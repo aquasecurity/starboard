@@ -4,9 +4,8 @@
 
 # Starboard
 
-Starboard is a Kubernetes-native security tool kit for finding risks, such as vulnerable container images
-or insecure Pod specs, in Kubernetes workloads. It provides [custom security resources definitions][k8s-security-crds]
-and the [Go module][starboard-go-module] which allow for the following use cases:
+Starboard is a Kubernetes-native security tool kit for finding risks in your Kubernetes workloads and environments. It provides [custom security resources definitions][k8s-security-crds]
+and the [Go module][starboard-go-module] to work alongside a range of existing security tools, allowing for use cases such as these:
 
 - Develop Kubernetes-native security applications such as:
   - admission webhook servers (like [Anchore Image Validator][anchore-image-validator])
@@ -18,7 +17,7 @@ and the [Go module][starboard-go-module] which allow for the following use cases
     (like [kubectl starboard][kubectl-starboard] plugin)
 - Extend existing Kubernetes dashboards, such as [Octant][octant] or [OpenShift Console][openshift-console], with
   vulnerability assessment reports
-- Implement scoring, health check, and metrics systems for the whole Kubernetes cluster or a single namespace
+- Implement scoring, health check, and metrics systems for the whole Kubernetes cluster or a single namespace, aggregating results from different tools to simplify overall security assessments
 - Implement custom security dashboards from scratch
 
 ## Rationale
@@ -34,15 +33,20 @@ On the other hand, they usually have the same or very similar modus operandi, i.
 3. Save risk assessment report somewhere, typically to the standard output or a file. JSON/YAML with a free-style schema
    seems to be an "industry" standard.
 
-From the integration stand point the existing Kubernetes security tools are not something easy to deal with.
+It's not easy to deal with the results from these different, standalone Kubernetes security tools. 
 With all these heterogeneous data models it's very hard to take advantage of all the features provided by a given tool.
 Especially when you want to use a few or all of them.
 
 What if all the Kubernetes security tools spoke the same language that everyone knows and understands?
 Similarly to the standardized and well known Pod spec, we could come up with the schema for a *vulnerability*,
-a *risk assessment check*, a *black-* or *white-listed vulnerability*, or maybe even a *scanner config*.
+a *risk assessment check*, a *black-* or *white-listed vulnerability*, or maybe even a *scanner config*. What if you could combine the results from different tools to give an easy-to-understand overview of current security status? 
 This would allow security vendors to focus on what they do best, whereas others could consume the data in the
 homogeneous format.
+
+Project Starboard illustrates how the outputs from different security tools can be stored and combined using native Kubernetes approaches: 
+* Storing results in Kubernetes CRDs that can be queried using the Kubernetes API
+* Using Kubernetes Operators to efficiently manage security assessments of different resources within the cluster
+* Using Kubernetes Operators to aggregate results, using flexible policies, into Kubernetes-native CRDs 
 
 ## Getting started
 
