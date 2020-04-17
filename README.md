@@ -28,8 +28,7 @@ On the other hand, they usually have the same or very similar modus operandi, i.
 
 1. Discover Kubernetes workloads via Kubernetes API or by parsing descriptor YAML files
 2. Invoke some type of scanner which finds risks, e.g. execute a Trivy binary executable to find container image
-   vulnerabilities or invoke a Go function to check SecurityContext of a given Pod. More ambitious evaluate some
-   Rego rules against Pod spec.
+   vulnerabilities, invoke a Go function to check SecurityContext of a given Pod, or evaluate a Pod spec against some Rego rules.
 3. Save risk assessment report somewhere, typically to the standard output or a file. JSON/YAML with a free-style schema
    seems to be an "industry" standard.
 
