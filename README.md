@@ -8,7 +8,7 @@ Kubernetes-native security tool kit.
 
 - [Abstract](#abstract)
 - [Rationale](#rationale)
-- [Case Studies](#case-studies)
+- [Use Cases](#use-cases)
   - [Security Tool Kit for Development and DevOps Teams](#security-tool-kit-for-development-and-devops-teams)
   - [Security Tool Kit for Enterprises](#security-tool-kit-for-enterprises)
 - [Getting Started](#getting-started)
@@ -18,7 +18,7 @@ Kubernetes-native security tool kit.
 ## Abstract
 
 Starboard is a Kubernetes-native security tool kit for finding risks in your Kubernetes workloads and environments.
-It provides [custom security resources definitions][k8s-security-crds] and the [Go module][starboard-go-module] to work
+It provides [custom security resources definitions][starboard-crds] and the [Go module][starboard-go-module] to work
 alongside a range of existing security tools, allowing for use cases such as these:
 
 - Develop Kubernetes-native security applications such as:
@@ -48,8 +48,9 @@ ways, i.e. have different capabilities, data models, output sinks, license, matu
 On the other hand, they usually have the same or very similar modus operandi, i.e.:
 
 1. Discover Kubernetes workloads via Kubernetes API or by parsing descriptor YAML files
-2. Invoke some type of scanner which finds risks, e.g. execute a Trivy binary executable to find container image
-   vulnerabilities, invoke a Go function to check SecurityContext of a given Pod, or evaluate a Pod spec against some Rego rules.
+2. Invoke some type of scanner which finds risks, e.g. execute a [Trivy][trivy] binary executable to find container
+   image vulnerabilities, invoke a Go function to check SecurityContext of a given Pod, or evaluate a Pod spec against
+   some [Rego][opa-rego] rules.
 3. Save risk assessment report somewhere, typically to the standard output or a file. JSON/YAML with a free-style schema
    seems to be an "industry" standard.
 
@@ -75,19 +76,19 @@ Kubernetes approaches:
 
 ### Security Tool Kit for Development and DevOps Teams
 
-One idea behind Starboard is to help development and DevOps teams deliver
-secure and compliant applications from the get-go. As shown in the figure below, Dave Loper is using
-[`kubectl`][kubectl] to deploy and test his applications. With [`kubectl starboard`][kubectl-starboard] plugin he's now
-able to scan container images, which comprise his applications, for potentially dangerous and exploitable
-vulnerabilities. He can also look for configuration issues that can affect stability, reliability, and scalability of
-his deployment. This makes Dave Loper a new security guard of his organization. What's more, by doing that his
-organization effectively implemented the shift left security principle in SDLC.
+One idea behind Starboard is to help development and DevOps teams deliver secure and compliant applications from the
+get-go. As shown in the figure below, Dave Loper is using [`kubectl`][kubectl] to deploy and test his applications.
+Without learning the whole new tool, he can now use a familiar [`kubectl starboard`][kubectl-starboard] plugin interface
+to scan container images, which comprise his applications, for potentially dangerous and exploitable vulnerabilities. He
+can also look for configuration issues that might affect stability, reliability, and scalability of his deployment. This
+makes Dave Loper a new security guard of his organization. What's more, by doing that his organization effectively
+implemented the shift left security principle in SDLC.
 
 Sometimes, to better understand the complexity of his applications, Dave is using [Octant][octant], a Kubernetes
 introspective and object management platform. With [Starboard Octant plugin][starboard-octant-plugin] we extended the
 Octant's capabilities to present vulnerability and configuration audits in user-friendly manner.
 
-![](./docs/images/starboard-components-for-devops.png)
+![](./docs/images/starboard-for-devops.png)
 
 ### Security Tool Kit for Enterprises
 
@@ -97,8 +98,8 @@ multi-tenant clusters as is the case for enterprises.
 
 In such cases more suitable option is to deploy [Starboard Security Operator][starboard-security-operator], which
 constantly monitors Kubernetes-native resources, such as Deployments, and runs appropriate scanners against the
-underlying deployment descriptors. The scan reports can be saved as custom resources in the same instance of etcd used
-by the Kubernetes cluster running the workloads, or an etcd instance external to the cluster.
+underlying deployment descriptors. The scan reports can be saved as custom resources in the same instance of
+[etcd][etcd] used by the Kubernetes cluster running the workloads, or an etcd instance external to the cluster.
 
 The vulnerability reports or any other security audits can be used to build or integrate with dashboards tailored for
 SRE and Security teams.
@@ -111,7 +112,7 @@ Another interesting scenario would be to take advantage of [Starboard Harbor Web
 [Starboard Aqua CSP Webhook][starboard-aqua-csp-webhook] components to import existing vulnerability reports generated
 by Harbor or Aqua CSP respectively via Webhook integrations.
 
-![](./docs/images/starboard-components-for-enterprises.png)
+![](./docs/images/starboard-for-enterprises.png)
 
 ## Getting started
 
@@ -153,7 +154,9 @@ $ kubectl get risks -n dev -o yaml \
 
 ## Contributing
 
-At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see contributions integrating different security tools so that users can access security information in standard, Kubernetes-native ways.
+At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
+contributions integrating different security tools so that users can access security information in standard,
+Kubernetes-native ways.
 
 ## License
 
@@ -161,21 +164,28 @@ This repository is available under the [Apache License 2.0][license].
 
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
-[k8s-security-crds]: https://github.com/aquasecurity/k8s-security-crds
+
+[starboard-crds]: https://github.com/aquasecurity/starboard-crds
 [starboard-go-module]: https://github.com/aquasecurity/kubectl-starboard/tree/master/pkg
-[kubectl]: https://kubernetes.io/docs/reference/kubectl
 [kubectl-starboard]: https://github.com/aquasecurity/kubectl-starboard/tree/master/cmd/kubectl-starboard
 [starboard-octant-plugin]: https://github.com/aquasecurity/octant-starboard-plugin
 [starboard-security-operator]: https://github.com/aquasecurity/starboard-security-operator
 [starboard-admission-webhook]: https://github.com/aquasecurity/starboard-admission-webhook
 [starboard-aqua-csp-webhook]: https://github.com/aquasecurity/starboard-aqua-csp-webhook
 [starboard-harbor-webhook]: https://github.com/aquasecurity/starboard-harbor-webhook
+
+[kubectl]: https://kubernetes.io/docs/reference/kubectl
+[kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
+[security-context]: https://kubernetes.io/docs/tasks/configure-pod-container/security-context
+
 [octant]: https://github.com/vmware-tanzu/octant
 [anchore-image-validator]: https://github.com/banzaicloud/anchore-image-validator
 [kube-trivy-exporter]: https://github.com/kaidotdev/kube-trivy-exporter
 [container-security-operator]: https://github.com/quay/container-security-operator
-[kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
 [kubeaudit]: https://github.com/Shopify/kubeaudit
 [openshift-console]: https://github.com/openshift/console
 [popeye]: https://github.com/derailed/popeye
 [polaris]: https://github.com/FairwindsOps/polaris
+[etcd]: https://etcd.io
+[trivy]: https://github.com/aquasecurity/trivy
+[opa-rego]: https://www.openpolicyagent.org/docs/latest/policy-language/
