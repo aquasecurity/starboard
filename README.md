@@ -71,17 +71,17 @@ Kubernetes approaches:
 * Using Kubernetes Operators to efficiently manage security assessments of different resources within the cluster
 * Using Kubernetes Operators to aggregate results, using flexible policies, into Kubernetes-native CRDs 
 
-## Case Studies
+## Use Cases
 
 ### Security Tool Kit for Development and DevOps Teams
 
-One idea behind Starboard is to offer the community a unique tool to help development and DevOps teams delivering
+One idea behind Starboard is to help development and DevOps teams deliver
 secure and compliant applications from the get-go. As shown in the figure below, Dave Loper is using
 [`kubectl`][kubectl] to deploy and test his applications. With [`kubectl starboard`][kubectl-starboard] plugin he's now
 able to scan container images, which comprise his applications, for potentially dangerous and exploitable
 vulnerabilities. He can also look for configuration issues that can affect stability, reliability, and scalability of
 his deployment. This makes Dave Loper a new security guard of his organization. What's more, by doing that his
-organization effectively implemented shift left security principle in SDLC.
+organization effectively implemented the shift left security principle in SDLC.
 
 Sometimes, to better understand the complexity of his applications, Dave is using [Octant][octant], a Kubernetes
 introspective and object management platform. With [Starboard Octant plugin][starboard-octant-plugin] we extended the
@@ -153,8 +153,7 @@ $ kubectl get risks -n dev -o yaml \
 
 ## Contributing
 
-We'd love to see contributions such as security companies especially when it comes to standardizing custom security
-resources.
+At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see contributions integrating different security tools so that users can access security information in standard, Kubernetes-native ways.
 
 ## License
 
