@@ -1,3 +1,6 @@
 .idea/
 
-vendor/
+bin/
+dist/
+
+coverage.txt
