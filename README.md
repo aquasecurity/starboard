@@ -1,3 +1,5 @@
+[![GitHub Release][release-img]][release]
+[![Build Actions][build-action-img]][build-action]
 [![License][license-img]][license]
 
 # Starboard
@@ -161,6 +163,10 @@ Kubernetes-native ways.
 
 This repository is available under the [Apache License 2.0][license].
 
+[release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg
+[release]: https://github.com/aquasecurity/starboard/releases
+[build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
+[build-action]: https://github.com/aquasecurity/starboard/actions
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 
