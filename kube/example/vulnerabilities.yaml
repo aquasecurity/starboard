@@ -1,0 +1,47 @@
+---
+apiVersion: aquasecurity.github.com/v1alpha1
+kind: Vulnerability
+metadata:
+  name: "sha256.bfb2cb1b47766fc424a7826d5ae79dc3aa70a8bbb697de7e683b965d47eb4295"
+report:
+  generatedAt: "2020-03-22T00:11:08Z"
+  scanner:
+    name: Trivy
+    vendor: Aqua Security
+    version: 0.5.2
+  registry:
+    url: https://index.docker.io/v1/
+  artifact:
+    repository: "library/alpine"
+    digest: "sha256:bfb2cb1b47766fc424a7826d5ae79dc3aa70a8bbb697de7e683b965d47eb4295"
+    tag: "3.10.2"
+    mimeType: "application/vnd.docker.distribution.manifest.v2+json"
+  summary:
+    criticalCount: 0
+    highCount: 0
+    mediumCount: 2
+    lowCount: 0
+    unknownCount: 0
+  vulnerabilities:
+    - vulnerabilityID: CVE-2019-1549
+      resource: openssl
+      installedVersion: 1.1.1c-r0
+      fixedVersion: 1.1.1d-r0
+      severity: MEDIUM
+      title: "openssl: information disclosure in fork()"
+      layerID: "sha256:bfb2cb1b47766fc424a7826d5ae79dc3aa70a8bbb697de7e683b965d47eb4295"
+      description: |
+        OpenSSL 1.1.1 introduced a rewritten random number generator (RNG). This was intended to include protection in the
+        event of a fork() system call in order to ensure that the parent and child processes did not share the same RNG
+        state. However this protection was not being used in the default case. A partial mitigation for this issue is that
+        the output from a high precision timer is mixed into the RNG state so the likelihood of a parent and child process
+        sharing state is significantly reduced. If an application already calls OPENSSL_init_crypto() explicitly using
+        OPENSSL_INIT_ATFORK then this problem does not occur at all. Fixed in OpenSSL 1.1.1d (Affected 1.1.1-1.1.1c).
+      links:
+        - "https://nvd.nist.gov/vuln/detail/CVE-2019-1549"
+    - vulnerabilityID: CVE-2019-1563
+      resource: openssl
+      installedVersion: 1.1.1c-r0
+      fixedVersion: 1.1.1d-r0
+      severity: MEDIUM
+      title: "openssl: information disclosure in PKCS7_dataDecode and CMS_decrypt_set1_pkey"
