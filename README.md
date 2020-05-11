@@ -92,16 +92,15 @@ Octant's capabilities to present vulnerability and configuration audits in user-
 
 ### Security Tool Kit for Enterprises
 
-Obviously the [`kubectl starboard`][kubectl-starboard] plugin has its own limitations in terms of reliability, e.g. when
-Dave gets disconnected from the cluster. It doesn't scale well with a huge number of Kubernetes workloads and / or
+Manual scanning through the [`kubectl starboard`][kubectl-starboard] plugin is useful, but it has its limitations:  it doesn't scale well with a huge number of Kubernetes workloads and / or
 multi-tenant clusters as is the case for enterprises.
 
-In such cases more suitable option is to deploy [Starboard Security Operator][starboard-security-operator], which
+In such cases a more suitable option is to deploy the [Starboard Security Operator][starboard-security-operator], which
 constantly monitors Kubernetes-native resources, such as Deployments, and runs appropriate scanners against the
 underlying deployment descriptors. The scan reports can be saved as custom resources in the same instance of
 [etcd][etcd] used by the Kubernetes cluster running the workloads, or an etcd instance external to the cluster.
 
-The vulnerability reports or any other security audits can be used to build or integrate with dashboards tailored for
+Because they are accessible over the Kubernetes API, the vulnerability reports or any other security audits can be used to build or integrate with dashboards tailored for
 SRE and Security teams.
 
 The same data can be used by the [Starboard Admission Webhook][starboard-admission-webhook] to accept or reject new
