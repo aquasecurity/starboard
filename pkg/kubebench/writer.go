@@ -1,9 +1,10 @@
 package kubebench
 
 import (
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	core "k8s.io/api/core/v1"
 )
 
 type Writer interface {
-	Write(report sec.CISKubernetesBenchmarkReport, node string) error
+	Write(report starboard.CISKubernetesBenchmarkReport, node *core.Node) error
 }
