@@ -4,17 +4,24 @@ before:
   hooks:
     - go mod download
 builds:
-  - id: build-kubectl-starboard
-    main: ./cmd/kubectl-starboard/main.go
-    binary: kubectl-starboard
+  - id: starboard
+    main: ./cmd/starboard/main.go
+    binary: starboard
     env:
       - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      386: i386
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
       amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
 checksum:
   name_template: "checksums.txt"
 snapshot:
