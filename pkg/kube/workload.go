@@ -5,9 +5,22 @@ import (
 )
 
 const (
-	LabelWorkloadKind  = "starboard.workload.kind"
+	// Deprecated use LabelResourceKind instead, which is more generic
+	LabelWorkloadKind = "starboard.workload.kind"
+	// Deprecated use LabelResourceName instead, which is more generic
 	LabelWorkloadName  = "starboard.workload.name"
 	LabelContainerName = "starboard.container.name"
+	LabelResourceKind  = "starboard.resource.kind"
+	LabelResourceName  = "starboard.resource.name"
+
+	LabelScannerName   = "starboard.scanner.name"
+	LabelScannerVendor = "starboard.scanner.vendor"
+
+	LabelHistoryLatest = "starboard.history.latest"
+)
+
+const (
+	AnnotationHistoryLimit = "starboard.history.limit"
 )
 
 // WorkloadKind is an enum defining the different kinds of Kubernetes workloads.

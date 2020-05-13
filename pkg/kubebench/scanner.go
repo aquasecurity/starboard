@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/klog"
 
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 const (
@@ -34,20 +33,18 @@ var (
 type Scanner struct {
 	clientset kubernetes.Interface
 	pods      *pod.Manager
+	converter Converter
 }
 
-func NewScanner(config *rest.Config) (*Scanner, error) {
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
+func NewScanner(clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
-	}, nil
+		converter: DefaultConverter,
+	}
 }
 
-func (s *Scanner) Scan() (report sec.CISKubernetesBenchmarkReport, node string, err error) {
+func (s *Scanner) Scan() (report starboard.CISKubernetesBenchmarkReport, node *core.Node, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	kubeBenchJob := s.prepareKubeBenchJob()
 
@@ -75,8 +72,6 @@ func (s *Scanner) Scan() (report sec.CISKubernetesBenchmarkReport, node string, 
 		return
 	}
 
-	node = kubeBenchPod.Spec.NodeName
-
 	// 4. Get kube-bench JSON output from the kube-bench Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
 		kubeBenchJob.Namespace, kubeBenchJob.Name)
@@ -90,12 +85,13 @@ func (s *Scanner) Scan() (report sec.CISKubernetesBenchmarkReport, node string, 
 	}()
 
 	// 5. Parse the CISBenchmarkReport from the logs Reader
-	report, err = CISBenchmarkReportFrom(logsReader)
+	report, err = s.converter.Convert(logsReader)
 	if err != nil {
 		err = fmt.Errorf("parsing CIS benchmark report: %w", err)
 		return
 	}
 
+	node, err = s.clientset.CoreV1().Nodes().Get(kubeBenchPod.Spec.NodeName, meta.GetOptions{})
 	return
 }
 

@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"github.com/aquasecurity/starboard/pkg/ext"
+	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/kubebench/crd"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -16,19 +19,19 @@ func GetKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			scanner, err := kubebench.NewScanner(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			report, node, err := scanner.Scan()
+			report, node, err := kubebench.NewScanner(kubernetesClientset).Scan()
 			if err != nil {
 				return
 			}
-			writer, err := crd.NewWriter(config)
+			starboardClientset, err := starboard.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			err = writer.Write(report, node)
+			err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(report, node)
 			return
 		},
 	}
