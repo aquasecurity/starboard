@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	KubeHunterReportCRName    = "kubehunterreports.aquasecurity.github.com"
+	KubeHunterReportCRName    = "kubehunterreports.aquasecurity.github.io"
 	KubeHunterReportCRVersion = "v1alpha1"
 	KubeHunterReportKind      = "KubeHunterReport"
 	KubeHunterReportListKind  = "KubeHunterReportList"

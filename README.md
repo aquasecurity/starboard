@@ -135,7 +135,7 @@ $ kubectl get vulnerabilities -n dev -o yaml \
 ```
 
 > **NOTE** The label selectors are used to find vulnerability reports for the specified Deployment.
-> For Deployments with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.com`
+> For Deployments with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
 > resources. There's the `starboard.workload.container` label to associate the vulnerability report with a particular
 > container image.
 

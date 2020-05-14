@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: configauditreports.aquasecurity.github.com
+  name: configauditreports.aquasecurity.github.io
 spec:
-  group: aquasecurity.github.com
+  group: aquasecurity.github.io
   versions:
     - name: v1alpha1
       served: true
