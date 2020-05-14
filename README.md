@@ -1,10 +1,10 @@
+<img src="docs/images/starboard-logo.png" width="200" alt="Starboard logo">
+
+> Kubernetes-native security tool kit.
+
 [![GitHub Release][release-img]][release]
 [![Build Actions][build-action-img]][build-action]
 [![License][license-img]][license]
-
-# Starboard
-
-Kubernetes-native security tool kit.
 
 ## Table of Contents
 
