@@ -17,9 +17,9 @@ type FakeCISKubeBenchReports struct {
 	Fake *FakeAquasecurityV1alpha1
 }
 
-var ciskubebenchreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.com", Version: "v1alpha1", Resource: "ciskubebenchreports"}
+var ciskubebenchreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.io", Version: "v1alpha1", Resource: "ciskubebenchreports"}
 
-var ciskubebenchreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.com", Version: "v1alpha1", Kind: "CISKubeBenchReport"}
+var ciskubebenchreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.io", Version: "v1alpha1", Kind: "CISKubeBenchReport"}
 
 // Get takes name of the cISKubeBenchReport, and returns the corresponding cISKubeBenchReport object, and an error if there is any.
 func (c *FakeCISKubeBenchReports) Get(name string, options v1.GetOptions) (result *v1alpha1.CISKubeBenchReport, err error) {

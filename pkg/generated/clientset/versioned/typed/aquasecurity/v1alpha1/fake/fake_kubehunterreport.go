@@ -17,9 +17,9 @@ type FakeKubeHunterReports struct {
 	Fake *FakeAquasecurityV1alpha1
 }
 
-var kubehunterreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.com", Version: "v1alpha1", Resource: "kubehunterreports"}
+var kubehunterreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.io", Version: "v1alpha1", Resource: "kubehunterreports"}
 
-var kubehunterreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.com", Version: "v1alpha1", Kind: "KubeHunterReport"}
+var kubehunterreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.io", Version: "v1alpha1", Kind: "KubeHunterReport"}
 
 // Get takes name of the kubeHunterReport, and returns the corresponding kubeHunterReport object, and an error if there is any.
 func (c *FakeKubeHunterReports) Get(name string, options v1.GetOptions) (result *v1alpha1.KubeHunterReport, err error) {

@@ -16,7 +16,7 @@ type AquasecurityV1alpha1Interface interface {
 	VulnerabilitiesGetter
 }
 
-// AquasecurityV1alpha1Client is used to interact with features provided by the aquasecurity.github.com group.
+// AquasecurityV1alpha1Client is used to interact with features provided by the aquasecurity.github.io group.
 type AquasecurityV1alpha1Client struct {
 	restClient rest.Interface
 }

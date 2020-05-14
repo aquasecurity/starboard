@@ -1,5 +1,5 @@
 ---
-apiVersion: aquasecurity.github.com/v1alpha1
+apiVersion: aquasecurity.github.io/v1alpha1
 kind: Vulnerability
 metadata:
   name: "sha256.bfb2cb1b47766fc424a7826d5ae79dc3aa70a8bbb697de7e683b965d47eb4295"

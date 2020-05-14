@@ -18,9 +18,9 @@ type FakeConfigAuditReports struct {
 	ns   string
 }
 
-var configauditreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.com", Version: "v1alpha1", Resource: "configauditreports"}
+var configauditreportsResource = schema.GroupVersionResource{Group: "aquasecurity.github.io", Version: "v1alpha1", Resource: "configauditreports"}
 
-var configauditreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.com", Version: "v1alpha1", Kind: "ConfigAuditReport"}
+var configauditreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.io", Version: "v1alpha1", Kind: "ConfigAuditReport"}
 
 // Get takes name of the configAuditReport, and returns the corresponding configAuditReport object, and an error if there is any.
 func (c *FakeConfigAuditReports) Get(name string, options v1.GetOptions) (result *v1alpha1.ConfigAuditReport, err error) {

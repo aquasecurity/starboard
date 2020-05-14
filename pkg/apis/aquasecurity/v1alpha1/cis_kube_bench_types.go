@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	CISKubeBenchReportCRName    = "ciskubebenchreports.aquasecurity.github.com"
+	CISKubeBenchReportCRName    = "ciskubebenchreports.aquasecurity.github.io"
 	CISKubeBenchReportCRVersion = "v1alpha1"
 	CISKubeBenchReportKind      = "CISKubeBenchReport"
 	CISKubeBenchReportKindList  = "CISKubeBenchReportList"

@@ -5,7 +5,7 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 )
 
@@ -42,14 +42,14 @@ func (m *crManager) Init() (err error) {
 		return
 	}
 
-	err = m.createOrUpdate(&sec.ConfigAuditReportsCRD)
+	err = m.createOrUpdate(&sec.ConfigAuditReportCRD)
 
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 	return
 }
 
 func (m *crManager) createOrUpdate(crd *v1beta1.CustomResourceDefinition) (err error) {
-	existingCRD, err := m.client.CustomResourceDefinitions().Get(crd.Name, metav1.GetOptions{})
+	existingCRD, err := m.client.CustomResourceDefinitions().Get(crd.Name, meta.GetOptions{})
 
 	switch {
 	case err == nil:
@@ -66,18 +66,18 @@ func (m *crManager) createOrUpdate(crd *v1beta1.CustomResourceDefinition) (err e
 }
 
 func (m *crManager) Cleanup() (err error) {
-	err = m.client.CustomResourceDefinitions().Delete(sec.VulnerabilitiesCRName, &metav1.DeleteOptions{})
+	err = m.client.CustomResourceDefinitions().Delete(sec.VulnerabilitiesCRName, &meta.DeleteOptions{})
 	if err != nil {
 		return
 	}
-	err = m.client.CustomResourceDefinitions().Delete(sec.CISKubeBenchReportCRName, &metav1.DeleteOptions{})
+	err = m.client.CustomResourceDefinitions().Delete(sec.CISKubeBenchReportCRName, &meta.DeleteOptions{})
 	if err != nil {
 		return
 	}
-	err = m.client.CustomResourceDefinitions().Delete(sec.KubeHunterReportCRName, &metav1.DeleteOptions{})
+	err = m.client.CustomResourceDefinitions().Delete(sec.KubeHunterReportCRName, &meta.DeleteOptions{})
 	if err != nil {
 		return
 	}
-	err = m.client.CustomResourceDefinitions().Delete(sec.ConfigAuditReportsCRName, &metav1.DeleteOptions{})
+	err = m.client.CustomResourceDefinitions().Delete(sec.ConfigAuditReportCRName, &meta.DeleteOptions{})
 	return
 }

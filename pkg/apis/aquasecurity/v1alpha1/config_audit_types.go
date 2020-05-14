@@ -7,22 +7,22 @@ import (
 )
 
 const (
-	ConfigAuditReportsCRName    = "configauditreports.aquasecurity.github.com"
-	ConfigAuditReportsCRVersion = "v1alpha1"
-	ConfigAuditReportKind       = "ConfigAuditReport"
-	ConfigAuditReportListKind   = "ConfigAuditReportList"
+	ConfigAuditReportCRName    = "configauditreports.aquasecurity.github.io"
+	ConfigAuditReportCRVersion = "v1alpha1"
+	ConfigAuditReportKind      = "ConfigAuditReport"
+	ConfigAuditReportListKind  = "ConfigAuditReportList"
 )
 
 var (
-	ConfigAuditReportsCRD = extv1beta1.CustomResourceDefinition{
+	ConfigAuditReportCRD = extv1beta1.CustomResourceDefinition{
 		ObjectMeta: meta.ObjectMeta{
-			Name: ConfigAuditReportsCRName,
+			Name: ConfigAuditReportCRName,
 		},
 		Spec: extv1beta1.CustomResourceDefinitionSpec{
 			Group: aquasecurity.GroupName,
 			Versions: []extv1beta1.CustomResourceDefinitionVersion{
 				{
-					Name:    ConfigAuditReportsCRVersion,
+					Name:    ConfigAuditReportCRVersion,
 					Served:  true,
 					Storage: true,
 				},
