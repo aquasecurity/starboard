@@ -35,7 +35,7 @@ func NewWriter(clock ext.Clock, clientset starboardapi.Interface) kubebench.Writ
 	}
 }
 
-func (w *writer) Write(report starboard.CISKubernetesBenchmarkReport, node *core.Node) (err error) {
+func (w *writer) Write(report starboard.CISKubeBenchOutput, node *core.Node) (err error) {
 	reports, err := w.getReportsByNodeName(node.GetName())
 	if err != nil {
 		return
@@ -49,7 +49,7 @@ func (w *writer) Write(report starboard.CISKubernetesBenchmarkReport, node *core
 		return
 	}
 
-	_, err = w.clientset.AquasecurityV1alpha1().CISKubernetesBenchmarks().Create(&starboard.CISKubernetesBenchmark{
+	_, err = w.clientset.AquasecurityV1alpha1().CISKubeBenchReports().Create(&starboard.CISKubeBenchReport{
 		ObjectMeta: meta.ObjectMeta{
 			Name: fmt.Sprintf("%s-%d", node.Name, w.clock.Now().Unix()),
 			Labels: map[string]string{
@@ -78,8 +78,8 @@ func (w *writer) Write(report starboard.CISKubernetesBenchmarkReport, node *core
 	return
 }
 
-func (w *writer) getReportsByNodeName(name string) (reports []starboard.CISKubernetesBenchmark, err error) {
-	list, err := w.clientset.AquasecurityV1alpha1().CISKubernetesBenchmarks().List(meta.ListOptions{
+func (w *writer) getReportsByNodeName(name string) (reports []starboard.CISKubeBenchReport, err error) {
+	list, err := w.clientset.AquasecurityV1alpha1().CISKubeBenchReports().List(meta.ListOptions{
 		LabelSelector: labels.Set{
 			kube.LabelResourceKind: "Node",
 			kube.LabelResourceName: name,
@@ -92,7 +92,7 @@ func (w *writer) getReportsByNodeName(name string) (reports []starboard.CISKuber
 	return
 }
 
-func (w *writer) removeHistoryLatestLabel(reports []starboard.CISKubernetesBenchmark) (err error) {
+func (w *writer) removeHistoryLatestLabel(reports []starboard.CISKubeBenchReport) (err error) {
 	for _, report := range reports {
 		if value, ok := report.Labels[kube.LabelHistoryLatest]; !ok || value != "true" {
 			continue
@@ -100,7 +100,7 @@ func (w *writer) removeHistoryLatestLabel(reports []starboard.CISKubernetesBench
 		clone := report.DeepCopy()
 		delete(clone.Labels, kube.LabelHistoryLatest)
 		klog.V(3).Infof("Removing %s label from %s report", kube.LabelHistoryLatest, clone.Name)
-		_, err = w.clientset.AquasecurityV1alpha1().CISKubernetesBenchmarks().Update(clone)
+		_, err = w.clientset.AquasecurityV1alpha1().CISKubeBenchReports().Update(clone)
 		if err != nil {
 			return
 		}
@@ -108,7 +108,7 @@ func (w *writer) removeHistoryLatestLabel(reports []starboard.CISKubernetesBench
 	return
 }
 
-func (w *writer) removeReportsWithHistoryLimitExceeded(reports []starboard.CISKubernetesBenchmark) (err error) {
+func (w *writer) removeReportsWithHistoryLimitExceeded(reports []starboard.CISKubeBenchReport) (err error) {
 	limit := w.getHistoryLimit(reports)
 	diff := len(reports) - limit
 	if diff < 0 {
@@ -116,7 +116,7 @@ func (w *writer) removeReportsWithHistoryLimitExceeded(reports []starboard.CISKu
 	}
 	for _, r := range reports[0 : diff+1] {
 		klog.V(3).Infof("Removing %s report which exceeded history limit of %d", r.GetName(), limit)
-		err = w.clientset.AquasecurityV1alpha1().CISKubernetesBenchmarks().Delete(r.GetName(), &meta.DeleteOptions{
+		err = w.clientset.AquasecurityV1alpha1().CISKubeBenchReports().Delete(r.GetName(), &meta.DeleteOptions{
 			GracePeriodSeconds: pointer.Int64Ptr(0),
 		})
 		if err != nil {
@@ -126,7 +126,7 @@ func (w *writer) removeReportsWithHistoryLimitExceeded(reports []starboard.CISKu
 	return
 }
 
-func (w *writer) getHistoryLimit(reports []starboard.CISKubernetesBenchmark) int {
+func (w *writer) getHistoryLimit(reports []starboard.CISKubeBenchReport) int {
 	if len(reports) == 0 {
 		return defaultHistoryLimit
 	}

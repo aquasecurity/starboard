@@ -12,8 +12,8 @@ type FakeAquasecurityV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeAquasecurityV1alpha1) CISKubernetesBenchmarks() v1alpha1.CISKubernetesBenchmarkInterface {
-	return &FakeCISKubernetesBenchmarks{c}
+func (c *FakeAquasecurityV1alpha1) CISKubeBenchReports() v1alpha1.CISKubeBenchReportInterface {
+	return &FakeCISKubeBenchReports{c}
 }
 
 func (c *FakeAquasecurityV1alpha1) ConfigAuditReports(namespace string) v1alpha1.ConfigAuditReportInterface {

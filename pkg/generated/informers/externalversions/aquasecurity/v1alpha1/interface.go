@@ -8,8 +8,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// CISKubernetesBenchmarks returns a CISKubernetesBenchmarkInformer.
-	CISKubernetesBenchmarks() CISKubernetesBenchmarkInformer
+	// CISKubeBenchReports returns a CISKubeBenchReportInformer.
+	CISKubeBenchReports() CISKubeBenchReportInformer
 	// ConfigAuditReports returns a ConfigAuditReportInformer.
 	ConfigAuditReports() ConfigAuditReportInformer
 	// KubeHunterReports returns a KubeHunterReportInformer.
@@ -29,9 +29,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// CISKubernetesBenchmarks returns a CISKubernetesBenchmarkInformer.
-func (v *version) CISKubernetesBenchmarks() CISKubernetesBenchmarkInformer {
-	return &cISKubernetesBenchmarkInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// CISKubeBenchReports returns a CISKubeBenchReportInformer.
+func (v *version) CISKubeBenchReports() CISKubeBenchReportInformer {
+	return &cISKubeBenchReportInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ConfigAuditReports returns a ConfigAuditReportInformer.

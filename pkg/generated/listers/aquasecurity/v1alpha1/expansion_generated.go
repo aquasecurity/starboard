@@ -2,9 +2,9 @@
 
 package v1alpha1
 
-// CISKubernetesBenchmarkListerExpansion allows custom methods to be added to
-// CISKubernetesBenchmarkLister.
-type CISKubernetesBenchmarkListerExpansion interface{}
+// CISKubeBenchReportListerExpansion allows custom methods to be added to
+// CISKubeBenchReportLister.
+type CISKubeBenchReportListerExpansion interface{}
 
 // ConfigAuditReportListerExpansion allows custom methods to be added to
 // ConfigAuditReportLister.
