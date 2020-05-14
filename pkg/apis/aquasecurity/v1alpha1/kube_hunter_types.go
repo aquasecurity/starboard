@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	KubeHunterReportKind      = "KubeHunterReport"
-	KubeHunterReportListKind  = "KubeHunterReportList"
 	KubeHunterReportCRName    = "kubehunterreports.aquasecurity.github.com"
 	KubeHunterReportCRVersion = "v1alpha1"
+	KubeHunterReportKind      = "KubeHunterReport"
+	KubeHunterReportListKind  = "KubeHunterReportList"
 )
 
 var (
@@ -34,6 +34,7 @@ var (
 				Kind:       KubeHunterReportKind,
 				ListKind:   KubeHunterReportListKind,
 				Categories: []string{"all"},
+				ShortNames: []string{"kubehunter"},
 			},
 		},
 	}

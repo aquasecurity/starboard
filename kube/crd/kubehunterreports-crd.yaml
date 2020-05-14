@@ -16,3 +16,5 @@ spec:
     listKind: KubeHunterReportList
     categories:
       - all
+    shortNames:
+      - kubehunter

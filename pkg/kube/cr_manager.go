@@ -32,7 +32,7 @@ func (m *crManager) Init() (err error) {
 		return
 	}
 
-	err = m.createOrUpdate(&sec.CISKubernetesBenchmarksCRD)
+	err = m.createOrUpdate(&sec.CISKubeBenchReportCRD)
 	if err != nil {
 		return
 	}
@@ -70,7 +70,7 @@ func (m *crManager) Cleanup() (err error) {
 	if err != nil {
 		return
 	}
-	err = m.client.CustomResourceDefinitions().Delete(sec.CISKubernetesBenchmarksCRName, &metav1.DeleteOptions{})
+	err = m.client.CustomResourceDefinitions().Delete(sec.CISKubeBenchReportCRName, &metav1.DeleteOptions{})
 	if err != nil {
 		return
 	}

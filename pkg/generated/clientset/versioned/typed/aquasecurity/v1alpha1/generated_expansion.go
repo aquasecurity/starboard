@@ -2,7 +2,7 @@
 
 package v1alpha1
 
-type CISKubernetesBenchmarkExpansion interface{}
+type CISKubeBenchReportExpansion interface{}
 
 type ConfigAuditReportExpansion interface{}
 

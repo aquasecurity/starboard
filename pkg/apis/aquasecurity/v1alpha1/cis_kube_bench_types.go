@@ -7,32 +7,34 @@ import (
 )
 
 const (
-	CISKubernetesBenchmarksCRName    = "ciskubernetesbenchmarks.aquasecurity.github.com"
-	CISKubernetesBenchmarksCRVersion = "v1alpha1"
+	CISKubeBenchReportCRName    = "ciskubebenchreports.aquasecurity.github.com"
+	CISKubeBenchReportCRVersion = "v1alpha1"
+	CISKubeBenchReportKind      = "CISKubeBenchReport"
+	CISKubeBenchReportKindList  = "CISKubeBenchReportList"
 )
 
 var (
-	CISKubernetesBenchmarksCRD = extv1beta1.CustomResourceDefinition{
+	CISKubeBenchReportCRD = extv1beta1.CustomResourceDefinition{
 		ObjectMeta: meta.ObjectMeta{
-			Name: CISKubernetesBenchmarksCRName,
+			Name: CISKubeBenchReportCRName,
 		},
 		Spec: extv1beta1.CustomResourceDefinitionSpec{
 			Group: aquasecurity.GroupName,
 			Versions: []extv1beta1.CustomResourceDefinitionVersion{
 				{
-					Name:    CISKubernetesBenchmarksCRVersion,
+					Name:    CISKubeBenchReportCRVersion,
 					Served:  true,
 					Storage: true,
 				},
 			},
 			Scope: extv1beta1.ClusterScoped,
 			Names: extv1beta1.CustomResourceDefinitionNames{
-				Singular:   "ciskubernetesbenchmark",
-				Plural:     "ciskubernetesbenchmarks",
-				Kind:       "CISKubernetesBenchmark",
-				ListKind:   "CISKubernetesBenchmarkList",
+				Singular:   "ciskubebenchreport",
+				Plural:     "ciskubebenchreports",
+				Kind:       CISKubeBenchReportKind,
+				ListKind:   CISKubeBenchReportKindList,
 				Categories: []string{"all"},
-				ShortNames: []string{"ciskubebench"},
+				ShortNames: []string{"kubebench"},
 			},
 		},
 	}
@@ -42,31 +44,31 @@ var (
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CISKubernetesBenchmark is a specification for the CISKubernetesBenchmark resource.
-type CISKubernetesBenchmark struct {
+// CISKubeBenchReport is a specification for the CISKubeBenchReport resource.
+type CISKubeBenchReport struct {
 	meta.TypeMeta   `json:",inline"`
 	meta.ObjectMeta `json:"metadata,omitempty"`
 
-	Report CISKubernetesBenchmarkReport `json:"report"`
+	Report CISKubeBenchOutput `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CISKubernetesBenchmarkList is a list of CISKubernetesBenchmark resources.
-type CISKubernetesBenchmarkList struct {
+// CISKubeBenchReportList is a list of CISKubeBenchReport resources.
+type CISKubeBenchReportList struct {
 	meta.TypeMeta `json:",inline"`
 	meta.ListMeta `json:"metadata"`
 
-	Items []CISKubernetesBenchmark `json:"items"`
+	Items []CISKubeBenchReport `json:"items"`
 }
 
-type CISKubernetesBenchmarkReport struct {
-	GeneratedAt meta.Time                       `json:"generatedAt"`
-	Scanner     Scanner                         `json:"scanner"`
-	Sections    []CISKubernetesBenchmarkSection `json:"sections"`
+type CISKubeBenchOutput struct {
+	GeneratedAt meta.Time             `json:"generatedAt"`
+	Scanner     Scanner               `json:"scanner"`
+	Sections    []CISKubeBenchSection `json:"sections"`
 }
 
-type CISKubernetesBenchmarkSection struct {
+type CISKubeBenchSection struct {
 	ID        string `json:"id"`
 	Version   string `json:"version"`
 	Text      string `json:"text"`
@@ -76,10 +78,10 @@ type CISKubernetesBenchmarkSection struct {
 	TotalWarn int    `json:"total_warn"`
 	TotalInfo int    `json:"total_info"`
 
-	Tests []CISKubernetesBenchmarkTests `json:"tests"`
+	Tests []CISKubeBenchTests `json:"tests"`
 }
 
-type CISKubernetesBenchmarkTests struct {
+type CISKubeBenchTests struct {
 	Section string `json:"section"`
 	Pass    int    `json:"pass"`
 	Fail    int    `json:"fail"`
@@ -87,10 +89,10 @@ type CISKubernetesBenchmarkTests struct {
 	Info    int    `json:"info"`
 	Desc    string `json:"desc"`
 
-	Results []CISKubernetesBenchmarkResult `json:"results"`
+	Results []CISKubeBenchResult `json:"results"`
 }
 
-type CISKubernetesBenchmarkResult struct {
+type CISKubeBenchResult struct {
 	TestNumber  string `json:"test_number"`
 	TestDesc    string `json:"test_desc"`
 	Remediation string `json:"remediation"`

@@ -6,5 +6,5 @@ import (
 )
 
 type Writer interface {
-	Write(report starboard.CISKubernetesBenchmarkReport, node *core.Node) error
+	Write(report starboard.CISKubeBenchOutput, node *core.Node) error
 }

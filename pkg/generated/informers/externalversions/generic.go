@@ -37,8 +37,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=aquasecurity.github.com, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("ciskubernetesbenchmarks"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Aquasecurity().V1alpha1().CISKubernetesBenchmarks().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("ciskubebenchreports"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Aquasecurity().V1alpha1().CISKubeBenchReports().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("configauditreports"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Aquasecurity().V1alpha1().ConfigAuditReports().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("kubehunterreports"):

@@ -4,3 +4,5 @@ bin/
 dist/
 
 coverage.txt
+
+vendor

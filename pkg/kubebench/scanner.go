@@ -44,7 +44,7 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() (report starboard.CISKubernetesBenchmarkReport, node *core.Node, err error) {
+func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	kubeBenchJob := s.prepareKubeBenchJob()
 
