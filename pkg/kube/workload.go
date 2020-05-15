@@ -9,13 +9,9 @@ const (
 )
 
 const (
-	// Deprecated use LabelResourceKind instead, which is more generic
-	LabelWorkloadKind = "starboard.workload.kind"
-	// Deprecated use LabelResourceName instead, which is more generic
-	LabelWorkloadName  = "starboard.workload.name"
-	LabelContainerName = "starboard.container.name"
 	LabelResourceKind  = "starboard.resource.kind"
 	LabelResourceName  = "starboard.resource.name"
+	LabelContainerName = "starboard.container.name"
 
 	LabelScannerName   = "starboard.scanner.name"
 	LabelScannerVendor = "starboard.scanner.vendor"

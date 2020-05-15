@@ -42,8 +42,8 @@ func (w *writer) Write(report sec.ConfigAudit) (err error) {
 				ObjectMeta: meta.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						kube.LabelWorkloadKind: report.Resource.Kind,
-						kube.LabelWorkloadName: report.Resource.Name,
+						kube.LabelResourceKind: report.Resource.Kind,
+						kube.LabelResourceName: report.Resource.Name,
 					},
 				},
 				Report: report,
