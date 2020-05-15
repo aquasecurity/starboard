@@ -5,8 +5,6 @@ import (
 	"io"
 
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/ext"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Converter interface {
@@ -14,14 +12,12 @@ type Converter interface {
 }
 
 type converter struct {
-	clock ext.Clock
 }
 
-var DefaultConverter = NewConverter(ext.NewSystemClock())
+var DefaultConverter = NewConverter()
 
-func NewConverter(clock ext.Clock) Converter {
+func NewConverter() Converter {
 	return &converter{
-		clock: clock,
 	}
 }
 
@@ -73,7 +69,6 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 	}
 
 	report = sec.ConfigAudit{
-		GeneratedAt: metav1.NewTime(c.clock.Now()),
 		Scanner: sec.Scanner{
 			Name:    "Polaris",
 			Vendor:  "Fairwinds",

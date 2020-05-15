@@ -5,6 +5,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kubehunter/crd"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -16,11 +17,11 @@ func GetKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			scanner, err := kubehunter.NewScanner(config)
+			clientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			report, err := scanner.Scan()
+			report, err := kubehunter.NewScanner(clientset).Scan()
 			if err != nil {
 				return
 			}
