@@ -5,26 +5,20 @@ import (
 	"io"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/ext"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Converter interface {
 	Convert(reader io.Reader) (report starboard.CISKubeBenchOutput, err error)
 }
 
-var DefaultConverter Converter = &converter{
-	clock: ext.NewSystemClock(),
-}
+var DefaultConverter Converter = &converter{}
 
 type converter struct {
-	clock ext.Clock
 }
 
 func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutput, err error) {
 	decoder := json.NewDecoder(reader)
 	report = starboard.CISKubeBenchOutput{
-		GeneratedAt: meta.NewTime(c.clock.Now()),
 		Scanner: starboard.Scanner{
 			Name:    "kube-bench",
 			Vendor:  "Aqua Security",

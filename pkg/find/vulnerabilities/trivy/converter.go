@@ -2,11 +2,8 @@ package trivy
 
 import (
 	"encoding/json"
-	"io"
-	"time"
-
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"io"
 )
 
 // Converter is the interface that wraps the Convert method.
@@ -51,7 +48,6 @@ func (c *converter) convert(reports []ScanReport) sec.VulnerabilityReport {
 	}
 
 	return sec.VulnerabilityReport{
-		GeneratedAt: meta.NewTime(time.Now()),
 		Scanner: sec.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",

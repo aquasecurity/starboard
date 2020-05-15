@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/klog"
 
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
@@ -16,7 +16,6 @@ import (
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/utils/pointer"
 )
 
@@ -35,18 +34,14 @@ type Scanner struct {
 	pods      *pod.Manager
 }
 
-func NewScanner(config *rest.Config) (*Scanner, error) {
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
+func NewScanner(clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
-	}, nil
+	}
 }
 
-func (s *Scanner) Scan() (report sec.KubeHunterOutput, err error) {
+func (s *Scanner) Scan() (report starboard.KubeHunterOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
 	kubeHunterJob := s.prepareKubeHunterJob()
 

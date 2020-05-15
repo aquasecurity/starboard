@@ -2,6 +2,7 @@ package crd
 
 import (
 	"errors"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
@@ -36,8 +37,11 @@ func (w *writer) Write(report sec.KubeHunterOutput, cluster string) (err error) 
 	// TODO If exists just update it, create new instance otherwise
 	_, err = w.client.AquasecurityV1alpha1().KubeHunterReports().Create(&sec.KubeHunterReport{
 		ObjectMeta: meta.ObjectMeta{
-			Name:   cluster,
-			Labels: map[string]string{},
+			Name: cluster,
+			Labels: map[string]string{
+				kube.LabelResourceKind: "Cluster",
+				kube.LabelResourceName: cluster,
+			},
 		},
 		Report: report,
 	})

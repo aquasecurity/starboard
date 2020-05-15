@@ -63,9 +63,8 @@ type CISKubeBenchReportList struct {
 }
 
 type CISKubeBenchOutput struct {
-	GeneratedAt meta.Time             `json:"generatedAt"`
-	Scanner     Scanner               `json:"scanner"`
-	Sections    []CISKubeBenchSection `json:"sections"`
+	Scanner  Scanner               `json:"scanner"`
+	Sections []CISKubeBenchSection `json:"sections"`
 }
 
 type CISKubeBenchSection struct {
