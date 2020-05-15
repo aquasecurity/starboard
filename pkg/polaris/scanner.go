@@ -88,9 +88,8 @@ func (s *Scanner) Scan() (reports []sec.ConfigAudit, err error) {
 func (s *Scanner) preparePolarisJob() *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
-			Name: uuid.New().String(),
-			// TODO Create the starboard namespace in the init command?
-			Namespace: "starboard",
+			Name:      uuid.New().String(),
+			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
 				"app": "polaris",
 			},

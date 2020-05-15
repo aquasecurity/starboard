@@ -98,9 +98,8 @@ func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, 
 func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
-			Name: uuid.New().String(),
-			// TODO Create the starboard namespace in the init command?
-			Namespace: core.NamespaceDefault,
+			Name:      uuid.New().String(),
+			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
 				"app": "kube-bench",
 			},

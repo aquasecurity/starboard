@@ -5,6 +5,10 @@ import (
 )
 
 const (
+	NamespaceStarboard = "starboard"
+)
+
+const (
 	// Deprecated use LabelResourceKind instead, which is more generic
 	LabelWorkloadKind = "starboard.workload.kind"
 	// Deprecated use LabelResourceName instead, which is more generic

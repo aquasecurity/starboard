@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -16,15 +17,16 @@ func GetCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			client, err := extapi.NewForConfig(config)
+			clientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			crm, err := kube.NewCRManager(client)
+			clientsetext, err := extapi.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			return crm.Cleanup()
+			err = kube.NewCRManager(clientset, clientsetext).Cleanup()
+			return
 		},
 	}
 	return cmd

@@ -17,8 +17,7 @@ type converter struct {
 var DefaultConverter = NewConverter()
 
 func NewConverter() Converter {
-	return &converter{
-	}
+	return &converter{}
 }
 
 func (c *converter) Convert(reader io.Reader) (reports []sec.ConfigAudit, err error) {

@@ -4,7 +4,6 @@ kind: Vulnerability
 metadata:
   name: "sha256.bfb2cb1b47766fc424a7826d5ae79dc3aa70a8bbb697de7e683b965d47eb4295"
 report:
-  generatedAt: "2020-03-22T00:11:08Z"
   scanner:
     name: Trivy
     vendor: Aqua Security

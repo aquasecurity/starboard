@@ -87,9 +87,8 @@ func (s *Scanner) Scan() (report starboard.KubeHunterOutput, err error) {
 func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
-			Name: uuid.New().String(),
-			// TODO Create the starboard namespace in the init command?
-			Namespace: core.NamespaceDefault,
+			Name:      uuid.New().String(),
+			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
 				"app": "kube-hunter",
 			},
