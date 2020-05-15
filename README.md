@@ -130,13 +130,13 @@ After that you can pull the vulnerabilities reports using the `kubectl get` comm
 
 ```
 $ kubectl get vulnerabilities -n dev -o yaml \
-    -l starboard.workload.kind=Deployment \
-    -l starboard.workload.name=booking-svc
+    -l starboard.resource.kind=Deployment \
+    -l starboard.resource.name=booking-svc
 ```
 
 > **NOTE** The label selectors are used to find vulnerability reports for the specified Deployment.
 > For Deployments with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
-> resources. There's the `starboard.workload.container` label to associate the vulnerability report with a particular
+> resources. There's the `starboard.container.name` label to associate the vulnerability report with a particular
 > container image.
 
 Additionally, you could check for other risks with:
@@ -149,8 +149,8 @@ And get the corresponding report(s):
 
 ```
 $ kubectl get risks -n dev -o yaml \
-    -l starboard.workload.kind=Deployment \
-    -l starboard.workload.name=booking-svc
+    -l starboard.resource.kind=Deployment \
+    -l starboard.resource.name=booking-svc
 ```
 
 ## Contributing

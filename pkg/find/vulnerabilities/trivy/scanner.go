@@ -174,8 +174,8 @@ func (s *scanner) prepareJob(workload kube.Workload, spec core.PodSpec) (*batch.
 			Name:      jobName,
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
-				kube.LabelWorkloadKind: workload.Kind.String(),
-				kube.LabelWorkloadName: workload.Name,
+				kube.LabelResourceKind: workload.Kind.String(),
+				kube.LabelResourceName: workload.Name,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -185,8 +185,8 @@ func (s *scanner) prepareJob(workload kube.Workload, spec core.PodSpec) (*batch.
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelWorkloadKind: workload.Kind.String(),
-						kube.LabelWorkloadName: workload.Name,
+						kube.LabelResourceKind: workload.Kind.String(),
+						kube.LabelResourceName: workload.Name,
 					},
 				},
 				Spec: core.PodSpec{

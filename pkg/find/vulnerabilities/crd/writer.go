@@ -37,8 +37,8 @@ func (s *writer) createVulnerability(workload kube.Workload, container string, r
 		ObjectMeta: meta.ObjectMeta{
 			Name: fmt.Sprintf(uuid.New().String()),
 			Labels: map[string]string{
-				kube.LabelWorkloadKind:  workload.Kind.String(),
-				kube.LabelWorkloadName:  workload.Name,
+				kube.LabelResourceKind:  workload.Kind.String(),
+				kube.LabelResourceName:  workload.Name,
 				kube.LabelContainerName: container,
 			},
 		},
