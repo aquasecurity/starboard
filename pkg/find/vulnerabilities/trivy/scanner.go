@@ -172,7 +172,7 @@ func (s *scanner) prepareJob(workload kube.Workload, spec core.PodSpec) (*batch.
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      jobName,
-			Namespace: workload.Namespace,
+			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
 				kube.LabelWorkloadKind: workload.Kind.String(),
 				kube.LabelWorkloadName: workload.Name,

@@ -3,8 +3,9 @@ package cmd
 import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
-	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	extensionsapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -16,15 +17,16 @@ func GetInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			client, err := extapi.NewForConfig(config)
+			clientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			crm, err := kube.NewCRManager(client)
+			clientsetext, err := extensionsapi.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			return crm.Init()
+			err = kube.NewCRManager(clientset, clientsetext).Init()
+			return
 		},
 	}
 	return cmd
