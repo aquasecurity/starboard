@@ -84,6 +84,14 @@ func (pw *Manager) GetPodSpecByWorkload(workload kube.Workload) (spec core.PodSp
 		}
 		spec = cj.Spec.JobTemplate.Spec.Template.Spec
 		return
+	case kube.WorkloadKindJob:
+		var job *batch.Job
+		job, err = pw.clientset.BatchV1().Jobs(ns).Get(workload.Name, meta.GetOptions{})
+		if err != nil {
+			return
+		}
+		spec = job.Spec.Template.Spec
+		return
 	}
 	err = fmt.Errorf("unrecognized workload: %s", workload.Kind)
 	return
