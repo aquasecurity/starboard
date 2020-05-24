@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"k8s.io/utils/pointer"
 
@@ -18,7 +18,6 @@ import (
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 const (
@@ -31,7 +30,7 @@ const (
 	// TODO: The latest semver tagged image 0.6.0 doesn't return audit checks ?!
 	polarisContainerImage = "quay.io/fairwinds/polaris:cfc0d213cd603793d8e36eecfb0def1579a34997"
 	polarisConfigVolume   = "config-volume"
-	polarisConfigMap      = "polaris-config"
+	polarisConfigMap      = "polaris"
 )
 
 type Scanner struct {
@@ -40,19 +39,15 @@ type Scanner struct {
 	converter Converter
 }
 
-func NewScanner(config *rest.Config) (*Scanner, error) {
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
+func NewScanner(clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 		converter: DefaultConverter,
-	}, nil
+	}
 }
 
-func (s *Scanner) Scan() (reports []sec.ConfigAudit, err error) {
+func (s *Scanner) Scan() (reports []starboard.ConfigAudit, err error) {
 	polarisJob := s.preparePolarisJob()
 
 	err = runner.New(runnerTimeout).
@@ -105,7 +100,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName: "starboard",
+					ServiceAccountName: kube.ServiceAccountPolaris,
 					RestartPolicy:      core.RestartPolicyNever,
 					Volumes: []core.Volume{
 						{

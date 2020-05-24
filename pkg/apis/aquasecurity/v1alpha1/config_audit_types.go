@@ -34,6 +34,7 @@ var (
 				Kind:       ConfigAuditReportKind,
 				ListKind:   ConfigAuditReportListKind,
 				Categories: []string{"all"},
+				ShortNames: []string{"configaudit"},
 			},
 		},
 	}

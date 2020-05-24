@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	secapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/polaris/crd"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -17,19 +18,19 @@ func GetPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			scanner, err := polaris.NewScanner(config)
+			clientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			reports, err := scanner.Scan()
+			reports, err := polaris.NewScanner(clientset).Scan()
 			if err != nil {
 				return
 			}
-			secClientset, err := secapi.NewForConfig(config)
+			starboardClientset, err := starboard.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(secClientset).WriteAll(reports)
+			err = crd.NewWriter(starboardClientset).WriteAll(reports)
 			if err != nil {
 				return
 			}

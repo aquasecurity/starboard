@@ -6,6 +6,9 @@ import (
 
 const (
 	NamespaceStarboard = "starboard"
+	// ServiceAccountPolaris the name of the ServiceAccount used to run Polaris scan Jobs.
+	ServiceAccountPolaris = "polaris"
+	ConfigMapPolaris      = "polaris"
 )
 
 const (
