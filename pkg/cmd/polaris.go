@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "polaris",
 		Short: "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",

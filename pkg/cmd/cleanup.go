@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup",
 		Short: "Delete custom resource definitions created by starboard",

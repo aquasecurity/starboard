@@ -5,7 +5,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func GetRBACCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewRBACCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rbac",
 		Short: "Get RBAC config to run starboard",

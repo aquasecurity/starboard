@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kube-hunter",
 		Short: "Hunt for security weaknesses",
