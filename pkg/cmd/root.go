@@ -10,7 +10,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func GetRootCmd() *cobra.Command {
+func NewRootCmd(version VersionInfo) *cobra.Command {
 	var cf *genericclioptions.ConfigFlags
 
 	rootCmd := &cobra.Command{
@@ -22,13 +22,15 @@ func GetRootCmd() *cobra.Command {
 
 	cf = genericclioptions.NewConfigFlags(true)
 
-	rootCmd.AddCommand(GetInitCmd(cf))
-	rootCmd.AddCommand(GetRBACCmd(cf))
-	rootCmd.AddCommand(GetFindCmd(cf))
-	rootCmd.AddCommand(GetKubeBenchCmd(cf))
-	rootCmd.AddCommand(GetKubeHunterCmd(cf))
-	rootCmd.AddCommand(GetPolarisCmd(cf))
-	rootCmd.AddCommand(GetCleanupCmd(cf))
+	rootCmd.AddCommand(NewVersionCmd(version))
+	rootCmd.AddCommand(NewInitCmd(cf))
+	rootCmd.AddCommand(NewRBACCmd(cf))
+	rootCmd.AddCommand(NewFindCmd(cf))
+	rootCmd.AddCommand(NewKubeBenchCmd(cf))
+	rootCmd.AddCommand(NewKubeHunterCmd(cf))
+	rootCmd.AddCommand(NewPolarisCmd(cf))
+	rootCmd.AddCommand(NewGetCmd(cf))
+	rootCmd.AddCommand(NewCleanupCmd(cf))
 
 	SetFlags(cf, rootCmd)
 

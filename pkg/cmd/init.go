@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create custom resource definitions used by starboard",

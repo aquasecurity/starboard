@@ -11,12 +11,21 @@ import (
 	"k8s.io/klog"
 )
 
+var (
+	// These variables are populated by GoReleases via ldflags
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	defer klog.Flush()
 
 	initFlags()
 
-	if err := cmd.GetRootCmd().Execute(); err != nil {
+	version := cmd.VersionInfo{Version: version, Commit: commit, Date: date}
+
+	if err := cmd.NewRootCmd(version).Execute(); err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 	}
