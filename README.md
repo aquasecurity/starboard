@@ -86,6 +86,8 @@ Kubernetes approaches:
 
 ### Starboard for DevOps
 
+![](docs/images/starboard-cli-with-octant-demo.gif)
+
 One idea behind Starboard is to help development and DevOps teams deliver secure and compliant applications from the
 get-go. As shown in the figure below, Dave Loper is using [`kubectl`][kubectl] to deploy and test his applications.
 Without learning the whole new tool, he can now use a familiar [`kubectl starboard`][kubectl-starboard] plugin interface
