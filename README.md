@@ -130,8 +130,7 @@ by Harbor or Aqua CSP respectively via Webhook integrations.
 
 ### Starboard for Security Vendors
 
-> **TODO:** Explain how security vendors might benefit from Custom Security Resources Specification and other components
-> developed as part of the Starboard tool kit, for example, Octant Starboard plugin and Starboard Admission Webhook.
+Starboard provides a framework for security tool developers and vendors, making it easy to integrate their tooling into Kubernetes in a way that's familiar for users. As a tool developer you can re-use one of the existing CRD definitions, or create a new one. The Starboard code generator saves time and effort on creating the tools to integrate with Kubernetes tooling, for example creating web hooks and plugins for Starboard. 
 
 ## Installing
 
@@ -139,7 +138,7 @@ This guide shows how to install the [Starboard CLI][starboard-cli]. Starboard CL
 or from pre-built binary releases.
 
 > The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kubectl plugin][kubectl-plugins],
-> but it's perfectly fine to run it as a stand-alone executable.
+> but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to `kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard` (as shown in the examples below). Alternatively, if you want to run as a stand-alone executable, simply call `starboard` in place of `kubectl starboard` in the examples below. 
 
 ### From the Binary Releases
 
@@ -155,7 +154,7 @@ From there, you should be able to run Starboard CLI commands: `starboard help`
 
 ### From Krew
 
-Once we resolve [#8][issue-8] and submit Starboard to [krew-index][krew-index] you'll be able to install starboard with
+Once we resolve [#8][issue-8] our intention is to submit Starboard to [krew-index][krew-index] so that if accepted, you'll be able to install starboard with
 [Krew][krew] plugins manager:
 
 ```
