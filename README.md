@@ -19,6 +19,7 @@
   - [From Krew](#from-krew)
   - [From Source (Linux, macOS)](#from-source-linux-macos)
 - [Getting Started](#getting-started)
+- [Next Steps](#next-steps)
 - [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Starboard CLI](#starboard-cli)
 - [Troubleshooting](#troubleshooting)
@@ -182,60 +183,80 @@ If required, it will fetch the dependencies and cache them. It will then compile
 
 ## Getting Started
 
-For those who're familiar with [`kubectl`][kubectl], the easiest way to get started with Starboard is to use the
-[Starboard CLI][starboard-cli] or [`kubectl starboard`][kubectl-starboard] plugin, which allow you to scan any
-Kubernetes workload deployed in the cluster.
+The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
+workloads deployed in your cluster.
 
-To begin with, initialize Starboard by sending custom security resources definitions to the Kubernetes API:
+To begin with, execute the following one-time setup command:
 
 ```
-$ kubectl starboard init
-$ kubectl api-resources
+$ starboard init
+```
+
+The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes Jobs to perform
+scans. It also sends custom security resources definitions to the Kubernetes API:
+
+```
+$ kubectl api-resources --api-group aquasecurity.github.io
 NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
 ciskubebenchreports               kubebench    aquasecurity.github.io         false        CISKubeBenchReport
-configauditreports                             aquasecurity.github.io         true         ConfigAuditReport
+configauditreports                configaudit  aquasecurity.github.io         true         ConfigAuditReport
 kubehunterreports                 kubehunter   aquasecurity.github.io         false        KubeHunterReport
 vulnerabilities                   vulns,vuln   aquasecurity.github.io         true         Vulnerability
-...
 ```
 
-The `init` subcommand also creates the `starboard` namespace, in which Starboard executes Kubernetes Jobs to perform
-scans.
+> There's the `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
 
-Next, let's assume there's the `nginx` Deployment in the `dev` namespace:
-
-```
-$ kubectl create deployment nginx --image=nginx:1.16 --namespace=dev
-```
-
-You can easily find its containers' images vulnerabilities with the following command:
+As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the
+`dev` namespace:
 
 ```
-$ kubectl starboard find vulnerabilities -n dev deploy/nginx --namespace=dev
+$ kubectl create deployment nginx --image nginx:1.16 --namespace dev
 ```
 
-To retrieve the latest vulnerabilities reports use the standard `kubectl get` command:
+Run the scanner to find the vulnerabilities:
 
 ```
-$ kubectl get vulnerabilities -n dev -o yaml \
-    -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+$ starboard find vulnerabilities deployment/nginx --namespace dev
+```
+
+Finally, retrieve the latest vulnerability reports:
+
+```
+$ starboard get vulnerabilities deployment/nginx \
+  --namespace dev \
+  --output yaml
 ```
 
 Starboard relies on labels and label selectors to associate vulnerability reports with the specified Deployment.
-For Deployments with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
-resources. Each instance has the `starboard.container.name` label to associate it with a particular container's image.
+For a Deployment with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
+resources. In addition, each instance has the `starboard.container.name` label to associate it with a particular
+container's image. This means that the same data retrieved by the `starboard get vulnerabilities` subcommand can be
+fetched with the standard `kubectl get` command:
+
+```
+$ kubectl get vulnerabilities \
+    --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+    --namespace dev \
+    --output yaml
+```
 
 In this example, the `nginx` deployment has a single container called `nginx`, hence only one instance of the
-`vulnerabilities.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`
+`vulnerabilities.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`.
+
+To read more about custom resources and label selectors check [Custom Security Resources Specification][starboard-crds-spec].
 
 For those for whom the CLI interface is not enough, we've implemented the
-[Octant Starboard plugin][starboard-octant-plugin] to display the same vulnerability reports in the Octant's interface.
+[Starboard Octant plugin][starboard-octant-plugin] to display the same vulnerability reports in the Octant's interface.
 
 <p align="center">
   <img src="docs/images/getting-started/octant-plugin-vulnerabilities.png">
 </p>
 
 Check the plugin's repository for the installation instructions.
+
+## Next Steps
+
+TODO Explain how to run Polaris and fetch configauditreports.aquasecurity.github.io resources
 
 To learn more about the available Starboard commands, use `kubectl starboard help` or type a command followed by the
 `-h` flag:
@@ -261,7 +282,7 @@ generated by Kubernetes [code generators][k8s-code-generator] to write such cust
 | [kubehunterreports][kubehunterreports-crd]     | kubehunter   | aquasecurity.github.io | false      | KubeHunterReport   |
 | [configauditreports][configauditreports-crd]   | configaudit  | aquasecurity.github.io | true       | ConfigAuditReport  |
 
-See [Custom Security Resources Specification](SECURITY_CRDS_SPEC.md) for the detailed explanation of custom resources
+See [Custom Security Resources Specification][starboard-crds-spec] for the detailed explanation of custom resources
 used by Starboard and their lifecycle.
 
 ## Starboard CLI
@@ -334,6 +355,7 @@ This repository is available under the [Apache License 2.0][license].
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 
 [starboard-crds]: #custom-security-resources-definitions
+[starboard-crds-spec]: ./SECURITY_CRDS_SPEC.md
 [vulnerabilities-crd]: ./kube/crd/vulnerabilities-crd.yaml
 [ciskubebenchreports-crd]: ./kube/crd/ciskubebenchreports-crd.yaml
 [kubehunterreports-crd]: ./kube/crd/kubehunterreports-crd.yaml
