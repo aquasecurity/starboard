@@ -11,9 +11,18 @@
 - [Abstract](#abstract)
 - [Rationale](#rationale)
 - [Use Cases](#use-cases)
-  - [Security Tool Kit for Development and DevOps Teams](#security-tool-kit-for-development-and-devops-teams)
-  - [Security Tool Kit for Enterprises](#security-tool-kit-for-enterprises)
+  - [Starboard for DevOps](#starboard-for-devops)
+  - [Starboard for Enterprises](#starboard-for-enterprises)
+  - [Starboard for Security Vendors](#starboard-for-security-vendors)
+- [Installing](#installing)
+  - [From the Binary Releases](#from-the-binary-releases)
+  - [From Krew](#from-krew)
+  - [From Source (Linux, macOS)](#from-source-linux-macos)
 - [Getting Started](#getting-started)
+- [Next Steps](#next-steps)
+- [Custom Security Resources Definitions](#custom-security-resources-definitions)
+- [Starboard CLI](#starboard-cli)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -68,7 +77,7 @@ This would allow security vendors to focus on what they do best, whereas others 
 homogeneous format.
 
 Project Starboard illustrates how the outputs from different security tools can be stored and combined using native
-Kubernetes approaches: 
+Kubernetes approaches:
 
 * Storing results in Kubernetes CRDs that can be queried using the Kubernetes API
 * Using Kubernetes Operators to efficiently manage security assessments of different resources within the cluster
@@ -76,7 +85,9 @@ Kubernetes approaches:
 
 ## Use Cases
 
-### Security Tool Kit for Development and DevOps Teams
+### Starboard for DevOps
+
+![](docs/images/starboard-cli-with-octant-demo.gif)
 
 One idea behind Starboard is to help development and DevOps teams deliver secure and compliant applications from the
 get-go. As shown in the figure below, Dave Loper is using [`kubectl`][kubectl] to deploy and test his applications.
@@ -90,20 +101,21 @@ Sometimes, to better understand the complexity of his applications, Dave is usin
 introspective and object management platform. With [Starboard Octant plugin][starboard-octant-plugin] we extended the
 Octant's capabilities to present vulnerability and configuration audits in user-friendly manner.
 
-![](./docs/images/starboard-for-devops.png)
+![](docs/images/use-cases/starboard-for-devops.png)
 
-### Security Tool Kit for Enterprises
+### Starboard for Enterprises
 
-Manual scanning through the [`kubectl starboard`][kubectl-starboard] plugin is useful, but it has its limitations:  it doesn't scale well with a huge number of Kubernetes workloads and / or
-multi-tenant clusters as is the case for enterprises.
+Manual scanning through the [`kubectl starboard`][kubectl-starboard] plugin is useful, but it has its limitations: it
+doesn't scale well with a huge number of Kubernetes workloads and / or multi-tenant clusters as is the case for
+enterprises.
 
 In such cases a more suitable option is to deploy the [Starboard Security Operator][starboard-security-operator], which
 constantly monitors Kubernetes-native resources, such as Deployments, and runs appropriate scanners against the
 underlying deployment descriptors. The scan reports can be saved as custom resources in the same instance of
 [etcd][etcd] used by the Kubernetes cluster running the workloads, or an etcd instance external to the cluster.
 
-Because they are accessible over the Kubernetes API, the vulnerability reports or any other security audits can be used to build or integrate with dashboards tailored for
-SRE and Security teams.
+Because they are accessible over the Kubernetes API, the vulnerability reports or any other security audits can be used
+to build or integrate with dashboards tailored for SRE and Security teams.
 
 The same data can be used by the [Starboard Admission Webhook][starboard-admission-webhook] to accept or reject new
 deployments based on security policies put in place, e.g. number of critical vulnerabilities found in a container
@@ -113,51 +125,252 @@ Another interesting scenario would be to take advantage of [Starboard Harbor Web
 [Starboard Aqua CSP Webhook][starboard-aqua-csp-webhook] components to import existing vulnerability reports generated
 by Harbor or Aqua CSP respectively via Webhook integrations.
 
-![](./docs/images/starboard-for-enterprises.png)
+![](docs/images/use-cases/starboard-for-enterprises.png)
 
-## Getting started
+### Starboard for Security Vendors
 
-For those who're familiar with [`kubectl`][kubectl], the easiest way to get started is to use the
-[`kubectl starboard`][kubectl-starboard] plugin, which allows you to scan any Kubernetes workload deployed in the cluster.
-For example, you can find vulnerabilities in the Deployment named `booking-svc` in the `dev` namespace with the
-following command:
+Starboard provides a framework for security tool developers and vendors, making it easy to integrate their tooling into
+Kubernetes in a way that's familiar for users. As a tool developer you can re-use one of the existing CR definitions,
+or create a new one. The Starboard code generator saves time and effort on creating the tools to integrate with
+Kubernetes tooling, for example creating webhooks and plugins for Starboard.
+
+## Installing
+
+This guide shows how to install the [Starboard CLI][starboard-cli]. Starboard CLI can be installed either from source,
+or from pre-built binary releases.
+
+### From the Binary Releases
+
+Every [release][release] of Starboard provides binary releases for a variety of operating systems. These
+binary versions can be manually downloaded and installed.
+
+1. Download your [desired version][release]
+2. Unpack it (`tar -zxvf starboard_darwin_x86_64.tar.gz`)
+3. Find the `starboard` binary in the unpacked directory, and move it to its desired destination
+   (`mv starboard_darwin_x86_64/starboard /usr/local/bin/starboard`)
+
+From there, you should be able to run Starboard CLI commands: `starboard help`
+
+### From Krew
+
+The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kubectl plugin][kubectl-plugins],
+but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
+`kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard`.
+
+Once we resolve [#8][issue-8] our intention is to submit Starboard to [krew-index][krew-index] so that if accepted,
+you'll be able to install starboard with [Krew][krew] plugins manager:
 
 ```
-$ kubectl starboard find vulnerabilities -n dev deployment/booking-svc
+$ kubectl krew install starboard
+$ kubectl starboard help
 ```
 
-After that you can pull the vulnerabilities reports using the `kubectl get` command:
+### From Source (Linux, macOS)
+
+Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
+version of Starboard.
+
+You must have a working Go environment.
 
 ```
-$ kubectl get vulnerabilities -n dev -o yaml \
-    -l starboard.resource.kind=Deployment \
-    -l starboard.resource.name=booking-svc
+$ git clone git@github.com:aquasecurity/starboard.git
+$ cd starboard
+$ make
 ```
 
-> **NOTE** The label selectors are used to find vulnerability reports for the specified Deployment.
-> For Deployments with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
-> resources. There's the `starboard.container.name` label to associate the vulnerability report with a particular
-> container image.
+If required, it will fetch the dependencies and cache them. It will then compile `starboard` and place it in
+`bin/starboard`.
 
-Additionally, you could check for other risks with:
+## Getting Started
 
-```
-$ kubectl starboard find risks -n dev deployments.apps/booking-svc
-```
+The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
+workloads deployed in your cluster.
 
-And get the corresponding report(s):
+To begin with, execute the following one-time setup command:
 
 ```
-$ kubectl get risks -n dev -o yaml \
-    -l starboard.resource.kind=Deployment \
-    -l starboard.resource.name=booking-svc
+$ starboard init
 ```
+
+The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes Jobs to perform
+scans. It also sends custom security resources definitions to the Kubernetes API:
+
+```
+$ kubectl api-resources --api-group aquasecurity.github.io
+NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
+ciskubebenchreports               kubebench    aquasecurity.github.io         false        CISKubeBenchReport
+configauditreports                configaudit  aquasecurity.github.io         true         ConfigAuditReport
+kubehunterreports                 kubehunter   aquasecurity.github.io         false        KubeHunterReport
+vulnerabilities                   vulns,vuln   aquasecurity.github.io         true         Vulnerability
+```
+
+> There's the `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
+
+As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the
+`dev` namespace:
+
+```
+$ kubectl create deployment nginx --image nginx:1.16 --namespace dev
+```
+
+Run the scanner to find the vulnerabilities:
+
+```
+$ starboard find vulnerabilities deployment/nginx --namespace dev
+```
+
+Finally, retrieve the latest vulnerability reports:
+
+```
+$ starboard get vulnerabilities deployment/nginx \
+  --namespace dev \
+  --output yaml
+```
+
+Starboard relies on labels and label selectors to associate vulnerability reports with the specified Deployment.
+For a Deployment with *N* containers Starboard creates *N* instances of `vulnerabilities.aquasecurity.github.io`
+resources. In addition, each instance has the `starboard.container.name` label to associate it with a particular
+container's image. This means that the same data retrieved by the `starboard get vulnerabilities` subcommand can be
+fetched with the standard `kubectl get` command:
+
+```
+$ kubectl get vulnerabilities \
+  --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+  --namespace dev \
+  --output yaml
+```
+
+In this example, the `nginx` deployment has a single container called `nginx`, hence only one instance of the
+`vulnerabilities.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`.
+
+To read more about custom resources and label selectors check [Custom Security Resources Specification][starboard-crds-spec].
+
+For those for whom the CLI interface is not enough, we've implemented the
+[Starboard Octant plugin][starboard-octant-plugin] to display the same vulnerability reports in the Octant's interface.
+
+<p align="center">
+  <img src="docs/images/getting-started/deployment_vulnerabilities.png">
+</p>
+
+Check the plugin's repository for the installation instructions.
+
+## Next Steps
+
+Let's take the same `nginx` Deployment and audit its Kubernetes configuration. As you remember we've created it with
+the `kubectl create deployment` command which applies the default settings to the deployment descriptors. However, we
+also know that in Kubernetes the defaults are usually the least secure.
+
+Run the scanner to audit the configuration:
+
+```
+$ starboard polaris
+```
+
+> Note that currently the `polaris` subcommand scans workloads in all namespaces. However, once we resolve
+> [issue #29][issue-29] it will be possible to scan just a single deployment with
+> `starboard polaris deployment/nginx --namespace dev`.
+
+Retrieve the configuration audit report:
+
+```
+$ starboard get configaudit deployment/nginx \
+  --namespace dev \
+  --output yaml
+```
+
+or
+
+```
+$ kubectl get configaudit \
+  --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+  --namespace dev \
+  --output yaml
+```
+
+Similar to vulnerabilities the Starboard Octant plugin can visualize config audit reports. What's more important,
+Starboard and Octant provide a single pane view with visibility into potentially dangerous and exploitable
+vulnerabilities as well as configuration issues that might affect stability, reliability, and scalability of the
+`nginx` Deployment.
+
+<p align="center">
+  <img src="docs/images/next-steps/deployment_configauditreports.png">
+</p>
+
+To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or
+[kube-hunter][aqua-kube-hunter], use `starboard help`.
+
+## Custom Security Resources Definitions
+
+This project houses CustomResourceDefinitions (CRDs) related to security and compliance checks along with the code
+generated by Kubernetes [code generators][k8s-code-generator] to write such custom resources in a natural way.
+
+| NAME                                           | SHORTNAMES   | APIGROUP               | NAMESPACED |  KIND              |
+| ---------------------------------------------- | ------------ | ---------------------- | ---------- | ------------------ |
+| [vulnerabilities][vulnerabilities-crd]         | vulns,vuln   | aquasecurity.github.io | true       | Vulnerability      |
+| [ciskubebenchreports][ciskubebenchreports-crd] | kubebench    | aquasecurity.github.io | false      | CISKubeBenchReport |
+| [kubehunterreports][kubehunterreports-crd]     | kubehunter   | aquasecurity.github.io | false      | KubeHunterReport   |
+| [configauditreports][configauditreports-crd]   | configaudit  | aquasecurity.github.io | true       | ConfigAuditReport  |
+
+See [Custom Security Resources Specification][starboard-crds-spec] for the detailed explanation of custom resources
+used by Starboard and their lifecycle.
+
+## Starboard CLI
+
+Starbord CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure Pod
+specs, in Kubernetes workloads. By default, the risk assessment reports are stored as
+[custom security resources][starboard-crds].
+
+To learn more about the available Starboard CLI commands, run `starboard help` or type a command followed by the
+`-h` flag:
+
+```
+$ starboard kube-hunter -h
+```
+
+## Troubleshooting
+
+### "starboard" cannot be opened because the developer cannot be verified. (macOS)
+
+Since Starboard CLI is not registered with Apple by an identified developer, if you try to run it for the first time
+you might get a warning dialog. This doesn't mean that something is wrong with the release binary, rather macOS can't
+check whether the binary has been modified or broken since it was released.
+
+<p align="center">
+  <img src="docs/images/troubleshooting/developer-not-verified.png">
+</p>
+
+To override your security settings and use the Starboard CLI anyway, follow these steps:
+
+1. In the Finder on your Mac, locate the `starboard` binary.
+2. Control-click the binary icon, then choose Open from the shortcut menu.
+3. Click Open.
+
+   <p align="center">
+     <img src="docs/images/troubleshooting/control-click-open.png">
+   </p>
+
+   The `starboard` is saved as an exception to your security settings, and you can use it just as you can any registered
+   app.
+
+You can also grant an exception for a blocked Starboard release binary by clicking the Allow Anyway button in the
+General pane of Security & Privacy preferences. This button is available for about an hour after you try to run the
+Starboard CLI command.
+
+To open this pane on your Mac, choose Apple menu > System Preferences, click Security & Privacy, then click General.
+
+<p align="center">
+  <img src="docs/images/troubleshooting/developer-not-verified-remediation.png">
+</p>
 
 ## Contributing
 
 At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
 contributions integrating different security tools so that users can access security information in standard,
 Kubernetes-native ways.
+
+See our [hacking](HACKING.md) guide for getting your development environment setup.
+
+See our [roadmap](ROADMAP.md) for tentative features in a 1.0 release.
 
 ## License
 
@@ -170,18 +383,27 @@ This repository is available under the [Apache License 2.0][license].
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 
-[starboard-crds]: https://github.com/aquasecurity/starboard-crds
-[starboard-go-module]: https://github.com/aquasecurity/kubectl-starboard/tree/master/pkg
-[kubectl-starboard]: https://github.com/aquasecurity/kubectl-starboard/tree/master/cmd/kubectl-starboard
+[starboard-crds]: #custom-security-resources-definitions
+[starboard-crds-spec]: ./SECURITY_CRDS_SPEC.md
+[vulnerabilities-crd]: ./kube/crd/vulnerabilities-crd.yaml
+[ciskubebenchreports-crd]: ./kube/crd/ciskubebenchreports-crd.yaml
+[kubehunterreports-crd]: ./kube/crd/kubehunterreports-crd.yaml
+[configauditreports-crd]: ./kube/crd/configauditreports-crd.yaml
+[starboard-go-module]: ./pkg
+[starboard-cli]: #starboard-cli
+[kubectl-starboard]: #from-krew
 [starboard-octant-plugin]: https://github.com/aquasecurity/octant-starboard-plugin
 [starboard-security-operator]: https://github.com/aquasecurity/starboard-security-operator
 [starboard-admission-webhook]: https://github.com/aquasecurity/starboard-admission-webhook
 [starboard-aqua-csp-webhook]: https://github.com/aquasecurity/starboard-aqua-csp-webhook
 [starboard-harbor-webhook]: https://github.com/aquasecurity/starboard-harbor-webhook
+[aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
+[aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter
+
+[k8s-code-generator]: https://github.com/kubernetes/code-generator
 
 [kubectl]: https://kubernetes.io/docs/reference/kubectl
 [kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
-[security-context]: https://kubernetes.io/docs/tasks/configure-pod-container/security-context
 
 [octant]: https://github.com/vmware-tanzu/octant
 [anchore-image-validator]: https://github.com/banzaicloud/anchore-image-validator
@@ -194,3 +416,8 @@ This repository is available under the [Apache License 2.0][license].
 [etcd]: https://etcd.io
 [trivy]: https://github.com/aquasecurity/trivy
 [opa-rego]: https://www.openpolicyagent.org/docs/latest/policy-language/
+[krew]: https://github.com/kubernetes-sigs/krew
+[krew-index]: https://github.com/kubernetes-sigs/krew-index
+
+[issue-8]: https://github.com/aquasecurity/starboard/issues/8
+[issue-29]: https://github.com/aquasecurity/starboard/issues/29
