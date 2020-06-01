@@ -23,7 +23,7 @@
 
 ## Introduction
 
-Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that relate to different resources in a Kubernetes-way. Starboard provides [custom security resources definitions][starboard-crds] and a [Go module][starboard-go-module] to work with a range of existing security tools, as well as a `kubectl`-compatible command-line tool and an Octant plug-in that make security reports available through familiar Kubernetes tools. 
+Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that relate to different resources in a Kubernetes-native way. Starboard provides [custom security resources definitions][starboard-crds] and a [Go module][starboard-go-module] to work with a range of existing security tools, as well as a `kubectl`-compatible command-line tool and an Octant plug-in that make security reports available through familiar Kubernetes tools. 
 
 You can read more about the motivations and use cases [here][aqua-starboard-blog]. 
 
