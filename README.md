@@ -114,7 +114,7 @@ Run the scanner to find the vulnerabilities:
 $ starboard find vulnerabilities deployment/nginx --namespace dev
 ```
 
-Finally, retrieve the latest vulnerability reports:
+Behind the scenes, this uses [Trivy][trivy] to identify vulnerabilities in the container images associated with the specified deployment. Once this has been done, you can retrieve the latest vulnerability reports for this workload:
 
 ```
 $ starboard get vulnerabilities deployment/nginx \
@@ -154,7 +154,7 @@ Let's take the same `nginx` Deployment and audit its Kubernetes configuration. A
 the `kubectl create deployment` command which applies the default settings to the deployment descriptors. However, we
 also know that in Kubernetes the defaults are usually the least secure.
 
-Run the scanner to audit the configuration:
+Run the scanner to audit the configuration using [Polaris][polaris]:
 
 ```
 $ starboard polaris
@@ -277,7 +277,7 @@ This repository is available under the [Apache License 2.0][license].
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 
-[aqua-starboard-blog]: https://blog.aquasec.com
+[aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [starboard-crds]: #custom-security-resources-definitions
 [starboard-crds-spec]: ./SECURITY_CRDS_SPEC.md
 [vulnerabilities-crd]: ./kube/crd/vulnerabilities-crd.yaml
@@ -294,23 +294,14 @@ This repository is available under the [Apache License 2.0][license].
 [starboard-harbor-webhook]: https://github.com/aquasecurity/starboard-harbor-webhook
 [aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
 [aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter
+[octant]: https://github.com/vmware-tanzu/octant
+[polaris]: https://github.com/FairwindsOps/polaris
+[trivy]: https://github.com/aquasecurity/trivy
 
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
-
 [kubectl]: https://kubernetes.io/docs/reference/kubectl
 [kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
 
-[octant]: https://github.com/vmware-tanzu/octant
-[anchore-image-validator]: https://github.com/banzaicloud/anchore-image-validator
-[kube-trivy-exporter]: https://github.com/kaidotdev/kube-trivy-exporter
-[container-security-operator]: https://github.com/quay/container-security-operator
-[kubeaudit]: https://github.com/Shopify/kubeaudit
-[openshift-console]: https://github.com/openshift/console
-[popeye]: https://github.com/derailed/popeye
-[polaris]: https://github.com/FairwindsOps/polaris
-[etcd]: https://etcd.io
-[trivy]: https://github.com/aquasecurity/trivy
-[opa-rego]: https://www.openpolicyagent.org/docs/latest/policy-language/
 [krew]: https://github.com/kubernetes-sigs/krew
 [krew-index]: https://github.com/kubernetes-sigs/krew-index
 
