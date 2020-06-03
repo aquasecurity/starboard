@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	trivyImageRef = "docker.io/aquasec/trivy:latest"
+	trivyImageRef = "docker.io/aquasec/trivy:0.8.0"
 )
 
 var (
