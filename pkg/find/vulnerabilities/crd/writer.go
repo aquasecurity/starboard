@@ -1,11 +1,12 @@
 package crd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/google/uuid"
@@ -22,9 +23,9 @@ func NewWriter(client clientset.Interface) vulnerabilities.Writer {
 	}
 }
 
-func (s *writer) Write(workload kube.Workload, reports map[string]sec.VulnerabilityReport) (err error) {
+func (s *writer) Write(ctx context.Context, workload kube.Workload, reports map[string]starboard.VulnerabilityReport) (err error) {
 	for container, report := range reports {
-		err = s.createVulnerability(workload, container, report)
+		err = s.createVulnerability(ctx, workload, container, report)
 		if err != nil {
 			return
 		}
@@ -32,8 +33,8 @@ func (s *writer) Write(workload kube.Workload, reports map[string]sec.Vulnerabil
 	return
 }
 
-func (s *writer) createVulnerability(workload kube.Workload, container string, report sec.VulnerabilityReport) (err error) {
-	_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).Create(&sec.Vulnerability{
+func (s *writer) createVulnerability(ctx context.Context, workload kube.Workload, container string, report starboard.VulnerabilityReport) (err error) {
+	_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).Create(ctx, &starboard.Vulnerability{
 		ObjectMeta: meta.ObjectMeta{
 			Name: fmt.Sprintf(uuid.New().String()),
 			Labels: map[string]string{
@@ -43,7 +44,7 @@ func (s *writer) createVulnerability(workload kube.Workload, container string, r
 			},
 		},
 		Report: report,
-	})
+	}, meta.CreateOptions{})
 
 	return err
 }

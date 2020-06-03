@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -14,23 +15,23 @@ var ErrTimeout = errors.New("runner received timeout")
 //
 // Run should be implemented by any task intended to be executed by the Runner.
 type Runnable interface {
-	Run() error
+	Run(ctx context.Context) error
 }
 
 // The RunnableFunc type is an adapter to allow the use of ordinary functions as Runnable tasks.
 // If f is a function with the appropriate signature, RunnableFunc(f) is a Runnable that calls f.
-type RunnableFunc func() error
+type RunnableFunc func(ctx context.Context) error
 
 // Run calls f()
-func (f RunnableFunc) Run() error {
-	return f()
+func (f RunnableFunc) Run(ctx context.Context) error {
+	return f(ctx)
 }
 
 // Runner is the interface that wraps the basic Run method.
 //
 // Run executes submitted Runnable tasks.
 type Runner interface {
-	Run(task Runnable) error
+	Run(ctx context.Context, task Runnable) error
 }
 
 type runner struct {
@@ -49,9 +50,9 @@ func New(d time.Duration) Runner {
 }
 
 // Run runs the specified task and monitors channel events.
-func (r *runner) Run(task Runnable) error {
+func (r *runner) Run(ctx context.Context, task Runnable) error {
 	go func() {
-		r.complete <- task.Run()
+		r.complete <- task.Run(ctx)
 	}()
 
 	select {

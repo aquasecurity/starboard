@@ -1,6 +1,7 @@
 package polaris
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -47,11 +48,11 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() (reports []starboard.ConfigAudit, err error) {
+func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
 	polarisJob := s.preparePolarisJob()
 
 	err = runner.New(runnerTimeout).
-		Run(kube.NewRunnableJob(s.clientset, polarisJob))
+		Run(ctx, kube.NewRunnableJob(s.clientset, polarisJob))
 	if err != nil {
 		err = fmt.Errorf("running polaris job: %w", err)
 		return
@@ -60,14 +61,14 @@ func (s *Scanner) Scan() (reports []starboard.ConfigAudit, err error) {
 	defer func() {
 		klog.V(3).Infof("Deleting job: %s/%s", polarisJob.Namespace, polarisJob.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(polarisJob.Namespace).Delete(polarisJob.Name, &meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(polarisJob.Namespace).Delete(ctx, polarisJob.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", polarisContainerName,
 		polarisJob.Namespace, polarisJob.Name)
-	logsReader, err := s.pods.GetPodLogsByJob(polarisJob, polarisContainerName)
+	logsReader, err := s.pods.GetPodLogsByJob(ctx, polarisJob, polarisContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return

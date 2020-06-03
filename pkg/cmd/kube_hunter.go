@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"context"
+
+	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
 	"github.com/aquasecurity/starboard/pkg/kubehunter/crd"
 	"github.com/spf13/cobra"
@@ -13,23 +16,24 @@ func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 		Use:   "kube-hunter",
 		Short: "Hunt for security weaknesses",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			clientset, err := kubernetes.NewForConfig(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			report, err := kubehunter.NewScanner(clientset).Scan()
+			report, err := kubehunter.NewScanner(kubernetesClientset).Scan(ctx)
 			if err != nil {
 				return
 			}
-			writer, err := crd.NewWriter(config)
+			starboardClientset, err := starboardapi.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			err = writer.Write(report, "cluster")
+			err = crd.NewWriter(starboardClientset).Write(ctx, report, "cluster")
 			if err != nil {
 				return
 			}

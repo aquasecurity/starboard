@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -22,7 +24,7 @@ var kubehunterreportsResource = schema.GroupVersionResource{Group: "aquasecurity
 var kubehunterreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.io", Version: "v1alpha1", Kind: "KubeHunterReport"}
 
 // Get takes name of the kubeHunterReport, and returns the corresponding kubeHunterReport object, and an error if there is any.
-func (c *FakeKubeHunterReports) Get(name string, options v1.GetOptions) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *FakeKubeHunterReports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(kubehunterreportsResource, name), &v1alpha1.KubeHunterReport{})
 	if obj == nil {
@@ -32,7 +34,7 @@ func (c *FakeKubeHunterReports) Get(name string, options v1.GetOptions) (result 
 }
 
 // List takes label and field selectors, and returns the list of KubeHunterReports that match those selectors.
-func (c *FakeKubeHunterReports) List(opts v1.ListOptions) (result *v1alpha1.KubeHunterReportList, err error) {
+func (c *FakeKubeHunterReports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.KubeHunterReportList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(kubehunterreportsResource, kubehunterreportsKind, opts), &v1alpha1.KubeHunterReportList{})
 	if obj == nil {
@@ -53,13 +55,13 @@ func (c *FakeKubeHunterReports) List(opts v1.ListOptions) (result *v1alpha1.Kube
 }
 
 // Watch returns a watch.Interface that watches the requested kubeHunterReports.
-func (c *FakeKubeHunterReports) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeKubeHunterReports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(kubehunterreportsResource, opts))
 }
 
 // Create takes the representation of a kubeHunterReport and creates it.  Returns the server's representation of the kubeHunterReport, and an error, if there is any.
-func (c *FakeKubeHunterReports) Create(kubeHunterReport *v1alpha1.KubeHunterReport) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *FakeKubeHunterReports) Create(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.CreateOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(kubehunterreportsResource, kubeHunterReport), &v1alpha1.KubeHunterReport{})
 	if obj == nil {
@@ -69,7 +71,7 @@ func (c *FakeKubeHunterReports) Create(kubeHunterReport *v1alpha1.KubeHunterRepo
 }
 
 // Update takes the representation of a kubeHunterReport and updates it. Returns the server's representation of the kubeHunterReport, and an error, if there is any.
-func (c *FakeKubeHunterReports) Update(kubeHunterReport *v1alpha1.KubeHunterReport) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *FakeKubeHunterReports) Update(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.UpdateOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(kubehunterreportsResource, kubeHunterReport), &v1alpha1.KubeHunterReport{})
 	if obj == nil {
@@ -79,22 +81,22 @@ func (c *FakeKubeHunterReports) Update(kubeHunterReport *v1alpha1.KubeHunterRepo
 }
 
 // Delete takes name of the kubeHunterReport and deletes it. Returns an error if one occurs.
-func (c *FakeKubeHunterReports) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeKubeHunterReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(kubehunterreportsResource, name), &v1alpha1.KubeHunterReport{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeKubeHunterReports) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(kubehunterreportsResource, listOptions)
+func (c *FakeKubeHunterReports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(kubehunterreportsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.KubeHunterReportList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched kubeHunterReport.
-func (c *FakeKubeHunterReports) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *FakeKubeHunterReports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KubeHunterReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(kubehunterreportsResource, name, pt, data, subresources...), &v1alpha1.KubeHunterReport{})
 	if obj == nil {

@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/docker"
@@ -21,10 +22,10 @@ func NewSecretManager(clientset kubernetes.Interface) *Manager {
 }
 
 // GetImagesWithCredentials gets private images for the specified PodSpec and maps them to the Docker ServerCredentials.
-func (s *Manager) GetImagesWithCredentials(namespace string, spec core.PodSpec) (credentials map[string]docker.ServerCredentials, err error) {
+func (s *Manager) GetImagesWithCredentials(ctx context.Context, namespace string, spec core.PodSpec) (credentials map[string]docker.ServerCredentials, err error) {
 	images := s.GetImages(spec)
 
-	serverCredentials, err := s.GetServersWithCredentials(namespace, spec.ImagePullSecrets)
+	serverCredentials, err := s.GetServersWithCredentials(ctx, namespace, spec.ImagePullSecrets)
 	if err != nil {
 		return
 	}
@@ -53,13 +54,13 @@ func (s *Manager) GetImages(spec core.PodSpec) (images []string) {
 	return
 }
 
-func (s *Manager) GetServersWithCredentials(namespace string, imagePullSecrets []core.LocalObjectReference) (credentials map[string]docker.ServerCredentials, err error) {
+func (s *Manager) GetServersWithCredentials(ctx context.Context, namespace string, imagePullSecrets []core.LocalObjectReference) (credentials map[string]docker.ServerCredentials, err error) {
 	credentials = make(map[string]docker.ServerCredentials)
 
 	for _, secret := range imagePullSecrets {
 		secret, err := s.clientset.CoreV1().
 			Secrets(namespace).
-			Get(secret.Name, meta.GetOptions{})
+			Get(ctx, secret.Name, meta.GetOptions{})
 
 		if err != nil {
 			return nil, err

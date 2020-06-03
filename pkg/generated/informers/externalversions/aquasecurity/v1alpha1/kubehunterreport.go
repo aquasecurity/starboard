@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -44,13 +45,13 @@ func NewFilteredKubeHunterReportInformer(client versioned.Interface, resyncPerio
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AquasecurityV1alpha1().KubeHunterReports().List(options)
+				return client.AquasecurityV1alpha1().KubeHunterReports().List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AquasecurityV1alpha1().KubeHunterReports().Watch(options)
+				return client.AquasecurityV1alpha1().KubeHunterReports().Watch(context.TODO(), options)
 			},
 		},
 		&aquasecurityv1alpha1.KubeHunterReport{},

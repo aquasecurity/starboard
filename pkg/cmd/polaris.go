@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/polaris/crd"
@@ -14,6 +16,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 		Use:   "polaris",
 		Short: "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return
@@ -22,7 +25,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			reports, err := polaris.NewScanner(clientset).Scan()
+			reports, err := polaris.NewScanner(clientset).Scan(ctx)
 			if err != nil {
 				return
 			}
@@ -30,7 +33,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(starboardClientset).WriteAll(reports)
+			err = crd.NewWriter(starboardClientset).WriteAll(ctx, reports)
 			if err != nil {
 				return
 			}

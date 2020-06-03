@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	v1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -21,14 +22,14 @@ type CISKubeBenchReportsGetter interface {
 
 // CISKubeBenchReportInterface has methods to work with CISKubeBenchReport resources.
 type CISKubeBenchReportInterface interface {
-	Create(*v1alpha1.CISKubeBenchReport) (*v1alpha1.CISKubeBenchReport, error)
-	Update(*v1alpha1.CISKubeBenchReport) (*v1alpha1.CISKubeBenchReport, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.CISKubeBenchReport, error)
-	List(opts v1.ListOptions) (*v1alpha1.CISKubeBenchReportList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error)
+	Create(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.CreateOptions) (*v1alpha1.CISKubeBenchReport, error)
+	Update(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.UpdateOptions) (*v1alpha1.CISKubeBenchReport, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.CISKubeBenchReport, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.CISKubeBenchReportList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error)
 	CISKubeBenchReportExpansion
 }
 
@@ -45,19 +46,19 @@ func newCISKubeBenchReports(c *AquasecurityV1alpha1Client) *cISKubeBenchReports 
 }
 
 // Get takes name of the cISKubeBenchReport, and returns the corresponding cISKubeBenchReport object, and an error if there is any.
-func (c *cISKubeBenchReports) Get(name string, options v1.GetOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *cISKubeBenchReports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	result = &v1alpha1.CISKubeBenchReport{}
 	err = c.client.Get().
 		Resource("ciskubebenchreports").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of CISKubeBenchReports that match those selectors.
-func (c *cISKubeBenchReports) List(opts v1.ListOptions) (result *v1alpha1.CISKubeBenchReportList, err error) {
+func (c *cISKubeBenchReports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.CISKubeBenchReportList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -67,13 +68,13 @@ func (c *cISKubeBenchReports) List(opts v1.ListOptions) (result *v1alpha1.CISKub
 		Resource("ciskubebenchreports").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested cISKubeBenchReports.
-func (c *cISKubeBenchReports) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *cISKubeBenchReports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -83,66 +84,69 @@ func (c *cISKubeBenchReports) Watch(opts v1.ListOptions) (watch.Interface, error
 		Resource("ciskubebenchreports").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a cISKubeBenchReport and creates it.  Returns the server's representation of the cISKubeBenchReport, and an error, if there is any.
-func (c *cISKubeBenchReports) Create(cISKubeBenchReport *v1alpha1.CISKubeBenchReport) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *cISKubeBenchReports) Create(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.CreateOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	result = &v1alpha1.CISKubeBenchReport{}
 	err = c.client.Post().
 		Resource("ciskubebenchreports").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cISKubeBenchReport).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a cISKubeBenchReport and updates it. Returns the server's representation of the cISKubeBenchReport, and an error, if there is any.
-func (c *cISKubeBenchReports) Update(cISKubeBenchReport *v1alpha1.CISKubeBenchReport) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *cISKubeBenchReports) Update(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.UpdateOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	result = &v1alpha1.CISKubeBenchReport{}
 	err = c.client.Put().
 		Resource("ciskubebenchreports").
 		Name(cISKubeBenchReport.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cISKubeBenchReport).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the cISKubeBenchReport and deletes it. Returns an error if one occurs.
-func (c *cISKubeBenchReports) Delete(name string, options *v1.DeleteOptions) error {
+func (c *cISKubeBenchReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("ciskubebenchreports").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *cISKubeBenchReports) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *cISKubeBenchReports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("ciskubebenchreports").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched cISKubeBenchReport.
-func (c *cISKubeBenchReports) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *cISKubeBenchReports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error) {
 	result = &v1alpha1.CISKubeBenchReport{}
 	err = c.client.Patch(pt).
 		Resource("ciskubebenchreports").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

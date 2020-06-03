@@ -10,7 +10,7 @@ const (
 	CISKubeBenchReportCRName    = "ciskubebenchreports.aquasecurity.github.io"
 	CISKubeBenchReportCRVersion = "v1alpha1"
 	CISKubeBenchReportKind      = "CISKubeBenchReport"
-	CISKubeBenchReportKindList  = "CISKubeBenchReportList"
+	CISKubeBenchReportListKind  = "CISKubeBenchReportList"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 				Singular:   "ciskubebenchreport",
 				Plural:     "ciskubebenchreports",
 				Kind:       CISKubeBenchReportKind,
-				ListKind:   CISKubeBenchReportKindList,
+				ListKind:   CISKubeBenchReportListKind,
 				Categories: []string{"all"},
 				ShortNames: []string{"kubebench"},
 			},

@@ -1,6 +1,8 @@
 package polaris
 
 import (
+	"context"
+
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
@@ -10,6 +12,6 @@ import (
 //
 // WriteAll persists the given slice of ConfigAudit reports.
 type Writer interface {
-	Write(report sec.ConfigAudit) (err error)
-	WriteAll(reports []sec.ConfigAudit) (err error)
+	Write(ctx context.Context, report sec.ConfigAudit) (err error)
+	WriteAll(ctx context.Context, reports []sec.ConfigAudit) (err error)
 }

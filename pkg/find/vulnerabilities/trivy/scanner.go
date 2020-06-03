@@ -1,10 +1,12 @@
 package trivy
 
 import (
+	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"io"
 	"time"
+
+	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"k8s.io/klog"
 
@@ -51,29 +53,29 @@ func NewScanner(clientset kubernetes.Interface) vulnerabilities.Scanner {
 	}
 }
 
-func (s *scanner) Scan(workload kube.Workload) (reports map[string]sec.VulnerabilityReport, err error) {
+func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map[string]sec.VulnerabilityReport, err error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-	podSpec, err := s.pods.GetPodSpecByWorkload(workload)
+	podSpec, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
 		err = fmt.Errorf("getting Pod template: %w", err)
 		return
 	}
 
-	reports, err = s.ScanByPodSpec(workload, podSpec)
+	reports, err = s.ScanByPodSpec(ctx, workload, podSpec)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func (s *scanner) ScanByPodSpec(workload kube.Workload, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
-	job, err := s.prepareJob(workload, spec)
+func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Workload, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
+	job, err := s.prepareJob(ctx, workload, spec)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
 
 	err = runner.New(scanJobRunnerTimeout).
-		Run(kube.NewRunnableJob(s.clientset, job))
+		Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
 		return nil, fmt.Errorf("running scan job: %w", err)
 	}
@@ -81,23 +83,23 @@ func (s *scanner) ScanByPodSpec(workload kube.Workload, spec core.PodSpec) (map[
 	defer func() {
 		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(job.Name, &meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	klog.V(3).Infof("Scan job completed: %s/%s", job.Namespace, job.Name)
 
-	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(job.Name, meta.GetOptions{})
+	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, meta.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("getting scan job: %w", err)
 	}
 
-	return s.getScanReportsFor(job)
+	return s.getScanReportsFor(ctx, job)
 }
 
-func (s *scanner) prepareJob(workload kube.Workload, spec core.PodSpec) (*batch.Job, error) {
-	credentials, err := s.secrets.GetImagesWithCredentials(workload.Namespace, spec)
+func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec core.PodSpec) (*batch.Job, error) {
+	credentials, err := s.secrets.GetImagesWithCredentials(ctx, workload.Namespace, spec)
 	if err != nil {
 		return nil, fmt.Errorf("getting docker configs: %w", err)
 	}
@@ -209,13 +211,13 @@ func (s *scanner) prepareJob(workload kube.Workload, spec core.PodSpec) (*batch.
 	}, nil
 }
 
-func (s *scanner) getScanReportsFor(job *batch.Job) (reports map[string]sec.VulnerabilityReport, err error) {
+func (s *scanner) getScanReportsFor(ctx context.Context, job *batch.Job) (reports map[string]sec.VulnerabilityReport, err error) {
 	reports = make(map[string]sec.VulnerabilityReport)
 
 	for _, c := range job.Spec.Template.Spec.Containers {
 		klog.V(3).Infof("Getting logs for %s container in job: %s/%s", c.Name, job.Namespace, job.Name)
 		var logReader io.ReadCloser
-		logReader, err = s.pods.GetPodLogsByJob(job, c.Name)
+		logReader, err = s.pods.GetPodLogsByJob(ctx, job, c.Name)
 		if err != nil {
 			return
 		}
