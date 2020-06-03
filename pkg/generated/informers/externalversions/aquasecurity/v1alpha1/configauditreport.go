@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -45,13 +46,13 @@ func NewFilteredConfigAuditReportInformer(client versioned.Interface, namespace 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AquasecurityV1alpha1().ConfigAuditReports(namespace).List(options)
+				return client.AquasecurityV1alpha1().ConfigAuditReports(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AquasecurityV1alpha1().ConfigAuditReports(namespace).Watch(options)
+				return client.AquasecurityV1alpha1().ConfigAuditReports(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&aquasecurityv1alpha1.ConfigAuditReport{},

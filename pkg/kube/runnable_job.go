@@ -1,7 +1,9 @@
 package kube
 
 import (
+	"context"
 	"fmt"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	"k8s.io/klog"
@@ -34,7 +36,7 @@ func NewRunnableJob(clientset kubernetes.Interface, spec *batch.Job) runner.Runn
 	}
 }
 
-func (j *runnableJob) Run() (err error) {
+func (j *runnableJob) Run(ctx context.Context) (err error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		j.clientset,
 		defaultResyncDuration,
@@ -43,7 +45,7 @@ func (j *runnableJob) Run() (err error) {
 	jobInformer := informerFactory.Batch().V1().Jobs()
 
 	klog.V(3).Infof("Creating runnable job: %s/%s", j.spec.Namespace, j.spec.Name)
-	j.spec, err = j.clientset.BatchV1().Jobs(j.spec.Namespace).Create(j.spec)
+	j.spec, err = j.clientset.BatchV1().Jobs(j.spec.Namespace).Create(ctx, j.spec, meta.CreateOptions{})
 	if err != nil {
 		err = fmt.Errorf("creating job: %w", err)
 		return

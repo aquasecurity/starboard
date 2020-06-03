@@ -1,6 +1,7 @@
 package kubehunter
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -41,13 +42,13 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() (report starboard.KubeHunterOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
 	kubeHunterJob := s.prepareKubeHunterJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New(runnerTimeout).
-		Run(kube.NewRunnableJob(s.clientset, kubeHunterJob))
+		Run(ctx, kube.NewRunnableJob(s.clientset, kubeHunterJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-hunter job: %w", err)
 		return
@@ -57,7 +58,7 @@ func (s *Scanner) Scan() (report starboard.KubeHunterOutput, err error) {
 		// 5. Delete the kube-hunter Job
 		klog.V(3).Infof("Deleting job: %s/%s", kubeHunterJob.Namespace, kubeHunterJob.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(kubeHunterJob.Namespace).Delete(kubeHunterJob.Name, &meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(kubeHunterJob.Namespace).Delete(ctx, kubeHunterJob.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
@@ -65,7 +66,7 @@ func (s *Scanner) Scan() (report starboard.KubeHunterOutput, err error) {
 	// 3. Get kube-hunter JSON output from the kube-hunter Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeHunterContainerName,
 		kubeHunterJob.Namespace, kubeHunterJob.Name)
-	logsReader, err := s.pods.GetPodLogsByJob(kubeHunterJob, kubeHunterContainerName)
+	logsReader, err := s.pods.GetPodLogsByJob(ctx, kubeHunterJob, kubeHunterContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return

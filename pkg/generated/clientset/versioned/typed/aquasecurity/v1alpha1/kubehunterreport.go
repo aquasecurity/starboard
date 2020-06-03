@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	v1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -21,14 +22,14 @@ type KubeHunterReportsGetter interface {
 
 // KubeHunterReportInterface has methods to work with KubeHunterReport resources.
 type KubeHunterReportInterface interface {
-	Create(*v1alpha1.KubeHunterReport) (*v1alpha1.KubeHunterReport, error)
-	Update(*v1alpha1.KubeHunterReport) (*v1alpha1.KubeHunterReport, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.KubeHunterReport, error)
-	List(opts v1.ListOptions) (*v1alpha1.KubeHunterReportList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.KubeHunterReport, err error)
+	Create(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.CreateOptions) (*v1alpha1.KubeHunterReport, error)
+	Update(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.UpdateOptions) (*v1alpha1.KubeHunterReport, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KubeHunterReport, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KubeHunterReportList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KubeHunterReport, err error)
 	KubeHunterReportExpansion
 }
 
@@ -45,19 +46,19 @@ func newKubeHunterReports(c *AquasecurityV1alpha1Client) *kubeHunterReports {
 }
 
 // Get takes name of the kubeHunterReport, and returns the corresponding kubeHunterReport object, and an error if there is any.
-func (c *kubeHunterReports) Get(name string, options v1.GetOptions) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *kubeHunterReports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	result = &v1alpha1.KubeHunterReport{}
 	err = c.client.Get().
 		Resource("kubehunterreports").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of KubeHunterReports that match those selectors.
-func (c *kubeHunterReports) List(opts v1.ListOptions) (result *v1alpha1.KubeHunterReportList, err error) {
+func (c *kubeHunterReports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.KubeHunterReportList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -67,13 +68,13 @@ func (c *kubeHunterReports) List(opts v1.ListOptions) (result *v1alpha1.KubeHunt
 		Resource("kubehunterreports").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested kubeHunterReports.
-func (c *kubeHunterReports) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *kubeHunterReports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -83,66 +84,69 @@ func (c *kubeHunterReports) Watch(opts v1.ListOptions) (watch.Interface, error) 
 		Resource("kubehunterreports").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a kubeHunterReport and creates it.  Returns the server's representation of the kubeHunterReport, and an error, if there is any.
-func (c *kubeHunterReports) Create(kubeHunterReport *v1alpha1.KubeHunterReport) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *kubeHunterReports) Create(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.CreateOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	result = &v1alpha1.KubeHunterReport{}
 	err = c.client.Post().
 		Resource("kubehunterreports").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(kubeHunterReport).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a kubeHunterReport and updates it. Returns the server's representation of the kubeHunterReport, and an error, if there is any.
-func (c *kubeHunterReports) Update(kubeHunterReport *v1alpha1.KubeHunterReport) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *kubeHunterReports) Update(ctx context.Context, kubeHunterReport *v1alpha1.KubeHunterReport, opts v1.UpdateOptions) (result *v1alpha1.KubeHunterReport, err error) {
 	result = &v1alpha1.KubeHunterReport{}
 	err = c.client.Put().
 		Resource("kubehunterreports").
 		Name(kubeHunterReport.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(kubeHunterReport).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the kubeHunterReport and deletes it. Returns an error if one occurs.
-func (c *kubeHunterReports) Delete(name string, options *v1.DeleteOptions) error {
+func (c *kubeHunterReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("kubehunterreports").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *kubeHunterReports) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *kubeHunterReports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("kubehunterreports").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched kubeHunterReport.
-func (c *kubeHunterReports) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.KubeHunterReport, err error) {
+func (c *kubeHunterReports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KubeHunterReport, err error) {
 	result = &v1alpha1.KubeHunterReport{}
 	err = c.client.Patch(pt).
 		Resource("kubehunterreports").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

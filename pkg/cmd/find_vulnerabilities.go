@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
-	secapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -46,6 +48,7 @@ NAME is the name of a particular Kubernetes workload.
   # Scan a cronjob with the specified name
   kubectl starboard find vulns cj/my-cronjob`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return
@@ -58,19 +61,19 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			clientset, err := kubernetes.NewForConfig(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(config)
 			if err != nil {
 				return err
 			}
-			reports, err := trivy.NewScanner(clientset).Scan(workload)
+			reports, err := trivy.NewScanner(kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return
 			}
-			secClientset, err := secapi.NewForConfig(config)
+			starboardClientset, err := starboardapi.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(secClientset).Write(workload, reports)
+			err = crd.NewWriter(starboardClientset).Write(ctx, workload, reports)
 			return
 		},
 	}

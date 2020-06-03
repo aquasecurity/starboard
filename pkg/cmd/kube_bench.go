@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
@@ -15,6 +17,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 		Use:   "kube-bench",
 		Short: "Run the CIS Kubernetes Benchmark https://www.cisecurity.org/benchmark/kubernetes",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return
@@ -23,7 +26,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, node, err := kubebench.NewScanner(kubernetesClientset).Scan()
+			report, node, err := kubebench.NewScanner(kubernetesClientset).Scan(ctx)
 			if err != nil {
 				return
 			}
@@ -31,7 +34,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(report, node)
+			err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(ctx, report, node)
 			return
 		},
 	}

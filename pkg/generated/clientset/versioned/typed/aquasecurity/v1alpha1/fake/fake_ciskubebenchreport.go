@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -22,7 +24,7 @@ var ciskubebenchreportsResource = schema.GroupVersionResource{Group: "aquasecuri
 var ciskubebenchreportsKind = schema.GroupVersionKind{Group: "aquasecurity.github.io", Version: "v1alpha1", Kind: "CISKubeBenchReport"}
 
 // Get takes name of the cISKubeBenchReport, and returns the corresponding cISKubeBenchReport object, and an error if there is any.
-func (c *FakeCISKubeBenchReports) Get(name string, options v1.GetOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *FakeCISKubeBenchReports) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(ciskubebenchreportsResource, name), &v1alpha1.CISKubeBenchReport{})
 	if obj == nil {
@@ -32,7 +34,7 @@ func (c *FakeCISKubeBenchReports) Get(name string, options v1.GetOptions) (resul
 }
 
 // List takes label and field selectors, and returns the list of CISKubeBenchReports that match those selectors.
-func (c *FakeCISKubeBenchReports) List(opts v1.ListOptions) (result *v1alpha1.CISKubeBenchReportList, err error) {
+func (c *FakeCISKubeBenchReports) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.CISKubeBenchReportList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(ciskubebenchreportsResource, ciskubebenchreportsKind, opts), &v1alpha1.CISKubeBenchReportList{})
 	if obj == nil {
@@ -53,13 +55,13 @@ func (c *FakeCISKubeBenchReports) List(opts v1.ListOptions) (result *v1alpha1.CI
 }
 
 // Watch returns a watch.Interface that watches the requested cISKubeBenchReports.
-func (c *FakeCISKubeBenchReports) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCISKubeBenchReports) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(ciskubebenchreportsResource, opts))
 }
 
 // Create takes the representation of a cISKubeBenchReport and creates it.  Returns the server's representation of the cISKubeBenchReport, and an error, if there is any.
-func (c *FakeCISKubeBenchReports) Create(cISKubeBenchReport *v1alpha1.CISKubeBenchReport) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *FakeCISKubeBenchReports) Create(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.CreateOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(ciskubebenchreportsResource, cISKubeBenchReport), &v1alpha1.CISKubeBenchReport{})
 	if obj == nil {
@@ -69,7 +71,7 @@ func (c *FakeCISKubeBenchReports) Create(cISKubeBenchReport *v1alpha1.CISKubeBen
 }
 
 // Update takes the representation of a cISKubeBenchReport and updates it. Returns the server's representation of the cISKubeBenchReport, and an error, if there is any.
-func (c *FakeCISKubeBenchReports) Update(cISKubeBenchReport *v1alpha1.CISKubeBenchReport) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *FakeCISKubeBenchReports) Update(ctx context.Context, cISKubeBenchReport *v1alpha1.CISKubeBenchReport, opts v1.UpdateOptions) (result *v1alpha1.CISKubeBenchReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(ciskubebenchreportsResource, cISKubeBenchReport), &v1alpha1.CISKubeBenchReport{})
 	if obj == nil {
@@ -79,22 +81,22 @@ func (c *FakeCISKubeBenchReports) Update(cISKubeBenchReport *v1alpha1.CISKubeBen
 }
 
 // Delete takes name of the cISKubeBenchReport and deletes it. Returns an error if one occurs.
-func (c *FakeCISKubeBenchReports) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCISKubeBenchReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(ciskubebenchreportsResource, name), &v1alpha1.CISKubeBenchReport{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeCISKubeBenchReports) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(ciskubebenchreportsResource, listOptions)
+func (c *FakeCISKubeBenchReports) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(ciskubebenchreportsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.CISKubeBenchReportList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched cISKubeBenchReport.
-func (c *FakeCISKubeBenchReports) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error) {
+func (c *FakeCISKubeBenchReports) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.CISKubeBenchReport, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(ciskubebenchreportsResource, name, pt, data, subresources...), &v1alpha1.CISKubeBenchReport{})
 	if obj == nil {

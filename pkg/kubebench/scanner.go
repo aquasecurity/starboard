@@ -1,6 +1,7 @@
 package kubebench
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/klog"
@@ -44,13 +45,13 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
+func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	kubeBenchJob := s.prepareKubeBenchJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New(runnerTimeout).
-		Run(kube.NewRunnableJob(s.clientset, kubeBenchJob))
+		Run(ctx, kube.NewRunnableJob(s.clientset, kubeBenchJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-bench job: %w", err)
 		return
@@ -60,13 +61,13 @@ func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, 
 		// 6. Delete the kube-bench Job
 		klog.V(3).Infof("Deleting job: %s/%s", kubeBenchJob.Namespace, kubeBenchJob.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(kubeBenchJob.Namespace).Delete(kubeBenchJob.Name, &meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(kubeBenchJob.Namespace).Delete(ctx, kubeBenchJob.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	// 3. Get the Pod controlled by the kube-bench Job
-	kubeBenchPod, err := s.pods.GetPodByJob(kubeBenchJob)
+	kubeBenchPod, err := s.pods.GetPodByJob(ctx, kubeBenchJob)
 	if err != nil {
 		err = fmt.Errorf("getting kube-bench pod: %w", err)
 		return
@@ -75,7 +76,7 @@ func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, 
 	// 4. Get kube-bench JSON output from the kube-bench Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
 		kubeBenchJob.Namespace, kubeBenchJob.Name)
-	logsReader, err := s.pods.GetPodLogs(kubeBenchPod, kubeBenchContainerName)
+	logsReader, err := s.pods.GetPodLogs(ctx, kubeBenchPod, kubeBenchContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return
@@ -91,7 +92,7 @@ func (s *Scanner) Scan() (report starboard.CISKubeBenchOutput, node *core.Node, 
 		return
 	}
 
-	node, err = s.clientset.CoreV1().Nodes().Get(kubeBenchPod.Spec.NodeName, meta.GetOptions{})
+	node, err = s.clientset.CoreV1().Nodes().Get(ctx, kubeBenchPod.Spec.NodeName, meta.GetOptions{})
 	return
 }
 
