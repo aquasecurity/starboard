@@ -3,7 +3,10 @@
 > Kubernetes-native security tool kit.
 
 [![GitHub Release][release-img]][release]
-[![Build Actions][build-action-img]][build-action]
+[![GitHub Build Actions][build-action-img]][actions]
+[![GitHub Release Action][release-action-img]][actions]
+[![Coverage Status][cov-img]][cov]
+[![Go Report Card][report-card-img]][report-card]
 [![License][license-img]][license]
 
 ## Table of Contents
@@ -270,10 +273,15 @@ See our [roadmap](ROADMAP.md) for tentative features in a 1.0 release.
 
 This repository is available under the [Apache License 2.0][license].
 
-[release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg
+[release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
 [build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
-[build-action]: https://github.com/aquasecurity/starboard/actions
+[release-action-img]: https://github.com/aquasecurity/starboard/workflows/release/badge.svg
+[actions]: https://github.com/aquasecurity/starboard/actions
+[cov-img]: https://codecov.io/github/aquasecurity/starboard/branch/master/graph/badge.svg
+[cov]: https://codecov.io/github/aquasecurity/starboard
+[report-card-img]: https://goreportcard.com/badge/github.com/aquasecurity/starboard
+[report-card]: https://goreportcard.com/report/github.com/aquasecurity/starboard
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 
