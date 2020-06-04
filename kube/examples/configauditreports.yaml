@@ -1,0 +1,107 @@
+---
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ConfigAuditReport
+metadata:
+  name: deployment.nginx
+  namespace: de
+  labels:
+    starboard.resource.kind: Deployment
+    starboard.resource.name: nginx
+report:
+  scanner:
+    name: Polaris
+    vendor: Fairwinds
+    version: cfc0d213cd603793d8e36eecfb0def1579a34997
+  resource:
+    kind: Deployment
+    name: nginx
+    namespace: dev
+  podChecks:
+    - category: Security
+      checkID: hostIPCSet
+      message: Host IPC is not configured
+      severity: error
+      success: true
+    - category: Networking
+      checkID: hostNetworkSet
+      message: Host network is not configured
+      severity: warning
+      success: true
+    - category: Security
+      checkID: hostPIDSet
+      message: Host PID is not configured
+      severity: error
+      success: true
+  containerChecks:
+    nginx:
+      - category: Resources
+        checkID: cpuLimitsMissing
+        message: CPU limits should be set
+        severity: warning
+        success: false
+      - category: Resources
+        checkID: memoryLimitsMissing
+        message: Memory limits should be set
+        severity: warning
+        success: false
+      - category: Resources
+        checkID: memoryRequestsMissing
+        message: Memory requests should be set
+        severity: warning
+        success: false
+      - category: Security
+        checkID: privilegeEscalationAllowed
+        message: Privilege escalation not allowed
+        severity: error
+        success: true
+      - category: Security
+        checkID: dangerousCapabilities
+        message: Container does not have any dangerous capabilities
+        severity: error
+        success: true
+      - category: Security
+        checkID: insecureCapabilities
+        message: Container does not have any insecure capabilities
+        severity: warning
+        success: true
+      - category: Health Checks
+        checkID: livenessProbeMissing
+        message: Liveness probe should be configured
+        severity: warning
+        success: false
+      - category: Images
+        checkID: tagNotSpecified
+        message: Image tag is specified
+        severity: error
+        success: true
+      - category: Networking
+        checkID: hostPortSet
+        message: Host port is not configured
+        severity: warning
+        success: true
+      - category: Security
+        checkID: runAsRootAllowed
+        message: Should not be allowed to run as root
+        severity: warning
+        success: false
+      - category: Resources
+        checkID: cpuRequestsMissing
+        message: CPU requests should be set
+        severity: warning
+        success: false
+      - category: Security
+        checkID: notReadOnlyRootFileSystem
+        message: Filesystem should be read only
+        severity: warning
+        success: false
+      - category: Health Checks
+        checkID: readinessProbeMissing
+        message: Readiness probe should be configured
+        severity: warning
+        success: false
+      - category: Security
+        checkID: runAsPrivileged
+        message: Not running as privileged
+        severity: error
+        success: true
+

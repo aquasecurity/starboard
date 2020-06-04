@@ -4,14 +4,18 @@ on:
     branches:
       - master
     paths-ignore:
+      - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'kube/**'
       - 'LICENSE'
       - 'NOTICE'
   pull_request:
     paths-ignore:
+      - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'kube/**'
       - 'LICENSE'
       - 'NOTICE'
 jobs:
