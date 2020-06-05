@@ -51,7 +51,7 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
 	polarisJob := s.preparePolarisJob()
 
-	err = runner.New(runnerTimeout).
+	err = runner.NewWithTimeout(runnerTimeout).
 		Run(ctx, kube.NewRunnableJob(s.clientset, polarisJob))
 	if err != nil {
 		err = fmt.Errorf("running polaris job: %w", err)

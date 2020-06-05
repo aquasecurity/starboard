@@ -3,12 +3,10 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"io"
-	"time"
-
 	"github.com/aquasecurity/starboard/pkg/ext"
-
+	"io"
 	"k8s.io/klog"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
@@ -33,24 +31,28 @@ const (
 	trivyImageRef = "docker.io/aquasec/trivy:0.8.0"
 )
 
-var (
-	scanJobRunnerTimeout = 60 * time.Second
-)
-
-type scanner struct {
-	clientset kubernetes.Interface
-	pods      *pod.Manager
-	secrets   *secret.Manager
-	converter Converter
+// ScannerOpts holds configuration of the vulnerability Scanner.
+type ScannerOpts struct {
+	ScanJobTimeout time.Duration
 }
 
-func NewScanner(clientset kubernetes.Interface) vulnerabilities.Scanner {
+// NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
+func NewScanner(opts ScannerOpts, clientset kubernetes.Interface) vulnerabilities.Scanner {
 	return &scanner{
+		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 		secrets:   secret.NewSecretManager(clientset),
 		converter: DefaultConverter,
 	}
+}
+
+type scanner struct {
+	opts      ScannerOpts
+	clientset kubernetes.Interface
+	pods      *pod.Manager
+	secrets   *secret.Manager
+	converter Converter
 }
 
 func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map[string]sec.VulnerabilityReport, err error) {
@@ -69,26 +71,26 @@ func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map
 }
 
 func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Workload, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
+	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 	job, err := s.prepareJob(ctx, workload, spec)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
 
-	err = runner.New(scanJobRunnerTimeout).
-		Run(ctx, kube.NewRunnableJob(s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
 		return nil, fmt.Errorf("running scan job: %w", err)
 	}
 
 	defer func() {
-		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
+		klog.V(3).Infof("Deleting Job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
 		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
-	klog.V(3).Infof("Scan job completed: %s/%s", job.Namespace, job.Name)
+	klog.V(3).Infof("Scan Job completed: %s/%s", job.Namespace, job.Name)
 
 	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, meta.GetOptions{})
 	if err != nil {
@@ -183,7 +185,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(1),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: pointer.Int64Ptr(int64(scanJobRunnerTimeout.Seconds())),
+			ActiveDeadlineSeconds: s.getActiveDeadlineSeconds(),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
@@ -209,6 +211,14 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 			},
 		},
 	}, nil
+}
+
+func (s *scanner) getActiveDeadlineSeconds() (timeout *int64) {
+	if s.opts.ScanJobTimeout > 0 {
+		timeout = pointer.Int64Ptr(int64(s.opts.ScanJobTimeout.Seconds()))
+		return
+	}
+	return
 }
 
 func (s *scanner) getScanReportsFor(ctx context.Context, job *batch.Job) (reports map[string]sec.VulnerabilityReport, err error) {

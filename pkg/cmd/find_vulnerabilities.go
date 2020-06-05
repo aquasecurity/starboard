@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
@@ -9,6 +10,10 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	scanJobTimeoutFlagName = "scan-job-timeout"
 )
 
 func GetVulnerabilitiesCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -65,7 +70,11 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			reports, err := trivy.NewScanner(kubernetesClientset).Scan(ctx, workload)
+			opts, err := getScannerOpts(cmd)
+			if err != nil {
+				return
+			}
+			reports, err := trivy.NewScanner(opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return
 			}
@@ -78,5 +87,17 @@ NAME is the name of a particular Kubernetes workload.
 		},
 	}
 
+	cmd.Flags().Duration(scanJobTimeoutFlagName, time.Duration(0),
+		"The length of time to wait before giving up on a scan job. Non-zero values should contain a"+
+			" corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout the scan job.")
+
 	return cmd
+}
+
+func getScannerOpts(cmd *cobra.Command) (opts trivy.ScannerOpts, err error) {
+	opts.ScanJobTimeout, err = cmd.Flags().GetDuration(scanJobTimeoutFlagName)
+	if err != nil {
+		return
+	}
+	return
 }

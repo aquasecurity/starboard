@@ -47,7 +47,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, 
 	kubeHunterJob := s.prepareKubeHunterJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New(runnerTimeout).
+	err = runner.NewWithTimeout(runnerTimeout).
 		Run(ctx, kube.NewRunnableJob(s.clientset, kubeHunterJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-hunter job: %w", err)

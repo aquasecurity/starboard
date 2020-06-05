@@ -50,7 +50,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput
 	kubeBenchJob := s.prepareKubeBenchJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New(runnerTimeout).
+	err = runner.NewWithTimeout(runnerTimeout).
 		Run(ctx, kube.NewRunnableJob(s.clientset, kubeBenchJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-bench job: %w", err)
