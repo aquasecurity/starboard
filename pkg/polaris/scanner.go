@@ -3,9 +3,9 @@ package polaris
 import (
 	"context"
 	"fmt"
-	"time"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/scanners"
 
 	"k8s.io/utils/pointer"
 
@@ -22,11 +22,6 @@ import (
 )
 
 const (
-	runnerTimeout = 90 * time.Second
-	jobTimeout    = 60 * time.Second
-)
-
-const (
 	polarisContainerName = "polaris"
 	// TODO: The latest semver tagged image 0.6.0 doesn't return audit checks ?!
 	polarisContainerImage = "quay.io/fairwinds/polaris:cfc0d213cd603793d8e36eecfb0def1579a34997"
@@ -35,13 +30,16 @@ const (
 )
 
 type Scanner struct {
+	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
+	scanners.Base
 }
 
-func NewScanner(clientset kubernetes.Interface) *Scanner {
+func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 		converter: DefaultConverter,
@@ -51,8 +49,7 @@ func NewScanner(clientset kubernetes.Interface) *Scanner {
 func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
 	polarisJob := s.preparePolarisJob()
 
-	err = runner.New(runnerTimeout).
-		Run(ctx, kube.NewRunnableJob(s.clientset, polarisJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, polarisJob))
 	if err != nil {
 		err = fmt.Errorf("running polaris job: %w", err)
 		return
@@ -93,7 +90,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(1),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: pointer.Int64Ptr(int64(jobTimeout.Seconds())),
+			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{

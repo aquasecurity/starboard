@@ -2,6 +2,7 @@ package kube
 
 import (
 	"fmt"
+	"time"
 )
 
 const (
@@ -90,4 +91,9 @@ func WorkloadKindFromString(s string) (WorkloadKind, error) {
 		return WorkloadKindJob, nil
 	}
 	return WorkloadKindUnknown, fmt.Errorf("unrecognized workload: %s", s)
+}
+
+// ScannerOpts holds configuration of the vulnerability Scanner.
+type ScannerOpts struct {
+	ScanJobTimeout time.Duration
 }

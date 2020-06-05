@@ -25,7 +25,11 @@ func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, err := kubehunter.NewScanner(kubernetesClientset).Scan(ctx)
+			opts, err := getScannerOpts(cmd)
+			if err != nil {
+				return
+			}
+			report, err := kubehunter.NewScanner(opts, kubernetesClientset).Scan(ctx)
 			if err != nil {
 				return
 			}
@@ -40,5 +44,8 @@ func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			return
 		},
 	}
+
+	registerScannerOpts(cmd)
+
 	return cmd
 }

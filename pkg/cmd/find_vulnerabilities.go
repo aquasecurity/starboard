@@ -65,7 +65,11 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			reports, err := trivy.NewScanner(kubernetesClientset).Scan(ctx, workload)
+			opts, err := getScannerOpts(cmd)
+			if err != nil {
+				return
+			}
+			reports, err := trivy.NewScanner(opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return
 			}
@@ -77,6 +81,8 @@ NAME is the name of a particular Kubernetes workload.
 			return
 		},
 	}
+
+	registerScannerOpts(cmd)
 
 	return cmd
 }

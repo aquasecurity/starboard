@@ -34,27 +34,59 @@ type Runner interface {
 	Run(ctx context.Context, task Runnable) error
 }
 
+// New constructs a new ready-to-use Runner for running a Runnable task.
+func New() Runner {
+	return &runner{
+		complete:        make(chan error),
+		timeoutDuration: 0,
+	}
+}
+
+// NewWithTimeout constructs a new ready-to-use Runner with the specified timeout for running a Runnable task.
+func NewWithTimeout(d time.Duration) Runner {
+	return &runner{
+		complete:        make(chan error),
+		timeoutDuration: d,
+		timeout:         time.After(d),
+	}
+}
+
 type runner struct {
 	// complete channel reports that processing is done
 	complete chan error
+	// timeout duration
+	timeoutDuration time.Duration
 	// timeout channel reports that time has run out
 	timeout <-chan time.Time
 }
 
-// New constructs a new ready-to-use Runner with the specified timeout for running a Task.
-func New(d time.Duration) Runner {
-	return &runner{
-		complete: make(chan error),
-		timeout:  time.After(d),
-	}
-}
-
 // Run runs the specified task and monitors channel events.
-func (r *runner) Run(ctx context.Context, task Runnable) error {
+func (r *runner) Run(ctx context.Context, task Runnable) (err error) {
 	go func() {
 		r.complete <- task.Run(ctx)
 	}()
 
+	if r.timeoutDuration > 0 {
+		err = r.runWithTimeout()
+		return
+	} else {
+		err = r.runAndWaitForever()
+		return
+	}
+}
+
+func (r *runner) runAndWaitForever() (err error) {
+	klog.V(3).Info("Running task and waiting forever")
+	select {
+	// Signaled when processing is done.
+	case err := <-r.complete:
+		klog.V(3).Infof("Stopping runner on task completion with error: %v", err)
+		return err
+	}
+}
+
+func (r *runner) runWithTimeout() (err error) {
+	klog.V(3).Infof("Running task with timeout: %v", r.timeoutDuration)
 	select {
 	// Signaled when processing is done.
 	case err := <-r.complete:

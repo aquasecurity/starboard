@@ -25,7 +25,11 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			reports, err := polaris.NewScanner(clientset).Scan(ctx)
+			opts, err := getScannerOpts(cmd)
+			if err != nil {
+				return
+			}
+			reports, err := polaris.NewScanner(opts, clientset).Scan(ctx)
 			if err != nil {
 				return
 			}
@@ -40,5 +44,8 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			return
 		},
 	}
+
+	registerScannerOpts(cmd)
+
 	return cmd
 }

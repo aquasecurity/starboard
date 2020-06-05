@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/scanners"
+
 	"k8s.io/klog"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -17,8 +19,6 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
-	"time"
-
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -27,18 +27,17 @@ const (
 	kubeBenchContainerImage = "aquasec/kube-bench:latest"
 )
 
-var (
-	runnerTimeout = 60 * time.Second
-)
-
 type Scanner struct {
+	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
+	scanners.Base
 }
 
-func NewScanner(clientset kubernetes.Interface) *Scanner {
+func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 		converter: DefaultConverter,
@@ -50,8 +49,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput
 	kubeBenchJob := s.prepareKubeBenchJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New(runnerTimeout).
-		Run(ctx, kube.NewRunnableJob(s.clientset, kubeBenchJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, kubeBenchJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-bench job: %w", err)
 		return
@@ -108,7 +106,7 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(1),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: pointer.Int64Ptr(int64(runnerTimeout.Seconds())),
+			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{

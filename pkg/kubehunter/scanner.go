@@ -3,7 +3,8 @@ package kubehunter
 import (
 	"context"
 	"fmt"
-	"time"
+
+	"github.com/aquasecurity/starboard/pkg/scanners"
 
 	"k8s.io/klog"
 
@@ -25,18 +26,16 @@ const (
 	kubeHunterContainerImage = "aquasec/kube-hunter:latest"
 )
 
-var (
-	runnerTimeout = 90 * time.Second
-	jobTimeout    = 60 * time.Second
-)
-
 type Scanner struct {
+	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
+	scanners.Base
 }
 
-func NewScanner(clientset kubernetes.Interface) *Scanner {
+func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 	}
@@ -47,8 +46,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, 
 	kubeHunterJob := s.prepareKubeHunterJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New(runnerTimeout).
-		Run(ctx, kube.NewRunnableJob(s.clientset, kubeHunterJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, kubeHunterJob))
 	if err != nil {
 		err = fmt.Errorf("running kube-hunter job: %w", err)
 		return
@@ -97,7 +95,7 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(1),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: pointer.Int64Ptr(int64(jobTimeout.Seconds())),
+			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
