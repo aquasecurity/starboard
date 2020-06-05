@@ -3,10 +3,11 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
-	"time"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
@@ -31,13 +32,8 @@ const (
 	trivyImageRef = "docker.io/aquasec/trivy:0.8.0"
 )
 
-// ScannerOpts holds configuration of the vulnerability Scanner.
-type ScannerOpts struct {
-	ScanJobTimeout time.Duration
-}
-
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(opts ScannerOpts, clientset kubernetes.Interface) vulnerabilities.Scanner {
+func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) vulnerabilities.Scanner {
 	return &scanner{
 		opts:      opts,
 		clientset: clientset,
@@ -48,11 +44,12 @@ func NewScanner(opts ScannerOpts, clientset kubernetes.Interface) vulnerabilitie
 }
 
 type scanner struct {
-	opts      ScannerOpts
+	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	secrets   *secret.Manager
 	converter Converter
+	scanners.Base
 }
 
 func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map[string]sec.VulnerabilityReport, err error) {
@@ -185,7 +182,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(1),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: s.getActiveDeadlineSeconds(),
+			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
@@ -211,14 +208,6 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 			},
 		},
 	}, nil
-}
-
-func (s *scanner) getActiveDeadlineSeconds() (timeout *int64) {
-	if s.opts.ScanJobTimeout > 0 {
-		timeout = pointer.Int64Ptr(int64(s.opts.ScanJobTimeout.Seconds()))
-		return
-	}
-	return
 }
 
 func (s *scanner) getScanReportsFor(ctx context.Context, job *batch.Job) (reports map[string]sec.VulnerabilityReport, err error) {

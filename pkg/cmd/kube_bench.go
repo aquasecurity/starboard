@@ -26,7 +26,11 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, node, err := kubebench.NewScanner(kubernetesClientset).Scan(ctx)
+			opts, err := getScannerOpts(cmd)
+			if err != nil {
+				return
+			}
+			report, node, err := kubebench.NewScanner(opts, kubernetesClientset).Scan(ctx)
 			if err != nil {
 				return
 			}
@@ -38,5 +42,8 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			return
 		},
 	}
+
+	registerScannerOpts(cmd)
+
 	return cmd
 }
