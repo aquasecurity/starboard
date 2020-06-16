@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	"github.com/spf13/pflag"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"k8s.io/klog"
@@ -28,10 +29,17 @@ func main() {
 
 	version := cmd.VersionInfo{Version: version, Commit: commit, Date: date}
 
-	if err := cmd.NewRootCmd(version).Execute(); err != nil {
+	if err := cmd.NewRootCmd(executable(os.Args), version).Execute(); err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func executable(args []string) string {
+	if strings.HasPrefix(filepath.Base(args[0]), "kubectl-") {
+		return "kubectl starboard"
+	}
+	return "starboard"
 }
 
 func initFlags() {

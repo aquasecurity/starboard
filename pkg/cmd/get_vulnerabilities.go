@@ -9,7 +9,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewGetVulnerabilitiesCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewGetVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Aliases: []string{"vulns", "vuln"},
 		Use:     "vulnerabilities (NAME | TYPE/NAME)",
@@ -29,7 +29,7 @@ NAME is the name of a particular Kubernetes workload.
   %[1]s get vulns replicaset/nginx
 
   # Get vulnerabilities for a CronJob with the specified name in JSON output format
-  %[1]s get vuln cj/my-job -o json`, "starboard"),
+  %[1]s get vuln cj/my-job -o json`, executable),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
