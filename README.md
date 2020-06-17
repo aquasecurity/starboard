@@ -55,8 +55,8 @@ The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kube
 but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
 `kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard`.
 
-Once we resolve [#8][issue-8] our intention is to submit Starboard to [krew-index][krew-index] so that if accepted,
-you'll be able to install starboard with the [Krew][krew] plugins manager:
+After following the [Krew][krew] installation documentation, you can install starboard with the
+[Krew][krew] plugins manager:
 
 ```
 $ kubectl krew install starboard
