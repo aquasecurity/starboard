@@ -5,12 +5,12 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewFindCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewFindCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	findCmd := &cobra.Command{
 		Use:   "find",
 		Short: "Manage security scanners",
 	}
-	findCmd.AddCommand(GetVulnerabilitiesCmd(cf))
+	findCmd.AddCommand(GetVulnerabilitiesCmd(executable, cf))
 
 	return findCmd
 }

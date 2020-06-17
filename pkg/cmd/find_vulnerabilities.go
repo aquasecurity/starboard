@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
@@ -11,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetVulnerabilitiesCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func GetVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Aliases: []string{"vulns", "vuln"},
 		Use:     "vulnerabilities (NAME | TYPE/NAME)",
@@ -21,32 +22,32 @@ func GetVulnerabilitiesCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
 NAME is the name of a particular Kubernetes workload.
 `,
-		Example: `  # Scan a pod with the specified name
-  kubectl starboard find vulnerabilities nginx
+		Example: fmt.Sprintf(`  # Scan a pod with the specified name
+  %[1]s find vulnerabilities nginx
 
   # Scan a pod with the specified name in the specified namespace
-  kubectl starboard find vulns po/nginx -n staging
+  %[1]s find vulns po/nginx -n staging
 
   # Scan a replicaset with the specified name
-  kubectl starboard find vuln replicaset/nginx
+  %[1]s find vuln replicaset/nginx
 
   # Scan a replicationcontroller with the given name
-  kubectl starboard find vulns rc/nginx
+  %[1]s find vulns rc/nginx
 
   # Scan a deployment with the specified name
-  kubectl starboard find vulns deployments.apps/nginx
+  %[1]s find vulns deployments.apps/nginx
 
   # Scan a daemonset with the specified name
-  kubectl starboard find vulns daemonsets/nginx
+  %[1]s starboard find vulns daemonsets/nginx
 
   # Scan a statefulset with the specified name
-  kubectl starboard find vulns sts/redis
+  %[1]s vulns sts/redis
 
   # Scan a job with the specified name
-  kubectl starboard find vulns job/my-job
+  %[1]s find vulns job/my-job
 
-  # Scan a cronjob with the specified name
-  kubectl starboard find vulns cj/my-cronjob`,
+  # Scan a cronjob with the specified name and the specified scan job timeout
+  %[1]s find vulns cj/my-cronjob --scan-job-timeout 2m`, executable),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
