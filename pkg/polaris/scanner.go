@@ -47,25 +47,30 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 }
 
 func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
-	polarisJob := s.preparePolarisJob()
+	job := s.preparePolarisJob()
 
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, polarisJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
+		s.pods.LogRunnerErrors(ctx, job)
 		err = fmt.Errorf("running polaris job: %w", err)
 		return
 	}
 
 	defer func() {
-		klog.V(3).Infof("Deleting job: %s/%s", polarisJob.Namespace, polarisJob.Name)
+		if !s.opts.DeleteScanJob {
+			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
+			return
+		}
+		klog.V(3).Infof("Deleting scan job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(polarisJob.Namespace).Delete(ctx, polarisJob.Name, meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", polarisContainerName,
-		polarisJob.Namespace, polarisJob.Name)
-	logsReader, err := s.pods.GetPodLogsByJob(ctx, polarisJob, polarisContainerName)
+		job.Namespace, job.Name)
+	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, polarisContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return
@@ -88,7 +93,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 			},
 		},
 		Spec: batch.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(1),
+			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
@@ -114,9 +119,10 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 					},
 					Containers: []core.Container{
 						{
-							Name:            polarisContainerName,
-							Image:           polarisContainerImage,
-							ImagePullPolicy: core.PullIfNotPresent,
+							Name:                     polarisContainerName,
+							Image:                    polarisContainerImage,
+							ImagePullPolicy:          core.PullIfNotPresent,
+							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							VolumeMounts: []core.VolumeMount{
 								{
 									Name:      polarisConfigVolume,

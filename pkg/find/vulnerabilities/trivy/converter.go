@@ -2,26 +2,37 @@ package trivy
 
 import (
 	"encoding/json"
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"io"
+	"io/ioutil"
+	"strings"
+
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
 // Converter is the interface that wraps the Convert method.
 //
 // Convert converts the vulnerabilities model used by Trivy
-// to a generic model defined by K8S-native security CRDs.
+// to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(reader io.Reader) (sec.VulnerabilityReport, error)
+	Convert(reader io.Reader) (starboard.VulnerabilityReport, error)
 }
 
 type converter struct {
 }
 
-var DefaultConverter Converter = &converter{}
+var DefaultConverter = NewConverter()
 
-func (c *converter) Convert(reader io.Reader) (report sec.VulnerabilityReport, err error) {
+func NewConverter() Converter {
+	return &converter{}
+}
+
+func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityReport, err error) {
 	var scanReports []ScanReport
-	err = json.NewDecoder(reader).Decode(&scanReports)
+	skipReader, err := c.skippingNoisyOutputReader(reader)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(skipReader).Decode(&scanReports)
 	if err != nil {
 		return
 	}
@@ -29,29 +40,48 @@ func (c *converter) Convert(reader io.Reader) (report sec.VulnerabilityReport, e
 	return
 }
 
-func (c *converter) convert(reports []ScanReport) sec.VulnerabilityReport {
-	var vulnerabilities []sec.VulnerabilityItem
+// TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
+// TODO Therefore, as a workaround I do sanitize the input reader before we start parsing the JSON output.
+func (c *converter) skippingNoisyOutputReader(input io.Reader) (reader io.Reader, err error) {
+	inputAsBytes, err := ioutil.ReadAll(input)
+	if err != nil {
+		return
+	}
+	inputAsString := string(inputAsBytes)
 
-	// TODO There might be > 1 item in the slice of reports (for app dependencies)
-	for _, sr := range reports[0].Vulnerabilities {
-		vulnerabilities = append(vulnerabilities, sec.VulnerabilityItem{
-			VulnerabilityID:  sr.VulnerabilityID,
-			Resource:         sr.PkgName,
-			InstalledVersion: sr.InstalledVersion,
-			FixedVersion:     sr.FixedVersion,
-			Severity:         sr.Severity,
-			LayerID:          sr.LayerID,
-			Title:            sr.Title,
-			Description:      sr.Description,
-			Links:            c.toLinks(sr.References),
-		})
+	index := strings.Index(inputAsString, "\n[")
+	if index > 0 {
+		reader = strings.NewReader(inputAsString[index:])
+		return
+	}
+	reader = strings.NewReader(inputAsString)
+	return
+}
+
+func (c *converter) convert(reports []ScanReport) starboard.VulnerabilityReport {
+	var vulnerabilities []starboard.VulnerabilityItem
+
+	for _, report := range reports {
+		for _, sr := range report.Vulnerabilities {
+			vulnerabilities = append(vulnerabilities, starboard.VulnerabilityItem{
+				VulnerabilityID:  sr.VulnerabilityID,
+				Resource:         sr.PkgName,
+				InstalledVersion: sr.InstalledVersion,
+				FixedVersion:     sr.FixedVersion,
+				Severity:         sr.Severity,
+				LayerID:          sr.LayerID,
+				Title:            sr.Title,
+				Description:      sr.Description,
+				Links:            c.toLinks(sr.References),
+			})
+		}
 	}
 
-	return sec.VulnerabilityReport{
-		Scanner: sec.Scanner{
+	return starboard.VulnerabilityReport{
+		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
-			Version: "latest",
+			Version: trivyVersion,
 		},
 		Summary:         c.toSummary(vulnerabilities),
 		Vulnerabilities: vulnerabilities,
@@ -65,16 +95,16 @@ func (c *converter) toLinks(references []string) []string {
 	return references
 }
 
-func (c *converter) toSummary(vulnerabilities []sec.VulnerabilityItem) (vs sec.VulnerabilitySummary) {
+func (c *converter) toSummary(vulnerabilities []starboard.VulnerabilityItem) (vs starboard.VulnerabilitySummary) {
 	for _, v := range vulnerabilities {
 		switch v.Severity {
-		case sec.SeverityCritical:
+		case starboard.SeverityCritical:
 			vs.CriticalCount++
-		case sec.SeverityHigh:
+		case starboard.SeverityHigh:
 			vs.HighCount++
-		case sec.SeverityMedium:
+		case starboard.SeverityMedium:
 			vs.MediumCount++
-		case sec.SeverityLow:
+		case starboard.SeverityLow:
 			vs.LowCount++
 		default:
 			vs.UnknownCount++
