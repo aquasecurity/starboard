@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 
@@ -102,7 +103,33 @@ func (pw *Manager) GetPodByName(ctx context.Context, namespace, name string) (*c
 	return pw.clientset.CoreV1().Pods(namespace).Get(ctx, name, meta.GetOptions{})
 }
 
-func (pw *Manager) GetPodLogsByJob(ctx context.Context, job *batch.Job, container string) (io.ReadCloser, error) {
+func (pw *Manager) GetTerminatedContainersStatusesByJob(ctx context.Context, job *batch.Job) (statuses map[string]*core.ContainerStateTerminated, err error) {
+	pod, err := pw.GetPodByJob(ctx, job)
+	if err != nil {
+		return
+	}
+	statuses = pw.GetTerminatedContainersStatusesByPod(pod)
+	return
+}
+
+func (pw *Manager) GetTerminatedContainersStatusesByPod(pod *core.Pod) map[string]*core.ContainerStateTerminated {
+	states := make(map[string]*core.ContainerStateTerminated)
+	for _, status := range pod.Status.InitContainerStatuses {
+		if status.State.Terminated == nil {
+			continue
+		}
+		states[status.Name] = status.State.Terminated
+	}
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.State.Terminated == nil {
+			continue
+		}
+		states[status.Name] = status.State.Terminated
+	}
+	return states
+}
+
+func (pw *Manager) GetContainerLogsByJob(ctx context.Context, job *batch.Job, container string) (io.ReadCloser, error) {
 	pod, err := pw.GetPodByJob(ctx, job)
 	if err != nil {
 		return nil, err
@@ -130,4 +157,23 @@ func (pw *Manager) GetPodLogs(ctx context.Context, pod *core.Pod, container stri
 	req := pw.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &core.PodLogOptions{
 		Follow: true, Container: container})
 	return req.Stream(ctx)
+}
+
+// TODO Consider moving this generic code to kube.runnableJob and call it in case of failure
+func (pw *Manager) LogRunnerErrors(ctx context.Context, job *batch.Job) {
+	statuses, err := pw.GetTerminatedContainersStatusesByJob(ctx, job)
+	if err != nil {
+		klog.Errorf("Error while getting terminated containers statuses for scan job: %s/%s", job.Namespace, job.Name)
+	} else {
+		pw.logTerminatedContainersErrors(statuses)
+	}
+}
+
+func (pw *Manager) logTerminatedContainersErrors(statuses map[string]*core.ContainerStateTerminated) {
+	for container, status := range statuses {
+		if status.ExitCode == 0 {
+			continue
+		}
+		klog.Errorf("Container %s terminated with %s: %s", container, status.Reason, status.Message)
+	}
 }

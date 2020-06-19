@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
@@ -25,11 +24,11 @@ import (
 )
 
 const (
-	kubernetesNameMaxLength int = 63
+	trivyVersion = "0.9.1"
 )
 
-const (
-	trivyImageRef = "docker.io/aquasec/trivy:0.8.0"
+var (
+	trivyImageRef = fmt.Sprintf("docker.io/aquasec/trivy:%s", trivyVersion)
 )
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
@@ -76,18 +75,23 @@ func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Workload, spe
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
+		s.pods.LogRunnerErrors(ctx, job)
 		return nil, fmt.Errorf("running scan job: %w", err)
 	}
 
 	defer func() {
-		klog.V(3).Infof("Deleting Job: %s/%s", job.Namespace, job.Name)
+		if !s.opts.DeleteScanJob {
+			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
+			return
+		}
+		klog.V(3).Infof("Deleting scan job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
 		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
-	klog.V(3).Infof("Scan Job completed: %s/%s", job.Namespace, job.Name)
+	klog.V(3).Infof("Scan job completed: %s/%s", job.Namespace, job.Name)
 
 	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, meta.GetOptions{})
 	if err != nil {
@@ -104,13 +108,13 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 	}
 
 	jobName := fmt.Sprintf(uuid.New().String())
-	jobName = jobName[:ext.MinInt(len(jobName), kubernetesNameMaxLength)]
 
 	initContainers := []core.Container{
 		{
-			Name:            jobName,
-			Image:           trivyImageRef,
-			ImagePullPolicy: core.PullAlways,
+			Name:                     jobName,
+			Image:                    trivyImageRef,
+			ImagePullPolicy:          core.PullIfNotPresent,
+			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 			Command: []string{
 				"trivy",
 			},
@@ -143,10 +147,11 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 		}
 
 		scanJobContainers[i] = core.Container{
-			Name:            c.Name,
-			Image:           trivyImageRef,
-			ImagePullPolicy: core.PullAlways,
-			Env:             envs,
+			Name:                     c.Name,
+			Image:                    trivyImageRef,
+			ImagePullPolicy:          core.PullIfNotPresent,
+			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+			Env:                      envs,
 			Command: []string{
 				"trivy",
 			},
@@ -155,7 +160,6 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 				"--cache-dir",
 				"/var/lib/trivy",
 				"--no-progress",
-				"--quiet",
 				"--format",
 				"json",
 				c.Image,
@@ -180,7 +184,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 			},
 		},
 		Spec: batch.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(1),
+			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
@@ -191,6 +195,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 					},
 				},
 				Spec: core.PodSpec{
+					AutomountServiceAccountToken: pointer.BoolPtr(false),
 					Volumes: []core.Volume{
 						{
 							Name: "data",
@@ -216,7 +221,7 @@ func (s *scanner) getScanReportsFor(ctx context.Context, job *batch.Job) (report
 	for _, c := range job.Spec.Template.Spec.Containers {
 		klog.V(3).Infof("Getting logs for %s container in job: %s/%s", c.Name, job.Namespace, job.Name)
 		var logReader io.ReadCloser
-		logReader, err = s.pods.GetPodLogsByJob(ctx, job, c.Name)
+		logReader, err = s.pods.GetContainerLogsByJob(ctx, job, c.Name)
 		if err != nil {
 			return
 		}

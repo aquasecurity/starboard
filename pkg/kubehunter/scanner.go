@@ -64,7 +64,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, 
 	// 3. Get kube-hunter JSON output from the kube-hunter Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeHunterContainerName,
 		kubeHunterJob.Namespace, kubeHunterJob.Name)
-	logsReader, err := s.pods.GetPodLogsByJob(ctx, kubeHunterJob, kubeHunterContainerName)
+	logsReader, err := s.pods.GetContainerLogsByJob(ctx, kubeHunterJob, kubeHunterContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return
@@ -93,7 +93,7 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 			},
 		},
 		Spec: batch.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(1),
+			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
@@ -107,11 +107,12 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 					HostPID:       true,
 					Containers: []core.Container{
 						{
-							Name:            kubeHunterContainerName,
-							Image:           kubeHunterContainerImage,
-							ImagePullPolicy: core.PullAlways,
-							Command:         []string{"python", "kube-hunter.py"},
-							Args:            []string{"--pod", "--report", "json", "--log", "warn"},
+							Name:                     kubeHunterContainerName,
+							Image:                    kubeHunterContainerImage,
+							ImagePullPolicy:          core.PullAlways,
+							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							Command:                  []string{"python", "kube-hunter.py"},
+							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
 						},
 					},
 				},

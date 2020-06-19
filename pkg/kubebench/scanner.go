@@ -104,7 +104,7 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 			},
 		},
 		Spec: batch.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(1),
+			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
@@ -160,11 +160,12 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 					},
 					Containers: []core.Container{
 						{
-							Name:            kubeBenchContainerName,
-							Image:           kubeBenchContainerImage,
-							ImagePullPolicy: core.PullAlways,
-							Command:         []string{"kube-bench"},
-							Args:            []string{"--json"},
+							Name:                     kubeBenchContainerName,
+							Image:                    kubeBenchContainerImage,
+							ImagePullPolicy:          core.PullAlways,
+							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							Command:                  []string{"kube-bench"},
+							Args:                     []string{"--json"},
 							VolumeMounts: []core.VolumeMount{
 								{
 									Name:      "var-lib-etcd",
