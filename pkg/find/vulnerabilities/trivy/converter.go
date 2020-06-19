@@ -42,20 +42,18 @@ func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityRep
 
 // TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
 // TODO Therefore, as a workaround I do sanitize the input reader before we start parsing the JSON output.
-func (c *converter) skippingNoisyOutputReader(input io.Reader) (reader io.Reader, err error) {
+func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error) {
 	inputAsBytes, err := ioutil.ReadAll(input)
 	if err != nil {
-		return
+		return nil, err
 	}
 	inputAsString := string(inputAsBytes)
 
 	index := strings.Index(inputAsString, "\n[")
 	if index > 0 {
-		reader = strings.NewReader(inputAsString[index:])
-		return
+		return strings.NewReader(inputAsString[index:]), nil
 	}
-	reader = strings.NewReader(inputAsString)
-	return
+	return strings.NewReader(inputAsString), nil
 }
 
 func (c *converter) convert(reports []ScanReport) starboard.VulnerabilityReport {
