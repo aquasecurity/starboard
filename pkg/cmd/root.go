@@ -19,7 +19,6 @@ func NewRootCmd(executable string, version VersionInfo) *cobra.Command {
 
 	rootCmd.AddCommand(NewVersionCmd(version))
 	rootCmd.AddCommand(NewInitCmd(cf))
-	rootCmd.AddCommand(NewRBACCmd(cf))
 	rootCmd.AddCommand(NewFindCmd(executable, cf))
 	rootCmd.AddCommand(NewKubeBenchCmd(cf))
 	rootCmd.AddCommand(NewKubeHunterCmd(cf))
