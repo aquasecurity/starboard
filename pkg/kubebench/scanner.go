@@ -23,8 +23,12 @@ import (
 )
 
 const (
-	kubeBenchContainerName  = "kube-bench"
-	kubeBenchContainerImage = "aquasec/kube-bench:latest"
+	kubeBenchVersion       = "0.3.0"
+	kubeBenchContainerName = "kube-bench"
+)
+
+var (
+	kubeBenchContainerImage = fmt.Sprintf("aquasec/kube-bench:%s", kubeBenchVersion)
 )
 
 type Scanner struct {
@@ -46,26 +50,30 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 
 func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	kubeBenchJob := s.prepareKubeBenchJob()
+	job := s.prepareKubeBenchJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, kubeBenchJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
 		err = fmt.Errorf("running kube-bench job: %w", err)
 		return
 	}
 
 	defer func() {
+		if !s.opts.DeleteScanJob {
+			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
+			return
+		}
 		// 6. Delete the kube-bench Job
-		klog.V(3).Infof("Deleting job: %s/%s", kubeBenchJob.Namespace, kubeBenchJob.Name)
+		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(kubeBenchJob.Namespace).Delete(ctx, kubeBenchJob.Name, meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	// 3. Get the Pod controlled by the kube-bench Job
-	kubeBenchPod, err := s.pods.GetPodByJob(ctx, kubeBenchJob)
+	kubeBenchPod, err := s.pods.GetPodByJob(ctx, job)
 	if err != nil {
 		err = fmt.Errorf("getting kube-bench pod: %w", err)
 		return
@@ -73,7 +81,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput
 
 	// 4. Get kube-bench JSON output from the kube-bench Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
-		kubeBenchJob.Namespace, kubeBenchJob.Name)
+		job.Namespace, job.Name)
 	logsReader, err := s.pods.GetPodLogs(ctx, kubeBenchPod, kubeBenchContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
@@ -162,7 +170,7 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 						{
 							Name:                     kubeBenchContainerName,
 							Image:                    kubeBenchContainerImage,
-							ImagePullPolicy:          core.PullAlways,
+							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"kube-bench"},
 							Args:                     []string{"--json"},
