@@ -102,6 +102,28 @@ func TestConverter_Convert(t *testing.T) {
 			expectedError:  nil,
 			expectedReport: sampleReport,
 		},
+		{
+			name: "Should convert vulnerability report in JSON format when OS is not detected",
+			input: `2020-06-21T23:10:15.162+0200	WARN	OS is not detected and vulnerabilities in OS packages are not detected.
+null`,
+			expectedError: nil,
+			expectedReport: starboard.VulnerabilityReport{
+				Scanner: starboard.Scanner{
+					Name:    "Trivy",
+					Vendor:  "Aqua Security",
+					Version: "0.9.1",
+				},
+				Summary: starboard.VulnerabilitySummary{
+					CriticalCount: 0,
+					HighCount:     0,
+					MediumCount:   0,
+					LowCount:      0,
+					NoneCount:     0,
+					UnknownCount:  0,
+				},
+				Vulnerabilities: []starboard.VulnerabilityItem{},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

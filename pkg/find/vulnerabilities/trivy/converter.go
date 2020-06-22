@@ -53,11 +53,15 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	if index > 0 {
 		return strings.NewReader(inputAsString[index:]), nil
 	}
+	index = strings.LastIndex(inputAsString, "null")
+	if index > 0 {
+		return strings.NewReader(inputAsString[index:]), nil
+	}
 	return strings.NewReader(inputAsString), nil
 }
 
 func (c *converter) convert(reports []ScanReport) starboard.VulnerabilityReport {
-	var vulnerabilities []starboard.VulnerabilityItem
+	vulnerabilities := make([]starboard.VulnerabilityItem, 0)
 
 	for _, report := range reports {
 		for _, sr := range report.Vulnerabilities {
