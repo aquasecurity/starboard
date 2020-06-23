@@ -22,8 +22,12 @@ import (
 )
 
 const (
-	kubeHunterContainerName  = "kube-hunter"
-	kubeHunterContainerImage = "aquasec/kube-hunter:latest"
+	kubeHunterVersion       = "0.3.1"
+	kubeHunterContainerName = "kube-hunter"
+)
+
+var (
+	kubeHunterContainerImage = fmt.Sprintf("aquasec/kube-hunter:%s", kubeHunterVersion)
 )
 
 type Scanner struct {
@@ -43,28 +47,32 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 
 func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
-	kubeHunterJob := s.prepareKubeHunterJob()
+	job := s.prepareKubeHunterJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, kubeHunterJob))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
 		err = fmt.Errorf("running kube-hunter job: %w", err)
 		return
 	}
 
 	defer func() {
+		if !s.opts.DeleteScanJob {
+			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
+			return
+		}
 		// 5. Delete the kube-hunter Job
-		klog.V(3).Infof("Deleting job: %s/%s", kubeHunterJob.Namespace, kubeHunterJob.Name)
+		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
 		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(kubeHunterJob.Namespace).Delete(ctx, kubeHunterJob.Name, meta.DeleteOptions{
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
 	// 3. Get kube-hunter JSON output from the kube-hunter Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeHunterContainerName,
-		kubeHunterJob.Namespace, kubeHunterJob.Name)
-	logsReader, err := s.pods.GetContainerLogsByJob(ctx, kubeHunterJob, kubeHunterContainerName)
+		job.Namespace, job.Name)
+	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, kubeHunterContainerName)
 	if err != nil {
 		err = fmt.Errorf("getting logs: %w", err)
 		return
@@ -109,7 +117,7 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 						{
 							Name:                     kubeHunterContainerName,
 							Image:                    kubeHunterContainerImage,
-							ImagePullPolicy:          core.PullAlways,
+							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"python", "kube-hunter.py"},
 							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},

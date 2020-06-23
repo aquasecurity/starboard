@@ -22,7 +22,7 @@ func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutp
 		Scanner: starboard.Scanner{
 			Name:    "kube-bench",
 			Vendor:  "Aqua Security",
-			Version: "latest",
+			Version: kubeBenchVersion,
 		},
 		Sections: []starboard.CISKubeBenchSection{},
 	}
