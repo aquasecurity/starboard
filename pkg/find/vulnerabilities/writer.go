@@ -8,5 +8,5 @@ import (
 )
 
 type Writer interface {
-	Write(ctx context.Context, workload kube.Workload, reports map[string]starboard.VulnerabilityReport) error
+	Write(ctx context.Context, workload kube.Object, reports map[string]starboard.VulnerabilityReport) error
 }

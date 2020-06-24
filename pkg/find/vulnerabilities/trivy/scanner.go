@@ -51,7 +51,7 @@ type scanner struct {
 	scanners.Base
 }
 
-func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map[string]sec.VulnerabilityReport, err error) {
+func (s *scanner) Scan(ctx context.Context, workload kube.Object) (reports map[string]sec.VulnerabilityReport, err error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 	podSpec, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *scanner) Scan(ctx context.Context, workload kube.Workload) (reports map
 	return
 }
 
-func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Workload, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
+func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 	job, err := s.prepareJob(ctx, workload, spec)
 	if err != nil {
@@ -101,7 +101,7 @@ func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Workload, spe
 	return s.getScanReportsFor(ctx, job)
 }
 
-func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec core.PodSpec) (*batch.Job, error) {
+func (s *scanner) prepareJob(ctx context.Context, workload kube.Object, spec core.PodSpec) (*batch.Job, error) {
 	credentials, err := s.secrets.GetImagesWithCredentials(ctx, workload.Namespace, spec)
 	if err != nil {
 		return nil, fmt.Errorf("getting docker configs: %w", err)
@@ -179,8 +179,9 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 			Name:      jobName,
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
-				kube.LabelResourceKind: workload.Kind.String(),
-				kube.LabelResourceName: workload.Name,
+				kube.LabelResourceKind:      string(workload.Kind),
+				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceNamespace: workload.Namespace,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -190,7 +191,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Workload, spec c
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind: workload.Kind.String(),
+						kube.LabelResourceKind: string(workload.Kind),
 						kube.LabelResourceName: workload.Name,
 					},
 				},

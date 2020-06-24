@@ -27,10 +27,10 @@ func NewPodManager(clientset kubernetes.Interface) *Manager {
 }
 
 // GetPodSpecByWorkload returns a PodSpec of the specified Workload.
-func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workload) (spec core.PodSpec, err error) {
+func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec core.PodSpec, err error) {
 	ns := workload.Namespace
 	switch workload.Kind {
-	case kube.WorkloadKindPod:
+	case kube.KindPod:
 		var pod *core.Pod
 		pod, err = pw.GetPodByName(ctx, ns, workload.Name)
 		if err != nil {
@@ -38,7 +38,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = pod.Spec
 		return
-	case kube.WorkloadKindReplicaSet:
+	case kube.KindReplicaSet:
 		var rs *apps.ReplicaSet
 		rs, err = pw.clientset.AppsV1().ReplicaSets(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -46,7 +46,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = rs.Spec.Template.Spec
 		return
-	case kube.WorkloadKindReplicationController:
+	case kube.KindReplicationController:
 		var rc *core.ReplicationController
 		rc, err = pw.clientset.CoreV1().ReplicationControllers(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -54,7 +54,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = rc.Spec.Template.Spec
 		return
-	case kube.WorkloadKindDeployment:
+	case kube.KindDeployment:
 		var deploy *apps.Deployment
 		deploy, err = pw.clientset.AppsV1().Deployments(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -62,7 +62,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = deploy.Spec.Template.Spec
 		return
-	case kube.WorkloadKindStatefulSet:
+	case kube.KindStatefulSet:
 		var sts *apps.StatefulSet
 		sts, err = pw.clientset.AppsV1().StatefulSets(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -70,7 +70,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = sts.Spec.Template.Spec
 		return
-	case kube.WorkloadKindDaemonSet:
+	case kube.KindDaemonSet:
 		var ds *apps.DaemonSet
 		ds, err = pw.clientset.AppsV1().DaemonSets(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -78,7 +78,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = ds.Spec.Template.Spec
 		return
-	case kube.WorkloadKindCronJob:
+	case kube.KindCronJob:
 		var cj *batchv1beta1.CronJob
 		cj, err = pw.clientset.BatchV1beta1().CronJobs(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
@@ -86,7 +86,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Workl
 		}
 		spec = cj.Spec.JobTemplate.Spec.Template.Spec
 		return
-	case kube.WorkloadKindJob:
+	case kube.KindJob:
 		var job *batch.Job
 		job, err = pw.clientset.BatchV1().Jobs(ns).Get(ctx, workload.Name, meta.GetOptions{})
 		if err != nil {
