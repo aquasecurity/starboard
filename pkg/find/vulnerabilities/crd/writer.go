@@ -23,7 +23,7 @@ func NewWriter(client clientset.Interface) vulnerabilities.Writer {
 	}
 }
 
-func (s *writer) Write(ctx context.Context, workload kube.Workload, reports map[string]starboard.VulnerabilityReport) (err error) {
+func (s *writer) Write(ctx context.Context, workload kube.Object, reports map[string]starboard.VulnerabilityReport) (err error) {
 	for container, report := range reports {
 		err = s.createVulnerability(ctx, workload, container, report)
 		if err != nil {
@@ -33,14 +33,15 @@ func (s *writer) Write(ctx context.Context, workload kube.Workload, reports map[
 	return
 }
 
-func (s *writer) createVulnerability(ctx context.Context, workload kube.Workload, container string, report starboard.VulnerabilityReport) (err error) {
+func (s *writer) createVulnerability(ctx context.Context, workload kube.Object, container string, report starboard.VulnerabilityReport) (err error) {
 	_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).Create(ctx, &starboard.Vulnerability{
 		ObjectMeta: meta.ObjectMeta{
 			Name: fmt.Sprintf(uuid.New().String()),
 			Labels: map[string]string{
-				kube.LabelResourceKind:  workload.Kind.String(),
-				kube.LabelResourceName:  workload.Name,
-				kube.LabelContainerName: container,
+				kube.LabelResourceKind:      string(workload.Kind),
+				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceNamespace: workload.Namespace,
+				kube.LabelContainerName:     container,
 			},
 		},
 		Report: report,
