@@ -34,12 +34,23 @@ jobs:
       - name: Verify generated code
         run: GOPATH="$(go env GOPATH)" ./hack/verify-codegen.sh
       - name: Run unit tests
-        run: make test
+        run: make unit-tests
       - name: Upload code coverage
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.txt
+      - name: Setup Kubernetes cluster (KIND)
+        uses: engineerd/setup-kind@v0.4.0
+      - name: Test connection to Kubernetes cluster
+        run: |
+          kubectl cluster-info
+      - name: Run integration tests
+        run: |
+          make integration-tests
+          kubectl get crd
+        env:
+          KUBECONFIG: /home/runner/.kube/config
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
