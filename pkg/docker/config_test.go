@@ -34,15 +34,15 @@ func TestReadCredentialsFromBytes(t *testing.T) {
 		{
 			name: "Should return server credentials with encoded username and password",
 			givenJSON: `{
-  "auths": {
-    "https://index.docker.io/v1/": {
-      "auth": "ZG9ja2VyOmh1Yg=="
-    },
-    "harbor.domain": {
-      "auth": "YWRtaW46SGFyYm9yMTIzNDU="
-    }
-  }
-}`,
+						"auths": {
+							"https://index.docker.io/v1/": {
+							"auth": "ZG9ja2VyOmh1Yg=="
+							},
+							"harbor.domain": {
+							"auth": "YWRtaW46SGFyYm9yMTIzNDU="
+							}
+						}
+						}`,
 			expectedCredentials: map[string]ServerCredentials{
 				"harbor.domain": {
 					Auth:     "YWRtaW46SGFyYm9yMTIzNDU=",
@@ -53,6 +53,26 @@ func TestReadCredentialsFromBytes(t *testing.T) {
 					Auth:     "ZG9ja2VyOmh1Yg==",
 					Username: "docker",
 					Password: "hub",
+				},
+			},
+		},
+		{
+			name: "Should skip empty server entries",
+			givenJSON: `{
+						"auths": {
+						"https://index.docker.io/v1/": {
+							
+						},
+						"harbor.domain": {
+							"auth": "YWRtaW46SGFyYm9yMTIzNDU="
+						}
+						}
+					}`,
+			expectedCredentials: map[string]ServerCredentials{
+				"harbor.domain": {
+					Auth:     "YWRtaW46SGFyYm9yMTIzNDU=",
+					Username: "admin",
+					Password: "Harbor12345",
 				},
 			},
 		},
@@ -72,3 +92,4 @@ func TestReadCredentialsFromBytes(t *testing.T) {
 
 	}
 }
+
