@@ -37,15 +37,11 @@ spec:
         report:
           type: object
           required:
-            - generatedAt
             - scanner
             - artifact
             - summary
             - vulnerabilities
           properties:
-            generatedAt:
-              type: string
-              format: date-time
             scanner:
               type: object
               required:

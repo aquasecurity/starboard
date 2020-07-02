@@ -3,9 +3,8 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"io"
-
 	"github.com/aquasecurity/starboard/pkg/scanners"
+	"io"
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -32,8 +31,8 @@ var (
 )
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) vulnerabilities.Scanner {
-	return &scanner{
+func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+	return &Scanner{
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -42,7 +41,7 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) vulnerabi
 	}
 }
 
-type scanner struct {
+type Scanner struct {
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
@@ -51,7 +50,7 @@ type scanner struct {
 	scanners.Base
 }
 
-func (s *scanner) Scan(ctx context.Context, workload kube.Object) (reports map[string]sec.VulnerabilityReport, err error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 	podSpec, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
@@ -66,9 +65,9 @@ func (s *scanner) Scan(ctx context.Context, workload kube.Object) (reports map[s
 	return
 }
 
-func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
+func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, err := s.prepareJob(ctx, workload, spec)
+	job, err := s.PrepareScanJob(ctx, workload, spec)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
@@ -98,10 +97,10 @@ func (s *scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 		return nil, fmt.Errorf("getting scan job: %w", err)
 	}
 
-	return s.getScanReportsFor(ctx, job)
+	return s.GetVulnerabilityReportsByScanJob(ctx, job)
 }
 
-func (s *scanner) prepareJob(ctx context.Context, workload kube.Object, spec core.PodSpec) (*batch.Job, error) {
+func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec core.PodSpec) (*batch.Job, error) {
 	credentials, err := s.secrets.GetImagesWithCredentials(ctx, workload.Namespace, spec)
 	if err != nil {
 		return nil, fmt.Errorf("getting docker configs: %w", err)
@@ -191,8 +190,9 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Object, spec cor
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind: string(workload.Kind),
-						kube.LabelResourceName: workload.Name,
+						kube.LabelResourceKind:      string(workload.Kind),
+						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
 				Spec: core.PodSpec{
@@ -216,7 +216,7 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Object, spec cor
 	}, nil
 }
 
-func (s *scanner) getScanReportsFor(ctx context.Context, job *batch.Job) (reports map[string]sec.VulnerabilityReport, err error) {
+func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
 	reports = make(map[string]sec.VulnerabilityReport)
 
 	for _, c := range job.Spec.Template.Spec.Containers {
