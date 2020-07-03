@@ -68,7 +68,7 @@ status:
     lastScanTime: null
 ```
 
-The `Registry` entity has the `spec` property, which allows specifying trusted repositories. The `status` filed might
+The `Registry` entity has the `spec` property, which allows specifying trusted repositories. The `status` field might
 contain scan status for individual repositories. In the example above, you can see that the `library/nginx` repository
 has already been scanned, whereas the `library/alpine` repository has not.
 
