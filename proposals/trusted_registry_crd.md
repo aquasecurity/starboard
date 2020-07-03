@@ -16,7 +16,7 @@ Common requirements for running secure Kubernetes workloads are:
 - Pull container images only from trusted registries and/or repositories. For example, one might allow pulling
   images from private Harbor repository accessible at https://core.harbor.domain/library/nginx:1.16, but deny pull
   requests to the core.harbor.domain/library/redis:5 or https://docker.io/library/nginx:1.16 repositories.
-- Statically scan container images for critical, high or medium vulnerabilities. In general, these rules are configurable.
+- Statically scan container images, and implement rules to deny workloads that include critical, high or medium vulnerabilities. In general, these rules are configurable (for example, what level of severity will cause an image to be denied).
 - Use a Kubernetes admission controller to deny workloads with non-compliant container images. For example, one may
   allow `kubectl run nginx-pod --image=core.harbor.domain/library/nginx:1.16`, but deny
   `kubectl run redis-pod --image core.harbor.domain/library/redis:5`.
