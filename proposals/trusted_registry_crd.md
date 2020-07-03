@@ -108,8 +108,18 @@ report:
     noneCount: 0
     unknownCount: 3
   vulnerabilities:
-  - id: CVE-2020-1879
-  - id: CVE-2018-2342
+    - vulnerabilityID: CVE-2020-3810
+      resource: apt
+      severity: MEDIUM
+      installedVersion: 1.8.2
+      fixedVersion: 1.8.2.1
+      description: Missing input validation in the ar/tar implementations of APT before
+        version 2.1.2 could result in denial of service when processing specially crafted
+        deb files.
+      links:
+        - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-3810
+        - https://github.com/Debian/apt/issues/111
+    - vulnerabilityID: CVE-2018-2342
 ```
 
 ## Starboard Security Operator supervising Registry entities
