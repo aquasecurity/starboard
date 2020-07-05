@@ -12,6 +12,7 @@ type AquasecurityV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	CISKubeBenchReportsGetter
 	ConfigAuditReportsGetter
+	ContainerVulnerabilitiesGetter
 	KubeHunterReportsGetter
 	VulnerabilitiesGetter
 }
@@ -27,6 +28,10 @@ func (c *AquasecurityV1alpha1Client) CISKubeBenchReports() CISKubeBenchReportInt
 
 func (c *AquasecurityV1alpha1Client) ConfigAuditReports(namespace string) ConfigAuditReportInterface {
 	return newConfigAuditReports(c, namespace)
+}
+
+func (c *AquasecurityV1alpha1Client) ContainerVulnerabilities() ContainerVulnerabilityInterface {
+	return newContainerVulnerabilities(c)
 }
 
 func (c *AquasecurityV1alpha1Client) KubeHunterReports() KubeHunterReportInterface {

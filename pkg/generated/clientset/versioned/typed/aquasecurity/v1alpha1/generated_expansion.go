@@ -6,6 +6,8 @@ type CISKubeBenchReportExpansion interface{}
 
 type ConfigAuditReportExpansion interface{}
 
+type ContainerVulnerabilityExpansion interface{}
+
 type KubeHunterReportExpansion interface{}
 
 type VulnerabilityExpansion interface{}

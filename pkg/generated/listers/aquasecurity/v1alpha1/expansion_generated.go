@@ -14,6 +14,10 @@ type ConfigAuditReportListerExpansion interface{}
 // ConfigAuditReportNamespaceLister.
 type ConfigAuditReportNamespaceListerExpansion interface{}
 
+// ContainerVulnerabilityListerExpansion allows custom methods to be added to
+// ContainerVulnerabilityLister.
+type ContainerVulnerabilityListerExpansion interface{}
+
 // KubeHunterReportListerExpansion allows custom methods to be added to
 // KubeHunterReportLister.
 type KubeHunterReportListerExpansion interface{}

@@ -12,6 +12,8 @@ type Interface interface {
 	CISKubeBenchReports() CISKubeBenchReportInformer
 	// ConfigAuditReports returns a ConfigAuditReportInformer.
 	ConfigAuditReports() ConfigAuditReportInformer
+	// ContainerVulnerabilities returns a ContainerVulnerabilityInformer.
+	ContainerVulnerabilities() ContainerVulnerabilityInformer
 	// KubeHunterReports returns a KubeHunterReportInformer.
 	KubeHunterReports() KubeHunterReportInformer
 	// Vulnerabilities returns a VulnerabilityInformer.
@@ -37,6 +39,11 @@ func (v *version) CISKubeBenchReports() CISKubeBenchReportInformer {
 // ConfigAuditReports returns a ConfigAuditReportInformer.
 func (v *version) ConfigAuditReports() ConfigAuditReportInformer {
 	return &configAuditReportInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ContainerVulnerabilities returns a ContainerVulnerabilityInformer.
+func (v *version) ContainerVulnerabilities() ContainerVulnerabilityInformer {
+	return &containerVulnerabilityInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // KubeHunterReports returns a KubeHunterReportInformer.
