@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -93,6 +94,17 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = job.Spec.Template.Spec
+		return
+	case kube.KindImage:
+		// pseudo pod spec
+		spec = core.PodSpec{
+			Containers: []core.Container{
+				{
+					Name:  "image",
+					Image: workload.Name,
+				},
+			},
+		}
 		return
 	}
 	err = fmt.Errorf("unrecognized workload: %s", workload.Kind)

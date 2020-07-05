@@ -23,6 +23,9 @@ const (
 
 	KindNode Kind = "Node"
 
+	// pseudo Kind
+	KindImage Kind = "Image"
+
 	KindPod                   Kind = "Pod"
 	KindReplicaSet            Kind = "ReplicaSet"
 	KindReplicationController Kind = "ReplicationController"
@@ -65,6 +68,8 @@ func KindFromResource(resource string) (Kind, error) {
 		return KindCronJob, nil
 	case "jobs.batch", "job.batch", "jobs", "job":
 		return KindJob, nil
+	case "image", "img":
+		return KindImage, nil
 	}
 	return KindUnknown, fmt.Errorf("unrecognized resource: %s", resource)
 }
