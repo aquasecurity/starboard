@@ -3,8 +3,9 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/scanners"
 	"io"
+	"strings"
+	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -28,6 +29,9 @@ const (
 
 var (
 	trivyImageRef = fmt.Sprintf("docker.io/aquasec/trivy:%s", trivyVersion)
+
+	// label doesn't allow "/" and ":" used in an image name
+	labelReplacer = strings.NewReplacer("/", "_", ":", "-")
 )
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
@@ -179,7 +183,7 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
-				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceName:      labelReplacer.Replace(workload.Name),
 				kube.LabelResourceNamespace: workload.Namespace,
 			},
 		},
@@ -191,7 +195,7 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
 						kube.LabelResourceKind:      string(workload.Kind),
-						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceName:      labelReplacer.Replace(workload.Name),
 						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
