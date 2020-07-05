@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/google/go-containerregistry/pkg/name"
 )
 
 // Converter is the interface that wraps the Convert method.
@@ -14,7 +15,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(reader io.Reader) (starboard.VulnerabilityReport, error)
+	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityReport, error)
 }
 
 type converter struct {
@@ -26,7 +27,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityReport, err error) {
+func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityReport, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -37,6 +38,14 @@ func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityRep
 		return
 	}
 	report = c.convert(scanReports)
+
+	ref, err := name.ParseReference(imageRef)
+	if err != nil {
+		return
+	}
+	report.Artifact = c.toArtifact(ref)
+	report.Registry = c.toRegistry(ref)
+
 	return
 }
 
@@ -113,4 +122,24 @@ func (c *converter) toSummary(vulnerabilities []starboard.VulnerabilityItem) (vs
 		}
 	}
 	return
+}
+
+func (c *converter) toArtifact(imageRef name.Reference) starboard.Artifact {
+	artifact := starboard.Artifact{
+		Repository: imageRef.Context().RepositoryStr(),
+	}
+	switch t := imageRef.(type) {
+	case name.Tag:
+		artifact.Tag = t.TagStr()
+	case name.Digest:
+		artifact.Digest = t.DigestStr()
+	}
+
+	return artifact
+}
+
+func (c *converter) toRegistry(imageRef name.Reference) starboard.Registry {
+	return starboard.Registry{
+		URL: imageRef.Context().RegistryStr(),
+	}
 }

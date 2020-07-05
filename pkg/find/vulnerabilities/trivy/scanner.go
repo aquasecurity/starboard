@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
@@ -230,7 +231,9 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return
 		}
-		reports[c.Name], err = s.converter.Convert(logReader)
+
+		imageRef := c.Args[len(c.Args)-1]
+		reports[c.Name], err = s.converter.Convert(imageRef, logReader)
 		_ = logReader.Close()
 		if err != nil {
 			return
