@@ -2,10 +2,12 @@ package kube
 
 import (
 	"context"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -142,6 +144,11 @@ exemptions:
 `
 )
 
+var (
+	crds = []extv1beta1.CustomResourceDefinition{starboard.VulnerabilitiesCRD, starboard.ContainerVulnerabilitiesCRD,
+		starboard.CISKubeBenchReportCRD, starboard.KubeHunterReportCRD, starboard.ConfigAuditReportCRD}
+)
+
 // TODO This is no longer CRManager as we're creating other resources, such as ClusterRoles and ConfigMaps
 // CRManager defined methods for managing Kubernetes custom resources.
 type CRManager interface {
@@ -163,25 +170,13 @@ func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.Apiextensi
 }
 
 func (m *crManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilitiesCRD)
-	if err != nil {
-		return
+	for _, crd := range crds {
+		err = m.createOrUpdateCRD(ctx, &crd)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = m.createOrUpdateCRD(ctx, &starboard.CISKubeBenchReportCRD)
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateCRD(ctx, &starboard.KubeHunterReportCRD)
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateCRD(ctx, &starboard.ConfigAuditReportCRD)
-	if err != nil {
-		return
-	}
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 
 	err = m.createNamespaceIfNotFound(ctx, NamespaceStarboard)
