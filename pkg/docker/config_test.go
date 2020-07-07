@@ -92,4 +92,3 @@ func TestReadCredentialsFromBytes(t *testing.T) {
 
 	}
 }
-
