@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -13,17 +15,17 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type writer struct {
+type ReadWriter struct {
 	client clientset.Interface
 }
 
-func NewWriter(client clientset.Interface) vulnerabilities.Writer {
-	return &writer{
+func NewReadWriter(client clientset.Interface) *ReadWriter {
+	return &ReadWriter{
 		client: client,
 	}
 }
 
-func (s *writer) Write(ctx context.Context, workload kube.Object, reports map[string]starboard.VulnerabilityReport) (err error) {
+func (s *ReadWriter) Write(ctx context.Context, workload kube.Object, reports vulnerabilities.WorkloadVulnerabilities) (err error) {
 	for container, report := range reports {
 		err = s.createVulnerability(ctx, workload, container, report)
 		if err != nil {
@@ -33,7 +35,7 @@ func (s *writer) Write(ctx context.Context, workload kube.Object, reports map[st
 	return
 }
 
-func (s *writer) createVulnerability(ctx context.Context, workload kube.Object, container string, report starboard.VulnerabilityReport) (err error) {
+func (s *ReadWriter) createVulnerability(ctx context.Context, workload kube.Object, container string, report starboard.VulnerabilityReport) (err error) {
 	_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).Create(ctx, &starboard.Vulnerability{
 		ObjectMeta: meta.ObjectMeta{
 			Name: fmt.Sprintf(uuid.New().String()),
@@ -48,4 +50,24 @@ func (s *writer) createVulnerability(ctx context.Context, workload kube.Object, 
 	}, meta.CreateOptions{})
 
 	return err
+}
+
+func (s *ReadWriter) Read(ctx context.Context, workload kube.Object) (vulnerabilities.WorkloadVulnerabilities, error) {
+	list, err := s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).List(ctx, meta.ListOptions{
+		LabelSelector: labels.Set{
+			kube.LabelResourceKind:      string(workload.Kind),
+			kube.LabelResourceName:      workload.Name,
+			kube.LabelResourceNamespace: workload.Namespace,
+		}.String(),
+	})
+	if err != nil {
+		return vulnerabilities.WorkloadVulnerabilities{}, err
+	}
+	reports := make(map[string]starboard.VulnerabilityReport)
+	for _, item := range list.Items {
+		if container, ok := item.Labels[kube.LabelContainerName]; ok {
+			reports[container] = item.Report
+		}
+	}
+	return reports, nil
 }

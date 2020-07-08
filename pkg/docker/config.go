@@ -47,4 +47,3 @@ func encodeAuth(config map[string]ServerCredentials) (encodedConfig map[string]S
 	}
 	return
 }
-

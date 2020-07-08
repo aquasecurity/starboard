@@ -3,10 +3,18 @@ package vulnerabilities
 import (
 	"context"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 )
 
 type Writer interface {
-	Write(ctx context.Context, workload kube.Object, reports map[string]starboard.VulnerabilityReport) error
+	Write(ctx context.Context, workload kube.Object, reports WorkloadVulnerabilities) error
+}
+
+type Reader interface {
+	Read(ctx context.Context, workload kube.Object) (WorkloadVulnerabilities, error)
+}
+
+type ReadWriter interface {
+	Reader
+	Writer
 }
