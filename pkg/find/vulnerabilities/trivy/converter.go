@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/google/go-containerregistry/pkg/name"
 )
 
 // Converter is the interface that wraps the Convert method.
@@ -14,7 +15,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(reader io.Reader) (starboard.VulnerabilityReport, error)
+	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityReport, error)
 }
 
 type converter struct {
@@ -26,7 +27,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityReport, err error) {
+func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityReport, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -36,8 +37,7 @@ func (c *converter) Convert(reader io.Reader) (report starboard.VulnerabilityRep
 	if err != nil {
 		return
 	}
-	report = c.convert(scanReports)
-	return
+	return c.convert(imageRef, scanReports)
 }
 
 // TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
@@ -60,7 +60,7 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	return strings.NewReader(inputAsString), nil
 }
 
-func (c *converter) convert(reports []ScanReport) starboard.VulnerabilityReport {
+func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.VulnerabilityReport, error) {
 	vulnerabilities := make([]starboard.VulnerabilityItem, 0)
 
 	for _, report := range reports {
@@ -79,15 +79,22 @@ func (c *converter) convert(reports []ScanReport) starboard.VulnerabilityReport 
 		}
 	}
 
+	registry, artifact, err := c.parseImageRef(imageRef)
+	if err != nil {
+		return starboard.VulnerabilityReport{}, nil
+	}
+
 	return starboard.VulnerabilityReport{
 		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
 			Version: trivyVersion,
 		},
+		Registry:        registry,
+		Artifact:        artifact,
 		Summary:         c.toSummary(vulnerabilities),
 		Vulnerabilities: vulnerabilities,
-	}
+	}, nil
 }
 
 func (c *converter) toLinks(references []string) []string {
@@ -113,4 +120,25 @@ func (c *converter) toSummary(vulnerabilities []starboard.VulnerabilityItem) (vs
 		}
 	}
 	return
+}
+
+func (c *converter) parseImageRef(imageRef string) (starboard.Registry, starboard.Artifact, error) {
+	ref, err := name.ParseReference(imageRef)
+	if err != nil {
+		return starboard.Registry{}, starboard.Artifact{}, err
+	}
+	registry := starboard.Registry{
+		URL: ref.Context().RegistryStr(),
+	}
+	artifact := starboard.Artifact{
+		Repository: ref.Context().RepositoryStr(),
+	}
+	switch t := ref.(type) {
+	case name.Tag:
+		artifact.Tag = t.TagStr()
+	case name.Digest:
+		artifact.Digest = t.DigestStr()
+	}
+
+	return registry, artifact, nil
 }

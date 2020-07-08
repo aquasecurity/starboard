@@ -3,8 +3,9 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/scanners"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -226,7 +227,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return
 		}
-		reports[c.Name], err = s.converter.Convert(logReader)
+		reports[c.Name], err = s.converter.Convert(c.Image, logReader)
 		_ = logReader.Close()
 		if err != nil {
 			return
