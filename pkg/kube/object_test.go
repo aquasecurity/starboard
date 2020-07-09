@@ -71,3 +71,17 @@ func TestObjectFromLabelsSet(t *testing.T) {
 		})
 	}
 }
+
+func TestContainerImages_AsJSON_And_FromJSON(t *testing.T) {
+	containerImages := ContainerImages{
+		"nginx": "nginx:1.16",
+		"redis": "core.harbor.domain:8443/library/redis:5",
+	}
+	value, err := containerImages.AsJSON()
+	require.NoError(t, err)
+
+	newContainerImages := ContainerImages{}
+	err = newContainerImages.FromJSON(value)
+	require.NoError(t, err)
+	assert.Equal(t, containerImages, newContainerImages)
+}
