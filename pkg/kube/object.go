@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -67,4 +68,19 @@ func KindFromResource(resource string) (Kind, error) {
 		return KindJob, nil
 	}
 	return KindUnknown, fmt.Errorf("unrecognized resource: %s", resource)
+}
+
+// ContainerImages is a simple structure to hold the mapping between container names and container image references.
+type ContainerImages map[string]string
+
+func (ci ContainerImages) AsJSON() (string, error) {
+	writer, err := json.Marshal(ci)
+	if err != nil {
+		return "", err
+	}
+	return string(writer), nil
+}
+
+func (ci ContainerImages) FromJSON(value string) error {
+	return json.Unmarshal([]byte(value), &ci)
 }

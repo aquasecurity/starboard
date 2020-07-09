@@ -133,8 +133,12 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		},
 	}
 
+	containerImages := kube.ContainerImages{}
+
 	scanJobContainers := make([]core.Container, len(spec.Containers))
 	for i, c := range spec.Containers {
+		containerImages[c.Name] = c.Image
+
 		var envs []core.EnvVar
 		if dockerConfig, ok := credentials[c.Image]; ok {
 			envs = append(envs, core.EnvVar{
@@ -174,6 +178,11 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		}
 	}
 
+	containerImagesAsJSON, err := containerImages.AsJSON()
+	if err != nil {
+		return nil, err
+	}
+
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      jobName,
@@ -182,6 +191,9 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				kube.LabelResourceKind:      string(workload.Kind),
 				kube.LabelResourceName:      workload.Name,
 				kube.LabelResourceNamespace: workload.Namespace,
+			},
+			Annotations: map[string]string{
+				kube.AnnotationContainerImages: containerImagesAsJSON,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -220,6 +232,21 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
 	reports = make(map[string]sec.VulnerabilityReport)
 
+	var containerImagesAsJSON string
+	var ok bool
+
+	if containerImagesAsJSON, ok = job.Annotations[kube.AnnotationContainerImages]; !ok {
+		err = fmt.Errorf("scan job does not have required annotation: %s", kube.AnnotationContainerImages)
+		return
+
+	}
+	containerImages := kube.ContainerImages{}
+	err = containerImages.FromJSON(containerImagesAsJSON)
+	if err != nil {
+		err = fmt.Errorf("reading scan job annotation: %s: %w", kube.AnnotationContainerImages, err)
+		return
+	}
+
 	for _, c := range job.Spec.Template.Spec.Containers {
 		klog.V(3).Infof("Getting logs for %s container in job: %s/%s", c.Name, job.Namespace, job.Name)
 		var logReader io.ReadCloser
@@ -227,7 +254,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return
 		}
-		reports[c.Name], err = s.converter.Convert(c.Image, logReader)
+		reports[c.Name], err = s.converter.Convert(containerImages[c.Name], logReader)
 		_ = logReader.Close()
 		if err != nil {
 			return

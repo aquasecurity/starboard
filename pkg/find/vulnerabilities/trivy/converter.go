@@ -81,7 +81,7 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.Vu
 
 	registry, artifact, err := c.parseImageRef(imageRef)
 	if err != nil {
-		return starboard.VulnerabilityReport{}, nil
+		return starboard.VulnerabilityReport{}, err
 	}
 
 	return starboard.VulnerabilityReport{
