@@ -124,11 +124,11 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
 							Resources: core.ResourceRequirements{
 								Limits: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("0.3"),
+									core.ResourceCPU:    resource.MustParse("300m"),
 									core.ResourceMemory: resource.MustParse("400M"),
 								},
 								Requests: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("0.05"),
+									core.ResourceCPU:    resource.MustParse("50m"),
 									core.ResourceMemory: resource.MustParse("100M"),
 								},
 							},

@@ -126,11 +126,11 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Resources: core.ResourceRequirements{
 								Limits: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("0.3"),
+									core.ResourceCPU:    resource.MustParse("300m"),
 									core.ResourceMemory: resource.MustParse("300M"),
 								},
 								Requests: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("0.05"),
+									core.ResourceCPU:    resource.MustParse("50m"),
 									core.ResourceMemory: resource.MustParse("50M"),
 								},
 							},

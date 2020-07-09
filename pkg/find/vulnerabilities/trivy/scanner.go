@@ -167,11 +167,11 @@ func (s *scanner) prepareJob(ctx context.Context, workload kube.Object, spec cor
 			},
 			Resources: core.ResourceRequirements{
 				Limits: core.ResourceList{
-					core.ResourceCPU:    resource.MustParse("0.5"),
+					core.ResourceCPU:    resource.MustParse("500m"),
 					core.ResourceMemory: resource.MustParse("500M"),
 				},
 				Requests: core.ResourceList{
-					core.ResourceCPU:    resource.MustParse("0.10"),
+					core.ResourceCPU:    resource.MustParse("100m"),
 					core.ResourceMemory: resource.MustParse("100M"),
 				},
 			},
