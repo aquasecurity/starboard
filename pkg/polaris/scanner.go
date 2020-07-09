@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -123,6 +124,16 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 							Image:                    polarisContainerImage,
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							Resources: core.ResourceRequirements{
+								Limits: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("300m"),
+									core.ResourceMemory: resource.MustParse("300M"),
+								},
+								Requests: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("50m"),
+									core.ResourceMemory: resource.MustParse("50M"),
+								},
+							},
 							VolumeMounts: []core.VolumeMount{
 								{
 									Name:      polarisConfigVolume,

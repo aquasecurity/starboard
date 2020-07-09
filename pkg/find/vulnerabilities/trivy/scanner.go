@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
@@ -167,6 +168,16 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				"--format",
 				"json",
 				c.Image,
+			},
+			Resources: core.ResourceRequirements{
+				Limits: core.ResourceList{
+					core.ResourceCPU:    resource.MustParse("500m"),
+					core.ResourceMemory: resource.MustParse("500M"),
+				},
+				Requests: core.ResourceList{
+					core.ResourceCPU:    resource.MustParse("100m"),
+					core.ResourceMemory: resource.MustParse("100M"),
+				},
 			},
 			VolumeMounts: []core.VolumeMount{
 				{
