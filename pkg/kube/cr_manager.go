@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -307,6 +308,15 @@ func (m *crManager) cleanupPolaris(ctx context.Context) (err error) {
 	return nil
 }
 
+func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
+	klog.V(3).Infof("Deleting Namespace %s", NamespaceStarboard)
+	err = m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return
+	}
+	return nil
+}
+
 func (m *crManager) createNamespaceIfNotFound(ctx context.Context, name string) (err error) {
 	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, name, meta.GetOptions{})
 	switch {
@@ -442,6 +452,10 @@ func (m *crManager) Cleanup(ctx context.Context) (err error) {
 		return
 	}
 	err = m.cleanupPolaris(ctx)
+	if err != nil {
+		return
+	}
+	err = m.cleanupNamespace(ctx)
 	if err != nil {
 		return
 	}
