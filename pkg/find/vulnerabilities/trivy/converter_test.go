@@ -1,6 +1,7 @@
 package trivy
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -141,6 +142,12 @@ null`,
 				},
 				Vulnerabilities: []starboard.VulnerabilityItem{},
 			},
+		},
+		{
+			name:          "Should return error when image reference cannot be parsed",
+			imageRef:      ":",
+			input:         "null",
+			expectedError: errors.New("could not parse reference: :"),
 		},
 	}
 
