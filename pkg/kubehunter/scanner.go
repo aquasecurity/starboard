@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
@@ -121,6 +122,16 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"python", "kube-hunter.py"},
 							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
+							Resources: core.ResourceRequirements{
+								Limits: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("0.3"),
+									core.ResourceMemory: resource.MustParse("400M"),
+								},
+								Requests: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("0.05"),
+									core.ResourceMemory: resource.MustParse("100M"),
+								},
+							},
 						},
 					},
 				},
