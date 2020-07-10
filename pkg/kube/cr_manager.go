@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	polarisConfigYAML = `---
-checks:
+	polarisConfigYAML = `checks:
   # reliability
   multipleReplicasForDeployment: ignore
   priorityClassNotSet: ignore
