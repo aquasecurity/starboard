@@ -23,7 +23,6 @@ import (
 
 const (
 	polarisContainerName = "polaris"
-	// TODO: The latest semver tagged image 0.6.0 doesn't return audit checks ?!
 	polarisContainerImage = "quay.io/fairwinds/polaris:1.1.0"
 	polarisConfigVolume   = "config-volume"
 	polarisConfigMap      = "polaris"
