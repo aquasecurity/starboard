@@ -35,6 +35,10 @@ func (s *Manager) GetImagesWithCredentials(ctx context.Context, namespace string
 		server := s.GetServerFromImage(image)
 		if ce, ok := serverCredentials[server]; ok {
 			credentials[image] = ce
+		} else if ce, ok := serverCredentials["http://"+server]; ok {
+			credentials[image] = ce
+		} else if ce, ok := serverCredentials["https://"+server]; ok {
+			credentials[image] = ce
 		}
 	}
 
