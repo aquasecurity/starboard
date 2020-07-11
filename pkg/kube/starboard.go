@@ -28,7 +28,8 @@ const (
 )
 
 const (
-	AnnotationHistoryLimit = "starboard.history.limit"
+	AnnotationHistoryLimit    = "starboard.history.limit"
+	AnnotationContainerImages = "starboard.container-images"
 )
 
 // ScannerOpts holds configuration of the vulnerability Scanner.

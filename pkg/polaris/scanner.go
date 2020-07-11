@@ -17,14 +17,14 @@ import (
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
 	polarisContainerName = "polaris"
-	// TODO: The latest semver tagged image 0.6.0 doesn't return audit checks ?!
-	polarisContainerImage = "quay.io/fairwinds/polaris:cfc0d213cd603793d8e36eecfb0def1579a34997"
+	polarisContainerImage = "quay.io/fairwinds/polaris:1.1.0"
 	polarisConfigVolume   = "config-volume"
 	polarisConfigMap      = "polaris"
 )
@@ -123,6 +123,16 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 							Image:                    polarisContainerImage,
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							Resources: core.ResourceRequirements{
+								Limits: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("300m"),
+									core.ResourceMemory: resource.MustParse("300M"),
+								},
+								Requests: core.ResourceList{
+									core.ResourceCPU:    resource.MustParse("50m"),
+									core.ResourceMemory: resource.MustParse("50M"),
+								},
+							},
 							VolumeMounts: []core.VolumeMount{
 								{
 									Name:      polarisConfigVolume,
@@ -130,7 +140,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 								},
 							},
 							Command: []string{"polaris"},
-							Args:    []string{"audit", "--log-level", "error"},
+							Args:    []string{"audit", "--log-level", "error", "--config", "/examples/config.yaml"},
 						},
 					},
 				},

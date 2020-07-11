@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -14,15 +15,17 @@ import (
 )
 
 const (
-	polarisConfigYAML = `---
-checks:
+	polarisConfigYAML = `checks:
+  # reliability
+  multipleReplicasForDeployment: ignore
+  priorityClassNotSet: ignore
   # resources
   cpuRequestsMissing: warning
   cpuLimitsMissing: warning
   memoryRequestsMissing: warning
   memoryLimitsMissing: warning
   # images
-  tagNotSpecified: error
+  tagNotSpecified: danger
   pullPolicyNotAlways: ignore
   # healthChecks
   readinessProbeMissing: warning
@@ -31,114 +34,170 @@ checks:
   hostNetworkSet: warning
   hostPortSet: warning
   # security
-  hostIPCSet: error
-  hostPIDSet: error
-  notReadOnlyRootFileSystem: warning
-  privilegeEscalationAllowed: error
+  hostIPCSet: danger
+  hostPIDSet: danger
+  notReadOnlyRootFilesystem: warning
+  privilegeEscalationAllowed: danger
   runAsRootAllowed: warning
-  runAsPrivileged: error
-  dangerousCapabilities: error
+  runAsPrivileged: danger
+  dangerousCapabilities: danger
   insecureCapabilities: warning
-controllersToScan:
-  - Deployments
-  - StatefulSets
-  - DaemonSets
-  - CronJobs
-  - Jobs
-  - ReplicationControllers
 exemptions:
   - controllerNames:
-      - dns-controller
-      - datadog-datadog
-      - kube-flannel-ds
-      - kube2iam
-      - aws-iam-authenticator
-      - datadog
-      - kube2iam
+    - kube-apiserver
+    - kube-proxy
+    - kube-scheduler
+    - etcd-manager-events
+    - kube-controller-manager
+    - kube-dns
+    - etcd-manager-main
     rules:
-      - hostNetworkSet
+    - hostPortSet
+    - hostNetworkSet
+    - readinessProbeMissing
+    - livenessProbeMissing
+    - cpuRequestsMissing
+    - cpuLimitsMissing
+    - memoryRequestsMissing
+    - memoryLimitsMissing
+    - runAsRootAllowed
+    - runAsPrivileged
+    - notReadOnlyRootFilesystem
+    - hostPIDSet
   - controllerNames:
-      - aws-iam-authenticator
-      - aws-cluster-autoscaler
-      - kube-state-metrics
-      - dns-controller
-      - external-dns
-      - dnsmasq
-      - autoscaler
-      - kubernetes-dashboard
-      - install-cni
-      - kube2iam
+    - kube-flannel-ds
     rules:
-      - readinessProbeMissing
-      - livenessProbeMissing
+    - notReadOnlyRootFilesystem
+    - runAsRootAllowed
+    - notReadOnlyRootFilesystem
+    - readinessProbeMissing
+    - livenessProbeMissing
+    - cpuLimitsMissing
   - controllerNames:
-      - aws-iam-authenticator
-      - nginx-ingress-controller
-      - nginx-ingress-default-backend
-      - aws-cluster-autoscaler
-      - kube-state-metrics
-      - dns-controller
-      - external-dns
-      - kubedns
-      - dnsmasq
-      - autoscaler
-      - tiller
-      - kube2iam
+    - cert-manager
     rules:
-      - runAsRootAllowed
+    - notReadOnlyRootFilesystem
+    - runAsRootAllowed
+    - readinessProbeMissing
+    - livenessProbeMissing
   - controllerNames:
-      - aws-iam-authenticator
-      - nginx-ingress-controller
-      - nginx-ingress-default-backend
-      - aws-cluster-autoscaler
-      - kube-state-metrics
-      - dns-controller
-      - external-dns
-      - kubedns
-      - dnsmasq
-      - autoscaler
-      - tiller
-      - kube2iam
+    - cluster-autoscaler
     rules:
-      - notReadOnlyRootFileSystem
+    - notReadOnlyRootFilesystem
+    - runAsRootAllowed
+    - readinessProbeMissing
   - controllerNames:
-      - cert-manager
-      - dns-controller
-      - kubedns
-      - dnsmasq
-      - autoscaler
-      - insights-agent-goldilocks-vpa-install
+    - vpa
     rules:
-      - cpuRequestsMissing
-      - cpuLimitsMissing
-      - memoryRequestsMissing
-      - memoryLimitsMissing
+    - runAsRootAllowed
+    - readinessProbeMissing
+    - livenessProbeMissing
+    - notReadOnlyRootFilesystem
   - controllerNames:
-      - kube2iam
-      - kube-flannel-ds
+    - datadog
     rules:
-      - runAsPrivileged
+    - runAsRootAllowed
+    - readinessProbeMissing
+    - livenessProbeMissing
+    - notReadOnlyRootFilesystem
   - controllerNames:
-      - kube-hunter
+    - nginx-ingress-controller
     rules:
-      - hostPIDSet
+    - privilegeEscalationAllowed
+    - insecureCapabilities
+    - runAsRootAllowed
   - controllerNames:
-      - polaris
-      - kube-hunter
-      - goldilocks
-      - insights-agent-goldilocks-vpa-install
+    - dns-controller
+    - datadog-datadog
+    - kube-flannel-ds
+    - kube2iam
+    - aws-iam-authenticator
+    - datadog
+    - kube2iam
     rules:
-      - notReadOnlyRootFileSystem
+    - hostNetworkSet
   - controllerNames:
-      - insights-agent-goldilocks-controller
+    - aws-iam-authenticator
+    - aws-cluster-autoscaler
+    - kube-state-metrics
+    - dns-controller
+    - external-dns
+    - dnsmasq
+    - autoscaler
+    - kubernetes-dashboard
+    - install-cni
+    - kube2iam
     rules:
-      - livenessProbeMissing
-      - readinessProbeMissing
+    - readinessProbeMissing
+    - livenessProbeMissing
   - controllerNames:
-      - insights-agent-goldilocks-vpa-install
-      - kube-hunter
+    - aws-iam-authenticator
+    - nginx-ingress-default-backend
+    - aws-cluster-autoscaler
+    - kube-state-metrics
+    - dns-controller
+    - external-dns
+    - kubedns
+    - dnsmasq
+    - autoscaler
+    - tiller
+    - kube2iam
     rules:
-      - runAsRootAllowed
+    - runAsRootAllowed
+  - controllerNames:
+    - aws-iam-authenticator
+    - nginx-ingress-controller
+    - nginx-ingress-default-backend
+    - aws-cluster-autoscaler
+    - kube-state-metrics
+    - dns-controller
+    - external-dns
+    - kubedns
+    - dnsmasq
+    - autoscaler
+    - tiller
+    - kube2iam
+    rules:
+    - notReadOnlyRootFilesystem
+  - controllerNames:
+    - cert-manager
+    - dns-controller
+    - kubedns
+    - dnsmasq
+    - autoscaler
+    - insights-agent-goldilocks-vpa-install
+    - datadog
+    rules:
+    - cpuRequestsMissing
+    - cpuLimitsMissing
+    - memoryRequestsMissing
+    - memoryLimitsMissing
+  - controllerNames:
+    - kube2iam
+    - kube-flannel-ds
+    rules:
+    - runAsPrivileged
+  - controllerNames:
+    - kube-hunter
+    rules:
+    - hostPIDSet
+  - controllerNames:
+    - polaris
+    - kube-hunter
+    - goldilocks
+    - insights-agent-goldilocks-vpa-install
+    rules:
+    - notReadOnlyRootFilesystem
+  - controllerNames:
+    - insights-agent-goldilocks-controller
+    rules:
+    - livenessProbeMissing
+    - readinessProbeMissing
+  - controllerNames:
+    - insights-agent-goldilocks-vpa-install
+    - kube-hunter
+    rules:
+    - runAsRootAllowed
 `
 )
 
@@ -307,6 +366,15 @@ func (m *crManager) cleanupPolaris(ctx context.Context) (err error) {
 	return nil
 }
 
+func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
+	klog.V(3).Infof("Deleting Namespace %s", NamespaceStarboard)
+	err = m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return
+	}
+	return nil
+}
+
 func (m *crManager) createNamespaceIfNotFound(ctx context.Context, name string) (err error) {
 	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, name, meta.GetOptions{})
 	switch {
@@ -442,6 +510,10 @@ func (m *crManager) Cleanup(ctx context.Context) (err error) {
 		return
 	}
 	err = m.cleanupPolaris(ctx)
+	if err != nil {
+		return
+	}
+	err = m.cleanupNamespace(ctx)
 	if err != nil {
 		return
 	}

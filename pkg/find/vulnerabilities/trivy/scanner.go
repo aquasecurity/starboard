@@ -3,8 +3,9 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/scanners"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
@@ -132,8 +134,12 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		},
 	}
 
+	containerImages := kube.ContainerImages{}
+
 	scanJobContainers := make([]core.Container, len(spec.Containers))
 	for i, c := range spec.Containers {
+		containerImages[c.Name] = c.Image
+
 		var envs []core.EnvVar
 		if dockerConfig, ok := credentials[c.Image]; ok {
 			envs = append(envs, core.EnvVar{
@@ -163,6 +169,16 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				"json",
 				c.Image,
 			},
+			Resources: core.ResourceRequirements{
+				Limits: core.ResourceList{
+					core.ResourceCPU:    resource.MustParse("500m"),
+					core.ResourceMemory: resource.MustParse("500M"),
+				},
+				Requests: core.ResourceList{
+					core.ResourceCPU:    resource.MustParse("100m"),
+					core.ResourceMemory: resource.MustParse("100M"),
+				},
+			},
 			VolumeMounts: []core.VolumeMount{
 				{
 					Name:      "data",
@@ -173,6 +189,11 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		}
 	}
 
+	containerImagesAsJSON, err := containerImages.AsJSON()
+	if err != nil {
+		return nil, err
+	}
+
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      jobName,
@@ -181,6 +202,9 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				kube.LabelResourceKind:      string(workload.Kind),
 				kube.LabelResourceName:      workload.Name,
 				kube.LabelResourceNamespace: workload.Namespace,
+			},
+			Annotations: map[string]string{
+				kube.AnnotationContainerImages: containerImagesAsJSON,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -219,6 +243,21 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
 	reports = make(map[string]sec.VulnerabilityReport)
 
+	var containerImagesAsJSON string
+	var ok bool
+
+	if containerImagesAsJSON, ok = job.Annotations[kube.AnnotationContainerImages]; !ok {
+		err = fmt.Errorf("scan job does not have required annotation: %s", kube.AnnotationContainerImages)
+		return
+
+	}
+	containerImages := kube.ContainerImages{}
+	err = containerImages.FromJSON(containerImagesAsJSON)
+	if err != nil {
+		err = fmt.Errorf("reading scan job annotation: %s: %w", kube.AnnotationContainerImages, err)
+		return
+	}
+
 	for _, c := range job.Spec.Template.Spec.Containers {
 		klog.V(3).Infof("Getting logs for %s container in job: %s/%s", c.Name, job.Namespace, job.Name)
 		var logReader io.ReadCloser
@@ -226,7 +265,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return
 		}
-		reports[c.Name], err = s.converter.Convert(logReader)
+		reports[c.Name], err = s.converter.Convert(containerImages[c.Name], logReader)
 		_ = logReader.Close()
 		if err != nil {
 			return

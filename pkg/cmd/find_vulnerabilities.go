@@ -78,7 +78,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(starboardClientset).Write(ctx, workload, reports)
+			err = crd.NewReadWriter(starboardClientset).Write(ctx, workload, reports)
 			return
 		},
 	}

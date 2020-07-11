@@ -29,13 +29,15 @@ func ReadCredentialsFromBytes(contents []byte) (cfg map[string]ServerCredentials
 func encodeAuth(config map[string]ServerCredentials) (encodedConfig map[string]ServerCredentials, err error) {
 	encodedConfig = make(map[string]ServerCredentials)
 	for server, entry := range config {
+		if (ServerCredentials{}) == entry {
+			continue
+		}
 		var decodedAuth []byte
 		decodedAuth, err = base64.StdEncoding.DecodeString(entry.Auth)
 		if err != nil {
 			return
 		}
 		splitDecodedAuth := strings.Split(string(decodedAuth), ":")
-
 		encodedConfig[server] = ServerCredentials{
 			Auth:     entry.Auth,
 			Username: splitDecodedAuth[0],
