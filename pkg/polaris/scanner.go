@@ -23,7 +23,7 @@ import (
 
 const (
 	polarisContainerName = "polaris"
-	polarisContainerImage = "quay.io/fairwinds/polaris:1.1.0"
+	polarisContainerImage = "danielsagi/polaris:latest"
 	polarisConfigVolume   = "config-volume"
 	polarisConfigMap      = "polaris"
 )
@@ -45,8 +45,8 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
-	job := s.preparePolarisJob()
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports []starboard.ConfigAudit, err error) {
+	job := s.preparePolarisJob(workload)
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
@@ -82,13 +82,17 @@ func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, er
 	return
 }
 
-func (s *Scanner) preparePolarisJob() *batch.Job {
+func (s *Scanner) preparePolarisJob(workload kube.Object) *batch.Job {
+	workloadFullName := fmt.Sprintf("%s/%s/v1/%s", workload.Namespace, workload.Kind, workload.Name)
+	klog.V(5).Infof("Formatting scan job for %s", workloadFullName)
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
-				"app": "polaris",
+				kube.LabelResourceKind:      string(workload.Kind),
+				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceNamespace: workload.Namespace,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -98,7 +102,9 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						"app": "polaris",
+						kube.LabelResourceKind:      string(workload.Kind),
+						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
 				Spec: core.PodSpec{
@@ -129,7 +135,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 								},
 							},
 							Command: []string{"polaris"},
-							Args:    []string{"audit", "--log-level", "error", "--config", "/examples/config.yaml"},
+							Args:    []string{"audit", "--log-level", "error", "--config", "/examples/config.yaml", "--resource", workloadFullName},
 						},
 					},
 				},
