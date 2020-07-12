@@ -26,6 +26,7 @@ import (
 const (
 	kubeBenchVersion       = "0.3.0"
 	kubeBenchContainerName = "kube-bench"
+	masterNodeLabel        = "node-role.kubernetes.io/master"
 )
 
 var (
@@ -49,9 +50,10 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
+func (s *Scanner) Scan(ctx context.Context, nodeName string) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
+
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob()
+	job := s.prepareKubeBenchJob(nodeName)
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -103,7 +105,7 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob() *batch.Job {
+func (s *Scanner) prepareKubeBenchJob(nodeName string) *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
@@ -125,6 +127,7 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 				Spec: core.PodSpec{
 					RestartPolicy: core.RestartPolicyNever,
 					HostPID:       true,
+					NodeName:      nodeName,
 					Volumes: []core.Volume{
 						{
 							Name: "var-lib-etcd",
