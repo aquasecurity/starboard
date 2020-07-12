@@ -25,13 +25,13 @@ const (
 	KindNode Kind = "Node"
 
 	KindPod                   Kind = "Pod"
-	KindReplicaSet            Kind = "ReplicaSet"
+	KindReplicaSet            Kind = "ReplicaSet.apps"
 	KindReplicationController Kind = "ReplicationController"
-	KindDeployment            Kind = "Deployment"
-	KindStatefulSet           Kind = "StatefulSet"
-	KindDaemonSet             Kind = "DaemonSet"
-	KindCronJob               Kind = "CronJob"
-	KindJob                   Kind = "Job"
+	KindDeployment            Kind = "Deployment.apps"
+	KindStatefulSet           Kind = "StatefulSet.apps"
+	KindDaemonSet             Kind = "DaemonSet.apps"
+	KindCronJob               Kind = "CronJob.batch"
+	KindJob                   Kind = "Job.batch"
 )
 
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
