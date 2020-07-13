@@ -16,9 +16,6 @@ Page prints a page implementing Page interface.
 		<title>{%= p.Title() %}</title>
 	</head>
 	<body>
-		<div>
-			<a href="/">return to main page</a>
-		</div>
 		{%= p.Body() %}
 	</body>
 </html>
