@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,9 +54,10 @@ func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return
 			}
 
-			if err, _ := generateHtmlReport(configAudit.Items[0], vulnsReport.Items[0]); err != nil {
+			reporter := report.NewHTMLReporter(configAudit.Items[0], vulnsReport.Items[0], "./")
+			htmlReport, err := reporter.GenerateReport()
+			reporter.PublishReport(htmlReport)
 
-			}
 			return
 		},
 	}
