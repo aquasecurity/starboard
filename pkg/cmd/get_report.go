@@ -54,7 +54,7 @@ func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return
 			}
 
-			reporter := report.NewHTMLReporter(configAudit.Items[0], vulnsReport.Items[0], "./")
+			reporter := report.NewHTMLReporter(configAudit.Items[0].Report, vulnsReport.Items[0].Report, "./")
 			htmlReport, err := reporter.GenerateReport()
 			reporter.PublishReport(htmlReport)
 
