@@ -1,0 +1,25 @@
+This is a base page template. All the other template pages implement this interface.
+
+{% interface
+Page {
+	Title()
+	Body()
+}
+%}
+
+
+Page prints a page implementing Page interface.
+{% func PageTemplate(p Page) %}
+<html>
+	<head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+		<title>{%= p.Title() %}</title>
+	</head>
+	<body>
+		<div>
+			<a href="/">return to main page</a>
+		</div>
+		{%= p.Body() %}
+	</body>
+</html>
+{% endfunc %}

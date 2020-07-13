@@ -1,7 +1,110 @@
-All text outside function templates is treated as comments,
-i.e. it is just ignored by quicktemplate compiler (`qtc`). It is for humans.
+{% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 
-Hello is a simple template function.
-{% fugitnc Hello(name string) %}
-	Hello, {%s name %}!
+{% code
+type ReportPage struct {
+	VulnsReport v1alpha1.VulnerabilityReport
+	ConfigAuditReport v1alpha1.ConfigAudit
+	Workload v1alpha1.KubernetesNamespacedResource
+}
+%}
+
+{% func (p *ReportPage) Title() %}
+	Starboard Security Report - {%s p.Workload.Namespace %}/{%s p.Workload.Kind %}/{%s p.Workload.Name %}
+{% endfunc %}
+
+
+{% func (p *ReportPage) Body() %}
+	<div class="container border-right border-left" style="height: 100%; overflow: scroll;">
+            <div class="col mt-5">
+                <div class="row text-center">
+                    <img style="width: 25vh" class="mx-auto" src="https://www.aquasec.com/wp-content/uploads/2016/05/aqua_logo_fullcolor.png" alt="">
+                </div>
+                <div class="row mt-4 text-center">
+                    <h2 class="text-muted mx-auto">Starboard Security Report for<br>
+                </div>
+                <div class="row text-center">
+                    <h2 class="text-muted mx-auto">{%s p.Workload.Kind %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
+                </div>
+
+                <!-- Vulnerabilities -->
+                <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Vulnerabilities</h4></div>
+                <div class="row"><h5 class="text-info">Container <></h5></div>
+                <div class="row"><p>image</p></div>
+                <div class="row">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                              <th scope="col">ID</th>
+                              <th scope="col">Severity</th>
+                              <th scope="col">Resource</th>
+                              <th scope="col">Installed Version</th>
+                              <th scope="col">Fixed Version</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+						  	{% for _, r := range p.VulnsReport.Vulnerabilities %}
+							<tr>
+								<td>{%s r.VulnerabilityID %}</td>
+								<td>{%s string(r.Severity) %}</td>
+								<td>{%s r.Resource %}</td>
+								<td>{%s r.InstalledVersion %}</td>
+								<td>{%s r.FixedVersion %}</td>
+							</tr>	
+							{% endfor %}
+                          </tbody>
+                    </table>
+                </div>
+                
+                <!-- Config Audits -->
+                <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Configuration Audit</h4></div>
+                <div class="row"><h5 class="text-info">Pod Template</h5></div>
+                <div class="row">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                              <th scope="col">Success</th>
+                              <th scope="col">ID</th>
+                              <th scope="col">Severity</th>
+                              <th scope="col">Category</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>true</td>
+                              <td>hostIPCSet</td>
+                              <td>error</td>
+                              <td>Security</td>
+                            </tr>
+                          </tbody>
+                    </table>
+                </div>
+                <div class="row"><h5 class="text-info">Container nginx</h5></div>
+                <div class="row">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                              <th scope="col">Success</th>
+                              <th scope="col">ID</th>
+                              <th scope="col">Severity</th>
+                              <th scope="col">Category</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>false</td>
+                              <td>runAsPrivileged</td>
+                              <td>error</td>
+                              <td>Security</td>
+                            </tr>
+                          </tbody>
+                    </table>
+                </div>
+                
+            </div>
+        </div>
+{% endfunc %}
+
+
+{% func vulnerabilityRows(vulns []v1alpha1.VulnerabilityItem) %}
+
 {% endfunc %}
