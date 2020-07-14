@@ -1,8 +1,8 @@
 package report
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
@@ -22,17 +22,17 @@ func NewHTMLReporter(configAuditReport v1alpha1.ConfigAudit, vulnerabilityReport
 	}
 }
 
-func (h *HTMLReporter) GenerateReport() (htmlReport interface{}, err error) {
+func (h *HTMLReporter) GenerateReport() (htmlReport []byte, err error) {
 	p := &templates.ReportPage{
 		Vulns: h.vulnerabilityReport,
 		ConfigAuditReport: h.configAuditReport,
 	}
 	var buf bytes.Buffer
 	templates.WritePageTemplate(&buf, p)
-	fmt.Printf("\n%s", buf.Bytes())
-	return nil, nil
+	return buf.Bytes(), nil
 }
 
-func (h *HTMLReporter) PublishReport(htmlReport interface{}) (err error) {
-	return nil
+func (h *HTMLReporter) PublishReport(htmlReport []byte) (err error) {
+	_, err = fmt.Printf("%s", htmlReport)
+	return err
 }
