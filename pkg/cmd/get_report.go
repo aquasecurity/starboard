@@ -21,7 +21,14 @@ func generateHtmlReport(configaudit v1alpha1.ConfigAuditReport, vulnerabilities 
 func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
-		Short: "Generate full HTML report for a given workload",
+		Short: "Generates a full html security report for a specified workload",
+		Long: `Generates a report that contains vulnerabilities and config audits found for the specified workload
+
+TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
+NAME is the name of a particular Kubernetes workload.			
+`,
+		Example: fmt.Sprintf(`  # Save report to a file
+  %[1]s get report deploy/nginx > report.html`, "starboard"),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
