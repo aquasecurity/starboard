@@ -115,8 +115,3 @@ type ReportPage struct {
             </div>
         </div>
 {% endfunc %}
-
-
-{% func vulnerabilityRows(VulnsReports []v1alpha1.VulnerabilityItem) %}
-
-{% endfunc %}
