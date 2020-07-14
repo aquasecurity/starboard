@@ -3,6 +3,7 @@
 bin/
 dist/
 
+*.qtpl.go
 coverage.txt
 
 vendor
