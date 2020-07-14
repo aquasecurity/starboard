@@ -4,6 +4,7 @@ bin/
 dist/
 
 *.qtpl.go
+*.html
 coverage.txt
 
 vendor
