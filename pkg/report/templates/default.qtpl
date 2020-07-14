@@ -30,7 +30,6 @@ type ReportPage struct {
 
                 <!-- Vulnerabilities -->
                 <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Vulnerabilities</h4></div>
-
                 {% for _, report := range p.VulnsReports %}                
                   <div class="row"><h5 class="text-info">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
                   <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
@@ -60,51 +59,59 @@ type ReportPage struct {
                   </div>
                 {% endfor %}
 
+
                 <!-- Config Audits -->
                 <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Configuration Audit</h4></div>
-                <div class="row"><h5 class="text-info">Pod Template</h5></div>
-                <div class="row">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                              <th scope="col">Success</th>
-                              <th scope="col">ID</th>
-                              <th scope="col">Severity</th>
-                              <th scope="col">Category</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>true</td>
-                              <td>hostIPCSet</td>
-                              <td>error</td>
-                              <td>Security</td>
-                            </tr>
-                          </tbody>
-                    </table>
-                </div>
-                <div class="row"><h5 class="text-info">Container nginx</h5></div>
-                <div class="row">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                              <th scope="col">Success</th>
-                              <th scope="col">ID</th>
-                              <th scope="col">Severity</th>
-                              <th scope="col">Category</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>false</td>
-                              <td>runAsPrivileged</td>
-                              <td>error</td>
-                              <td>Security</td>
-                            </tr>
-                          </tbody>
-                    </table>
-                </div>
-                
+                {% for _, report := range p.ConfigAuditReports %}        
+                  <div class="row"><h5 class="text-info">Pod Template</h5></div>
+                  <div class="row">
+                      <table class="table">
+                          <thead>
+                              <tr>
+                                <th scope="col">Success</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Severity</th>
+                                <th scope="col">Category</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for _, check := range report.Report.PodChecks %}
+                                <tr>
+                                  <td>{%v check.Success %}</td>
+                                  <td>{%s check.ID %}</td>
+                                  <td>{%s check.Severity %}</td>
+                                  <td>{%s check.Category %}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                      </table>
+                  </div>
+                  {% for container, checks := range report.Report.ContainerChecks %}
+                    <div class="row"><h5 class="text-info">Container {%s container %}</h5></div>
+                    <div class="row">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                  <th scope="col">Success</th>
+                                  <th scope="col">ID</th>
+                                  <th scope="col">Severity</th>
+                                  <th scope="col">Category</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for _, check := range checks %}
+                                  <tr>
+                                    <td>{%v check.Success %}</td>
+                                    <td>{%s check.ID %}</td>
+                                    <td>{%s check.Severity %}</td>
+                                    <td>{%s check.Category %}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                        </table>
+                    </div>
+                  {% endfor %}
+                {% endfor %}
             </div>
         </div>
 {% endfunc %}
