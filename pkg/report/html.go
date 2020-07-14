@@ -9,14 +9,14 @@ import (
 )
 
 type HTMLReporter struct {
-	configAuditReport v1alpha1.ConfigAuditReport
+	configAuditReports []v1alpha1.ConfigAuditReport
 	vulnerabilityReports []v1alpha1.Vulnerability
 	workload v1alpha1.KubernetesNamespacedResource
 }
 
-func NewHTMLReporter(configAuditReport v1alpha1.ConfigAuditReport, vulnerabilityReport []v1alpha1.Vulnerability, workload v1alpha1.KubernetesNamespacedResource) HTMLReporter {
+func NewHTMLReporter(configAuditReports []v1alpha1.ConfigAuditReport, vulnerabilityReport []v1alpha1.Vulnerability, workload v1alpha1.KubernetesNamespacedResource) HTMLReporter {
 	return HTMLReporter{
-		configAuditReport: configAuditReport,
+		configAuditReports: configAuditReports,
 		vulnerabilityReports: vulnerabilityReport,
 		workload: workload,
 	}
@@ -24,7 +24,7 @@ func NewHTMLReporter(configAuditReport v1alpha1.ConfigAuditReport, vulnerability
 
 func (h *HTMLReporter) GenerateReport() (htmlReport []byte, err error) {
 	p := &templates.ReportPage{
-		ConfigAuditReport: h.configAuditReport,
+		ConfigAuditReports: h.configAuditReports,
 		VulnsReports: h.vulnerabilityReports,
 		Workload: h.workload,
 	}

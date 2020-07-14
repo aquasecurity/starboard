@@ -4,7 +4,7 @@
 {% code
 type ReportPage struct {
 	VulnsReports []v1alpha1.Vulnerability
-	ConfigAuditReport v1alpha1.ConfigAuditReport
+	ConfigAuditReports []v1alpha1.ConfigAuditReport
   Workload v1alpha1.KubernetesNamespacedResource
 }
 %}
