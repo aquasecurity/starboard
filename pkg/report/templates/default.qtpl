@@ -15,6 +15,22 @@ type ReportPage struct {
 {% endfunc %}
 
 
+{% code 
+func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {  
+  merged := v1alpha1.VulnerabilitySummary{}
+	for _, report := range p.VulnsReports {
+		merged.CriticalCount += report.Report.Summary.CriticalCount
+		merged.HighCount += report.Report.Summary.HighCount
+		merged.MediumCount += report.Report.Summary.MediumCount
+		merged.LowCount += report.Report.Summary.LowCount
+		merged.UnknownCount += report.Report.Summary.UnknownCount
+	}
+  return merged
+}
+%}
+
+
+
 {% func (p *ReportPage) Body() %}
 	<div class="container border-right border-left" style="height: 100%; overflow: scroll;">
             <div class="col mt-5">
@@ -29,12 +45,70 @@ type ReportPage struct {
                 </div>
 
                 <!-- Vulnerabilities -->
-                <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Vulnerabilities</h4></div>
+                <div class="row pt-3 text-center border-bottom mt-4">
+                    <h3 class="mx-auto " style="color: rgb(0, 160, 170);">Vulnerabilities</h3>
+                </div>
+                <!-- Cards -->
+                <div class="">
+                    <div class="row my-5" style="font-size:small;">
+                        <!-- Scanner -->
+                        <div class="col-3 border rounded shadow px-3 py-2 ml-4 ">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <p class="mb-2 pb-1 border-bottom">Scanner</p>
+                                </div>
+                             </div>
+                             <div class="row">
+                                <div class="col">
+                                    <p class="my-0">Name:  {%s p.VulnsReports[0].Report.Scanner.Name %}</p>
+                                    <p class="my-0">Vendor:  {%s p.VulnsReports[0].Report.Scanner.Vendor %}</p>
+                                    <p class="my-0">Version:  {%s p.VulnsReports[0].Report.Scanner.Version %}</p>
+                                </div>
+                             </div>
+                        </div>
+                        <!-- summary -->
+                        <div class="col-3 border rounded shadow px-3 py-2 mx-auto ">
+                            <div class="row text-center">
+                               <div class="col">
+                                   <p class="mb-2 pb-1 border-bottom">Summary</p>
+                               </div>
+                            </div>
+                            <div class="row">
+                                {% code
+                                  summary := p.GetMergedVulnsSummary()
+                                %}
+                                <div class="col-6">
+                                    <p class="my-0">CRITICAL  {%d summary.CriticalCount %}</p>
+                                    <p class="my-0">HIGH  {%d summary.HighCount %}</p>
+                                    <p class="my-0">MEDIUM  {%d summary.MediumCount %}</p>        
+                                </div>
+                                <div class="col-6">
+                                    <p class="my-0">LOW  {%d summary.LowCount %}</p>
+                                    <p class="my-0">UNKNOWN  {%d summary.UnknownCount %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Metadata -->
+                        <div class="col-3 border rounded shadow px-3 py-2 mr-4">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <p class="mb-2 pb-1 border-bottom">Metadata</p>
+                                </div>
+                             </div>
+                             <div class="row">
+                                <div class="col">
+                                    <p class="my-0">Generated at:  {%s p.VulnsReports[0].CreationTimestamp.String() %}</p>
+                                </div>
+                             </div>
+                        </div>
+
+                    </div>      
+                </div>
                 {% for _, report := range p.VulnsReports %}                
                   <div class="row"><h5 class="text-info">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
                   <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
                   <div class="row">
-                      <table class="table">
+                      <table class="table table-sm table-bordered">
                           <thead>
                               <tr>
                                 <th scope="col">ID</th>
@@ -61,11 +135,13 @@ type ReportPage struct {
 
 
                 <!-- Config Audits -->
-                <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Configuration Audit</h4></div>
+                <div class="row pt-3 text-center border-bottom my-4">
+                    <h3 class="mx-auto " style="color: rgb(0, 160, 170);">Configuration Audit</h3>
+                </div>
                 {% for _, report := range p.ConfigAuditReports %}        
                   <div class="row"><h5 class="text-info">Pod Template</h5></div>
                   <div class="row">
-                      <table class="table">
+                      <table class="table table-sm table-bordered">
                           <thead>
                               <tr>
                                 <th scope="col">Success</th>
@@ -89,7 +165,7 @@ type ReportPage struct {
                   {% for container, checks := range report.Report.ContainerChecks %}
                     <div class="row"><h5 class="text-info">Container {%s container %}</h5></div>
                     <div class="row">
-                        <table class="table">
+                        <table class="table table-sm table-bordered">
                             <thead>
                                 <tr>
                                   <th scope="col">Success</th>
