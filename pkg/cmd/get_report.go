@@ -54,7 +54,8 @@ func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return
 			}
 
-			reporter := report.NewHTMLReporter(configAudit.Items[0].Report, vulnsReport.Items[0].Report, "./")
+			// TODO: check for different containers, and show all in the report
+			reporter := report.NewHTMLReporter(configAudit.Items[0].Report, vulnsReport.Items[0], "./")
 			htmlReport, err := reporter.GenerateReport()
 			reporter.PublishReport(htmlReport)
 

@@ -10,11 +10,11 @@ import (
 
 type HTMLReporter struct {
 	configAuditReport v1alpha1.ConfigAudit
-	vulnerabilityReport v1alpha1.VulnerabilityReport
+	vulnerabilityReport v1alpha1.Vulnerability
 	savePath string
 }
 
-func NewHTMLReporter(configAuditReport v1alpha1.ConfigAudit, vulnerabilityReport v1alpha1.VulnerabilityReport, savePath string) HTMLReporter {
+func NewHTMLReporter(configAuditReport v1alpha1.ConfigAudit, vulnerabilityReport v1alpha1.Vulnerability, savePath string) HTMLReporter {
 	return HTMLReporter{
 		configAuditReport: configAuditReport,
 		vulnerabilityReport: vulnerabilityReport,
@@ -24,9 +24,8 @@ func NewHTMLReporter(configAuditReport v1alpha1.ConfigAudit, vulnerabilityReport
 
 func (h *HTMLReporter) GenerateReport() (htmlReport interface{}, err error) {
 	p := &templates.ReportPage{
-		VulnsReport: h.vulnerabilityReport,
+		Vulns: h.vulnerabilityReport,
 		ConfigAuditReport: h.configAuditReport,
-		Workload: h.configAuditReport.Resource,
 	}
 	var buf bytes.Buffer
 	templates.WritePageTemplate(&buf, p)
