@@ -1,8 +1,11 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 
+Vulns contains kubernetes metadata, this is necessary for getting labels (for container name)
+Real report is on Vulns.Report
+
 {% code
 type ReportPage struct {
-	VulnsReport v1alpha1.VulnerabilityReport
+	Vulns v1alpha1.Vulnerability
 	ConfigAuditReport v1alpha1.ConfigAudit
 	Workload v1alpha1.KubernetesNamespacedResource
 }
@@ -23,13 +26,13 @@ type ReportPage struct {
                     <h2 class="text-muted mx-auto">Starboard Security Report for<br>
                 </div>
                 <div class="row text-center">
-                    <h2 class="text-muted mx-auto">{%s p.Workload.Kind %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
+                    <h2 class="text-muted mx-auto">{%s p.ConfigAuditReport.Resource.Kind %} {%s p.ConfigAuditReport.Resource.Name %} in namespace {%s p.ConfigAuditReport.Resource.Namespace %}</h2>
                 </div>
 
                 <!-- Vulnerabilities -->
                 <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Vulnerabilities</h4></div>
-                <div class="row"><h5 class="text-info">Container <></h5></div>
-                <div class="row"><p>image</p></div>
+                <div class="row"><h5 class="text-info">Container {%s p.Vulns.Labels["starboard.container.name"] %}</h5></div>
+                <div class="row"><p>{%s p.Vulns.Report.Registry.URL %}/{%s p.Vulns.Report.Artifact.Repository %}:{%s p.Vulns.Report.Artifact.Tag %}</p></div>
                 <div class="row">
                     <table class="table">
                         <thead>
@@ -42,7 +45,7 @@ type ReportPage struct {
                             </tr>
                           </thead>
                           <tbody>
-						  	{% for _, r := range p.VulnsReport.Vulnerabilities %}
+						  	{% for _, r := range p.Vulns.Report.Vulnerabilities %}
 							<tr>
 								<td>{%s r.VulnerabilityID %}</td>
 								<td>{%s string(r.Severity) %}</td>
