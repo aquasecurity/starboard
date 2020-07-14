@@ -1,15 +1,14 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 
-Vulns contains kubernetes metadata, this is necessary for getting labels (for container name)
-Real report is on Vulns.Report
 
 {% code
 type ReportPage struct {
-	Vulns v1alpha1.Vulnerability
-	ConfigAuditReport v1alpha1.ConfigAudit
-	Workload v1alpha1.KubernetesNamespacedResource
+	VulnsReports []v1alpha1.Vulnerability
+	ConfigAuditReport v1alpha1.ConfigAuditReport
+  Workload v1alpha1.KubernetesNamespacedResource
 }
 %}
+
 
 {% func (p *ReportPage) Title() %}
 	Starboard Security Report - {%s p.Workload.Namespace %}/{%s p.Workload.Kind %}/{%s p.Workload.Name %}
@@ -26,38 +25,41 @@ type ReportPage struct {
                     <h2 class="text-muted mx-auto">Starboard Security Report for<br>
                 </div>
                 <div class="row text-center">
-                    <h2 class="text-muted mx-auto">{%s p.ConfigAuditReport.Resource.Kind %} {%s p.ConfigAuditReport.Resource.Name %} in namespace {%s p.ConfigAuditReport.Resource.Namespace %}</h2>
+                    <h2 class="text-muted mx-auto">{%s p.Workload.Kind %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
                 </div>
 
                 <!-- Vulnerabilities -->
                 <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Vulnerabilities</h4></div>
-                <div class="row"><h5 class="text-info">Container {%s p.Vulns.Labels["starboard.container.name"] %}</h5></div>
-                <div class="row"><p>{%s p.Vulns.Report.Registry.URL %}/{%s p.Vulns.Report.Artifact.Repository %}:{%s p.Vulns.Report.Artifact.Tag %}</p></div>
-                <div class="row">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                              <th scope="col">ID</th>
-                              <th scope="col">Severity</th>
-                              <th scope="col">Resource</th>
-                              <th scope="col">Installed Version</th>
-                              <th scope="col">Fixed Version</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-						  	{% for _, r := range p.Vulns.Report.Vulnerabilities %}
-							<tr>
-								<td>{%s r.VulnerabilityID %}</td>
-								<td>{%s string(r.Severity) %}</td>
-								<td>{%s r.Resource %}</td>
-								<td>{%s r.InstalledVersion %}</td>
-								<td>{%s r.FixedVersion %}</td>
-							</tr>	
-							{% endfor %}
-                          </tbody>
-                    </table>
-                </div>
-                
+
+                {% for _, report := range p.VulnsReports %}                
+                  <div class="row"><h5 class="text-info">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
+                  <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
+                  <div class="row">
+                      <table class="table">
+                          <thead>
+                              <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Severity</th>
+                                <th scope="col">Resource</th>
+                                <th scope="col">Installed Version</th>
+                                <th scope="col">Fixed Version</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                  {% for _, v := range report.Report.Vulnerabilities %}
+                    <tr>
+                      <td>{%s v.VulnerabilityID %}</td>
+                      <td>{%s string(v.Severity) %}</td>
+                      <td>{%s v.Resource %}</td>
+                      <td>{%s v.InstalledVersion %}</td>
+                      <td>{%s v.FixedVersion %}</td>
+                    </tr>	
+                  {% endfor %}
+                            </tbody>
+                      </table>
+                  </div>
+                {% endfor %}
+
                 <!-- Config Audits -->
                 <div class="row mt-4"><h4 style="color: rgb(0, 160, 170);">Configuration Audit</h4></div>
                 <div class="row"><h5 class="text-info">Pod Template</h5></div>
@@ -108,6 +110,6 @@ type ReportPage struct {
 {% endfunc %}
 
 
-{% func vulnerabilityRows(vulns []v1alpha1.VulnerabilityItem) %}
+{% func vulnerabilityRows(VulnsReports []v1alpha1.VulnerabilityItem) %}
 
 {% endfunc %}

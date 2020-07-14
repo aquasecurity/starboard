@@ -62,7 +62,7 @@ NAME is the name of a particular Kubernetes workload.
 			}
 
 			// TODO: check for different containers, and show all in the report
-			reporter := report.NewHTMLReporter(configAudit.Items[0].Report, vulnsReport.Items[0], "./")
+			reporter := report.NewHTMLReporter(configAudit.Items[0], vulnsReport.Items, configAudit.Items[0].Report.Resource)
 			htmlReport, err := reporter.GenerateReport()
 			if err != nil {
 				return

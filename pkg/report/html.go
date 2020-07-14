@@ -9,23 +9,24 @@ import (
 )
 
 type HTMLReporter struct {
-	configAuditReport v1alpha1.ConfigAudit
-	vulnerabilityReport v1alpha1.Vulnerability
-	savePath string
+	configAuditReport v1alpha1.ConfigAuditReport
+	vulnerabilityReports []v1alpha1.Vulnerability
+	workload v1alpha1.KubernetesNamespacedResource
 }
 
-func NewHTMLReporter(configAuditReport v1alpha1.ConfigAudit, vulnerabilityReport v1alpha1.Vulnerability, savePath string) HTMLReporter {
+func NewHTMLReporter(configAuditReport v1alpha1.ConfigAuditReport, vulnerabilityReport []v1alpha1.Vulnerability, workload v1alpha1.KubernetesNamespacedResource) HTMLReporter {
 	return HTMLReporter{
 		configAuditReport: configAuditReport,
-		vulnerabilityReport: vulnerabilityReport,
-		savePath: savePath,
+		vulnerabilityReports: vulnerabilityReport,
+		workload: workload,
 	}
 }
 
 func (h *HTMLReporter) GenerateReport() (htmlReport []byte, err error) {
 	p := &templates.ReportPage{
-		Vulns: h.vulnerabilityReport,
 		ConfigAuditReport: h.configAuditReport,
+		VulnsReports: h.vulnerabilityReports,
+		Workload: h.workload,
 	}
 	var buf bytes.Buffer
 	templates.WritePageTemplate(&buf, p)
