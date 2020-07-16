@@ -21,7 +21,7 @@ func generateHtmlReport(configaudit starboard.ConfigAuditReport, vulnerabilities
 func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
-		Short: "Generates a full html security report for a specified workload",
+		Short: "Get a full html security report for a specified workload",
 		Long: `Generates a report that contains vulnerabilities and config audits found for the specified workload
 
 TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
