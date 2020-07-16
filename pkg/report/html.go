@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 )
 
 type HTMLReporter struct {
-	configAuditReports []v1alpha1.ConfigAuditReport
-	vulnerabilityReports []v1alpha1.Vulnerability
+	configAuditReports []starboard.ConfigAuditReport
+	vulnerabilityReports []starboard.Vulnerability
 	workload kube.Object
 }
 
-func NewHTMLReporter(configAuditReports []v1alpha1.ConfigAuditReport, vulnerabilityReport []v1alpha1.Vulnerability, workload kube.Object) HTMLReporter {
+func NewHTMLReporter(configAuditReports []starboard.ConfigAuditReport, vulnerabilityReport []starboard.Vulnerability, workload kube.Object) HTMLReporter {
 	return HTMLReporter{
 		configAuditReports: configAuditReports,
 		vulnerabilityReports: vulnerabilityReport,

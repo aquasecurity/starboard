@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func generateHtmlReport(configaudit v1alpha1.ConfigAuditReport, vulnerabilities v1alpha1.Vulnerability) (err error, html string){
+func generateHtmlReport(configaudit starboard.ConfigAuditReport, vulnerabilities starboard.Vulnerability) (err error, html string){
 	fmt.Println("config: ", configaudit)
 	fmt.Println("vulnerabilties: ", vulnerabilities)
 	return nil, ""
@@ -35,7 +35,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			starboardClientset, err := starboard.NewForConfig(config)
+			starboardClientset, err := clientset.NewForConfig(config)
 			if err != nil {
 				return
 			}
