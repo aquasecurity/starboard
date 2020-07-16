@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"k8s.io/klog"
+	"log"
 
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -52,16 +55,20 @@ NAME is the name of a particular Kubernetes workload.
 			listOptions := v1.ListOptions{
 				LabelSelector: fmt.Sprintf("starboard.resource.kind=%s,starboard.resource.name=%s", workload.Kind, workload.Name),
 			}
-			configAudit, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(workload.Namespace).List(ctx, listOptions)
+			configAudits, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(workload.Namespace).List(ctx, listOptions)
 			if err != nil {
 				return
 			}
-			vulnsReport, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).List(ctx, listOptions)
+			vulnsReports, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).List(ctx, listOptions)
 			if err != nil {
 				return
 			}
 
-			reporter := report.NewHTMLReporter(configAudit.Items, vulnsReport.Items, configAudit.Items[0].Report.Resource)
+			if len(configAudits.Items) == 0 && len(vulnsReports.Items) == 0 {
+				err = errors.New(fmt.Sprintf("No configaudits or vulnerabilities found for workload %s/%s/%s", workload.Namespace, workload.Kind, workload.Name))
+				return
+			}
+			reporter := report.NewHTMLReporter(configAudits.Items, vulnsReports.Items, configAudits.Items[0].Report.Resource)
 			htmlReport, err := reporter.GenerateReport()
 			if err != nil {
 				return
