@@ -108,6 +108,12 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                 {% for _, report := range p.VulnsReports %}                
                   <div class="row"><h5 class="text-info">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
                   <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
+                  {% if len(report.Report.Vulnerabilities) == 0 %}
+                    <div class="row">
+                      <p class="alert alert-success py-0 m-0" style="font-size: small;">No Vulnerabilities</p>
+                    </div>                  
+                  {% else %}
+
                   <div class="row">
                       <table class="table table-sm table-bordered">
                           <thead>
@@ -132,8 +138,9 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                             </tbody>
                       </table>
                   </div>
+                {% endif %}
                 {% endfor %}
-
+                
 
                 <!-- Config Audits -->
                 <div class="row pt-3 text-center border-bottom my-4">
