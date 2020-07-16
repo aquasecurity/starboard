@@ -30,7 +30,7 @@ func main() {
 	version := cmd.VersionInfo{Version: version, Commit: commit, Date: date}
 
 	if err := cmd.NewRootCmd(executable(os.Args), version).Execute(); err != nil {
-		fmt.Printf("error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
