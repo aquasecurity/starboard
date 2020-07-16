@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/klog"
-	"log"
-
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
@@ -68,7 +65,7 @@ NAME is the name of a particular Kubernetes workload.
 				err = errors.New(fmt.Sprintf("No configaudits or vulnerabilities found for workload %s/%s/%s", workload.Namespace, workload.Kind, workload.Name))
 				return
 			}
-			reporter := report.NewHTMLReporter(configAudits.Items, vulnsReports.Items, configAudits.Items[0].Report.Resource)
+			reporter := report.NewHTMLReporter(configAudits.Items, vulnsReports.Items, workload)
 			htmlReport, err := reporter.GenerateReport()
 			if err != nil {
 				return

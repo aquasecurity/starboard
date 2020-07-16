@@ -1,17 +1,18 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
+{% import "github.com/aquasecurity/starboard/pkg/kube" %}
 
 
 {% code
 type ReportPage struct {
 	VulnsReports []v1alpha1.Vulnerability
 	ConfigAuditReports []v1alpha1.ConfigAuditReport
-  Workload v1alpha1.KubernetesNamespacedResource
+  Workload kube.Object
 }
 %}
 
 
 {% func (p *ReportPage) Title() %}
-	Starboard Security Report - {%s p.Workload.Namespace %}/{%s p.Workload.Kind %}/{%s p.Workload.Name %}
+	Starboard Security Report - {%s p.Workload.Namespace %}/{%s string(p.Workload.Kind) %}/{%s p.Workload.Name %}
 {% endfunc %}
 
 
@@ -41,7 +42,7 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                     <h2 class="text-muted mx-auto">Starboard Security Report for<br>
                 </div>
                 <div class="row text-center">
-                    <h2 class="text-muted mx-auto">{%s p.Workload.Kind %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
+                    <h2 class="text-muted mx-auto">{%s string(p.Workload.Kind) %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
                 </div>
 
                 <!-- Vulnerabilities -->
