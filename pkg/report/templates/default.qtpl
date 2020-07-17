@@ -33,7 +33,12 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
 
 
 {% func (p *ReportPage) Body() %}
-	<div class="container border-right border-left" style="height: 100%; overflow: scroll;">
+	<style>
+  a {
+    color: inherit;
+  }
+  </style>
+  <div class="container border-right border-left" style="height: 100%; overflow: scroll;">
             <div class="col mt-5">
                 <div class="row text-center">
                     <img style="width: 25vh" class="mx-auto" src="https://www.aquasec.com/wp-content/uploads/2016/05/aqua_logo_fullcolor.png" alt="">
@@ -45,10 +50,43 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                     <h2 class="text-muted mx-auto">{%s string(p.Workload.Kind) %} {%s p.Workload.Name %} in namespace {%s p.Workload.Namespace %}</h2>
                 </div>
 
+		  
+                <div class="row mt-5 px-3">
+                    <h4>Table Of Contents</h4>
+                </div>
+                <div class="row">
+                    <ul>
+                        {% if len(p.VulnsReports) > 0 %}
+                        <li>
+                            <a href="#vuln_header">Vulnerabilities</a></li>
+                            <ul>
+                              {% for count, report := range p.VulnsReports %}
+                                <li><a href="#vulns_container_{%d count %}">{%s report.Labels["starboard.container.name"] %}</a></li>
+                              {% endfor %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                        {% if len(p.ConfigAuditReports) > 0 %}
+                        <li>
+                            <a href="#ca_header">Configuration Audit</a>
+                            <ul>
+                              <li><a href="#ca_pod_checks">Pod Checks</a></li>
+                              {% for _, report := range p.ConfigAuditReports %}
+                                {% for container, _ := range report.Report.ContainerChecks %}
+                                  <li><a href="#ca_container_{%s container %}">{%s container %}</a></li>
+                                {% endfor %}
+                              {% endfor %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+
                 {% if len(p.VulnsReports) > 0%}
                 <!-- Vulnerabilities -->
-                <div class="row pt-3 text-center border-bottom mt-4">
-                    <h3 class="mx-auto " style="color: rgb(0, 160, 170);">Vulnerabilities</h3>
+                <div class="row text-center border-bottom mt-4">
+                    <h3 class="mx-auto " id="vuln_header" style="color: rgb(0, 160, 170);">Vulnerabilities</h3>
                 </div>
                 <!-- Cards -->
                 <div class="">
@@ -108,8 +146,9 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                 </div>
                 {% endif %}
                 
-                {% for _, report := range p.VulnsReports %}                
-                  <div class="row"><h5 class="text-info">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
+                {% for count, report := range p.VulnsReports %}
+                
+                  <div class="row"><h5 class="text-info" id="vulns_container_{%d count %}">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
                   <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
                   {% if len(report.Report.Vulnerabilities) == 0 %}
                     <div class="row">
@@ -148,11 +187,11 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                 <!-- Config Audits -->
                 {% if len(p.ConfigAuditReports) > 0 %}
                   <div class="row pt-3 text-center border-bottom my-4">
-                      <h3 class="mx-auto " style="color: rgb(0, 160, 170);">Configuration Audit</h3>
+                      <h3 class="mx-auto" id="ca_header" style="color: rgb(0, 160, 170);">Configuration Audit</h3>
                   </div>
                 {% endif %}
                 {% for _, report := range p.ConfigAuditReports %}        
-                  <div class="row"><h5 class="text-info">Pod Template</h5></div>
+                  <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
                   <div class="row">
                       <table class="table table-sm table-bordered">
                           <thead>
@@ -176,7 +215,7 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                       </table>
                   </div>
                   {% for container, checks := range report.Report.ContainerChecks %}
-                    <div class="row"><h5 class="text-info">Container {%s container %}</h5></div>
+                    <div class="row"><h5 class="text-info" id="ca_container_{%s container %}">Container {%s container %}</h5></div>
                     <div class="row">
                         <table class="table table-sm table-bordered">
                             <thead>
