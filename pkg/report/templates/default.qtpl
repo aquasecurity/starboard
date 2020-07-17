@@ -107,7 +107,7 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                              </div>
                         </div>
                         <!-- summary -->
-                        <div class="col-3 border rounded shadow px-3 py-2 mx-auto ">
+                        <div class="col-5 border rounded shadow py-2 mx-auto ">
                             <div class="row text-center">
                                <div class="col">
                                    <p class="mb-2 pb-1 border-bottom">Summary</p>
@@ -117,14 +117,25 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                                 {% code
                                   summary := p.GetMergedVulnsSummary()
                                 %}
-                                <div class="col-6">
-                                    <p class="my-0">CRITICAL  {%d summary.CriticalCount %}</p>
-                                    <p class="my-0">HIGH  {%d summary.HighCount %}</p>
-                                    <p class="my-0">MEDIUM  {%d summary.MediumCount %}</p>        
+                                <div class="col text-center p-0">
+                                    <p class="mx-auto mb-1">{%d summary.CriticalCount %}</p>
+                                    <p class="mx-auto ">CRITICAL</p>
                                 </div>
-                                <div class="col-6">
-                                    <p class="my-0">LOW  {%d summary.LowCount %}</p>
-                                    <p class="my-0">UNKNOWN  {%d summary.UnknownCount %}</p>
+                                <div class="col text-center p-0">
+                                    <p class="mx-auto mb-1">{%d summary.HighCount %}</p>
+                                    <p class="mx-auto ">HIGH</p>
+                                </div>
+                                <div class="col text-center p-0">
+                                    <p class="mx-auto mb-1">{%d summary.MediumCount %}</p>
+                                    <p class="mx-auto ">MEDIUM</p>
+                                </div>
+                                <div class="col text-center p-0">
+                                    <p class="mx-auto mb-1">{%d summary.LowCount %}</p>
+                                    <p class="mx-auto ">LOW</p>
+                                </div>
+                                <div class="col text-center p-0">
+                                    <p class="mx-auto mb-1">{%d summary.UnknownCount %}</p>
+                                    <p class="mx-auto ">UNKNOWN</p>
                                 </div>
                             </div>
                         </div>
