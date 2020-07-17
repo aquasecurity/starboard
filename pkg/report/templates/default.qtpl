@@ -8,8 +8,14 @@ type ReportPage struct {
 	ConfigAuditReports []v1alpha1.ConfigAuditReport
   Workload kube.Object
 }
-%}
 
+type ConfigAuditSummary struct {
+	PodPass int
+	PodFail int
+  ContainerPass int
+  ContainerFail int
+}
+%}
 
 {% func (p *ReportPage) Title() %}
 	Starboard Security Report - {%s p.Workload.Namespace %}/{%s string(p.Workload.Kind) %}/{%s p.Workload.Name %}
@@ -30,6 +36,32 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
 }
 %}
 
+{% code
+func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {  
+  summary := ConfigAuditSummary{}
+  // sum container checks
+  for _, report := range p.ConfigAuditReports {
+    for _, checks := range report.Report.ContainerChecks {
+      for _, check := range checks {
+        if check.Success {
+          summary.ContainerPass += 1
+        } else {
+          summary.ContainerFail += 1
+        }
+      }
+    }
+    // sum pod checks
+    for _, check := range report.Report.PodChecks {
+      if check.Success {
+        summary.PodPass += 1
+      } else {
+        summary.PodFail += 1
+      }
+    }
+	}
+  return summary
+}
+%}
 
 
 {% func (p *ReportPage) Body() %}
@@ -212,6 +244,71 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                   <div class="row pt-3 text-center border-bottom my-4">
                       <h3 class="mx-auto" id="ca_header" style="color: rgb(0, 160, 170);">Configuration Audit</h3>
                   </div>
+                  <!-- Cards -->
+                <div class="">
+                    <div class="row my-5" style="font-size:small;">
+                        <!-- Scanner -->
+                        <div class="col-3 border rounded shadow px-3 py-2 ml-4 ">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <p class="mb-2 pb-1 border-bottom">Scanner</p>
+                                </div>
+                             </div>
+                             <div class="row">
+                                <div class="col">
+                                    <p class="my-0">Name:  {%s p.ConfigAuditReports[0].Report.Scanner.Name %}</p>
+                                    <p class="my-0">Vendor:  {%s p.ConfigAuditReports[0].Report.Scanner.Vendor %}</p>
+                                    <p class="my-0">Version:  {%s p.ConfigAuditReports[0].Report.Scanner.Version %}</p>
+                                </div>
+                             </div>
+                        </div>
+                        <!-- summary -->
+                        <div class="col-3 border rounded shadow py-2 mx-auto ">
+                            <div class="row text-center">
+                               <div class="col">
+                                   <p class="mb-2 pb-1 border-bottom">Summary</p>
+                               </div>
+                            </div>
+                            <div class="row">
+                                {% code
+                                  summary := p.GetConfigAuditSummary()
+                                  sumPass := summary.PodPass + summary.ContainerPass
+                                  sumFail := summary.PodFail + summary.ContainerFail 
+                                %}
+                                {% if sumPass > 0 %}
+                                <div class="col text-center p-0 text-success font-weight-bold">
+                                {% else %}
+                                <div class="col text-center p-0">
+                                {% endif %}
+                                    <p class="mx-auto mb-1">{%d sumPass %}</p>
+                                    <p class="mx-auto ">PASS</p>
+                                </div>
+                                {% if sumFail > 0 %}
+                                <div class="col text-center p-0 text-danger font-weight-bold">
+                                {% else %}
+                                <div class="col text-center p-0">
+                                {% endif %}
+                                    <p class="mx-auto mb-1">{%d sumFail %}</p>
+                                    <p class="mx-auto ">FAIL</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Metadata -->
+                        <div class="col-3 border rounded shadow px-3 py-2 mr-4">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <p class="mb-2 pb-1 border-bottom">Metadata</p>
+                                </div>
+                             </div>
+                             <div class="row">
+                                <div class="col">
+                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReports[0].CreationTimestamp.String() %}</p>
+                                </div>
+                             </div>
+                        </div>
+
+                    </div>      
+                </div>
                 {% endif %}
                 {% for _, report := range p.ConfigAuditReports %}        
                   <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
