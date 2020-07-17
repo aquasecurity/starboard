@@ -8,4 +8,4 @@ type ConfigAuditReportExpansion interface{}
 
 type KubeHunterReportExpansion interface{}
 
-type VulnerabilityExpansion interface{}
+type VulnerabilityReportExpansion interface{}

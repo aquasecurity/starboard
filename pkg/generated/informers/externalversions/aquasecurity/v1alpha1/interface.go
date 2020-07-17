@@ -14,8 +14,8 @@ type Interface interface {
 	ConfigAuditReports() ConfigAuditReportInformer
 	// KubeHunterReports returns a KubeHunterReportInformer.
 	KubeHunterReports() KubeHunterReportInformer
-	// Vulnerabilities returns a VulnerabilityInformer.
-	Vulnerabilities() VulnerabilityInformer
+	// VulnerabilityReports returns a VulnerabilityReportInformer.
+	VulnerabilityReports() VulnerabilityReportInformer
 }
 
 type version struct {
@@ -44,7 +44,7 @@ func (v *version) KubeHunterReports() KubeHunterReportInformer {
 	return &kubeHunterReportInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
-// Vulnerabilities returns a VulnerabilityInformer.
-func (v *version) Vulnerabilities() VulnerabilityInformer {
-	return &vulnerabilityInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// VulnerabilityReports returns a VulnerabilityReportInformer.
+func (v *version) VulnerabilityReports() VulnerabilityReportInformer {
+	return &vulnerabilityReportInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

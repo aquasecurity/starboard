@@ -24,8 +24,8 @@ func (c *FakeAquasecurityV1alpha1) KubeHunterReports() v1alpha1.KubeHunterReport
 	return &FakeKubeHunterReports{c}
 }
 
-func (c *FakeAquasecurityV1alpha1) Vulnerabilities(namespace string) v1alpha1.VulnerabilityInterface {
-	return &FakeVulnerabilities{c, namespace}
+func (c *FakeAquasecurityV1alpha1) VulnerabilityReports(namespace string) v1alpha1.VulnerabilityReportInterface {
+	return &FakeVulnerabilityReports{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

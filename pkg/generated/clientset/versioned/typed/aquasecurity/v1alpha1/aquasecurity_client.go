@@ -13,7 +13,7 @@ type AquasecurityV1alpha1Interface interface {
 	CISKubeBenchReportsGetter
 	ConfigAuditReportsGetter
 	KubeHunterReportsGetter
-	VulnerabilitiesGetter
+	VulnerabilityReportsGetter
 }
 
 // AquasecurityV1alpha1Client is used to interact with features provided by the aquasecurity.github.io group.
@@ -33,8 +33,8 @@ func (c *AquasecurityV1alpha1Client) KubeHunterReports() KubeHunterReportInterfa
 	return newKubeHunterReports(c)
 }
 
-func (c *AquasecurityV1alpha1Client) Vulnerabilities(namespace string) VulnerabilityInterface {
-	return newVulnerabilities(c, namespace)
+func (c *AquasecurityV1alpha1Client) VulnerabilityReports(namespace string) VulnerabilityReportInterface {
+	return newVulnerabilityReports(c, namespace)
 }
 
 // NewForConfig creates a new AquasecurityV1alpha1Client for the given config.
