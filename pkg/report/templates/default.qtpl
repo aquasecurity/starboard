@@ -117,15 +117,27 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
                                 {% code
                                   summary := p.GetMergedVulnsSummary()
                                 %}
+                                {% if summary.CriticalCount > 0 %}
+                                <div class="col text-center p-0 text-danger font-weight-bold">
+                                {% else %}
                                 <div class="col text-center p-0">
+                                {% endif %}
                                     <p class="mx-auto mb-1">{%d summary.CriticalCount %}</p>
                                     <p class="mx-auto ">CRITICAL</p>
                                 </div>
+                                {% if summary.HighCount > 0 %}
+                                <div class="col text-center p-0 text-danger font-weight-bold">
+                                {% else %}
                                 <div class="col text-center p-0">
+                                {% endif %}
                                     <p class="mx-auto mb-1">{%d summary.HighCount %}</p>
                                     <p class="mx-auto ">HIGH</p>
                                 </div>
+                                {% if summary.MediumCount > 0 %}
+                                <div class="col text-center p-0 text-warning font-weight-bold">
+                                {% else %}
                                 <div class="col text-center p-0">
+                                {% endif %}
                                     <p class="mx-auto mb-1">{%d summary.MediumCount %}</p>
                                     <p class="mx-auto ">MEDIUM</p>
                                 </div>

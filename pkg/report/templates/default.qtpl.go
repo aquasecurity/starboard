@@ -265,43 +265,91 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
 
 //line pkg/report/templates/default.qtpl:119
 		qw422016.N().S(`
+                                `)
+//line pkg/report/templates/default.qtpl:120
+		if summary.CriticalCount > 0 {
+//line pkg/report/templates/default.qtpl:120
+			qw422016.N().S(`
+                                <div class="col text-center p-0 text-danger font-weight-bold">
+                                `)
+//line pkg/report/templates/default.qtpl:122
+		} else {
+//line pkg/report/templates/default.qtpl:122
+			qw422016.N().S(`
                                 <div class="col text-center p-0">
+                                `)
+//line pkg/report/templates/default.qtpl:124
+		}
+//line pkg/report/templates/default.qtpl:124
+		qw422016.N().S(`
                                     <p class="mx-auto mb-1">`)
-//line pkg/report/templates/default.qtpl:121
+//line pkg/report/templates/default.qtpl:125
 		qw422016.N().D(summary.CriticalCount)
-//line pkg/report/templates/default.qtpl:121
+//line pkg/report/templates/default.qtpl:125
 		qw422016.N().S(`</p>
                                     <p class="mx-auto ">CRITICAL</p>
                                 </div>
+                                `)
+//line pkg/report/templates/default.qtpl:128
+		if summary.HighCount > 0 {
+//line pkg/report/templates/default.qtpl:128
+			qw422016.N().S(`
+                                <div class="col text-center p-0 text-danger font-weight-bold">
+                                `)
+//line pkg/report/templates/default.qtpl:130
+		} else {
+//line pkg/report/templates/default.qtpl:130
+			qw422016.N().S(`
                                 <div class="col text-center p-0">
+                                `)
+//line pkg/report/templates/default.qtpl:132
+		}
+//line pkg/report/templates/default.qtpl:132
+		qw422016.N().S(`
                                     <p class="mx-auto mb-1">`)
-//line pkg/report/templates/default.qtpl:125
+//line pkg/report/templates/default.qtpl:133
 		qw422016.N().D(summary.HighCount)
-//line pkg/report/templates/default.qtpl:125
+//line pkg/report/templates/default.qtpl:133
 		qw422016.N().S(`</p>
                                     <p class="mx-auto ">HIGH</p>
                                 </div>
+                                `)
+//line pkg/report/templates/default.qtpl:136
+		if summary.MediumCount > 0 {
+//line pkg/report/templates/default.qtpl:136
+			qw422016.N().S(`
+                                <div class="col text-center p-0 text-warning font-weight-bold">
+                                `)
+//line pkg/report/templates/default.qtpl:138
+		} else {
+//line pkg/report/templates/default.qtpl:138
+			qw422016.N().S(`
                                 <div class="col text-center p-0">
+                                `)
+//line pkg/report/templates/default.qtpl:140
+		}
+//line pkg/report/templates/default.qtpl:140
+		qw422016.N().S(`
                                     <p class="mx-auto mb-1">`)
-//line pkg/report/templates/default.qtpl:129
+//line pkg/report/templates/default.qtpl:141
 		qw422016.N().D(summary.MediumCount)
-//line pkg/report/templates/default.qtpl:129
+//line pkg/report/templates/default.qtpl:141
 		qw422016.N().S(`</p>
                                     <p class="mx-auto ">MEDIUM</p>
                                 </div>
                                 <div class="col text-center p-0">
                                     <p class="mx-auto mb-1">`)
-//line pkg/report/templates/default.qtpl:133
+//line pkg/report/templates/default.qtpl:145
 		qw422016.N().D(summary.LowCount)
-//line pkg/report/templates/default.qtpl:133
+//line pkg/report/templates/default.qtpl:145
 		qw422016.N().S(`</p>
                                     <p class="mx-auto ">LOW</p>
                                 </div>
                                 <div class="col text-center p-0">
                                     <p class="mx-auto mb-1">`)
-//line pkg/report/templates/default.qtpl:137
+//line pkg/report/templates/default.qtpl:149
 		qw422016.N().D(summary.UnknownCount)
-//line pkg/report/templates/default.qtpl:137
+//line pkg/report/templates/default.qtpl:149
 		qw422016.N().S(`</p>
                                     <p class="mx-auto ">UNKNOWN</p>
                                 </div>
@@ -317,9 +365,9 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                              <div class="row">
                                 <div class="col">
                                     <p class="my-0">Generated at:  `)
-//line pkg/report/templates/default.qtpl:151
+//line pkg/report/templates/default.qtpl:163
 		qw422016.E().S(p.VulnsReports[0].CreationTimestamp.String())
-//line pkg/report/templates/default.qtpl:151
+//line pkg/report/templates/default.qtpl:163
 		qw422016.N().S(`</p>
                                 </div>
                              </div>
@@ -328,51 +376,51 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                     </div>      
                 </div>
                 `)
-//line pkg/report/templates/default.qtpl:158
+//line pkg/report/templates/default.qtpl:170
 	}
-//line pkg/report/templates/default.qtpl:158
+//line pkg/report/templates/default.qtpl:170
 	qw422016.N().S(`
                 
                 `)
-//line pkg/report/templates/default.qtpl:160
+//line pkg/report/templates/default.qtpl:172
 	for count, report := range p.VulnsReports {
-//line pkg/report/templates/default.qtpl:160
+//line pkg/report/templates/default.qtpl:172
 		qw422016.N().S(`
                 
                   <div class="row"><h5 class="text-info" id="vulns_container_`)
-//line pkg/report/templates/default.qtpl:162
+//line pkg/report/templates/default.qtpl:174
 		qw422016.N().D(count)
-//line pkg/report/templates/default.qtpl:162
+//line pkg/report/templates/default.qtpl:174
 		qw422016.N().S(`">Container `)
-//line pkg/report/templates/default.qtpl:162
+//line pkg/report/templates/default.qtpl:174
 		qw422016.E().S(report.Labels["starboard.container.name"])
-//line pkg/report/templates/default.qtpl:162
+//line pkg/report/templates/default.qtpl:174
 		qw422016.N().S(`</h5></div>
                   <div class="row"><p>`)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.E().S(report.Report.Registry.URL)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.N().S(`/`)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.E().S(report.Report.Artifact.Repository)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.N().S(`:`)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.E().S(report.Report.Artifact.Tag)
-//line pkg/report/templates/default.qtpl:163
+//line pkg/report/templates/default.qtpl:175
 		qw422016.N().S(`</p></div>
                   `)
-//line pkg/report/templates/default.qtpl:164
+//line pkg/report/templates/default.qtpl:176
 		if len(report.Report.Vulnerabilities) == 0 {
-//line pkg/report/templates/default.qtpl:164
+//line pkg/report/templates/default.qtpl:176
 			qw422016.N().S(`
                     <div class="row">
                       <p class="alert alert-success py-0 m-0" style="font-size: small;">No Vulnerabilities</p>
                     </div>                  
                   `)
-//line pkg/report/templates/default.qtpl:168
+//line pkg/report/templates/default.qtpl:180
 		} else {
-//line pkg/report/templates/default.qtpl:168
+//line pkg/report/templates/default.qtpl:180
 			qw422016.N().S(`
 
                   <div class="row">
@@ -388,75 +436,75 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                             </thead>
                             <tbody>
                   `)
-//line pkg/report/templates/default.qtpl:182
+//line pkg/report/templates/default.qtpl:194
 			for _, v := range report.Report.Vulnerabilities {
-//line pkg/report/templates/default.qtpl:182
+//line pkg/report/templates/default.qtpl:194
 				qw422016.N().S(`
                     <tr>
                       <td>`)
-//line pkg/report/templates/default.qtpl:184
+//line pkg/report/templates/default.qtpl:196
 				qw422016.E().S(v.VulnerabilityID)
-//line pkg/report/templates/default.qtpl:184
+//line pkg/report/templates/default.qtpl:196
 				qw422016.N().S(`</td>
                       <td>`)
-//line pkg/report/templates/default.qtpl:185
+//line pkg/report/templates/default.qtpl:197
 				qw422016.E().S(string(v.Severity))
-//line pkg/report/templates/default.qtpl:185
+//line pkg/report/templates/default.qtpl:197
 				qw422016.N().S(`</td>
                       <td>`)
-//line pkg/report/templates/default.qtpl:186
+//line pkg/report/templates/default.qtpl:198
 				qw422016.E().S(v.Resource)
-//line pkg/report/templates/default.qtpl:186
+//line pkg/report/templates/default.qtpl:198
 				qw422016.N().S(`</td>
                       <td>`)
-//line pkg/report/templates/default.qtpl:187
+//line pkg/report/templates/default.qtpl:199
 				qw422016.E().S(v.InstalledVersion)
-//line pkg/report/templates/default.qtpl:187
+//line pkg/report/templates/default.qtpl:199
 				qw422016.N().S(`</td>
                       <td>`)
-//line pkg/report/templates/default.qtpl:188
+//line pkg/report/templates/default.qtpl:200
 				qw422016.E().S(v.FixedVersion)
-//line pkg/report/templates/default.qtpl:188
+//line pkg/report/templates/default.qtpl:200
 				qw422016.N().S(`</td>
                     </tr>	
                   `)
-//line pkg/report/templates/default.qtpl:190
+//line pkg/report/templates/default.qtpl:202
 			}
-//line pkg/report/templates/default.qtpl:190
+//line pkg/report/templates/default.qtpl:202
 			qw422016.N().S(`
                             </tbody>
                       </table>
                   </div>
                 `)
-//line pkg/report/templates/default.qtpl:194
+//line pkg/report/templates/default.qtpl:206
 		}
-//line pkg/report/templates/default.qtpl:194
+//line pkg/report/templates/default.qtpl:206
 		qw422016.N().S(`
                 `)
-//line pkg/report/templates/default.qtpl:195
+//line pkg/report/templates/default.qtpl:207
 	}
-//line pkg/report/templates/default.qtpl:195
+//line pkg/report/templates/default.qtpl:207
 	qw422016.N().S(`
                 
 
                 <!-- Config Audits -->
                 `)
-//line pkg/report/templates/default.qtpl:199
+//line pkg/report/templates/default.qtpl:211
 	if len(p.ConfigAuditReports) > 0 {
-//line pkg/report/templates/default.qtpl:199
+//line pkg/report/templates/default.qtpl:211
 		qw422016.N().S(`
                   <div class="row pt-3 text-center border-bottom my-4">
                       <h3 class="mx-auto" id="ca_header" style="color: rgb(0, 160, 170);">Configuration Audit</h3>
                   </div>
                 `)
-//line pkg/report/templates/default.qtpl:203
+//line pkg/report/templates/default.qtpl:215
 	}
-//line pkg/report/templates/default.qtpl:203
+//line pkg/report/templates/default.qtpl:215
 	qw422016.N().S(`
                 `)
-//line pkg/report/templates/default.qtpl:204
+//line pkg/report/templates/default.qtpl:216
 	for _, report := range p.ConfigAuditReports {
-//line pkg/report/templates/default.qtpl:204
+//line pkg/report/templates/default.qtpl:216
 		qw422016.N().S(`        
                   <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
                   <div class="row">
@@ -471,53 +519,53 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                             </thead>
                             <tbody>
                               `)
-//line pkg/report/templates/default.qtpl:217
+//line pkg/report/templates/default.qtpl:229
 		for _, check := range report.Report.PodChecks {
-//line pkg/report/templates/default.qtpl:217
+//line pkg/report/templates/default.qtpl:229
 			qw422016.N().S(`
                                 <tr>
                                   <td>`)
-//line pkg/report/templates/default.qtpl:219
+//line pkg/report/templates/default.qtpl:231
 			qw422016.E().V(check.Success)
-//line pkg/report/templates/default.qtpl:219
+//line pkg/report/templates/default.qtpl:231
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/default.qtpl:220
+//line pkg/report/templates/default.qtpl:232
 			qw422016.E().S(check.ID)
-//line pkg/report/templates/default.qtpl:220
+//line pkg/report/templates/default.qtpl:232
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/default.qtpl:221
+//line pkg/report/templates/default.qtpl:233
 			qw422016.E().S(check.Severity)
-//line pkg/report/templates/default.qtpl:221
+//line pkg/report/templates/default.qtpl:233
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/default.qtpl:222
+//line pkg/report/templates/default.qtpl:234
 			qw422016.E().S(check.Category)
-//line pkg/report/templates/default.qtpl:222
+//line pkg/report/templates/default.qtpl:234
 			qw422016.N().S(`</td>
                                 </tr>
                               `)
-//line pkg/report/templates/default.qtpl:224
+//line pkg/report/templates/default.qtpl:236
 		}
-//line pkg/report/templates/default.qtpl:224
+//line pkg/report/templates/default.qtpl:236
 		qw422016.N().S(`
                             </tbody>
                       </table>
                   </div>
                   `)
-//line pkg/report/templates/default.qtpl:228
+//line pkg/report/templates/default.qtpl:240
 		for container, checks := range report.Report.ContainerChecks {
-//line pkg/report/templates/default.qtpl:228
+//line pkg/report/templates/default.qtpl:240
 			qw422016.N().S(`
                     <div class="row"><h5 class="text-info" id="ca_container_`)
-//line pkg/report/templates/default.qtpl:229
+//line pkg/report/templates/default.qtpl:241
 			qw422016.E().S(container)
-//line pkg/report/templates/default.qtpl:229
+//line pkg/report/templates/default.qtpl:241
 			qw422016.N().S(`">Container `)
-//line pkg/report/templates/default.qtpl:229
+//line pkg/report/templates/default.qtpl:241
 			qw422016.E().S(container)
-//line pkg/report/templates/default.qtpl:229
+//line pkg/report/templates/default.qtpl:241
 			qw422016.N().S(`</h5></div>
                     <div class="row">
                         <table class="table table-sm table-bordered">
@@ -531,78 +579,78 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                               </thead>
                               <tbody>
                                 `)
-//line pkg/report/templates/default.qtpl:241
+//line pkg/report/templates/default.qtpl:253
 			for _, check := range checks {
-//line pkg/report/templates/default.qtpl:241
+//line pkg/report/templates/default.qtpl:253
 				qw422016.N().S(`
                                   <tr>
                                     <td>`)
-//line pkg/report/templates/default.qtpl:243
+//line pkg/report/templates/default.qtpl:255
 				qw422016.E().V(check.Success)
-//line pkg/report/templates/default.qtpl:243
+//line pkg/report/templates/default.qtpl:255
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/default.qtpl:244
+//line pkg/report/templates/default.qtpl:256
 				qw422016.E().S(check.ID)
-//line pkg/report/templates/default.qtpl:244
+//line pkg/report/templates/default.qtpl:256
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/default.qtpl:245
+//line pkg/report/templates/default.qtpl:257
 				qw422016.E().S(check.Severity)
-//line pkg/report/templates/default.qtpl:245
+//line pkg/report/templates/default.qtpl:257
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/default.qtpl:246
+//line pkg/report/templates/default.qtpl:258
 				qw422016.E().S(check.Category)
-//line pkg/report/templates/default.qtpl:246
+//line pkg/report/templates/default.qtpl:258
 				qw422016.N().S(`</td>
                                   </tr>
                                 `)
-//line pkg/report/templates/default.qtpl:248
+//line pkg/report/templates/default.qtpl:260
 			}
-//line pkg/report/templates/default.qtpl:248
+//line pkg/report/templates/default.qtpl:260
 			qw422016.N().S(`
                               </tbody>
                         </table>
                     </div>
                   `)
-//line pkg/report/templates/default.qtpl:252
+//line pkg/report/templates/default.qtpl:264
 		}
-//line pkg/report/templates/default.qtpl:252
+//line pkg/report/templates/default.qtpl:264
 		qw422016.N().S(`
                 `)
-//line pkg/report/templates/default.qtpl:253
+//line pkg/report/templates/default.qtpl:265
 	}
-//line pkg/report/templates/default.qtpl:253
+//line pkg/report/templates/default.qtpl:265
 	qw422016.N().S(`
             </div>
         </div>
 `)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 }
 
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 func (p *ReportPage) WriteBody(qq422016 qtio422016.Writer) {
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	p.StreamBody(qw422016)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	qt422016.ReleaseWriter(qw422016)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 }
 
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 func (p *ReportPage) Body() string {
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	qb422016 := qt422016.AcquireByteBuffer()
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	p.WriteBody(qb422016)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	qs422016 := string(qb422016.B)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	qt422016.ReleaseByteBuffer(qb422016)
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 	return qs422016
-//line pkg/report/templates/default.qtpl:256
+//line pkg/report/templates/default.qtpl:268
 }
