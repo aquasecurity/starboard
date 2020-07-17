@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 
@@ -36,18 +37,42 @@ func (s *ReadWriter) Write(ctx context.Context, workload kube.Object, reports vu
 }
 
 func (s *ReadWriter) createVulnerability(ctx context.Context, workload kube.Object, container string, report starboard.VulnerabilityReport) (err error) {
-	_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).Create(ctx, &starboard.Vulnerability{
-		ObjectMeta: meta.ObjectMeta{
-			Name: fmt.Sprintf(uuid.New().String()),
-			Labels: map[string]string{
-				kube.LabelResourceKind:      string(workload.Kind),
-				kube.LabelResourceName:      workload.Name,
-				kube.LabelResourceNamespace: workload.Namespace,
-				kube.LabelContainerName:     container,
-			},
-		},
-		Report: report,
-	}, meta.CreateOptions{})
+	namespace := workload.Namespace
+
+	// Trying to find previously generated vulnerability report for this specific container
+	vulnsSearch, err := s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).List(ctx, meta.ListOptions{
+		LabelSelector: labels.Set{
+			kube.LabelResourceKind:  string(workload.Kind),
+			kube.LabelResourceName:  workload.Name,
+			kube.LabelContainerName: container,
+		}.String(),
+	})
+	if err != nil {
+		return
+	}
+
+	if len(vulnsSearch.Items) > 0 {
+		existingCR := vulnsSearch.Items[0]
+		klog.V(3).Infof("Updating vulnerability report: %s/%s", namespace, workload.Name)
+		deepCopy := existingCR.DeepCopy()
+		deepCopy.Report = report
+		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).Update(ctx, deepCopy, meta.UpdateOptions{})
+	} else {
+		klog.V(3).Infof("Creating vulnerability report: %s/%s", namespace, workload.Name)
+		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).
+			Create(ctx, &starboard.Vulnerability{
+				ObjectMeta: meta.ObjectMeta{
+					Name: fmt.Sprintf(uuid.New().String()),
+					Labels: map[string]string{
+						kube.LabelResourceKind:      string(workload.Kind),
+						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceNamespace: workload.Namespace,
+						kube.LabelContainerName:     container,
+					},
+				},
+				Report: report,
+			}, meta.CreateOptions{})
+	}
 
 	return err
 }
