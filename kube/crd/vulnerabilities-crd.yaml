@@ -134,3 +134,41 @@ spec:
                     type: array
                     items:
                       type: string
+  additionalPrinterColumns:
+    - JSONPath: .report.artifact.repository
+      type: string
+      name: Repository
+      description: The name of image repository
+    - JSONPath: .report.artifact.tag
+      type: string
+      name: Tag
+      description: The name of image tag
+    - JSONPath: .report.scanner.name
+      type: string
+      name: Scanner
+      description: The name of the vulnerability scanner
+    - JSONPath: .report.summary.criticalCount
+      type: integer
+      name: Critical
+      description: The numer of critical vulnerabilities
+      priority: 1
+    - JSONPath: .report.summary.highCount
+      type: integer
+      name: High
+      description: The number of high vulnerabilities
+      priority: 1
+    - JSONPath: .report.summary.mediumCount
+      type: integer
+      name: Medium
+      description: The number of medium vulnerabilities
+      priority: 1
+    - JSONPath: .report.summary.lowCount
+      type: integer
+      name: Low
+      description: The number of low vulnerabilities
+      priority: 1
+    - JSONPath: .report.summary.unknownCount
+      type: integer
+      name: Unknown
+      description: The number of unknown vulnerabilities
+      priority: 1
