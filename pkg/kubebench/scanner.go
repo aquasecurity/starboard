@@ -3,6 +3,7 @@ package kubebench
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
@@ -50,10 +51,10 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, nodeName string) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
-
+func (s *Scanner) Scan(ctx context.Context, nodeName string, target string, wg *sync.WaitGroup) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
+	defer wg.Done()
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob(nodeName)
+	job := s.prepareKubeBenchJob(nodeName, target)
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -102,10 +103,11 @@ func (s *Scanner) Scan(ctx context.Context, nodeName string) (report starboard.C
 	}
 
 	node, err = s.clientset.CoreV1().Nodes().Get(ctx, kubeBenchPod.Spec.NodeName, meta.GetOptions{})
+
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob(nodeName string) *batch.Job {
+func (s *Scanner) prepareKubeBenchJob(nodeName string, target string) *batch.Job {
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
@@ -176,7 +178,7 @@ func (s *Scanner) prepareKubeBenchJob(nodeName string) *batch.Job {
 							Image:                    kubeBenchContainerImage,
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
-							Command:                  []string{"kube-bench"},
+							Command:                  []string{"kube-bench", target},
 							Args:                     []string{"--json"},
 							Resources: core.ResourceRequirements{
 								Limits: core.ResourceList{

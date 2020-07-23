@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
@@ -47,15 +48,28 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				err = fmt.Errorf("list nodes: %w", err)
 				return
 			}
+			var wg sync.WaitGroup
+			wg.Add(len(nodeList.Items))
 			for _, nodeItem := range nodeList.Items {
-				klog.V(3).Infof("Node name: %s/%s", nodeItem.Name, nodeItem.Labels[masterNodeLabel])
-				report, node, err := kubebench.NewScanner(opts, kubernetesClientset).Scan(ctx, nodeItem.Name)
-				if err != nil {
-					break
+				target := "node"
+				if _, ok := nodeItem.Labels[masterNodeLabel]; ok {
+					target = "master"
 				}
-				err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(ctx, report, node)
-			}
+				nodeName := nodeItem.Name
+				go func() {
+					klog.V(3).Infof("Node name: %s Label:%s", nodeName, target)
+					report, node, err := kubebench.NewScanner(opts, kubernetesClientset).Scan(ctx, nodeName, target, &wg)
 
+					if err != nil {
+						klog.Warningf("Node name: %s Error NewScanner: %s", nodeName, err)
+					}
+					err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(ctx, report, node)
+					if err != nil {
+						klog.Warningf("Node name: %s Error NewWriter: %s", nodeName, err)
+					}
+				}()
+			}
+			wg.Wait()
 			return
 		},
 	}
