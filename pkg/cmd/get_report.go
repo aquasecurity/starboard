@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/spf13/cobra"
@@ -12,11 +11,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func generateHtmlReport(configaudit starboard.ConfigAuditReport, vulnerabilities starboard.Vulnerability) (err error, html string){
-	fmt.Println("config: ", configaudit)
-	fmt.Println("vulnerabilties: ", vulnerabilities)
-	return nil, ""
-}
 
 func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
