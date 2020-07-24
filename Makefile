@@ -7,7 +7,7 @@ qtc:
 	go get -v -u github.com/valyala/quicktemplate/qtc
 	qtc
 
-$(BINARY): $(SOURCES) qtc
+$(BINARY): $(SOURCES)
 	CGO_ENABLED=0 go build -o ./bin/$(BINARY) ./cmd/starboard/main.go
 
 test: $(SOURCES)
