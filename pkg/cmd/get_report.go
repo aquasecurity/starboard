@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"os"
 )
-
 
 func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
@@ -60,11 +60,7 @@ NAME is the name of a particular Kubernetes workload.
 				return
 			}
 			reporter := report.NewHTMLReporter(configAudits.Items, vulnsReports.Items, workload)
-			htmlReport, err := reporter.GenerateReport()
-			if err != nil {
-				return
-			}
-			err = reporter.PublishReport(htmlReport)
+			err = reporter.GenerateReport(os.Stdout)
 
 			return
 		},
@@ -72,5 +68,3 @@ NAME is the name of a particular Kubernetes workload.
 
 	return cmd
 }
-
-

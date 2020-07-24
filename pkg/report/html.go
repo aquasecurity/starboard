@@ -2,7 +2,7 @@ package report
 
 import (
 	"bytes"
-	"fmt"
+	"io"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -23,7 +23,7 @@ func NewHTMLReporter(configAuditReports []starboard.ConfigAuditReport, vulnerabi
 	}
 }
 
-func (h *HTMLReporter) GenerateReport() (htmlReport []byte, err error) {
+func (h *HTMLReporter) GenerateReport(writer io.Writer) (err error) {
 	p := &templates.ReportPage{
 		ConfigAuditReports: h.configAuditReports,
 		VulnsReports: h.vulnerabilityReports,
@@ -31,10 +31,6 @@ func (h *HTMLReporter) GenerateReport() (htmlReport []byte, err error) {
 	}
 	var buf bytes.Buffer
 	templates.WritePageTemplate(&buf, p)
-	return buf.Bytes(), nil
-}
-
-func (h *HTMLReporter) PublishReport(htmlReport []byte) (err error) {
-	_, err = fmt.Printf("%s", htmlReport)
+	writer.Write(buf.Bytes())
 	return err
 }
