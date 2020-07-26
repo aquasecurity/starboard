@@ -4,12 +4,13 @@ import (
 	"os"
 	"testing"
 
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-	"k8s.io/client-go/kubernetes"
+	"github.com/onsi/gomega/gexec"
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -17,7 +18,15 @@ var (
 	apiextensionsClientset apiextensions.ApiextensionsV1beta1Interface
 )
 
+var (
+	pathToStarboardCLI string
+)
+
 var _ = BeforeSuite(func() {
+	var err error
+	pathToStarboardCLI, err = gexec.Build("github.com/aquasecurity/starboard/cmd/starboard")
+	Expect(err).ToNot(HaveOccurred())
+
 	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	Expect(err).ToNot(HaveOccurred())
 
@@ -37,5 +46,5 @@ func TestStarboardCLI(t *testing.T) {
 }
 
 var _ = AfterSuite(func() {
-	// currently do nothing
+	gexec.CleanupBuildArtifacts()
 })

@@ -12,10 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const (
-	starboardCmd = "./../bin/starboard"
-)
-
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
@@ -24,9 +20,9 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Running version command", func() {
 		It("should print the current version of the executable binary", func() {
-			cmd := exec.Command(starboardCmd, []string{"version"}...)
+			cmd := exec.Command(pathToStarboardCLI, []string{"version"}...)
 			output, err := cmd.Output()
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(string(output)).To(Equal("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))
 		})
 
@@ -34,7 +30,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Running init command", func() {
 		It("should initialize Starboard", func() {
-			cmd := exec.Command(starboardCmd, []string{"init", "-v", "3"}...)
+			cmd := exec.Command(pathToStarboardCLI, []string{"init", "-v", "3"}...)
 			err := cmd.Run()
 			Expect(err).ToNot(HaveOccurred())
 
