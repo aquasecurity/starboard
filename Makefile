@@ -10,4 +10,4 @@ unit-tests: $(SOURCES)
 	go test -v -short -race -timeout 30s -coverprofile=coverage.txt -covermode=atomic ./...
 
 integration-tests: build
-	go test -v ./integration-tests
+	go test ./itest -ginkgo.v -ginkgo.progress -test.v

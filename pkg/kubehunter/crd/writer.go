@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
@@ -25,14 +27,11 @@ func NewWriter(clientset starboardapi.Interface) kubehunter.Writer {
 
 }
 
-func (w *writer) Write(ctx context.Context, report starboard.KubeHunterOutput, cluster string) (err error) {
+func (w *writer) Write(ctx context.Context, report starboard.KubeHunterOutput, cluster string) error {
 	if strings.TrimSpace(cluster) == "" {
-		err = errors.New("cluster name must not be blank")
-		return
+		return errors.New("cluster name must not be blank")
 	}
-	// TODO Check if an instance of the report with the given name already exists.
-	// TODO If exists just update it, create new instance otherwise
-	_, err = w.clientset.AquasecurityV1alpha1().KubeHunterReports().Create(ctx, &starboard.KubeHunterReport{
+	_, err := w.clientset.AquasecurityV1alpha1().KubeHunterReports().Create(ctx, &starboard.KubeHunterReport{
 		ObjectMeta: meta.ObjectMeta{
 			Name: cluster,
 			Labels: map[string]string{
@@ -42,5 +41,15 @@ func (w *writer) Write(ctx context.Context, report starboard.KubeHunterOutput, c
 		},
 		Report: report,
 	}, meta.CreateOptions{})
-	return
+	if err != nil && apierrors.IsAlreadyExists(err) {
+		found, err := w.clientset.AquasecurityV1alpha1().KubeHunterReports().Get(ctx, cluster, meta.GetOptions{})
+		if err != nil {
+			return err
+		}
+		deepCopy := found.DeepCopy()
+		deepCopy.Report = report
+		_, err = w.clientset.AquasecurityV1alpha1().KubeHunterReports().Update(ctx, deepCopy, meta.UpdateOptions{})
+		return err
+	}
+	return err
 }

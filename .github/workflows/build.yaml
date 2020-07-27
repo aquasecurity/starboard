@@ -42,13 +42,15 @@ jobs:
           file: ./coverage.txt
       - name: Setup Kubernetes cluster (KIND)
         uses: engineerd/setup-kind@v0.4.0
+        with:
+          version: v0.8.1
       - name: Test connection to Kubernetes cluster
         run: |
           kubectl cluster-info
+          kubectl describe node
       - name: Run integration tests
         run: |
           make integration-tests
-          kubectl get crd
         env:
           KUBECONFIG: /home/runner/.kube/config
       - name: Release snapshot

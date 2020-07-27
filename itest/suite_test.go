@@ -1,10 +1,15 @@
-package integration_tests
+package itest
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/onsi/gomega/gexec"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+
+	. "github.com/onsi/gomega/gexec"
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/ginkgo"
@@ -16,6 +21,7 @@ import (
 var (
 	kubernetesClientset    kubernetes.Interface
 	apiextensionsClientset apiextensions.ApiextensionsV1beta1Interface
+	starboardClientset     starboardapi.Interface
 )
 
 var (
@@ -24,7 +30,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	var err error
-	pathToStarboardCLI, err = gexec.Build("github.com/aquasecurity/starboard/cmd/starboard")
+	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
 	Expect(err).ToNot(HaveOccurred())
 
 	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
@@ -34,6 +40,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	apiextensionsClientset, err = apiextensions.NewForConfig(config)
+	Expect(err).ToNot(HaveOccurred())
+
+	starboardClientset, err = starboardapi.NewForConfig(config)
 	Expect(err).ToNot(HaveOccurred())
 })
 
@@ -46,5 +55,17 @@ func TestStarboardCLI(t *testing.T) {
 }
 
 var _ = AfterSuite(func() {
-	gexec.CleanupBuildArtifacts()
+	CleanupBuildArtifacts()
 })
+
+func GetNodeNames(ctx context.Context) ([]string, error) {
+	nodesList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(nodesList.Items))
+	for i, node := range nodesList.Items {
+		names[i] = node.Name
+	}
+	return names, nil
+}
