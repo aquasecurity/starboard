@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run unit tests
-        run: make test
+        run: make unit-tests
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         with:
