@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	core "k8s.io/api/core/v1"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
@@ -14,10 +16,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
-)
-
-const (
-	masterNodeLabel = "node-role.kubernetes.io/master"
 )
 
 func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -42,33 +40,35 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			// List Nodes
 			nodeList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, meta.ListOptions{})
 			if err != nil {
-				err = fmt.Errorf("list nodes: %w", err)
+				err = fmt.Errorf("listing nodes: %w", err)
 				return
 			}
+			scanner := kubebench.NewScanner(opts, kubernetesClientset)
+			writer := crd.NewWriter(ext.NewSystemClock(), starboardClientset)
+
 			var wg sync.WaitGroup
-			wg.Add(len(nodeList.Items))
-			for _, nodeItem := range nodeList.Items {
-				target := "node"
-				if _, ok := nodeItem.Labels[masterNodeLabel]; ok {
-					target = "master"
-				}
-				nodeName := nodeItem.Name
-				go func() {
-					klog.V(3).Infof("Node name: %s Label:%s", nodeName, target)
-					report, node, err := kubebench.NewScanner(opts, kubernetesClientset).Scan(ctx, nodeName, target, &wg)
+
+			for _, node := range nodeList.Items {
+				wg.Add(1)
+				go func(node core.Node) {
+					defer wg.Done()
+
+					report, err := scanner.Scan(ctx, node)
 
 					if err != nil {
-						klog.Warningf("Node name: %s Error NewScanner: %s", nodeName, err)
+						klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
+						return
 					}
-					err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(ctx, report, node)
+					err = writer.Write(ctx, report, &node)
 					if err != nil {
-						klog.Warningf("Node name: %s Error NewWriter: %s", nodeName, err)
+						klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
+						return
 					}
-				}()
+				}(node)
 			}
+
 			wg.Wait()
 			return
 		},

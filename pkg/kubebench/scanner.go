@@ -3,7 +3,8 @@ package kubebench
 import (
 	"context"
 	"fmt"
-	"sync"
+
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
@@ -51,10 +52,9 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, nodeName string, target string, wg *sync.WaitGroup) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
-	defer wg.Done()
+func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboard.CISKubeBenchOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob(nodeName, target)
+	job := s.prepareKubeBenchJob(node)
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -102,18 +102,22 @@ func (s *Scanner) Scan(ctx context.Context, nodeName string, target string, wg *
 		return
 	}
 
-	node, err = s.clientset.CoreV1().Nodes().Get(ctx, kubeBenchPod.Spec.NodeName, meta.GetOptions{})
-
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob(nodeName string, target string) *batch.Job {
+func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
+	target := "node"
+	if _, ok := node.Labels[masterNodeLabel]; ok {
+		target = "master"
+	}
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: kube.NamespaceStarboard,
-			Labels: map[string]string{
-				"app": "kube-bench",
+			Labels: labels.Set{
+				"app.kubernetes.io/name": "starboard-cli",
+				kube.LabelResourceKind:   string(kube.KindNode),
+				kube.LabelResourceName:   node.Name,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -122,14 +126,16 @@ func (s *Scanner) prepareKubeBenchJob(nodeName string, target string) *batch.Job
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
-					Labels: map[string]string{
-						"app": "kube-bench",
+					Labels: labels.Set{
+						"app.kubernetes.io/name": "starboard-cli",
+						kube.LabelResourceKind:   string(kube.KindNode),
+						kube.LabelResourceName:   node.Name,
 					},
 				},
 				Spec: core.PodSpec{
 					RestartPolicy: core.RestartPolicyNever,
 					HostPID:       true,
-					NodeName:      nodeName,
+					NodeName:      node.Name,
 					Volumes: []core.Volume{
 						{
 							Name: "var-lib-etcd",
