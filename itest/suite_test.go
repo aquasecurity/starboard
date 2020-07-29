@@ -1,11 +1,15 @@
 package itest
 
 import (
-	"context"
 	"os"
 	"testing"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
+
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 
@@ -28,6 +32,13 @@ var (
 	pathToStarboardCLI string
 )
 
+var (
+	namespaces                corev1.NamespaceInterface
+	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
+	defaultDeployments        appsv1.DeploymentInterface
+	defaultVulnerabilities    v1alpha1.VulnerabilityInterface
+)
+
 var _ = BeforeSuite(func() {
 	var err error
 	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
@@ -44,6 +55,11 @@ var _ = BeforeSuite(func() {
 
 	starboardClientset, err = starboardapi.NewForConfig(config)
 	Expect(err).ToNot(HaveOccurred())
+
+	namespaces = kubernetesClientset.CoreV1().Namespaces()
+	defaultDeployments = kubernetesClientset.AppsV1().Deployments(metav1.NamespaceDefault)
+	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
+	defaultVulnerabilities = starboardClientset.AquasecurityV1alpha1().Vulnerabilities(metav1.NamespaceDefault)
 })
 
 func TestStarboardCLI(t *testing.T) {
@@ -57,15 +73,3 @@ func TestStarboardCLI(t *testing.T) {
 var _ = AfterSuite(func() {
 	CleanupBuildArtifacts()
 })
-
-func GetNodeNames(ctx context.Context) ([]string, error) {
-	nodesList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	names := make([]string, len(nodesList.Items))
-	for i, node := range nodesList.Items {
-		names[i] = node.Name
-	}
-	return names, nil
-}
