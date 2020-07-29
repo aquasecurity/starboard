@@ -37,7 +37,7 @@ var _ = Describe("Starboard CLI", func() {
 		session, err := Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(session).Should(Exit(0))
-	})
+	}, 60)
 
 	Describe("Command init", func() {
 		It("should initialize Starboard", func() {
@@ -128,7 +128,7 @@ var _ = Describe("Starboard CLI", func() {
 		AfterEach(func() {
 			err := defaultDeployments.Delete(context.TODO(), "nginx", metav1.DeleteOptions{})
 			Expect(err).ToNot(HaveOccurred())
-		})
+		}, 60)
 
 	})
 
@@ -193,6 +193,6 @@ var _ = Describe("Starboard CLI", func() {
 			_, err := kubernetesClientset.CoreV1().Namespaces().Get(context.TODO(), "starboard", metav1.GetOptions{})
 			return errors.IsNotFound(err)
 		}, 10*time.Second).Should(BeTrue())
-	})
+	}, 60)
 
 })
