@@ -77,58 +77,104 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command find vulnerabilities", func() {
-		// TODO Add test cases for other types of Kubernetes controllers (StatefulSets, DaemonSets, etc.)
+		// TODO 1. Add test cases for other types of Kubernetes controllers (StatefulSets, DaemonSets, etc.)
+		// TODO 2. Add test for a controller with multiple containers
 
-		BeforeEach(func() {
-			_, err := defaultDeployments.Create(context.TODO(), &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nginx",
-				},
-				Spec: appsv1.DeploymentSpec{
-					Replicas: pointer.Int32Ptr(1),
-					Selector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{"app": "nginx"},
+		Context("when unmanaged Pod is specified as workload", func() {
+
+			BeforeEach(func() {
+				_, err := defaultPods.Create(context.TODO(), &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Labels: labels.Set{
-								"app": "nginx",
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "nginx",
+								Image: "nginx:1.16",
 							},
 						},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "nginx",
-									Image: "nginx:1.16",
+					},
+				}, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			}, 60)
+
+			It("should create vulnerabilities resource", func() {
+				command := exec.Command(pathToStarboardCLI, []string{"find", "vulnerabilities", "pod/nginx", "-v", "3"}...)
+				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session, scanJobTimeout).Should(Exit(0))
+
+				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
+					LabelSelector: labels.Set{
+						kube.LabelResourceKind: string(kube.KindPod),
+						kube.LabelResourceName: "nginx",
+					}.String(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reportList.Items).To(HaveLen(1), "Expected VulnerabilityReport for pod/nginx but not found")
+			})
+
+			AfterEach(func() {
+				err := defaultPods.Delete(context.TODO(), "nginx", metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			}, 60)
+
+		})
+
+		Context("when Deployment is specified as workload", func() {
+
+			BeforeEach(func() {
+				_, err := defaultDeployments.Create(context.TODO(), &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "nginx",
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: pointer.Int32Ptr(1),
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"app": "nginx"},
+						},
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: labels.Set{
+									"app": "nginx",
+								},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "nginx",
+										Image: "nginx:1.16",
+									},
 								},
 							},
 						},
 					},
-				},
-			}, metav1.CreateOptions{})
-			Expect(err).ToNot(HaveOccurred())
-		})
+				}, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			}, 60)
 
-		It("should create vulnerabilities resource", func() {
-			command := exec.Command(pathToStarboardCLI, []string{"find", "vulnerabilities", "deployment/nginx", "-v", "3"}...)
-			session, err := Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session, 2*time.Minute).Should(Exit(0))
+			It("should create vulnerabilities resource", func() {
+				command := exec.Command(pathToStarboardCLI, []string{"find", "vulnerabilities", "deployment/nginx", "-v", "3"}...)
+				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session, scanJobTimeout).Should(Exit(0))
 
-			reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
-				LabelSelector: labels.Set{
-					kube.LabelResourceKind: string(kube.KindDeployment),
-					kube.LabelResourceName: "nginx",
-				}.String(),
+				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
+					LabelSelector: labels.Set{
+						kube.LabelResourceKind: string(kube.KindDeployment),
+						kube.LabelResourceName: "nginx",
+					}.String(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reportList.Items).To(HaveLen(1), "Expected VulnerabilityReport for deployment/nginx but not found")
 			})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(reportList.Items).To(HaveLen(1), "Expected VulnerabilityReport for deployment/nginx but not found")
-		})
 
-		AfterEach(func() {
-			err := defaultDeployments.Delete(context.TODO(), "nginx", metav1.DeleteOptions{})
-			Expect(err).ToNot(HaveOccurred())
-		}, 60)
+			AfterEach(func() {
+				err := defaultDeployments.Delete(context.TODO(), "nginx", metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			}, 60)
+		})
 
 	})
 

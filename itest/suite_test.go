@@ -35,9 +35,19 @@ var (
 var (
 	namespaces                corev1.NamespaceInterface
 	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
+	defaultPods               corev1.PodInterface
 	defaultDeployments        appsv1.DeploymentInterface
 	defaultVulnerabilities    v1alpha1.VulnerabilityInterface
 )
+
+// TestStarboardCLI is a spec that describes the behavior of Starboard CLI.
+func TestStarboardCLI(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Starboard CLI")
+}
 
 var _ = BeforeSuite(func() {
 	var err error
@@ -57,18 +67,11 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	namespaces = kubernetesClientset.CoreV1().Namespaces()
+	defaultPods = kubernetesClientset.CoreV1().Pods(metav1.NamespaceDefault)
 	defaultDeployments = kubernetesClientset.AppsV1().Deployments(metav1.NamespaceDefault)
 	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
 	defaultVulnerabilities = starboardClientset.AquasecurityV1alpha1().Vulnerabilities(metav1.NamespaceDefault)
 })
-
-func TestStarboardCLI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Starboard CLI")
-}
 
 var _ = AfterSuite(func() {
 	CleanupBuildArtifacts()
