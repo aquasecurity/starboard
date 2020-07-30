@@ -29,7 +29,8 @@ var (
 )
 
 var (
-	pathToStarboardCLI string
+	pathToStarboardCLI   string
+	starboardCLILogLevel = "0"
 )
 
 var (
@@ -53,6 +54,10 @@ var _ = BeforeSuite(func() {
 	var err error
 	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
 	Expect(err).ToNot(HaveOccurred())
+
+	if logLevel, ok := os.LookupEnv("STARBOARD_CLI_LOG_LEVEL"); ok {
+		starboardCLILogLevel = logLevel
+	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	Expect(err).ToNot(HaveOccurred())

@@ -53,6 +53,7 @@ jobs:
           make integration-tests
         env:
           KUBECONFIG: /home/runner/.kube/config
+          STARBOARD_CLI_LOG_LEVEL: "0"
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
