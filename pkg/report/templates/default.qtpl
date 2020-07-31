@@ -69,6 +69,11 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
   a {
     color: inherit;
   }
+  @media print {
+    .container {
+        display: inline;
+    }
+  }
   </style>
   <div class="container border-right border-left" style="height: 100%; overflow: scroll;">
             <div class="col mt-5">
