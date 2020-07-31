@@ -2,14 +2,20 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"sync"
+
+	core "k8s.io/api/core/v1"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/kubebench/crd"
 	"github.com/spf13/cobra"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 )
 
 func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
@@ -30,15 +36,40 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, node, err := kubebench.NewScanner(opts, kubernetesClientset).Scan(ctx)
-			if err != nil {
-				return
-			}
 			starboardClientset, err := starboard.NewForConfig(config)
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(ext.NewSystemClock(), starboardClientset).Write(ctx, report, node)
+			nodeList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, meta.ListOptions{})
+			if err != nil {
+				err = fmt.Errorf("listing nodes: %w", err)
+				return
+			}
+			scanner := kubebench.NewScanner(opts, kubernetesClientset)
+			writer := crd.NewWriter(ext.NewSystemClock(), starboardClientset)
+
+			var wg sync.WaitGroup
+
+			for _, node := range nodeList.Items {
+				wg.Add(1)
+				go func(node core.Node) {
+					defer wg.Done()
+
+					report, err := scanner.Scan(ctx, node)
+
+					if err != nil {
+						klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
+						return
+					}
+					err = writer.Write(ctx, report, &node)
+					if err != nil {
+						klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
+						return
+					}
+				}(node)
+			}
+
+			wg.Wait()
 			return
 		},
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
 	"k8s.io/klog"
@@ -26,6 +28,7 @@ import (
 const (
 	kubeBenchVersion       = "0.3.0"
 	kubeBenchContainerName = "kube-bench"
+	masterNodeLabel        = "node-role.kubernetes.io/master"
 )
 
 var (
@@ -49,9 +52,9 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput, node *core.Node, err error) {
+func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboard.CISKubeBenchOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob()
+	job := s.prepareKubeBenchJob(node)
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -99,17 +102,22 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.CISKubeBenchOutput
 		return
 	}
 
-	node, err = s.clientset.CoreV1().Nodes().Get(ctx, kubeBenchPod.Spec.NodeName, meta.GetOptions{})
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob() *batch.Job {
+func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
+	target := "node"
+	if _, ok := node.Labels[masterNodeLabel]; ok {
+		target = "master"
+	}
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: kube.NamespaceStarboard,
-			Labels: map[string]string{
-				"app": "kube-bench",
+			Labels: labels.Set{
+				"app.kubernetes.io/name": "starboard-cli",
+				kube.LabelResourceKind:   string(kube.KindNode),
+				kube.LabelResourceName:   node.Name,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -118,13 +126,16 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
-					Labels: map[string]string{
-						"app": "kube-bench",
+					Labels: labels.Set{
+						"app.kubernetes.io/name": "starboard-cli",
+						kube.LabelResourceKind:   string(kube.KindNode),
+						kube.LabelResourceName:   node.Name,
 					},
 				},
 				Spec: core.PodSpec{
 					RestartPolicy: core.RestartPolicyNever,
 					HostPID:       true,
+					NodeName:      node.Name,
 					Volumes: []core.Volume{
 						{
 							Name: "var-lib-etcd",
@@ -173,7 +184,7 @@ func (s *Scanner) prepareKubeBenchJob() *batch.Job {
 							Image:                    kubeBenchContainerImage,
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
-							Command:                  []string{"kube-bench"},
+							Command:                  []string{"kube-bench", target},
 							Args:                     []string{"--json"},
 							Resources: core.ResourceRequirements{
 								Limits: core.ResourceList{
