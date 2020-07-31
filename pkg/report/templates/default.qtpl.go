@@ -661,7 +661,7 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                       <table class="table table-sm table-bordered">
                           <thead>
                               <tr>
-                                <th scope="col">Success</th>
+                                <th scope="col">PASS</th>
                                 <th scope="col">ID</th>
                                 <th scope="col">Severity</th>
                                 <th scope="col">Category</th>
@@ -721,7 +721,7 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                         <table class="table table-sm table-bordered">
                             <thead>
                                 <tr>
-                                  <th scope="col">Success</th>
+                                  <th scope="col">PASS</th>
                                   <th scope="col">ID</th>
                                   <th scope="col">Severity</th>
                                   <th scope="col">Category</th>
