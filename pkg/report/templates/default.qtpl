@@ -318,7 +318,6 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
 
                     </div>      
                 </div>
-                {% endif %}
                   <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
                   <div class="row">
                       <table class="table table-sm table-bordered">
@@ -367,6 +366,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                         </table>
                     </div>
                   {% endfor %}
+                  {% endif %}
             </div>
         </div>
 {% endfunc %}

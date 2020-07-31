@@ -651,11 +651,6 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
 
                     </div>      
                 </div>
-                `)
-//line pkg/report/templates/default.qtpl:321
-	}
-//line pkg/report/templates/default.qtpl:321
-	qw422016.N().S(`
                   <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
                   <div class="row">
                       <table class="table table-sm table-bordered">
@@ -669,54 +664,54 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                             </thead>
                             <tbody>
                               `)
-//line pkg/report/templates/default.qtpl:334
-	for _, check := range p.ConfigAuditReport.Report.PodChecks {
-//line pkg/report/templates/default.qtpl:334
-		qw422016.N().S(`
+//line pkg/report/templates/default.qtpl:333
+		for _, check := range p.ConfigAuditReport.Report.PodChecks {
+//line pkg/report/templates/default.qtpl:333
+			qw422016.N().S(`
                                 <tr>
                                   <td>`)
+//line pkg/report/templates/default.qtpl:335
+			qw422016.E().V(check.Success)
+//line pkg/report/templates/default.qtpl:335
+			qw422016.N().S(`</td>
+                                  <td>`)
 //line pkg/report/templates/default.qtpl:336
-		qw422016.E().V(check.Success)
+			qw422016.E().S(check.ID)
 //line pkg/report/templates/default.qtpl:336
-		qw422016.N().S(`</td>
+			qw422016.N().S(`</td>
                                   <td>`)
 //line pkg/report/templates/default.qtpl:337
-		qw422016.E().S(check.ID)
+			qw422016.E().S(check.Severity)
 //line pkg/report/templates/default.qtpl:337
-		qw422016.N().S(`</td>
+			qw422016.N().S(`</td>
                                   <td>`)
 //line pkg/report/templates/default.qtpl:338
-		qw422016.E().S(check.Severity)
+			qw422016.E().S(check.Category)
 //line pkg/report/templates/default.qtpl:338
-		qw422016.N().S(`</td>
-                                  <td>`)
-//line pkg/report/templates/default.qtpl:339
-		qw422016.E().S(check.Category)
-//line pkg/report/templates/default.qtpl:339
-		qw422016.N().S(`</td>
+			qw422016.N().S(`</td>
                                 </tr>
                               `)
-//line pkg/report/templates/default.qtpl:341
-	}
-//line pkg/report/templates/default.qtpl:341
-	qw422016.N().S(`
+//line pkg/report/templates/default.qtpl:340
+		}
+//line pkg/report/templates/default.qtpl:340
+		qw422016.N().S(`
                             </tbody>
                       </table>
                   </div>
                   `)
-//line pkg/report/templates/default.qtpl:345
-	for container, checks := range p.ConfigAuditReport.Report.ContainerChecks {
-//line pkg/report/templates/default.qtpl:345
-		qw422016.N().S(`
+//line pkg/report/templates/default.qtpl:344
+		for container, checks := range p.ConfigAuditReport.Report.ContainerChecks {
+//line pkg/report/templates/default.qtpl:344
+			qw422016.N().S(`
                     <div class="row"><h5 class="text-info" id="ca_container_`)
-//line pkg/report/templates/default.qtpl:346
-		qw422016.E().S(container)
-//line pkg/report/templates/default.qtpl:346
-		qw422016.N().S(`">Container `)
-//line pkg/report/templates/default.qtpl:346
-		qw422016.E().S(container)
-//line pkg/report/templates/default.qtpl:346
-		qw422016.N().S(`</h5></div>
+//line pkg/report/templates/default.qtpl:345
+			qw422016.E().S(container)
+//line pkg/report/templates/default.qtpl:345
+			qw422016.N().S(`">Container `)
+//line pkg/report/templates/default.qtpl:345
+			qw422016.E().S(container)
+//line pkg/report/templates/default.qtpl:345
+			qw422016.N().S(`</h5></div>
                     <div class="row">
                         <table class="table table-sm table-bordered">
                             <thead>
@@ -729,40 +724,45 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
                               </thead>
                               <tbody>
                                 `)
-//line pkg/report/templates/default.qtpl:358
-		for _, check := range checks {
-//line pkg/report/templates/default.qtpl:358
-			qw422016.N().S(`
+//line pkg/report/templates/default.qtpl:357
+			for _, check := range checks {
+//line pkg/report/templates/default.qtpl:357
+				qw422016.N().S(`
                                   <tr>
                                     <td>`)
+//line pkg/report/templates/default.qtpl:359
+				qw422016.E().V(check.Success)
+//line pkg/report/templates/default.qtpl:359
+				qw422016.N().S(`</td>
+                                    <td>`)
 //line pkg/report/templates/default.qtpl:360
-			qw422016.E().V(check.Success)
+				qw422016.E().S(check.ID)
 //line pkg/report/templates/default.qtpl:360
-			qw422016.N().S(`</td>
+				qw422016.N().S(`</td>
                                     <td>`)
 //line pkg/report/templates/default.qtpl:361
-			qw422016.E().S(check.ID)
+				qw422016.E().S(check.Severity)
 //line pkg/report/templates/default.qtpl:361
-			qw422016.N().S(`</td>
+				qw422016.N().S(`</td>
                                     <td>`)
 //line pkg/report/templates/default.qtpl:362
-			qw422016.E().S(check.Severity)
+				qw422016.E().S(check.Category)
 //line pkg/report/templates/default.qtpl:362
-			qw422016.N().S(`</td>
-                                    <td>`)
-//line pkg/report/templates/default.qtpl:363
-			qw422016.E().S(check.Category)
-//line pkg/report/templates/default.qtpl:363
-			qw422016.N().S(`</td>
+				qw422016.N().S(`</td>
                                   </tr>
                                 `)
-//line pkg/report/templates/default.qtpl:365
-		}
-//line pkg/report/templates/default.qtpl:365
-		qw422016.N().S(`
+//line pkg/report/templates/default.qtpl:364
+			}
+//line pkg/report/templates/default.qtpl:364
+			qw422016.N().S(`
                               </tbody>
                         </table>
                     </div>
+                  `)
+//line pkg/report/templates/default.qtpl:368
+		}
+//line pkg/report/templates/default.qtpl:368
+		qw422016.N().S(`
                   `)
 //line pkg/report/templates/default.qtpl:369
 	}
