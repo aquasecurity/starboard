@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -26,7 +24,6 @@ NAME is the name of a particular Kubernetes workload.
 		Example: fmt.Sprintf(`  # Save report to a file
   %[1]s get report deploy/nginx > report.html`, "starboard"),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return
@@ -45,24 +42,9 @@ NAME is the name of a particular Kubernetes workload.
 			}
 
 			caReader := configAuditCrd.NewReadWriter(starboardClientset)
-			configAudit, err := caReader.Read(ctx, workload)
-			if err != nil {
-				return
-			}
-
 			vulnsReader := vulnsCrd.NewReadWriter(starboardClientset)
-			vulnsReports, err := vulnsReader.Read(ctx, workload)
-			if err != nil {
-				return
-			}
 
-			// if no reports whatsoever
-			if len(configAudit.Report.PodChecks) == 0 && len(vulnsReports) == 0 {
-				err = errors.New((fmt.Sprintf("No configaudits or vulnerabilities found for workload %s/%s/%s", workload.Namespace, workload.Kind, workload.Name)))
-				return
-			}
-
-			reporter := report.NewHTMLReporter(configAudit, vulnsReports, workload)
+			reporter := report.NewHTMLReporter(caReader, vulnsReader, workload)
 			err = reporter.GenerateReport(os.Stdout)
 
 			return
