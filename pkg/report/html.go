@@ -1,7 +1,6 @@
 package report
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -60,8 +59,6 @@ func (h *HTMLReporter) GenerateReport(writer io.Writer) (err error) {
 		Workload:          h.workload,
 	}
 
-	var buf bytes.Buffer
-	templates.WritePageTemplate(&buf, p)
-	writer.Write(buf.Bytes())
-	return err
+	templates.WritePageTemplate(writer, p)
+	return nil
 }
