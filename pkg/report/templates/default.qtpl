@@ -1,11 +1,12 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 {% import "github.com/aquasecurity/starboard/pkg/kube" %}
+{% import "github.com/aquasecurity/starboard/pkg/find/vulnerabilities" %}
 
 
 {% code
 type ReportPage struct {
-	VulnsReports []v1alpha1.Vulnerability
-	ConfigAuditReports []v1alpha1.ConfigAuditReport
+	VulnsReports vulnerabilities.WorkloadVulnerabilities
+	ConfigAuditReport v1alpha1.ConfigAuditReport
   Workload kube.Object
 }
 
@@ -26,11 +27,11 @@ type ConfigAuditSummary struct {
 func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {  
   merged := v1alpha1.VulnerabilitySummary{}
 	for _, report := range p.VulnsReports {
-		merged.CriticalCount += report.Report.Summary.CriticalCount
-		merged.HighCount += report.Report.Summary.HighCount
-		merged.MediumCount += report.Report.Summary.MediumCount
-		merged.LowCount += report.Report.Summary.LowCount
-		merged.UnknownCount += report.Report.Summary.UnknownCount
+		merged.CriticalCount += report.Summary.CriticalCount
+		merged.HighCount += report.Summary.HighCount
+		merged.MediumCount += report.Summary.MediumCount
+		merged.LowCount += report.Summary.LowCount
+		merged.UnknownCount += report.Summary.UnknownCount
 	}
   return merged
 }
@@ -40,25 +41,24 @@ func (p *ReportPage) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary) {
 func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {  
   summary := ConfigAuditSummary{}
   // sum container checks
-  for _, report := range p.ConfigAuditReports {
-    for _, checks := range report.Report.ContainerChecks {
-      for _, check := range checks {
-        if check.Success {
-          summary.ContainerPass += 1
-        } else {
-          summary.ContainerFail += 1
-        }
-      }
-    }
-    // sum pod checks
-    for _, check := range report.Report.PodChecks {
+  for _, checks := range p.ConfigAuditReport.Report.ContainerChecks {
+    for _, check := range checks {
       if check.Success {
-        summary.PodPass += 1
+        summary.ContainerPass += 1
       } else {
-        summary.PodFail += 1
+        summary.ContainerFail += 1
       }
     }
-	}
+  }
+  // sum pod checks
+  for _, check := range p.ConfigAuditReport.Report.PodChecks {
+    if check.Success {
+      summary.PodPass += 1
+    } else {
+      summary.PodFail += 1
+    }
+  }
+	
   return summary
 }
 %}
@@ -92,22 +92,20 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                         <li>
                             <a href="#vuln_header">Vulnerabilities</a></li>
                             <ul>
-                              {% for count, report := range p.VulnsReports %}
-                                <li><a href="#vulns_container_{%d count %}">{%s report.Labels["starboard.container.name"] %}</a></li>
+                              {% for container, _ := range p.VulnsReports %}
+                                <li><a href="#vulns_container_{%s container %}">{%s container %}</a></li>
                               {% endfor %}
                             </ul>
                         </li>
                         {% endif %}
-                        {% if len(p.ConfigAuditReports) > 0 %}
+                        {% if len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
                         <li>
                             <a href="#ca_header">Configuration Audit</a>
                             <ul>
                               <li><a href="#ca_pod_checks">Pod Checks</a></li>
-                              {% for _, report := range p.ConfigAuditReports %}
-                                {% for container, _ := range report.Report.ContainerChecks %}
+                                {% for container, _ := range p.ConfigAuditReport.Report.ContainerChecks %}
                                   <li><a href="#ca_container_{%s container %}">{%s container %}</a></li>
                                 {% endfor %}
-                              {% endfor %}
                             </ul>
                         </li>
                         {% endif %}
@@ -132,9 +130,20 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Name:  {%s p.VulnsReports[0].Report.Scanner.Name %}</p>
-                                    <p class="my-0">Vendor:  {%s p.VulnsReports[0].Report.Scanner.Vendor %}</p>
-                                    <p class="my-0">Version:  {%s p.VulnsReports[0].Report.Scanner.Version %}</p>
+                                {% code
+                                  var scanner_name, scanner_vendor, scanner_version, creation_timestamp string
+                                  for _, report := range p.VulnsReports {
+                                    scanner_name = report.Scanner.Name
+                                    scanner_vendor = report.Scanner.Vendor
+                                    scanner_version = report.Scanner.Version
+                                    // TODO: get the timestamp when it is intergrated
+                                    creation_timestamp = ""
+                                    break
+                                  }
+                                %}
+                                    <p class="my-0">Name:  {%s scanner_name %}</p>
+                                    <p class="my-0">Vendor:  {%s scanner_vendor %}</p>
+                                    <p class="my-0">Version:  {%s scanner_version %}</p>
                                 </div>
                              </div>
                         </div>
@@ -192,7 +201,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Generated at:  {%s p.VulnsReports[0].CreationTimestamp.String() %}</p>
+                                    <p class="my-0">Generated at:  {%s creation_timestamp %}</p>
                                 </div>
                              </div>
                         </div>
@@ -201,11 +210,11 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                 </div>
                 {% endif %}
                 
-                {% for count, report := range p.VulnsReports %}
+                {% for container, report := range p.VulnsReports %}
                 
-                  <div class="row"><h5 class="text-info" id="vulns_container_{%d count %}">Container {%s report.Labels["starboard.container.name"] %}</h5></div>
-                  <div class="row"><p>{%s report.Report.Registry.URL %}/{%s report.Report.Artifact.Repository %}:{%s report.Report.Artifact.Tag %}</p></div>
-                  {% if len(report.Report.Vulnerabilities) == 0 %}
+                  <div class="row"><h5 class="text-info" id="vulns_container_{%s container %}">Container {%s container %}</h5></div>
+                  <div class="row"><p>{%s report.Registry.URL %}/{%s report.Artifact.Repository %}:{%s report.Artifact.Tag %}</p></div>
+                  {% if len(report.Vulnerabilities) == 0 %}
                     <div class="row">
                       <p class="alert alert-success py-0 m-0" style="font-size: small;">No Vulnerabilities</p>
                     </div>                  
@@ -223,7 +232,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                               </tr>
                             </thead>
                             <tbody>
-                  {% for _, v := range report.Report.Vulnerabilities %}
+                  {% for _, v := range report.Vulnerabilities %}
                     <tr>
                       <td>{%s v.VulnerabilityID %}</td>
                       <td>{%s string(v.Severity) %}</td>
@@ -240,7 +249,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                 
 
                 <!-- Config Audits -->
-                {% if len(p.ConfigAuditReports) > 0 %}
+                {% if len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
                   <div class="row pt-3 text-center border-bottom my-4">
                       <h3 class="mx-auto" id="ca_header" style="color: rgb(0, 160, 170);">Configuration Audit</h3>
                   </div>
@@ -256,9 +265,9 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Name:  {%s p.ConfigAuditReports[0].Report.Scanner.Name %}</p>
-                                    <p class="my-0">Vendor:  {%s p.ConfigAuditReports[0].Report.Scanner.Vendor %}</p>
-                                    <p class="my-0">Version:  {%s p.ConfigAuditReports[0].Report.Scanner.Version %}</p>
+                                    <p class="my-0">Name:  {%s p.ConfigAuditReport.Report.Scanner.Name %}</p>
+                                    <p class="my-0">Vendor:  {%s p.ConfigAuditReport.Report.Scanner.Vendor %}</p>
+                                    <p class="my-0">Version:  {%s p.ConfigAuditReport.Report.Scanner.Version %}</p>
                                 </div>
                              </div>
                         </div>
@@ -302,7 +311,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReports[0].CreationTimestamp.String() %}</p>
+                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReport.CreationTimestamp.String() %}</p>
                                 </div>
                              </div>
                         </div>
@@ -310,7 +319,6 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                     </div>      
                 </div>
                 {% endif %}
-                {% for _, report := range p.ConfigAuditReports %}        
                   <div class="row"><h5 class="text-info" id="ca_pod_checks">Pod Checks</h5></div>
                   <div class="row">
                       <table class="table table-sm table-bordered">
@@ -323,7 +331,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                               </tr>
                             </thead>
                             <tbody>
-                              {% for _, check := range report.Report.PodChecks %}
+                              {% for _, check := range  p.ConfigAuditReport.Report.PodChecks %}
                                 <tr>
                                   <td>{%v check.Success %}</td>
                                   <td>{%s check.ID %}</td>
@@ -334,7 +342,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                             </tbody>
                       </table>
                   </div>
-                  {% for container, checks := range report.Report.ContainerChecks %}
+                  {% for container, checks := range p.ConfigAuditReport.Report.ContainerChecks %}
                     <div class="row"><h5 class="text-info" id="ca_container_{%s container %}">Container {%s container %}</h5></div>
                     <div class="row">
                         <table class="table table-sm table-bordered">
@@ -359,7 +367,6 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                         </table>
                     </div>
                   {% endfor %}
-                {% endfor %}
             </div>
         </div>
 {% endfunc %}
