@@ -51,11 +51,11 @@ var (
 							"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-1547",
 						},
 					},
-				},},
+				}},
 		}}
 	sampleConfigAudits = []starboard.ConfigAuditReport{
 		{
-			Report: starboard.ConfigAudit {
+			Report: starboard.ConfigAudit{
 
 				Scanner: starboard.Scanner{
 					Name:    "Polaris",
@@ -106,8 +106,6 @@ var (
 			},
 		}}
 )
-
-
 
 func TestHTMLReporter_GenerateReport(t *testing.T) {
 	t.Skip("Fix me - think of a better idea to test html report thoroughly enough")
