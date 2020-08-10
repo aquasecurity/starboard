@@ -1,0 +1,24 @@
+name: CodeQL
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  codeql:
+    name: Analyse
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: go
+    - name: Build code
+      run: |
+        make build
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v1
