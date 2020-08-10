@@ -12,6 +12,7 @@ func NewGetCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Comm
 	}
 	getCmd.AddCommand(NewGetVulnerabilitiesCmd(executable, cf))
 	getCmd.AddCommand(NewGetConfigAuditCmd(cf))
+	getCmd.AddCommand(NewGetReportCmd(cf))
 	getCmd.PersistentFlags().StringP("output", "o", "yaml", "Output format. One of yaml|json")
 
 	return getCmd

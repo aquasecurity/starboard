@@ -16,17 +16,17 @@ import (
 	"k8s.io/klog"
 )
 
-type writer struct {
+type ReadWriter struct {
 	client clientset.Interface
 }
 
-func NewWriter(client clientset.Interface) polaris.Writer {
-	return &writer{
+func NewReadWriter(client clientset.Interface) polaris.ReadWriter {
+	return &ReadWriter{
 		client: client,
 	}
 }
 
-func (w *writer) Write(ctx context.Context, report starboard.ConfigAudit) (err error) {
+func (w *ReadWriter) Write(ctx context.Context, report starboard.ConfigAudit) (err error) {
 	namespace := report.Resource.Namespace
 	name := fmt.Sprintf("%s.%s", strings.ToLower(report.Resource.Kind), report.Resource.Name)
 
@@ -56,9 +56,26 @@ func (w *writer) Write(ctx context.Context, report starboard.ConfigAudit) (err e
 	return
 }
 
-func (w *writer) WriteAll(ctx context.Context, reports []starboard.ConfigAudit) (err error) {
+func (w *ReadWriter) WriteAll(ctx context.Context, reports []starboard.ConfigAudit) (err error) {
 	for _, report := range reports {
 		err = w.Write(ctx, report)
 	}
 	return
+}
+
+func (s *ReadWriter) Read(ctx context.Context, workload kube.Object) (starboard.ConfigAuditReport, error) {
+	list, err := s.client.AquasecurityV1alpha1().ConfigAuditReports(workload.Namespace).List(ctx, meta.ListOptions{
+		LabelSelector: labels.Set{
+			kube.LabelResourceKind: string(workload.Kind),
+			kube.LabelResourceName: workload.Name,
+		}.String(),
+	})
+	if err != nil {
+		return starboard.ConfigAuditReport{}, err
+	}
+	// Only one config audit per specific workload exists on the cluster
+	if len(list.Items) > 0 {
+		return list.Items[0], nil
+	}
+	return starboard.ConfigAuditReport{}, nil
 }
