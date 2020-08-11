@@ -3,6 +3,7 @@
 bin/
 dist/
 
+*.html
 coverage.txt
 
 vendor
