@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	kubeBenchVersion       = "0.3.0"
+	kubeBenchVersion       = "0.3.1"
 	kubeBenchContainerName = "kube-bench"
 	masterNodeLabel        = "node-role.kubernetes.io/master"
 )
