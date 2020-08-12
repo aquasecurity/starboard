@@ -7,7 +7,6 @@ import (
 
 	core "k8s.io/api/core/v1"
 
-	"github.com/aquasecurity/starboard/pkg/ext"
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/kubebench/crd"
@@ -46,7 +45,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return
 			}
 			scanner := kubebench.NewScanner(opts, kubernetesClientset)
-			writer := crd.NewWriter(ext.NewSystemClock(), starboardClientset)
+			writer := crd.NewReadWriter(starboardClientset)
 
 			var wg sync.WaitGroup
 

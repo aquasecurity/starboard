@@ -24,11 +24,12 @@ const (
 	LabelScannerName   = "starboard.scanner.name"
 	LabelScannerVendor = "starboard.scanner.vendor"
 
+	// Deprecated We don't want to store historical reports in Starboard, only the current state.
+	// We should remove this label once we update the Octant plugin to not take this label into account.
 	LabelHistoryLatest = "starboard.history.latest"
 )
 
 const (
-	AnnotationHistoryLimit    = "starboard.history.limit"
 	AnnotationContainerImages = "starboard.container-images"
 )
 
