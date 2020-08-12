@@ -25,7 +25,7 @@ const (
 	LabelScannerVendor = "starboard.scanner.vendor"
 
 	// Deprecated We don't want to store historical reports in Starboard, only the current state.
-	// We should remove this label once we update the Octant plugin to not take this label into account.
+	// We should remove this label once we update the Octant plugin to not take it into account.
 	LabelHistoryLatest = "starboard.history.latest"
 )
 
