@@ -3,6 +3,10 @@ BINARY := starboard
 
 build: starboard
 
+qtc:
+	go get -v -u github.com/valyala/quicktemplate/qtc
+	qtc
+
 $(BINARY): $(SOURCES)
 	CGO_ENABLED=0 go build -o ./bin/$(BINARY) ./cmd/starboard/main.go
 

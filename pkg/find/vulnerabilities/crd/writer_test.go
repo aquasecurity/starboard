@@ -11,7 +11,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -29,11 +29,11 @@ var (
 
 func TestReadWriter_Read(t *testing.T) {
 	clientset := fake.NewSimpleClientset(&v1alpha1.Vulnerability{
-		TypeMeta: meta.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Vulnerability",
 			APIVersion: "v1alpha1",
 		},
-		ObjectMeta: meta.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-namespace",
 			Name:      "my-deploy-my-container-01",
 			Labels: map[string]string{
@@ -45,11 +45,11 @@ func TestReadWriter_Read(t *testing.T) {
 		},
 		Report: vulnerabilityReport01,
 	}, &v1alpha1.Vulnerability{
-		TypeMeta: meta.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Vulnerability",
 			APIVersion: "v1alpha1",
 		},
-		ObjectMeta: meta.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-namespace",
 			Name:      "my-deploy-my-container-02",
 			Labels: map[string]string{
@@ -61,11 +61,11 @@ func TestReadWriter_Read(t *testing.T) {
 		},
 		Report: vulnerabilityReport02,
 	}, &v1alpha1.Vulnerability{
-		TypeMeta: meta.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Vulnerability",
 			APIVersion: "v1alpha1",
 		},
-		ObjectMeta: meta.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-namespace",
 			Name:      "my-sts",
 			Labels: map[string]string{

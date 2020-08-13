@@ -45,7 +45,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			err = crd.NewWriter(starboardClientset).WriteAll(ctx, reports)
+			err = crd.NewReadWriter(starboardClientset).WriteAll(ctx, reports)
 			if err != nil {
 				return
 			}

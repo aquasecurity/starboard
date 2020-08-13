@@ -1,11 +1,15 @@
 package itest
 
 import (
-	"context"
 	"os"
 	"testing"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
+
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 
@@ -25,13 +29,35 @@ var (
 )
 
 var (
-	pathToStarboardCLI string
+	pathToStarboardCLI   string
+	starboardCLILogLevel = "0"
 )
+
+var (
+	namespaces                corev1.NamespaceInterface
+	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
+	defaultPods               corev1.PodInterface
+	defaultDeployments        appsv1.DeploymentInterface
+	defaultVulnerabilities    v1alpha1.VulnerabilityInterface
+)
+
+// TestStarboardCLI is a spec that describes the behavior of Starboard CLI.
+func TestStarboardCLI(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Starboard CLI")
+}
 
 var _ = BeforeSuite(func() {
 	var err error
 	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
 	Expect(err).ToNot(HaveOccurred())
+
+	if logLevel, ok := os.LookupEnv("STARBOARD_CLI_LOG_LEVEL"); ok {
+		starboardCLILogLevel = logLevel
+	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	Expect(err).ToNot(HaveOccurred())
@@ -44,28 +70,14 @@ var _ = BeforeSuite(func() {
 
 	starboardClientset, err = starboardapi.NewForConfig(config)
 	Expect(err).ToNot(HaveOccurred())
-})
 
-func TestStarboardCLI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Starboard CLI")
-}
+	namespaces = kubernetesClientset.CoreV1().Namespaces()
+	defaultPods = kubernetesClientset.CoreV1().Pods(metav1.NamespaceDefault)
+	defaultDeployments = kubernetesClientset.AppsV1().Deployments(metav1.NamespaceDefault)
+	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
+	defaultVulnerabilities = starboardClientset.AquasecurityV1alpha1().Vulnerabilities(metav1.NamespaceDefault)
+})
 
 var _ = AfterSuite(func() {
 	CleanupBuildArtifacts()
 })
-
-func GetNodeNames(ctx context.Context) ([]string, error) {
-	nodesList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	names := make([]string, len(nodesList.Items))
-	for i, node := range nodesList.Items {
-		names[i] = node.Name
-	}
-	return names, nil
-}
