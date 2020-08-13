@@ -24,7 +24,7 @@ import (
 
 const (
 	polarisContainerName  = "polaris"
-	polarisContainerImage = "quay.io/fairwinds/polaris:1.1.0"
+	polarisContainerImage = "quay.io/fairwinds/polaris:1.2"
 	polarisConfigVolume   = "config-volume"
 	polarisConfigMap      = "polaris"
 )
