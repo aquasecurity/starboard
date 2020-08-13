@@ -91,9 +91,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object) *batch.Job {
 			Name:      uuid.New().String(),
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
-				kube.LabelResourceKind:      string(workload.Kind),
-				kube.LabelResourceName:      workload.Name,
-				kube.LabelResourceNamespace: workload.Namespace,
+				"app": "polaris",
 			},
 		},
 		Spec: batch.JobSpec{
@@ -103,9 +101,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object) *batch.Job {
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind:      string(workload.Kind),
-						kube.LabelResourceName:      workload.Name,
-						kube.LabelResourceNamespace: workload.Namespace,
+						"app": "polaris",
 					},
 				},
 				Spec: core.PodSpec{
