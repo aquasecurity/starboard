@@ -224,41 +224,6 @@ To learn more about the available Starboard CLI commands, run `starboard help` o
 $ starboard kube-hunter -h
 ```
 
-## Troubleshooting
-
-### "starboard" cannot be opened because the developer cannot be verified. (macOS)
-
-Since Starboard CLI is not registered with Apple by an identified developer, if you try to run it for the first time
-you might get a warning dialog. This doesn't mean that something is wrong with the release binary, rather macOS can't
-check whether the binary has been modified or broken since it was released.
-
-<p align="center">
-  <img src="docs/images/troubleshooting/developer-not-verified.png">
-</p>
-
-To override your security settings and use the Starboard CLI anyway, follow these steps:
-
-1. In the Finder on your Mac, locate the `starboard` binary.
-2. Control-click the binary icon, then choose Open from the shortcut menu.
-3. Click Open.
-
-   <p align="center">
-     <img src="docs/images/troubleshooting/control-click-open.png">
-   </p>
-
-   The `starboard` is saved as an exception to your security settings, and you can use it just as you can any registered
-   app.
-
-You can also grant an exception for a blocked Starboard release binary by clicking the Allow Anyway button in the
-General pane of Security & Privacy preferences. This button is available for about an hour after you try to run the
-Starboard CLI command.
-
-To open this pane on your Mac, choose Apple menu > System Preferences, click Security & Privacy, then click General.
-
-<p align="center">
-  <img src="docs/images/troubleshooting/developer-not-verified-remediation.png">
-</p>
-
 ## Contributing
 
 At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
