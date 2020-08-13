@@ -15,6 +15,15 @@ builds:
       - windows
     goarch:
       - amd64
+  - id: starboard-macos
+    main: ./cmd/starboard/main.go
+    binary: starboard
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     replacements:
@@ -33,3 +42,20 @@ changelog:
       - '^docs'
       - '^test'
       - '^release'
+signs:
+  - signature: "starboard.dmg"
+    id: dmg
+    ids:
+      - starboard-macos # here we filter the macos only build id
+    cmd: gon
+    args:
+      - gon.json
+    artifacts: all
+  - signature: "starboard.zip"
+    id: zip
+    ids:
+      - starboard-macos # here we filter the macos only build id
+    cmd: gon
+    args:
+      - gon.json
+    artifacts: all
