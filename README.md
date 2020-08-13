@@ -8,6 +8,7 @@
 [![Coverage Status][cov-img]][cov]
 [![Go Report Card][report-card-img]][report-card]
 [![License][license-img]][license]
+[![GitHub All Releases][github-all-releases-img]][release]
 
 ## Table of Contents
 
@@ -284,6 +285,7 @@ This repository is available under the [Apache License 2.0][license].
 [report-card]: https://goreportcard.com/report/github.com/aquasecurity/starboard
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
+[github-all-releases-img]: https://img.shields.io/github/downloads/aquasecurity/starboard/total?logo=github
 
 [aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions
