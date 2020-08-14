@@ -3,6 +3,8 @@ package kube
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -269,6 +271,9 @@ func (m *crManager) initPolaris(ctx context.Context) (err error) {
 	err = m.createOrUpdateClusterRole(ctx, &rbac.ClusterRole{
 		ObjectMeta: meta.ObjectMeta{
 			Name: "starboard-polaris",
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
 		},
 		Rules: []rbac.PolicyRule{
 			{
@@ -323,6 +328,9 @@ func (m *crManager) initPolaris(ctx context.Context) (err error) {
 	err = m.createOrUpdateClusterRoleBinding(ctx, &rbac.ClusterRoleBinding{
 		ObjectMeta: meta.ObjectMeta{
 			Name: "starboard-polaris",
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
 		},
 		RoleRef: rbac.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -386,6 +394,9 @@ func (m *crManager) createNamespaceIfNotFound(ctx context.Context, name string) 
 		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, &core.Namespace{
 			ObjectMeta: meta.ObjectMeta{
 				Name: name,
+				Labels: labels.Set{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
 			},
 		}, meta.CreateOptions{})
 		return
@@ -404,6 +415,9 @@ func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, name str
 		_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Create(ctx, &core.ServiceAccount{
 			ObjectMeta: meta.ObjectMeta{
 				Name: name,
+				Labels: labels.Set{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
 			},
 		}, meta.CreateOptions{})
 		return
@@ -422,6 +436,9 @@ func (m *crManager) createConfigMapIfNotFound(ctx context.Context, name string, 
 		_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Create(ctx, &core.ConfigMap{
 			ObjectMeta: meta.ObjectMeta{
 				Name: name,
+				Labels: labels.Set{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
 			},
 			Data: data,
 		}, meta.CreateOptions{})
