@@ -126,6 +126,65 @@ var _ = Describe("Starboard CLI", func() {
 
 		})
 
+		Context("when ReplicaSet is specified as workload", func() {
+
+			BeforeEach(func() {
+				_, err := kubernetesClientset.AppsV1().ReplicaSets(corev1.NamespaceDefault).
+					Create(context.TODO(), &appsv1.ReplicaSet{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "nginx",
+						},
+						Spec: appsv1.ReplicaSetSpec{
+							Replicas: pointer.Int32Ptr(1),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "nginx"},
+							},
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: labels.Set{
+										"app": "nginx",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "nginx",
+											Image: "nginx:1.16",
+										},
+									},
+								},
+							},
+						},
+					}, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should create vulnerabilities resource", func() {
+				command := exec.Command(pathToStarboardCLI,
+					"find", "vulnerabilities", "replicaset/nginx",
+					"-v", starboardCLILogLevel)
+				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session, scanJobTimeout).Should(Exit(0))
+
+				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
+					LabelSelector: labels.Set{
+						kube.LabelResourceKind: string(kube.KindReplicaSet),
+						kube.LabelResourceName: "nginx",
+					}.String(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reportList.Items).To(HaveLen(1), "Expected VulnerabilityReport for replicaset/nginx but not found")
+			})
+
+			AfterEach(func() {
+				err := kubernetesClientset.AppsV1().ReplicaSets(corev1.NamespaceDefault).
+					Delete(context.TODO(), "nginx", metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
+
 		Context("when Deployment is specified as workload", func() {
 
 			BeforeEach(func() {
