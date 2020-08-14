@@ -201,14 +201,13 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			for _, nodeName := range nodeNames {
-				reportList, err := starboardClientset.AquasecurityV1alpha1().CISKubeBenchReports().List(context.TODO(), metav1.ListOptions{
-					LabelSelector: labels.Set{
-						kube.LabelResourceKind: string(kube.KindNode),
-						kube.LabelResourceName: nodeName,
-					}.String(),
-				})
-				Expect(err).ToNot(HaveOccurred())
-				Expect(reportList.Items).To(HaveLen(1), "Expected CISKubeBenchReport for node %s but not found", nodeName)
+				report, err := starboardClientset.AquasecurityV1alpha1().CISKubeBenchReports().Get(context.TODO(), nodeName, metav1.GetOptions{})
+				Expect(err).ToNot(HaveOccurred(), "Expected CISKubeBenchReport for node %s but not found", nodeName)
+				Expect(report.Labels).To(MatchAllKeys(Keys{
+					kube.LabelResourceKind:  Equal(string(kube.KindNode)),
+					kube.LabelResourceName:  Equal(nodeName),
+					kube.LabelHistoryLatest: Equal("true"),
+				}))
 			}
 		})
 	})
