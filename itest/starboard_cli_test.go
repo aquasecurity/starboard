@@ -2,8 +2,9 @@ package itest
 
 import (
 	"context"
-	"os/exec"
 	"time"
+
+	"github.com/aquasecurity/starboard/pkg/cmd"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
@@ -11,12 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
-	. "github.com/onsi/gomega/gbytes"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
 	. "github.com/onsi/gomega/gstruct"
 
-	. "github.com/onsi/gomega/gexec"
 	apiextentions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,19 +24,17 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	scanJobTimeout = 2 * time.Minute
-)
-
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
-		command := exec.Command(pathToStarboardCLI,
+		err := cmd.Run(versionInfo, []string{
+			"starboard",
 			"init",
-			"-v", starboardCLILogLevel)
-		session, err := Start(command, GinkgoWriter, GinkgoWriter)
+			"-v",
+			starboardCLILogLevel,
+		}, GinkgoWriter, GinkgoWriter)
+
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(Exit(0))
 	})
 
 	Describe("Command init", func() {
@@ -71,10 +67,14 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command version", func() {
 		It("should print the current version of the executable binary", func() {
-			command := exec.Command(pathToStarboardCLI, "version")
-			session, err := Start(command, GinkgoWriter, GinkgoWriter)
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"version",
+			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(session).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))
+
+			// TODO Fix this assert as we no longer use Ginkgo session
+			// Eventually(session).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))
 		})
 	})
 
@@ -102,12 +102,12 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			It("should create vulnerabilities resource", func() {
-				command := exec.Command(pathToStarboardCLI,
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
 					"find", "vulnerabilities", "pod/nginx",
-					"-v", starboardCLILogLevel)
-				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(session, scanJobTimeout).Should(Exit(0))
 
 				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
 					LabelSelector: labels.Set{
@@ -160,12 +160,12 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			It("should create vulnerabilities resource", func() {
-				command := exec.Command(pathToStarboardCLI,
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
 					"find", "vulnerabilities", "replicaset/nginx",
-					"-v", starboardCLILogLevel)
-				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(session, scanJobTimeout).Should(Exit(0))
 
 				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
 					LabelSelector: labels.Set{
@@ -218,12 +218,12 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			It("should create vulnerabilities resource", func() {
-				command := exec.Command(pathToStarboardCLI,
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
 					"find", "vulnerabilities", "deployment/nginx",
-					"-v", starboardCLILogLevel)
-				session, err := Start(command, GinkgoWriter, GinkgoWriter)
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(session, scanJobTimeout).Should(Exit(0))
 
 				reportList, err := defaultVulnerabilities.List(context.TODO(), metav1.ListOptions{
 					LabelSelector: labels.Set{
@@ -249,12 +249,12 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command run kube-bench", func() {
 		It("should run kube-bench", func() {
-			command := exec.Command(pathToStarboardCLI,
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
 				"kube-bench",
-				"-v", starboardCLILogLevel)
-			session, err := Start(command, GinkgoWriter, GinkgoWriter)
+				"-v", starboardCLILogLevel,
+			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(session, scanJobTimeout).Should(Exit(0))
 
 			nodeNames, err := GetNodeNames(context.TODO())
 			Expect(err).ToNot(HaveOccurred())
@@ -274,12 +274,12 @@ var _ = Describe("Starboard CLI", func() {
 	PDescribe("Command run kube-hunter", func() {
 		// FIXME Figure out why kube-hunter is failing on GitHub actions runner, whereas it's fine with local KIND cluster
 		It("should run kube-hunter", func() {
-			command := exec.Command(pathToStarboardCLI,
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
 				"kube-hunter",
-				"-v", starboardCLILogLevel)
-			session, err := Start(command, GinkgoWriter, GinkgoWriter)
+				"-v", starboardCLILogLevel,
+			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(session, scanJobTimeout).Should(Exit(0))
 
 			report, err := starboardClientset.AquasecurityV1alpha1().KubeHunterReports().
 				Get(context.TODO(), "cluster", metav1.GetOptions{})
@@ -293,11 +293,13 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	AfterEach(func() {
-		command := exec.Command(pathToStarboardCLI,
-			"cleanup", "-v", starboardCLILogLevel)
-		session, err := Start(command, GinkgoWriter, GinkgoWriter)
+		err := cmd.Run(versionInfo, []string{
+			"starboard",
+			"cleanup",
+			"-v",
+			starboardCLILogLevel,
+		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(Exit(0))
 
 		// TODO We have to wait for the termination of the starboard namespace. Otherwise the init command
 		// TODO run by the BeforeEach callback fails when it attempts to create Kubernetes objects in the
