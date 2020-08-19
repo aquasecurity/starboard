@@ -9,12 +9,12 @@ build: $(BINARY)
 .PHONY: get-ginkgo
 ## get-ginkgo Installs Ginkgo CLI.
 get-ginkgo:
-	@go get github.com/onsi/ginkgo/ginkgo
+	go install github.com/onsi/ginkgo/ginkgo
 
 .PHONY: get-qtc
 ## get-qtc Installs quicktemplate compiler.
 get-qtc:
-	@go get github.com/valyala/quicktemplate/qtc
+	go install github.com/valyala/quicktemplate/qtc
 
 .PHONY: compile-templates
 ## compile-templates Converts quicktemplate files (*.qtpl) into Go code.
@@ -47,3 +47,4 @@ integration-tests: get-ginkgo
 .PHONY: clean
 clean:
 	rm -r ./bin
+	rm -r ./dist

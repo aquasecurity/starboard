@@ -1,6 +1,7 @@
 package itest
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -67,11 +68,13 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command version", func() {
 		It("should print the current version of the executable binary", func() {
+			out := &bytes.Buffer{}
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"version",
-			}, GinkgoWriter, GinkgoWriter)
+			}, out, out)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(out.String()).To(Equal("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))
 
 			// TODO Fix this assert as we no longer use Ginkgo session
 			// Eventually(session).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))

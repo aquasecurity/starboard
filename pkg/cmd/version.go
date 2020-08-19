@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/spf13/cobra"
 )
@@ -12,12 +13,12 @@ type VersionInfo struct {
 	Date    string
 }
 
-func NewVersionCmd(version VersionInfo) *cobra.Command {
+func NewVersionCmd(version VersionInfo, outWriter io.Writer, _ io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version information",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			fmt.Printf("Starboard Version: %+v\n", version)
+			_, _ = fmt.Fprintf(outWriter, "Starboard Version: %+v\n", version)
 			return
 		},
 	}
