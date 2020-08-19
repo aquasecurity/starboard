@@ -13,7 +13,7 @@ type VersionInfo struct {
 	Date    string
 }
 
-func NewVersionCmd(version VersionInfo, outWriter io.Writer, _ io.Writer) *cobra.Command {
+func NewVersionCmd(version VersionInfo, outWriter io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version information",

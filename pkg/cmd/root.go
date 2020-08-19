@@ -26,7 +26,7 @@ func NewRootCmd(version VersionInfo, args []string, outWriter io.Writer, errWrit
 
 	executable := executable(args)
 
-	rootCmd.AddCommand(NewVersionCmd(version, outWriter, errWriter))
+	rootCmd.AddCommand(NewVersionCmd(version, outWriter))
 	rootCmd.AddCommand(NewInitCmd(cf))
 	rootCmd.AddCommand(NewFindCmd(executable, cf))
 	rootCmd.AddCommand(NewKubeBenchCmd(cf))
