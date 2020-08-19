@@ -1,8 +1,11 @@
 package itest
 
 import (
+	"github.com/aquasecurity/starboard/pkg/cmd"
 	"os"
 	"testing"
+
+	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
 
@@ -13,7 +16,6 @@ import (
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 
-	. "github.com/onsi/gomega/gexec"
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/ginkgo"
@@ -31,6 +33,7 @@ var (
 var (
 	pathToStarboardCLI   string
 	starboardCLILogLevel = "0"
+	versionInfo          = cmd.VersionInfo{Version: "dev", Commit: "none", Date: "unknown"}
 )
 
 var (
@@ -52,8 +55,8 @@ func TestStarboardCLI(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
-	Expect(err).ToNot(HaveOccurred())
+
+	klog.InitFlags(nil)
 
 	if logLevel, ok := os.LookupEnv("STARBOARD_CLI_LOG_LEVEL"); ok {
 		starboardCLILogLevel = logLevel
@@ -79,5 +82,5 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	CleanupBuildArtifacts()
+	klog.Flush()
 })
