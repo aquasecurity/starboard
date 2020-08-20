@@ -31,7 +31,6 @@ var (
 )
 
 var (
-	pathToStarboardCLI   string
 	starboardCLILogLevel = "0"
 	versionInfo          = cmd.VersionInfo{Version: "dev", Commit: "none", Date: "unknown"}
 )

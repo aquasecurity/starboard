@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	. "github.com/onsi/gomega/gbytes"
+
 	"github.com/aquasecurity/starboard/pkg/cmd"
 
 	corev1 "k8s.io/api/core/v1"
@@ -67,14 +69,13 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command version", func() {
 		It("should print the current version of the executable binary", func() {
+			out := NewBuffer()
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"version",
-			}, GinkgoWriter, GinkgoWriter)
+			}, out, out)
 			Expect(err).ToNot(HaveOccurred())
-
-			// TODO Fix this assert as we no longer use Ginkgo session
-			// Eventually(session).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}\n"))
+			Eventually(out).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}"))
 		})
 	})
 
