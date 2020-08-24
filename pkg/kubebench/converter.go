@@ -28,7 +28,7 @@ func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutp
 	}
 
 	for {
-		var section starboard.CISKubeBenchSection
+		var section []starboard.CISKubeBenchSection
 		de := decoder.Decode(&section)
 		if de == io.EOF {
 			break
@@ -37,7 +37,9 @@ func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutp
 			err = de
 			break
 		}
-		report.Sections = append(report.Sections, section)
+		for i := range section {
+			report.Sections = append(report.Sections, section[i])
+		}
 	}
 	return
 }
