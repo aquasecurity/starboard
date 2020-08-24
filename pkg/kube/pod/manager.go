@@ -27,7 +27,7 @@ func NewPodManager(clientset kubernetes.Interface) *Manager {
 }
 
 // GetPodSpecByWorkload returns a PodSpec of the specified Workload.
-func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec core.PodSpec, err error) {
+func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec core.PodSpec, object meta.Object, err error) {
 	ns := workload.Namespace
 	switch workload.Kind {
 	case kube.KindPod:
@@ -37,6 +37,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = pod.Spec
+		object = pod
 		return
 	case kube.KindReplicaSet:
 		var rs *apps.ReplicaSet
@@ -45,6 +46,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = rs.Spec.Template.Spec
+		object = rs
 		return
 	case kube.KindReplicationController:
 		var rc *core.ReplicationController
@@ -53,6 +55,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = rc.Spec.Template.Spec
+		object = rc
 		return
 	case kube.KindDeployment:
 		var deploy *apps.Deployment
@@ -61,6 +64,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = deploy.Spec.Template.Spec
+		object = deploy
 		return
 	case kube.KindStatefulSet:
 		var sts *apps.StatefulSet
@@ -69,6 +73,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = sts.Spec.Template.Spec
+		object = sts
 		return
 	case kube.KindDaemonSet:
 		var ds *apps.DaemonSet
@@ -77,6 +82,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = ds.Spec.Template.Spec
+		object = ds
 		return
 	case kube.KindCronJob:
 		var cj *batchv1beta1.CronJob
@@ -85,6 +91,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = cj.Spec.JobTemplate.Spec.Template.Spec
+		object = cj
 		return
 	case kube.KindJob:
 		var job *batch.Job
@@ -93,6 +100,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = job.Spec.Template.Spec
+		object = job
 		return
 	}
 	err = fmt.Errorf("unrecognized workload: %s", workload.Kind)
