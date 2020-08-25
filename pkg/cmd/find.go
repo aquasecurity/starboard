@@ -10,7 +10,7 @@ func NewFindCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Com
 		Use:   "find",
 		Short: "Manage security scanners",
 	}
-	findCmd.AddCommand(GetVulnerabilitiesCmd(executable, cf))
+	findCmd.AddCommand(NewFindVulnerabilitiesCmd(executable, cf))
 
 	return findCmd
 }

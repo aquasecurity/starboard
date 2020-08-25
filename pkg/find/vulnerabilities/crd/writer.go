@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -13,22 +14,24 @@ import (
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/google/uuid"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ReadWriter struct {
+	scheme *runtime.Scheme
 	client clientset.Interface
 }
 
-func NewReadWriter(client clientset.Interface) *ReadWriter {
+func NewReadWriter(scheme *runtime.Scheme, client clientset.Interface) *ReadWriter {
 	return &ReadWriter{
+		scheme: scheme,
 		client: client,
 	}
 }
 
-func (s *ReadWriter) Write(ctx context.Context, workload kube.Object, reports vulnerabilities.WorkloadVulnerabilities) (err error) {
+func (s *ReadWriter) Write(ctx context.Context, reports vulnerabilities.WorkloadVulnerabilities, owner metav1.Object) (err error) {
 	for container, report := range reports {
-		err = s.createVulnerability(ctx, workload, container, report)
+		err = s.createVulnerability(ctx, container, report, owner)
 		if err != nil {
 			return
 		}
@@ -36,14 +39,19 @@ func (s *ReadWriter) Write(ctx context.Context, workload kube.Object, reports vu
 	return
 }
 
-func (s *ReadWriter) createVulnerability(ctx context.Context, workload kube.Object, container string, report starboard.VulnerabilityReport) (err error) {
-	namespace := workload.Namespace
+func (s *ReadWriter) createVulnerability(ctx context.Context, container string, report starboard.VulnerabilityReport, owner metav1.Object) (err error) {
+	namespace := owner.GetNamespace()
+	name := owner.GetName()
+	kind, err := kube.KindForObject(owner, s.scheme)
+	if err != nil {
+		return err
+	}
 
 	// Trying to find previously generated vulnerability report for this specific container
-	vulnsSearch, err := s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).List(ctx, meta.ListOptions{
+	vulnsSearch, err := s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.Set{
-			kube.LabelResourceKind:  string(workload.Kind),
-			kube.LabelResourceName:  workload.Name,
+			kube.LabelResourceKind:  kind,
+			kube.LabelResourceName:  name,
 			kube.LabelContainerName: container,
 		}.String(),
 	})
@@ -53,32 +61,38 @@ func (s *ReadWriter) createVulnerability(ctx context.Context, workload kube.Obje
 
 	if len(vulnsSearch.Items) > 0 {
 		existingCR := vulnsSearch.Items[0]
-		klog.V(3).Infof("Updating vulnerability report: %s/%s", namespace, workload.Name)
+		klog.V(3).Infof("Updating vulnerability report: %s/%s", namespace, name)
 		deepCopy := existingCR.DeepCopy()
 		deepCopy.Report = report
-		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).Update(ctx, deepCopy, meta.UpdateOptions{})
+		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).Update(ctx, deepCopy, metav1.UpdateOptions{})
 	} else {
-		klog.V(3).Infof("Creating vulnerability report: %s/%s", namespace, workload.Name)
-		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).
-			Create(ctx, &starboard.Vulnerability{
-				ObjectMeta: meta.ObjectMeta{
-					Name: fmt.Sprintf(uuid.New().String()),
-					Labels: map[string]string{
-						kube.LabelResourceKind:      string(workload.Kind),
-						kube.LabelResourceName:      workload.Name,
-						kube.LabelResourceNamespace: workload.Namespace,
-						kube.LabelContainerName:     container,
-					},
+		klog.V(3).Infof("Creating vulnerability report: %s/%s", namespace, name)
+		report := &starboard.Vulnerability{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf(uuid.New().String()),
+				Namespace: namespace,
+				Labels: map[string]string{
+					kube.LabelResourceKind:      kind,
+					kube.LabelResourceName:      name,
+					kube.LabelResourceNamespace: namespace,
+					kube.LabelContainerName:     container,
 				},
-				Report: report,
-			}, meta.CreateOptions{})
+			},
+			Report: report,
+		}
+		err = kube.SetOwnerReference(owner, report, s.scheme)
+		if err != nil {
+			return err
+		}
+		_, err = s.client.AquasecurityV1alpha1().Vulnerabilities(namespace).
+			Create(ctx, report, metav1.CreateOptions{})
 	}
 
 	return err
 }
 
 func (s *ReadWriter) Read(ctx context.Context, workload kube.Object) (vulnerabilities.WorkloadVulnerabilities, error) {
-	list, err := s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).List(ctx, meta.ListOptions{
+	list, err := s.client.AquasecurityV1alpha1().Vulnerabilities(workload.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.Set{
 			kube.LabelResourceKind:      string(workload.Kind),
 			kube.LabelResourceName:      workload.Name,
