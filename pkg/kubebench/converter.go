@@ -18,26 +18,20 @@ type converter struct {
 
 func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutput, err error) {
 	decoder := json.NewDecoder(reader)
+	var section []starboard.CISKubeBenchSection
+	err = decoder.Decode(&section)
+	if err != nil {
+		return
+	}
+
 	report = starboard.CISKubeBenchOutput{
 		Scanner: starboard.Scanner{
 			Name:    "kube-bench",
 			Vendor:  "Aqua Security",
 			Version: kubeBenchVersion,
 		},
-		Sections: []starboard.CISKubeBenchSection{},
+		Sections: section,
 	}
 
-	for {
-		var section starboard.CISKubeBenchSection
-		de := decoder.Decode(&section)
-		if de == io.EOF {
-			break
-		}
-		if de != nil {
-			err = de
-			break
-		}
-		report.Sections = append(report.Sections, section)
-	}
 	return
 }
