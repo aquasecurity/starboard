@@ -24,6 +24,10 @@ compile-templates: get-qtc
 $(BINARY): $(SOURCES)
 	CGO_ENABLED=0 go build -o ./bin/$(BINARY) ./cmd/starboard/main.go
 
+.PHONY: test
+## test will run both unit tests and integration tests
+test: unit-tests integration-tests
+
 .PHONY: unit-tests
 ## unit-tests Runs unit tests with codecov enabled.
 unit-tests: $(SOURCES)
