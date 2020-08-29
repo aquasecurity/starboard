@@ -35,7 +35,7 @@ unit-tests: $(SOURCES)
 
 .PHONY: integration-tests
 ## integration-tests Runs integration tests with codecov enabled.
-integration-tests: get-ginkgo
+integration-tests: check-env get-ginkgo
 	$(GOBIN)/ginkgo \
 	--progress \
 	--v \
@@ -48,6 +48,11 @@ integration-tests: get-ginkgo
 	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy \
 	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd \
 	./itest
+
+check-env:
+ifndef KUBECONFIG
+	$(error Environment variable KUBECONFIG is not set)
+endif
 
 .PHONY: clean
 clean:
