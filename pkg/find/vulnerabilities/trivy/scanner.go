@@ -52,9 +52,9 @@ type Scanner struct {
 	scanners.Base
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilities.WorkloadVulnerabilities, owner meta.Object, err error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-	podSpec, err := s.pods.GetPodSpecByWorkload(ctx, workload)
+	podSpec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
 		err = fmt.Errorf("getting Pod template: %w", err)
 		return

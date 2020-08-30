@@ -16,9 +16,17 @@ $ ./bin/starboard help
 ## Testing
 
 We generally require tests to be added for all but the most trivial of changes. You can run the tests using the
-command below:
+commands below:
 
 ```
+# To run only unit tests
+$ make unit-tests
+
+# To run only integration tests
+# Please note that integration tests assumes that you have a working kubernetes cluster (e.g KIND cluster) and KUBECONFIG env variable is pointing to that cluster
+$ make integration-tests
+
+# To run both unit-tests and integration-tests
 $ make test
 ```
 

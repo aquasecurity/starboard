@@ -5,12 +5,12 @@ go 1.14
 require (
 	github.com/google/go-containerregistry v0.1.1
 	github.com/google/uuid v1.1.1
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/ginkgo v1.14.0
+	github.com/onsi/gomega v1.10.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
-	github.com/valyala/quicktemplate v1.6.0
+	github.com/valyala/quicktemplate v1.6.2
 	golang.org/x/tools v0.0.0-20200731060945-b5fad4ed8dd6 // indirect
 	k8s.io/api v0.19.0-alpha.3
 	k8s.io/apiextensions-apiserver v0.19.0-alpha.3

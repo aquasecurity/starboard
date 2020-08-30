@@ -5,6 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/client-go/kubernetes/scheme"
+
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -46,6 +50,10 @@ func WorkloadFromArgs(namespace string, args []string) (workload kube.Object, er
 		Name:      parts[1],
 	}
 	return
+}
+
+func GetScheme() *runtime.Scheme {
+	return scheme.Scheme
 }
 
 const (

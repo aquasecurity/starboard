@@ -45,7 +45,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return
 			}
 			scanner := kubebench.NewScanner(opts, kubernetesClientset)
-			writer := crd.NewReadWriter(starboardClientset)
+			writer := crd.NewReadWriter(GetScheme(), starboardClientset)
 
 			var wg sync.WaitGroup
 
