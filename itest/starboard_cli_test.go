@@ -3,6 +3,8 @@ package itest
 import (
 	"context"
 
+	"github.com/aquasecurity/starboard/pkg/kube/secrets"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	. "github.com/onsi/gomega/gbytes"
@@ -322,6 +324,112 @@ var _ = Describe("Starboard CLI", func() {
 			AfterEach(func() {
 				err := kubernetesClientset.CoreV1().Pods(podNamespace).
 					Delete(context.TODO(), podName, metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
+
+		// TODO Run with other integration tests
+		// The only reason this test is marked as pending is that I don't know
+		// how to pass DockerHub private repository credentials to this test case.
+		PContext("when unmanaged Pod with private image is specified as workload", func() {
+			var pod *corev1.Pod
+
+			var podName = "nginx-with-private-image"
+			var secretName = "registry-credentials"
+			var podNamespace = corev1.NamespaceDefault
+
+			BeforeEach(func() {
+				var err error
+				var secret *corev1.Secret
+				secret, err = secrets.NewImagePullSecret(metav1.ObjectMeta{
+					Name:      secretName,
+					Namespace: podNamespace,
+				}, "https://index.docker.io/v1",
+					os.Getenv("STARBOARD_TEST_DOCKERHUB_REGISTRY_USERNAME"),
+					os.Getenv("STARBOARD_TEST_DOCKERHUB_REGISTRY_PASSWORD"))
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = kubernetesClientset.CoreV1().Secrets(podNamespace).
+					Create(context.TODO(), secret, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+
+				pod, err = kubernetesClientset.CoreV1().Pods(podNamespace).
+					Create(context.TODO(), &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      podName,
+							Namespace: podNamespace,
+						},
+						Spec: corev1.PodSpec{
+							ImagePullSecrets: []corev1.LocalObjectReference{
+								{
+									Name: secretName,
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Name:            "nginx",
+									Image:           "starboardcicd/private-nginx:1.16",
+									ImagePullPolicy: corev1.PullAlways,
+								},
+							},
+						},
+					}, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should create vulnerabilities resources", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"find", "vulnerabilities", "po/nginx-with-private-image",
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+
+				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(podNamespace).
+					List(context.TODO(), metav1.ListOptions{
+						LabelSelector: labels.Set{
+							kube.LabelResourceKind:      "Pod",
+							kube.LabelResourceName:      podName,
+							kube.LabelResourceNamespace: podNamespace,
+						}.String(),
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
+					"nginx": MatchFields(IgnoreExtras, Fields{
+						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+							"Labels": MatchAllKeys(Keys{
+								kube.LabelContainerName:     Equal("nginx"),
+								kube.LabelResourceKind:      Equal("Pod"),
+								kube.LabelResourceName:      Equal(podName),
+								kube.LabelResourceNamespace: Equal(podNamespace),
+							}),
+							"OwnerReferences": ConsistOf(metav1.OwnerReference{
+								APIVersion: "v1",
+								Kind:       "Pod",
+								Name:       podName,
+								UID:        pod.UID,
+							}),
+						}),
+						"Report": MatchFields(IgnoreExtras, Fields{
+							"Scanner": Equal(v1alpha1.Scanner{
+								Name:    "Trivy",
+								Vendor:  "Aqua Security",
+								Version: "0.9.1",
+							}),
+						}),
+					}),
+				}))
+			})
+
+			AfterEach(func() {
+				err := kubernetesClientset.CoreV1().Pods(podNamespace).
+					Delete(context.TODO(), podName, metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+
+				err = kubernetesClientset.CoreV1().Secrets(podNamespace).
+					Delete(context.TODO(), secretName, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred())
 			})
 
