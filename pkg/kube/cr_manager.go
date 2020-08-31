@@ -382,11 +382,17 @@ func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
 		return
 	}
 	for {
-		time.Sleep(2 * time.Second)
-		ns, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
-		if errors.IsNotFound(err) {
-			klog.V(3).Infof("Starboard deleted: %v", ns)
-			break
+		select {
+		// This case controls the polling interval (every 2 seconds)
+		case <-time.After(2 * time.Second):
+			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
+			if errors.IsNotFound(err) {
+				klog.V(3).Infof("Deleted Namespace %v", NamespaceStarboard)
+				return nil
+			}
+		// This case caters for timeout (stop polling after 30 seconds)
+		case <-time.After(30 * time.Second):
+			return fmt.Errorf("deleting namespace timed out")
 		}
 	}
 	return nil
