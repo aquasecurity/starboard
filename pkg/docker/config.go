@@ -59,31 +59,30 @@ func (c *Config) Read(contents []byte) (err error) {
 	if err := json.Unmarshal(contents, c); err != nil {
 		return err
 	}
-	c.Auths, err = decodeAuth(c.Auths)
+	c.Auths, err = decodeAuths(c.Auths)
 	return
 }
 
-func decodeAuth(config map[string]Auth) (encodedConfig map[string]Auth, err error) {
-	encodedConfig = make(map[string]Auth)
-	for server, entry := range config {
+func decodeAuths(auths map[string]Auth) (map[string]Auth, error) {
+	decodedAuths := make(map[string]Auth)
+	for server, entry := range auths {
 		if (Auth{}) == entry {
 			continue
 		}
 
-		var username, password string
-		username, password, err = entry.Auth.Decode()
+		username, password, err := entry.Auth.Decode()
 		if err != nil {
-			return
+			return nil, err
 		}
 
-		encodedConfig[server] = Auth{
+		decodedAuths[server] = Auth{
 			Auth:     entry.Auth,
 			Username: username,
 			Password: password,
 		}
 
 	}
-	return
+	return decodedAuths, nil
 }
 
 func (c Config) Write() ([]byte, error) {
