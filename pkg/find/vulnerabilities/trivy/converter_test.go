@@ -3,9 +3,10 @@ package trivy_test
 import (
 	"errors"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 	"strings"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"

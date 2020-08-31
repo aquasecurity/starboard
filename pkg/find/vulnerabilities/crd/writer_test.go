@@ -2,8 +2,9 @@ package crd_test
 
 import (
 	"context"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
 
