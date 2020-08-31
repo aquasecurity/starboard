@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -379,6 +380,14 @@ func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
 	err = m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
+	}
+	for {
+		time.Sleep(2 * time.Second)
+		ns, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
+		if errors.IsNotFound(err) {
+			klog.V(3).Infof("Starboard deleted: %v", ns)
+			break
+		}
 	}
 	return nil
 }

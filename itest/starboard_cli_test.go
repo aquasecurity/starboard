@@ -2,7 +2,6 @@ package itest
 
 import (
 	"context"
-	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
@@ -13,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -680,11 +678,6 @@ var _ = Describe("Starboard CLI", func() {
 		// TODO run by the BeforeEach callback fails when it attempts to create Kubernetes objects in the
 		// TODO starboard namespace that is being terminated.
 		//
-		// TODO Maybe the cleanup command should block and wait unit the namespace is terminated?
-		Eventually(func() bool {
-			_, err := kubernetesClientset.CoreV1().Namespaces().Get(context.TODO(), "starboard", metav1.GetOptions{})
-			return errors.IsNotFound(err)
-		}, 10*time.Second).Should(BeTrue())
 	})
 
 })
