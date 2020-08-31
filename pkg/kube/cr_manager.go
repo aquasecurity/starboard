@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"

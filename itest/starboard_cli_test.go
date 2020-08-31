@@ -2,6 +2,7 @@ package itest
 
 import (
 	"context"
+	"os"
 
 	"github.com/aquasecurity/starboard/pkg/kube/secrets"
 
