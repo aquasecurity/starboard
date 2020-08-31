@@ -673,11 +673,6 @@ var _ = Describe("Starboard CLI", func() {
 			starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-
-		// TODO We have to wait for the termination of the starboard namespace. Otherwise the init command
-		// TODO run by the BeforeEach callback fails when it attempts to create Kubernetes objects in the
-		// TODO starboard namespace that is being terminated.
-		//
 	})
 
 })
