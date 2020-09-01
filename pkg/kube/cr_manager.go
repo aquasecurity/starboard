@@ -2,6 +2,8 @@ package kube
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -379,6 +381,20 @@ func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
 	err = m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
+	}
+	for {
+		select {
+		// This case controls the polling interval (every 2 seconds)
+		case <-time.After(2 * time.Second):
+			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
+			if errors.IsNotFound(err) {
+				klog.V(3).Infof("Deleted Namespace %v", NamespaceStarboard)
+				return nil
+			}
+		// This case caters for timeout (stop polling after 30 seconds)
+		case <-time.After(30 * time.Second):
+			return fmt.Errorf("deleting namespace timed out")
+		}
 	}
 	return nil
 }
