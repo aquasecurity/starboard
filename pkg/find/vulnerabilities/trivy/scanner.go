@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/docker"
+	"github.com/aquasecurity/starboard/pkg/kube/secrets"
+
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
@@ -14,7 +17,6 @@ import (
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
-	"github.com/aquasecurity/starboard/pkg/kube/secret"
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
@@ -38,7 +40,6 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
-		secrets:   secret.NewSecretManager(clientset),
 		converter: DefaultConverter,
 	}
 }
@@ -47,7 +48,6 @@ type Scanner struct {
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
-	secrets   *secret.Manager
 	converter Converter
 	scanners.Base
 }
@@ -69,9 +69,28 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulne
 
 func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, err := s.PrepareScanJob(ctx, workload, spec)
+
+	imagePullSecrets, err := s.pods.GetImagePullSecrets(ctx, workload.Namespace, spec)
+	if err != nil {
+		return nil, err
+	}
+
+	auths, err := secrets.MapContainerImagesToAuths(spec, imagePullSecrets)
+	if err != nil {
+		return nil, err
+	}
+
+	job, imagePullSecret, err := s.PrepareScanJob(ctx, workload, spec, auths)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
+	}
+
+	if imagePullSecret != nil {
+		klog.V(3).Infof("Creating image pull secret: %s/%s", kube.NamespaceStarboard, imagePullSecret.Name)
+		_, err = s.clientset.CoreV1().Secrets(kube.NamespaceStarboard).Create(ctx, imagePullSecret, meta.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -90,6 +109,11 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
 			PropagationPolicy: &background,
 		})
+
+		if imagePullSecret != nil {
+			klog.V(3).Infof("Deleting image pull secret: %s/%s", imagePullSecret.Namespace, imagePullSecret.Name)
+			_ = s.clientset.CoreV1().Secrets(imagePullSecret.Namespace).Delete(ctx, imagePullSecret.Name, meta.DeleteOptions{})
+		}
 	}()
 
 	klog.V(3).Infof("Scan job completed: %s/%s", job.Namespace, job.Name)
@@ -102,17 +126,17 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	return s.GetVulnerabilityReportsByScanJob(ctx, job)
 }
 
-func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec core.PodSpec) (*batch.Job, error) {
-	credentials, err := s.secrets.GetImagesWithCredentials(ctx, workload.Namespace, spec)
-	if err != nil {
-		return nil, fmt.Errorf("getting docker configs: %w", err)
-	}
-
+func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
 	jobName := fmt.Sprintf(uuid.New().String())
+
+	initContainerName := jobName
+	imagePullSecretName := jobName
+	imagePullSecretData := make(map[string][]byte)
+	var imagePullSecret *core.Secret
 
 	initContainers := []core.Container{
 		{
-			Name:                     jobName,
+			Name:                     initContainerName,
 			Image:                    trivyImageRef,
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
@@ -141,13 +165,34 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		containerImages[c.Name] = c.Image
 
 		var envs []core.EnvVar
+
 		if dockerConfig, ok := credentials[c.Image]; ok {
+			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
+			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+
+			imagePullSecretData[registryUsernameKey] = []byte(dockerConfig.Username)
+			imagePullSecretData[registryPasswordKey] = []byte(dockerConfig.Password)
+
 			envs = append(envs, core.EnvVar{
-				Name:  "TRIVY_USERNAME",
-				Value: dockerConfig.Username,
+				Name: "TRIVY_USERNAME",
+				ValueFrom: &core.EnvVarSource{
+					SecretKeyRef: &core.SecretKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: imagePullSecretName,
+						},
+						Key: registryUsernameKey,
+					},
+				},
 			}, core.EnvVar{
-				Name:  "TRIVY_PASSWORD",
-				Value: dockerConfig.Password,
+				Name: "TRIVY_PASSWORD",
+				ValueFrom: &core.EnvVarSource{
+					SecretKeyRef: &core.SecretKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: imagePullSecretName,
+						},
+						Key: registryPasswordKey,
+					},
+				},
 			})
 		}
 
@@ -191,7 +236,22 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 
 	containerImagesAsJSON, err := containerImages.AsJSON()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	if len(imagePullSecretData) > 0 {
+		imagePullSecret = &core.Secret{
+			ObjectMeta: meta.ObjectMeta{
+				Name:      imagePullSecretName,
+				Namespace: kube.NamespaceStarboard,
+				Labels: map[string]string{
+					kube.LabelResourceKind:      string(workload.Kind),
+					kube.LabelResourceName:      workload.Name,
+					kube.LabelResourceNamespace: workload.Namespace,
+				},
+			},
+			Data: imagePullSecretData,
+		}
 	}
 
 	return &batch.Job{
@@ -237,7 +297,7 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 				},
 			},
 		},
-	}, nil
+	}, imagePullSecret, nil
 }
 
 func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
