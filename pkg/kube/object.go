@@ -3,6 +3,9 @@ package kube
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -14,6 +17,9 @@ type Object struct {
 	Kind      Kind
 	Name      string
 	Namespace string
+	Group     string
+	Version   string
+	Resource  string
 }
 
 // Kind represents the type of a Kubernetes Object.
@@ -25,13 +31,13 @@ const (
 	KindNode Kind = "Node"
 
 	KindPod                   Kind = "Pod"
-	KindReplicaSet            Kind = "ReplicaSet.apps"
+	KindReplicaSet            Kind = "ReplicaSet"
 	KindReplicationController Kind = "ReplicationController"
-	KindDeployment            Kind = "Deployment.apps"
-	KindStatefulSet           Kind = "StatefulSet.apps"
-	KindDaemonSet             Kind = "DaemonSet.apps"
-	KindCronJob               Kind = "CronJob.batch"
-	KindJob                   Kind = "Job.batch"
+	KindDeployment            Kind = "Deployment"
+	KindStatefulSet           Kind = "StatefulSet"
+	KindDaemonSet             Kind = "DaemonSet"
+	KindCronJob               Kind = "CronJob"
+	KindJob                   Kind = "Job"
 )
 
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
@@ -48,26 +54,38 @@ func ObjectFromLabelsSet(set labels.Set) (Object, error) {
 	}, nil
 }
 
-func KindFromResource(resource string) (Kind, error) {
-	switch resource {
-	case "pods", "pod", "po":
-		return KindPod, nil
-	case "replicasets.apps", "replicasets", "replicaset", "rs":
-		return KindReplicaSet, nil
-	case "replicationcontrollers", "replicationcontroller", "rc":
-		return KindReplicationController, nil
-	case "deployments.apps", "deployments", "deployment", "deploy":
-		return KindDeployment, nil
-	case "statefulsets.apps", "statefulsets", "statefulset", "sts":
-		return KindStatefulSet, nil
-	case "daemonsets.apps", "daemonsets", "daemonset", "ds":
-		return KindDaemonSet, nil
-	case "cronjobs.batch", "cronjob.batch", "cronjobs", "cronjob", "cj":
-		return KindCronJob, nil
-	case "jobs.batch", "job.batch", "jobs", "job":
-		return KindJob, nil
+func GvkFromResource(mapper meta.RESTMapper, resource string) (gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, err error) {
+	fullySpecifiedGVR, groupResource := schema.ParseResourceArg(strings.ToLower(resource))
+	if fullySpecifiedGVR != nil {
+		gvr, err = mapper.ResourceFor(*fullySpecifiedGVR)
+		if err != nil {
+			return
+		}
 	}
-	return KindUnknown, fmt.Errorf("unrecognized resource: %s", resource)
+	if gvr.Empty() {
+		gvr, err = mapper.ResourceFor(groupResource.WithVersion(""))
+		if err != nil {
+			return
+		}
+	}
+	gvk, err = mapper.KindFor(gvr)
+	return
+}
+
+// Returns a string representing the workload, managing core api group as well
+func FullQNForWorkload(object Object) (fqname string) {
+	group := object.Group
+	if len(group) > 0 {
+		group = "." + group
+	}
+	fqname = fmt.Sprintf("%s/%s%s/%s/%s",
+		object.Namespace,
+		object.Kind,
+		group,
+		object.Version,
+		object.Name,
+	)
+	return
 }
 
 // ContainerImages is a simple structure to hold the mapping between container names and container image references.

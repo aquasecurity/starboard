@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ func SetGlobalFlags(cf *genericclioptions.ConfigFlags, cmd *cobra.Command) {
 	}
 }
 
-func WorkloadFromArgs(namespace string, args []string) (workload kube.Object, err error) {
+func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (workload kube.Object, err error) {
 	if len(args) < 1 {
 		err = errors.New("required workload kind and name not specified")
 		return
@@ -32,7 +33,7 @@ func WorkloadFromArgs(namespace string, args []string) (workload kube.Object, er
 		}
 		return
 	}
-	kind, err := kube.KindFromResource(parts[0])
+	gvr, gvk, err := kube.GvkFromResource(mapper, parts[0])
 	if err != nil {
 		return
 	}
@@ -42,8 +43,11 @@ func WorkloadFromArgs(namespace string, args []string) (workload kube.Object, er
 	}
 	workload = kube.Object{
 		Namespace: namespace,
-		Kind:      kind,
+		Kind:      kube.Kind(gvk.Kind),
 		Name:      parts[1],
+		Version:   gvk.Version,
+		Group:     gvk.Group,
+		Resource:  gvr.Resource,
 	}
 	return
 }

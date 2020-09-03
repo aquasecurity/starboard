@@ -84,7 +84,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports []sta
 }
 
 func (s *Scanner) preparePolarisJob(workload kube.Object) *batch.Job {
-	workloadFullName := fmt.Sprintf("%s/%s/v1/%s", workload.Namespace, workload.Kind, workload.Name)
+	workloadFullName := kube.FullQNForWorkload(workload)
 	klog.V(5).Infof("Formatting scan job for %s", workloadFullName)
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{

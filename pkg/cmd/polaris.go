@@ -21,7 +21,11 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			workload, err := WorkloadFromArgs(ns, args)
+			mapper, err := cf.ToRESTMapper()
+			if err != nil {
+				return
+			}
+			workload, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return err
 			}
