@@ -2,11 +2,12 @@ package vulnerabilities
 
 import (
 	"context"
+	"github.com/aquasecurity/starboard/pkg/docker"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	batch "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // WorkloadVulnerabilities holds VulnerabilityReports for each container
@@ -23,8 +24,8 @@ type WorkloadVulnerabilities map[string]starboard.VulnerabilityReport
 // GetVulnerabilityReportsByScanJob returns WorkloadVulnerabilities from
 // the completed scan Job.
 type ScannerAsync interface {
-	PrepareScanJob(ctx context.Context, workload kube.Object, spec core.PodSpec) (*batch.Job, error)
-	GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (WorkloadVulnerabilities, error)
+	PrepareScanJob(ctx context.Context, workload kube.Object, spec corev1.PodSpec, auths map[string]docker.Auth) (*batchv1.Job, *corev1.Secret, error)
+	GetVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job) (WorkloadVulnerabilities, error)
 }
 
 // Scanner defines methods for a synchronous vulnerability scanner.

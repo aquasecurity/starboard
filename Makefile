@@ -42,6 +42,8 @@ integration-tests: check-env get-ginkgo
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/cmd,\
 	github.com/aquasecurity/starboard/pkg/kube \
+	github.com/aquasecurity/starboard/pkg/kube/pod \
+	github.com/aquasecurity/starboard/pkg/kube/secrets \
 	github.com/aquasecurity/starboard/pkg/kubebench \
 	github.com/aquasecurity/starboard/pkg/kubehunter \
 	github.com/aquasecurity/starboard/pkg/polaris \
