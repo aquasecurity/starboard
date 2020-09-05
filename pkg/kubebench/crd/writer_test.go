@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/aquasecurity/starboard/pkg/cmd"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -50,7 +52,7 @@ var _ = Describe("ReadWriter", func() {
 	BeforeEach(func() {
 		objects = []runtime.Object{}
 		clientset = starboardClientsetFake.NewSimpleClientset(objects...)
-		rw = crd.NewReadWriter(clientset)
+		rw = crd.NewReadWriter(cmd.GetScheme(), clientset)
 	})
 
 	Describe("Writing report", func() {

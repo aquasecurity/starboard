@@ -1,10 +1,12 @@
-package trivy
+package trivy_test
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
@@ -153,7 +155,7 @@ null`,
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			report, err := NewConverter().Convert(tc.imageRef, strings.NewReader(tc.input))
+			report, err := trivy.NewConverter().Convert(tc.imageRef, strings.NewReader(tc.input))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)

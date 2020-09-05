@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewFindVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Aliases: []string{"vulns", "vuln"},
 		Use:     "vulnerabilities (NAME | TYPE/NAME)",
@@ -74,7 +74,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			reports, err := trivy.NewScanner(opts, kubernetesClientset).Scan(ctx, workload)
+			reports, owner, err := trivy.NewScanner(opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return
 			}
@@ -82,7 +82,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			err = crd.NewReadWriter(starboardClientset).Write(ctx, workload, reports)
+			err = crd.NewReadWriter(GetScheme(), starboardClientset).Write(ctx, reports, owner)
 			return
 		},
 	}

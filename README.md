@@ -1,4 +1,4 @@
-<img src="docs/images/starboard-logo.png" width="200" alt="Starboard logo">
+![Starboard logo](docs/images/starboard-logo.png)
 
 > Kubernetes-native security tool kit.
 

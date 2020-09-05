@@ -4,16 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/cmd"
 
-	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+	"k8s.io/klog"
+
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 
-	. "github.com/onsi/gomega/gexec"
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/ginkgo"
@@ -29,16 +27,13 @@ var (
 )
 
 var (
-	pathToStarboardCLI   string
 	starboardCLILogLevel = "0"
+	versionInfo          = cmd.VersionInfo{Version: "dev", Commit: "none", Date: "unknown"}
 )
 
 var (
 	namespaces                corev1.NamespaceInterface
 	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
-	defaultPods               corev1.PodInterface
-	defaultDeployments        appsv1.DeploymentInterface
-	defaultVulnerabilities    v1alpha1.VulnerabilityInterface
 )
 
 // TestStarboardCLI is a spec that describes the behavior of Starboard CLI.
@@ -52,8 +47,8 @@ func TestStarboardCLI(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	pathToStarboardCLI, err = Build("github.com/aquasecurity/starboard/cmd/starboard")
-	Expect(err).ToNot(HaveOccurred())
+
+	klog.InitFlags(nil)
 
 	if logLevel, ok := os.LookupEnv("STARBOARD_CLI_LOG_LEVEL"); ok {
 		starboardCLILogLevel = logLevel
@@ -72,12 +67,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	namespaces = kubernetesClientset.CoreV1().Namespaces()
-	defaultPods = kubernetesClientset.CoreV1().Pods(metav1.NamespaceDefault)
-	defaultDeployments = kubernetesClientset.AppsV1().Deployments(metav1.NamespaceDefault)
 	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
-	defaultVulnerabilities = starboardClientset.AquasecurityV1alpha1().Vulnerabilities(metav1.NamespaceDefault)
 })
 
 var _ = AfterSuite(func() {
-	CleanupBuildArtifacts()
+	klog.Flush()
 })

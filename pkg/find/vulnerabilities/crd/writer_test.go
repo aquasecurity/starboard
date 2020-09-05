@@ -1,8 +1,12 @@
-package crd
+package crd_test
 
 import (
 	"context"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
+
+	"github.com/aquasecurity/starboard/pkg/cmd"
 
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 
@@ -78,7 +82,7 @@ func TestReadWriter_Read(t *testing.T) {
 		Report: v1alpha1.VulnerabilityReport{},
 	})
 
-	reports, err := NewReadWriter(clientset).Read(context.TODO(), kube.Object{
+	reports, err := crd.NewReadWriter(cmd.GetScheme(), clientset).Read(context.TODO(), kube.Object{
 		Kind:      kube.KindDeployment,
 		Name:      "my-deploy",
 		Namespace: "my-namespace",

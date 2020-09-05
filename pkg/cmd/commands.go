@@ -6,6 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/client-go/kubernetes/scheme"
+
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -50,6 +54,10 @@ func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (
 		Resource:  gvr.Resource,
 	}
 	return
+}
+
+func GetScheme() *runtime.Scheme {
+	return scheme.Scheme
 }
 
 const (

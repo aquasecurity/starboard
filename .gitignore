@@ -4,6 +4,8 @@ bin/
 dist/
 
 *.html
-coverage.txt
 
+coverage.txt
+itest/coverage.txt
+itest/itest.test
 vendor

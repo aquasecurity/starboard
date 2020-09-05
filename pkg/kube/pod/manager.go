@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -14,6 +15,10 @@ import (
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	serviceAccountDefault = "default"
 )
 
 type Manager struct {
@@ -27,7 +32,7 @@ func NewPodManager(clientset kubernetes.Interface) *Manager {
 }
 
 // GetPodSpecByWorkload returns a PodSpec of the specified Workload.
-func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec core.PodSpec, err error) {
+func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec core.PodSpec, object meta.Object, err error) {
 	ns := workload.Namespace
 	switch workload.Kind {
 	case kube.KindPod:
@@ -37,6 +42,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = pod.Spec
+		object = pod
 		return
 	case kube.KindReplicaSet:
 		var rs *apps.ReplicaSet
@@ -45,6 +51,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = rs.Spec.Template.Spec
+		object = rs
 		return
 	case kube.KindReplicationController:
 		var rc *core.ReplicationController
@@ -53,6 +60,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = rc.Spec.Template.Spec
+		object = rc
 		return
 	case kube.KindDeployment:
 		var deploy *apps.Deployment
@@ -61,6 +69,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = deploy.Spec.Template.Spec
+		object = deploy
 		return
 	case kube.KindStatefulSet:
 		var sts *apps.StatefulSet
@@ -69,6 +78,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = sts.Spec.Template.Spec
+		object = sts
 		return
 	case kube.KindDaemonSet:
 		var ds *apps.DaemonSet
@@ -77,6 +87,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = ds.Spec.Template.Spec
+		object = ds
 		return
 	case kube.KindCronJob:
 		var cj *batchv1beta1.CronJob
@@ -85,6 +96,7 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = cj.Spec.JobTemplate.Spec.Template.Spec
+		object = cj
 		return
 	case kube.KindJob:
 		var job *batch.Job
@@ -93,10 +105,49 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 			return
 		}
 		spec = job.Spec.Template.Spec
+		object = job
 		return
 	}
 	err = fmt.Errorf("unrecognized workload: %s", workload.Kind)
 	return
+}
+
+// GetImagePullSecrets returns the union of image pull Secrets specified on the given PodSpec
+// and image pull secrets added to the Service Account.
+func (pw *Manager) GetImagePullSecrets(ctx context.Context, namespace string, spec core.PodSpec) ([]core.Secret, error) {
+	secrets := make([]core.Secret, 0)
+
+	for _, secretRef := range spec.ImagePullSecrets {
+		secret, err := pw.clientset.CoreV1().Secrets(namespace).
+			Get(ctx, secretRef.Name, meta.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("getting secret by name: %s/%s: %w", namespace, secretRef.Name, err)
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	serviceAccountName := spec.ServiceAccountName
+	// Note: For Kubernetes controllers the ServiceAccountName field might be blank.
+	if serviceAccountName == "" {
+		serviceAccountName = serviceAccountDefault
+	}
+
+	serviceAccount, err := pw.clientset.CoreV1().ServiceAccounts(namespace).
+		Get(ctx, serviceAccountName, meta.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting service account by name: %s/%s: %w", namespace, serviceAccountName, err)
+	}
+
+	for _, secretRef := range serviceAccount.ImagePullSecrets {
+		secret, err := pw.clientset.CoreV1().Secrets(namespace).
+			Get(ctx, secretRef.Name, meta.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("getting secret by name: %s/%s: %w", namespace, secretRef.Name, err)
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	return secrets, nil
 }
 
 func (pw *Manager) GetPodByName(ctx context.Context, namespace, name string) (*core.Pod, error) {
@@ -176,4 +227,17 @@ func (pw *Manager) logTerminatedContainersErrors(statuses map[string]*core.Conta
 		}
 		klog.Errorf("Container %s terminated with %s: %s", container, status.Reason, status.Message)
 	}
+}
+
+// GetImages gets a slice of images for the specified PodSpec.
+func GetImages(spec core.PodSpec) (images []string) {
+	for _, c := range spec.InitContainers {
+		images = append(images, c.Image)
+	}
+
+	for _, c := range spec.Containers {
+		images = append(images, c.Image)
+	}
+
+	return
 }

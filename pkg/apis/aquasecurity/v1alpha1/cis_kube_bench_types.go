@@ -4,6 +4,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 const (
@@ -17,6 +18,9 @@ var (
 	CISKubeBenchReportCRD = extv1beta1.CustomResourceDefinition{
 		ObjectMeta: meta.ObjectMeta{
 			Name: CISKubeBenchReportCRName,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
 		},
 		Spec: extv1beta1.CustomResourceDefinitionSpec{
 			Group: aquasecurity.GroupName,
