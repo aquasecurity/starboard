@@ -14,7 +14,7 @@ import (
 )
 
 var _ = Describe("Core Functionalities", func() {
-	FDescribe("Resolving workloads", func() {
+	Describe("Resolving workloads", func() {
 		testCases := []struct {
 			name string
 
