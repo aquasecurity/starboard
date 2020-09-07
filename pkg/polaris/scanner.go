@@ -34,7 +34,6 @@ type Scanner struct {
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
-	scanners.Base
 }
 
 func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
@@ -95,7 +94,7 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
+			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{

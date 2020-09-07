@@ -49,7 +49,6 @@ type Scanner struct {
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
-	scanners.Base
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilities.WorkloadVulnerabilities, owner meta.Object, err error) {
@@ -270,7 +269,7 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 		Spec: batch.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: s.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
+			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{

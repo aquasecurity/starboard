@@ -159,11 +159,11 @@ func (pw *Manager) GetTerminatedContainersStatusesByJob(ctx context.Context, job
 	if err != nil {
 		return
 	}
-	statuses = pw.GetTerminatedContainersStatusesByPod(pod)
+	statuses = GetTerminatedContainersStatusesByPod(pod)
 	return
 }
 
-func (pw *Manager) GetTerminatedContainersStatusesByPod(pod *core.Pod) map[string]*core.ContainerStateTerminated {
+func GetTerminatedContainersStatusesByPod(pod *core.Pod) map[string]*core.ContainerStateTerminated {
 	states := make(map[string]*core.ContainerStateTerminated)
 	for _, status := range pod.Status.InitContainerStatuses {
 		if status.State.Terminated == nil {
