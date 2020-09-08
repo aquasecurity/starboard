@@ -34,7 +34,11 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			workload, err := WorkloadFromArgs(ns, args)
+			mapper, err := cf.ToRESTMapper()
+			if err != nil {
+				return
+			}
+			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return
 			}

@@ -15,8 +15,21 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "polaris",
 		Short: "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
+			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
+			if err != nil {
+				return err
+			}
+			mapper, err := cf.ToRESTMapper()
+			if err != nil {
+				return
+			}
+			workload, gvk, err := WorkloadFromArgs(mapper, ns, args)
+			if err != nil {
+				return err
+			}
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return
@@ -29,7 +42,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			reports, err := polaris.NewScanner(opts, clientset).Scan(ctx)
+			report, owner, err := polaris.NewScanner(opts, clientset).Scan(ctx, workload, gvk)
 			if err != nil {
 				return
 			}
@@ -37,7 +50,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			err = crd.NewReadWriter(starboardClientset).WriteAll(ctx, reports)
+			err = crd.NewReadWriter(GetScheme(), starboardClientset).Write(ctx, report, owner)
 			if err != nil {
 				return
 			}

@@ -12,7 +12,7 @@ import (
 func TestConverter_Convert(t *testing.T) {
 	// FIXME Deterministic assert!
 	t.Skip("Fix me - the assert is not deterministic")
-	file, err := os.Open("test_fixture/polaris-report.json")
+	file, err := os.Open("testdata/polaris-report.json")
 	require.NoError(t, err)
 	defer func() {
 		_ = file.Close()
@@ -26,13 +26,6 @@ func TestConverter_Convert(t *testing.T) {
 				Name:    "Polaris",
 				Vendor:  "Fairwinds",
 				Version: "latest",
-			},
-			Resource: v1alpha1.KubernetesNamespacedResource{
-				Namespace: "aqua",
-				KubernetesResource: v1alpha1.KubernetesResource{
-					Kind: "Deployment",
-					Name: "csp-database",
-				},
 			},
 			PodChecks: []v1alpha1.Check{
 				{

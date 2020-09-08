@@ -36,12 +36,16 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			workload, err := WorkloadFromArgs(ns, args)
+			mapper, err := cf.ToRESTMapper()
+			if err != nil {
+				return
+			}
+			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return
 			}
 
-			caReader := configAuditCrd.NewReadWriter(starboardClientset)
+			caReader := configAuditCrd.NewReadWriter(GetScheme(), starboardClientset)
 			vulnsReader := vulnsCrd.NewReadWriter(GetScheme(), starboardClientset)
 
 			reporter := report.NewHTMLReporter(caReader, vulnsReader, workload)

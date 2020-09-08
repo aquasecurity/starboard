@@ -47,6 +47,7 @@ integration-tests: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/kubebench \
 	github.com/aquasecurity/starboard/pkg/kubehunter \
 	github.com/aquasecurity/starboard/pkg/polaris \
+	github.com/aquasecurity/starboard/pkg/polaris/crd \
 	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy \
 	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd \
 	./itest

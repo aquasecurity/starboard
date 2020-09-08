@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
@@ -23,10 +25,14 @@ import (
 )
 
 const (
-	polarisContainerName  = "polaris"
-	polarisContainerImage = "quay.io/fairwinds/polaris:1.1.0"
-	polarisConfigVolume   = "config-volume"
-	polarisConfigMap      = "polaris"
+	polarisContainerName = "polaris"
+	polarisConfigVolume  = "config-volume"
+	polarisConfigMap     = "polaris"
+	polarisVersion       = "1.2"
+)
+
+var (
+	polarisContainerImage = fmt.Sprintf("quay.io/fairwinds/polaris:%s", polarisVersion)
 )
 
 type Scanner struct {
@@ -45,8 +51,13 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, err error) {
-	job := s.preparePolarisJob()
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (report starboard.ConfigAudit, owner meta.Object, err error) {
+	_, owner, err = s.pods.GetPodSpecByWorkload(ctx, workload)
+	if err != nil {
+		return
+	}
+
+	job := s.preparePolarisJob(workload, gvk)
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
@@ -75,20 +86,37 @@ func (s *Scanner) Scan(ctx context.Context) (reports []starboard.ConfigAudit, er
 		return
 	}
 
-	reports, err = s.converter.Convert(logsReader)
+	report, err = s.converter.Convert(logsReader)
 	defer func() {
 		_ = logsReader.Close()
 	}()
 	return
 }
 
-func (s *Scanner) preparePolarisJob() *batch.Job {
+func (s *Scanner) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKind) string {
+	group := gvk.Group
+	if len(group) > 0 {
+		group = "." + group
+	}
+	return fmt.Sprintf("%s/%s%s/%s/%s",
+		workload.Namespace,
+		gvk.Kind,
+		group,
+		gvk.Version,
+		workload.Name,
+	)
+}
+
+func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) *batch.Job {
+	sourceName := s.sourceNameFrom(workload, gvk)
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: kube.NamespaceStarboard,
 			Labels: map[string]string{
-				"app": "polaris",
+				kube.LabelResourceKind:      string(workload.Kind),
+				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceNamespace: workload.Namespace,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -98,7 +126,9 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 			Template: core.PodTemplateSpec{
 				ObjectMeta: meta.ObjectMeta{
 					Labels: map[string]string{
-						"app": "polaris",
+						kube.LabelResourceKind:      string(workload.Kind),
+						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
 				Spec: core.PodSpec{
@@ -139,7 +169,10 @@ func (s *Scanner) preparePolarisJob() *batch.Job {
 								},
 							},
 							Command: []string{"polaris"},
-							Args:    []string{"audit", "--log-level", "error", "--config", "/examples/config.yaml"},
+							Args: []string{"audit",
+								"--log-level", "error",
+								"--config", "/examples/config.yaml",
+								"--resource", sourceName},
 						},
 					},
 				},

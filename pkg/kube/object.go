@@ -3,6 +3,9 @@ package kube
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/api/meta"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -11,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// Object is a simplified representation a Kubernetes object.
+// Object is a simplified representation of a Kubernetes object.
 // Each object has kind, which designates the type of the entity it represents.
 // Objects have names and many of them live in namespaces.
 type Object struct {
@@ -52,26 +55,22 @@ func ObjectFromLabelsSet(set labels.Set) (Object, error) {
 	}, nil
 }
 
-func KindFromResource(resource string) (Kind, error) {
-	switch resource {
-	case "pods", "pod", "po":
-		return KindPod, nil
-	case "replicasets.apps", "replicasets", "replicaset", "rs":
-		return KindReplicaSet, nil
-	case "replicationcontrollers", "replicationcontroller", "rc":
-		return KindReplicationController, nil
-	case "deployments.apps", "deployments", "deployment", "deploy":
-		return KindDeployment, nil
-	case "statefulsets.apps", "statefulsets", "statefulset", "sts":
-		return KindStatefulSet, nil
-	case "daemonsets.apps", "daemonsets", "daemonset", "ds":
-		return KindDaemonSet, nil
-	case "cronjobs.batch", "cronjob.batch", "cronjobs", "cronjob", "cj":
-		return KindCronJob, nil
-	case "jobs.batch", "job.batch", "jobs", "job":
-		return KindJob, nil
+func GVRForResource(mapper meta.RESTMapper, resource string) (gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, err error) {
+	fullySpecifiedGVR, groupResource := schema.ParseResourceArg(strings.ToLower(resource))
+	if fullySpecifiedGVR != nil {
+		gvr, err = mapper.ResourceFor(*fullySpecifiedGVR)
+		if err != nil {
+			return
+		}
 	}
-	return KindUnknown, fmt.Errorf("unrecognized resource: %s", resource)
+	if gvr.Empty() {
+		gvr, err = mapper.ResourceFor(groupResource.WithVersion(""))
+		if err != nil {
+			return
+		}
+	}
+	gvk, err = mapper.KindFor(gvr)
+	return
 }
 
 // ContainerImages is a simple structure to hold the mapping between container names and container image references.
