@@ -8,7 +8,7 @@ import (
 )
 
 type Converter interface {
-	Convert(reader io.Reader) ([]sec.ConfigAudit, error)
+	Convert(reader io.Reader) (sec.ConfigAudit, error)
 }
 
 type converter struct {
@@ -20,21 +20,13 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(reader io.Reader) (reports []sec.ConfigAudit, err error) {
+func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAudit, err error) {
 	var report Report
 	err = json.NewDecoder(reader).Decode(&report)
 	if err != nil {
 		return
 	}
-	reports = c.convert(report)
-	return
-}
-
-func (c *converter) convert(report Report) (reports []sec.ConfigAudit) {
-	reports = make([]sec.ConfigAudit, len(report.Results))
-	for i, result := range report.Results {
-		reports[i] = c.toConfigAudit(result)
-	}
+	reports = c.toConfigAudit(report.Results[0])
 	return
 }
 
@@ -70,15 +62,8 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 	report = sec.ConfigAudit{
 		Scanner: sec.Scanner{
 			Name:    "Polaris",
-			Vendor:  "Fairwinds",
-			Version: "latest",
-		},
-		Resource: sec.KubernetesNamespacedResource{
-			Namespace: result.Namespace,
-			KubernetesResource: sec.KubernetesResource{
-				Kind: result.Kind,
-				Name: result.Name,
-			},
+			Vendor:  "Fairwinds Ops",
+			Version: polarisVersion,
 		},
 		PodChecks:       podChecks,
 		ContainerChecks: containerChecks,

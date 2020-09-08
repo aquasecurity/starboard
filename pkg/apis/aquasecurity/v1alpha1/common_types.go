@@ -6,13 +6,3 @@ type Scanner struct {
 	Vendor  string `json:"vendor"`
 	Version string `json:"version"`
 }
-
-type KubernetesResource struct {
-	Kind string `json:"kind"` // Pod, Deployment, Node, etc.
-	Name string `json:"name"` // my-pod, my-deployment, my-node, etc.
-}
-
-type KubernetesNamespacedResource struct {
-	Namespace string `json:"namespace"`
-	KubernetesResource
-}

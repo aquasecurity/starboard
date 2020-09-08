@@ -69,10 +69,9 @@ type ConfigAuditReportList struct {
 // TODO by defining scope type (e.g. Pod, Container, Node) and the name of the scope (e.g. my-pod, my-container,
 // TODO my-node)
 type ConfigAudit struct {
-	Scanner         Scanner                      `json:"scanner"`
-	Resource        KubernetesNamespacedResource `json:"resource"`
-	PodChecks       []Check                      `json:"podChecks"`
-	ContainerChecks map[string][]Check           `json:"containerChecks"`
+	Scanner         Scanner            `json:"scanner"`
+	PodChecks       []Check            `json:"podChecks"`
+	ContainerChecks map[string][]Check `json:"containerChecks"`
 }
 
 type Check struct {

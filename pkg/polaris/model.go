@@ -3,6 +3,8 @@ package polaris
 type Report struct {
 	PolarisOutputVersion string       `json:"PolarisOutputVersion"`
 	SourceType           string       `json:"SourceType"`
+	SourceName           string       `json:"SourceName"`
+	DisplayName          string       `json:"DisplayName"`
 	ClusterInfo          *ClusterInfo `json:"ClusterInfo"`
 	Results              []Result     `json:"Results"`
 }

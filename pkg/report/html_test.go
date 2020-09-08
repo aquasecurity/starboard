@@ -62,13 +62,6 @@ var (
 					Vendor:  "Fairwinds",
 					Version: "latest",
 				},
-				Resource: starboard.KubernetesNamespacedResource{
-					Namespace: "aqua",
-					KubernetesResource: starboard.KubernetesResource{
-						Kind: "Deployment",
-						Name: "csp-database",
-					},
-				},
 				PodChecks: []starboard.Check{
 					{
 						ID:       "hostIPCSet",

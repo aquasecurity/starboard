@@ -39,7 +39,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			workload, err := WorkloadFromArgs(mapper, ns, args)
+			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return
 			}
