@@ -27,7 +27,11 @@
 
 ## Introduction
 
-Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that relate to different resources in a Kubernetes-native way. Starboard provides [custom security resources definitions][starboard-crds] and a [Go module][starboard-go-module] to work with a range of existing security tools, as well as a `kubectl`-compatible command-line tool and an Octant plug-in that make security reports available through familiar Kubernetes tools. 
+Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that
+relate to different resources in a Kubernetes-native way. Starboard provides
+[custom security resources definitions][starboard-crds] and a [Go module][starboard-go-module] to work with a range
+of existing security tools, as well as a `kubectl`-compatible command-line tool and an Octant plug-in that make security
+reports available through familiar Kubernetes tools.
 
 You can read more about the motivations and use cases [here][aqua-starboard-blog] and join our discussions [here][discussions]. 
 
@@ -56,8 +60,7 @@ The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kube
 but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
 `kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard`.
 
-After following the [Krew][krew] installation documentation, you can install starboard with the
-[Krew][krew] plugins manager:
+You can also install Starboard as a kubectl plugin with the [Krew][krew] plugins manager:
 
 ```
 $ kubectl krew install starboard
@@ -118,7 +121,8 @@ Run the scanner to find the vulnerabilities:
 $ starboard find vulnerabilities deployment/nginx --namespace dev
 ```
 
-Behind the scenes, this uses [Trivy][trivy] to identify vulnerabilities in the container images associated with the specified deployment. Once this has been done, you can retrieve the latest vulnerability reports for this workload:
+Behind the scenes, this uses [Trivy][trivy] to identify vulnerabilities in the container images associated with the
+specified deployment. Once this has been done, you can retrieve the latest vulnerability reports for this workload:
 
 ```
 $ starboard get vulnerabilities deployment/nginx \
@@ -161,12 +165,8 @@ also know that in Kubernetes the defaults are usually the least secure.
 Run the scanner to audit the configuration using [Polaris][polaris]:
 
 ```
-$ starboard polaris
+$ starboard polaris deployment/nginx --namespace dev
 ```
-
-> Note that currently the `polaris` subcommand scans workloads in all namespaces. However, once we resolve
-> [issue #29][issue-29] it will be possible to scan just a single deployment with
-> `starboard polaris deployment/nginx --namespace dev`.
 
 Retrieve the configuration audit report:
 
@@ -314,7 +314,3 @@ This repository is available under the [Apache License 2.0][license].
 [kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
 
 [krew]: https://github.com/kubernetes-sigs/krew
-[krew-index]: https://github.com/kubernetes-sigs/krew-index
-
-[issue-8]: https://github.com/aquasecurity/starboard/issues/8
-[issue-29]: https://github.com/aquasecurity/starboard/issues/29
