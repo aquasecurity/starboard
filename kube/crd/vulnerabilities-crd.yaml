@@ -147,6 +147,10 @@ spec:
       type: string
       name: Scanner
       description: The name of the vulnerability scanner
+    - JSONPath: .metadata.creationTimestamp
+      type: date
+      name: Age
+      description: The age of Vulnerability
     - JSONPath: .report.summary.criticalCount
       type: integer
       name: Critical

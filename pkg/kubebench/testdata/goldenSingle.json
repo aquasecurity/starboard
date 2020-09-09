@@ -4,6 +4,12 @@
         "vendor": "Aqua Security",
         "version": "0.3.1"
     },
+    "summary": {
+        "passCount": 41,
+        "infoCount": 0,
+        "warnCount": 11,
+        "failCount": 13
+    },
     "sections": [{
         "id": "1",
         "version": "1.5",
