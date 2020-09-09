@@ -18,3 +18,26 @@ spec:
       - all
     shortNames:
       - kubebench
+  additionalPrinterColumns:
+    - JSONPath: .report.scanner.name
+      type: string
+      name: Scanner
+    - JSONPath: .metadata.creationTimestamp
+      type: date
+      name: Age
+    - JSONPath: .report.summary.passCount
+      type: integer
+      name: Pass
+      priority: 1
+    - JSONPath: .report.summary.infoCount
+      type: integer
+      name: Info
+      priority: 1
+    - JSONPath: .report.summary.warnCount
+      type: integer
+      name: Warn
+      priority: 1
+    - JSONPath: .report.summary.failCount
+      type: integer
+      name: Fail
+      priority: 1

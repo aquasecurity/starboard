@@ -40,6 +40,42 @@ var (
 				Categories: []string{"all"},
 				ShortNames: []string{"kubebench"},
 			},
+			AdditionalPrinterColumns: []extv1beta1.CustomResourceColumnDefinition{
+				{
+					JSONPath: ".report.scanner.name",
+					Type:     "string",
+					Name:     "Scanner",
+				},
+				{
+					JSONPath: ".metadata.creationTimestamp",
+					Type:     "date",
+					Name:     "Age",
+				},
+				{
+					JSONPath: ".report.summary.passCount",
+					Type:     "integer",
+					Name:     "Pass",
+					Priority: 1,
+				},
+				{
+					JSONPath: ".report.summary.infoCount",
+					Type:     "integer",
+					Name:     "Info",
+					Priority: 1,
+				},
+				{
+					JSONPath: ".report.summary.warnCount",
+					Type:     "integer",
+					Name:     "Warn",
+					Priority: 1,
+				},
+				{
+					JSONPath: ".report.summary.failCount",
+					Type:     "integer",
+					Name:     "Fail",
+					Priority: 1,
+				},
+			},
 		},
 	}
 )
@@ -68,7 +104,15 @@ type CISKubeBenchReportList struct {
 
 type CISKubeBenchOutput struct {
 	Scanner  Scanner               `json:"scanner"`
+	Summary  CISKubeBenchSummary   `json:"summary"`
 	Sections []CISKubeBenchSection `json:"sections"`
+}
+
+type CISKubeBenchSummary struct {
+	PassCount int `json:"passCount"`
+	InfoCount int `json:"infoCount"`
+	WarnCount int `json:"warnCount"`
+	FailCount int `json:"failCount"`
 }
 
 type CISKubeBenchSection struct {

@@ -30,8 +30,30 @@ func (c *converter) Convert(reader io.Reader) (report starboard.CISKubeBenchOutp
 			Vendor:  "Aqua Security",
 			Version: kubeBenchVersion,
 		},
+		Summary:  c.summary(section),
 		Sections: section,
 	}
 
 	return
+}
+
+func (c *converter) summary(sections []starboard.CISKubeBenchSection) starboard.CISKubeBenchSummary {
+	totalPass := 0
+	totalInfo := 0
+	totalWarn := 0
+	totalFail := 0
+
+	for _, section := range sections {
+		totalPass += section.TotalPass
+		totalInfo += section.TotalInfo
+		totalWarn += section.TotalWarn
+		totalFail += section.TotalFail
+	}
+
+	return starboard.CISKubeBenchSummary{
+		PassCount: totalPass,
+		InfoCount: totalInfo,
+		WarnCount: totalWarn,
+		FailCount: totalFail,
+	}
 }
