@@ -27,7 +27,7 @@ spec:
       name: Age
     - JSONPath: .report.summary.passCount
       type: integer
-      name: "Pass
+      name: Pass
       priority: 1
     - JSONPath: .report.summary.infoCount
       type: integer
