@@ -718,7 +718,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	})
 
-	Describe("Command polaris configuration", func() {
+	Describe("Command polaris", func() {
 		// containerNameAsIDFn is used as an identifier by the MatchAllElements matcher
 		// to group ConfigAuditReport by container name.
 		containerNameAsIDFn := func(element interface{}) string {
