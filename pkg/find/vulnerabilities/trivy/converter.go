@@ -15,7 +15,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityReport, error)
+	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityScanResult, error)
 }
 
 type converter struct {
@@ -27,7 +27,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityReport, err error) {
+func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityScanResult, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -60,18 +60,17 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	return strings.NewReader(inputAsString), nil
 }
 
-func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.VulnerabilityReport, error) {
-	vulnerabilities := make([]starboard.VulnerabilityItem, 0)
+func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.VulnerabilityScanResult, error) {
+	vulnerabilities := make([]starboard.Vulnerability, 0)
 
 	for _, report := range reports {
 		for _, sr := range report.Vulnerabilities {
-			vulnerabilities = append(vulnerabilities, starboard.VulnerabilityItem{
+			vulnerabilities = append(vulnerabilities, starboard.Vulnerability{
 				VulnerabilityID:  sr.VulnerabilityID,
 				Resource:         sr.PkgName,
 				InstalledVersion: sr.InstalledVersion,
 				FixedVersion:     sr.FixedVersion,
 				Severity:         sr.Severity,
-				LayerID:          sr.LayerID,
 				Title:            sr.Title,
 				Description:      sr.Description,
 				Links:            c.toLinks(sr.References),
@@ -81,10 +80,10 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.Vu
 
 	registry, artifact, err := c.parseImageRef(imageRef)
 	if err != nil {
-		return starboard.VulnerabilityReport{}, err
+		return starboard.VulnerabilityScanResult{}, err
 	}
 
-	return starboard.VulnerabilityReport{
+	return starboard.VulnerabilityScanResult{
 		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
@@ -104,7 +103,7 @@ func (c *converter) toLinks(references []string) []string {
 	return references
 }
 
-func (c *converter) toSummary(vulnerabilities []starboard.VulnerabilityItem) (vs starboard.VulnerabilitySummary) {
+func (c *converter) toSummary(vulnerabilities []starboard.Vulnerability) (vs starboard.VulnerabilitySummary) {
 	for _, v := range vulnerabilities {
 		switch v.Severity {
 		case starboard.SeverityCritical:
@@ -128,7 +127,7 @@ func (c *converter) parseImageRef(imageRef string) (starboard.Registry, starboar
 		return starboard.Registry{}, starboard.Artifact{}, err
 	}
 	registry := starboard.Registry{
-		URL: ref.Context().RegistryStr(),
+		Server: ref.Context().RegistryStr(),
 	}
 	artifact := starboard.Artifact{
 		Repository: ref.Context().RepositoryStr(),

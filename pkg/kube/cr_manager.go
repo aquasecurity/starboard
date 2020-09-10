@@ -226,7 +226,7 @@ func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.Apiextensi
 }
 
 func (m *crManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilitiesCRD)
+	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilityReportsCRD)
 	if err != nil {
 		return
 	}
@@ -526,7 +526,7 @@ func (m *crManager) deleteCRD(ctx context.Context, name string) (err error) {
 }
 
 func (m *crManager) Cleanup(ctx context.Context) (err error) {
-	err = m.deleteCRD(ctx, starboard.VulnerabilitiesCRName)
+	err = m.deleteCRD(ctx, starboard.VulnerabilityReportsCRName)
 	if err != nil {
 		return
 	}

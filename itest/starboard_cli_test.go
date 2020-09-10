@@ -54,16 +54,16 @@ var _ = Describe("Starboard CLI", func() {
 			}
 
 			Expect(crdList.Items).To(MatchAllElements(id, Elements{
-				"vulnerabilities.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+				"vulnerabilityreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Group":   Equal("aquasecurity.github.io"),
 						"Version": Equal("v1alpha1"),
 						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
-							Plural:     "vulnerabilities",
-							Singular:   "vulnerability",
+							Plural:     "vulnerabilityreports",
+							Singular:   "vulnerabilityreport",
 							ShortNames: []string{"vulns", "vuln"},
-							Kind:       "Vulnerability",
-							ListKind:   "VulnerabilityList",
+							Kind:       "VulnerabilityReport",
+							ListKind:   "VulnerabilityReportList",
 							Categories: []string{"all"},
 						}),
 						"Scope": Equal(apiextensionsv1beta1.NamespaceScoped),
@@ -143,7 +143,7 @@ var _ = Describe("Starboard CLI", func() {
 		// containerNameAsIdFn is used as an identifier by the MatchAllElements matcher
 		// to group Vulnerability reports by container name.
 		containerNameAsIdFn := func(element interface{}) string {
-			return element.(v1alpha1.Vulnerability).
+			return element.(v1alpha1.VulnerabilityReport).
 				Labels[kube.LabelContainerName]
 		}
 
@@ -180,7 +180,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(podNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(podNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "Pod",
@@ -262,7 +262,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(podNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(podNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "Pod",
@@ -387,7 +387,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(podNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(podNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "Pod",
@@ -482,7 +482,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(rsNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(rsNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "ReplicaSet",
@@ -573,7 +573,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(rcNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(rcNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "ReplicationController",
@@ -664,7 +664,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reportList, err := starboardClientset.AquasecurityV1alpha1().Vulnerabilities(deployNamespace).
+				reportList, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(deployNamespace).
 					List(context.TODO(), metav1.ListOptions{
 						LabelSelector: labels.Set{
 							kube.LabelResourceKind:      "Deployment",

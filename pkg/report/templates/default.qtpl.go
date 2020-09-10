@@ -442,7 +442,7 @@ func (p *ReportPage) StreamBody(qw422016 *qt422016.Writer) {
 		qw422016.N().S(`</h5></div>
                   <div class="row"><p>`)
 //line pkg/report/templates/default.qtpl:221
-		qw422016.E().S(report.Registry.URL)
+		qw422016.E().S(report.Registry.Server)
 //line pkg/report/templates/default.qtpl:221
 		qw422016.N().S(`/`)
 //line pkg/report/templates/default.qtpl:221

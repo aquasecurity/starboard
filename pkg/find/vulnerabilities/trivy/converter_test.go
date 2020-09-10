@@ -45,14 +45,14 @@ var (
 	}
 ]`
 
-	sampleReport = starboard.VulnerabilityReport{
+	sampleReport = starboard.VulnerabilityScanResult{
 		Scanner: starboard.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
 			Version: "0.9.1",
 		},
 		Registry: starboard.Registry{
-			URL: "index.docker.io",
+			Server: "index.docker.io",
 		},
 		Artifact: starboard.Artifact{
 			Repository: "library/alpine",
@@ -65,7 +65,7 @@ var (
 			NoneCount:     0,
 			UnknownCount:  0,
 		},
-		Vulnerabilities: []starboard.VulnerabilityItem{
+		Vulnerabilities: []starboard.Vulnerability{
 			{
 				VulnerabilityID:  "CVE-2019-1549",
 				Resource:         "openssl",
@@ -99,7 +99,7 @@ func TestConverter_Convert(t *testing.T) {
 		imageRef       string
 		input          string
 		expectedError  error
-		expectedReport starboard.VulnerabilityReport
+		expectedReport starboard.VulnerabilityScanResult
 	}{
 		{
 			name:     "Should convert vulnerability report in JSON format when input is noisy",
@@ -121,14 +121,14 @@ func TestConverter_Convert(t *testing.T) {
 			input: `2020-06-21T23:10:15.162+0200	WARN	OS is not detected and vulnerabilities in OS packages are not detected.
 null`,
 			expectedError: nil,
-			expectedReport: starboard.VulnerabilityReport{
+			expectedReport: starboard.VulnerabilityScanResult{
 				Scanner: starboard.Scanner{
 					Name:    "Trivy",
 					Vendor:  "Aqua Security",
 					Version: "0.9.1",
 				},
 				Registry: starboard.Registry{
-					URL: "core.harbor.domain",
+					Server: "core.harbor.domain",
 				},
 				Artifact: starboard.Artifact{
 					Repository: "library/nginx",
@@ -142,7 +142,7 @@ null`,
 					NoneCount:     0,
 					UnknownCount:  0,
 				},
-				Vulnerabilities: []starboard.VulnerabilityItem{},
+				Vulnerabilities: []starboard.Vulnerability{},
 			},
 		},
 		{

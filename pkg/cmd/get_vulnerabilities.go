@@ -46,7 +46,7 @@ NAME is the name of a particular Kubernetes workload.
 
 			kubectlCmd := exec.Command("kubectl",
 				"get",
-				starboard.VulnerabilitiesCRName,
+				starboard.VulnerabilityReportsCRName,
 				fmt.Sprintf("-l=starboard.resource.kind=%s,starboard.resource.name=%s", workload.Kind, workload.Name),
 				fmt.Sprintf("--namespace=%s", workload.Namespace),
 				fmt.Sprintf("--output=%s", cmd.Flag("output").Value.String()))

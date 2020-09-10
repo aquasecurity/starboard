@@ -218,7 +218,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                 {% for container, report := range p.VulnsReports %}
                 
                   <div class="row"><h5 class="text-info" id="vulns_container_{%s container %}">Container {%s container %}</h5></div>
-                  <div class="row"><p>{%s report.Registry.URL %}/{%s report.Artifact.Repository %}:{%s report.Artifact.Tag %}</p></div>
+                  <div class="row"><p>{%s report.Registry.Server %}/{%s report.Artifact.Repository %}:{%s report.Artifact.Tag %}</p></div>
                   {% if len(report.Vulnerabilities) == 0 %}
                     <div class="row">
                       <p class="alert alert-success py-0 m-0" style="font-size: small;">No Vulnerabilities</p>

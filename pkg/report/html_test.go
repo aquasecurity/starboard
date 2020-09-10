@@ -1,21 +1,22 @@
 package report
 
 import (
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"testing"
+
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
 var (
-	sampleVulnsReports = []starboard.Vulnerability{
+	sampleVulnsReports = []starboard.VulnerabilityReport{
 		{
-			Report: starboard.VulnerabilityReport{
+			Report: starboard.VulnerabilityScanResult{
 				Scanner: starboard.Scanner{
 					Name:    "Trivy",
 					Vendor:  "Aqua Security",
 					Version: "0.9.1",
 				},
 				Registry: starboard.Registry{
-					URL: "index.docker.io",
+					Server: "index.docker.io",
 				},
 				Artifact: starboard.Artifact{
 					Repository: "library/alpine",
@@ -28,7 +29,7 @@ var (
 					NoneCount:     0,
 					UnknownCount:  0,
 				},
-				Vulnerabilities: []starboard.VulnerabilityItem{
+				Vulnerabilities: []starboard.Vulnerability{
 					{
 						VulnerabilityID:  "CVE-2019-1549",
 						Resource:         "openssl",

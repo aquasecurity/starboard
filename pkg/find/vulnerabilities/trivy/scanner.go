@@ -66,7 +66,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulne
 	return
 }
 
-func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityReport, error) {
+func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityScanResult, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 
 	imagePullSecrets, err := s.pods.GetImagePullSecrets(ctx, workload.Namespace, spec)
@@ -125,7 +125,7 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	return s.GetVulnerabilityReportsByScanJob(ctx, job)
 }
 
-func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
+func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
 	jobName := fmt.Sprintf(uuid.New().String())
 
 	initContainerName := jobName
@@ -300,7 +300,7 @@ func (s *Scanner) PrepareScanJob(ctx context.Context, workload kube.Object, spec
 }
 
 func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
-	reports = make(map[string]sec.VulnerabilityReport)
+	reports = make(map[string]sec.VulnerabilityScanResult)
 
 	var containerImagesAsJSON string
 	var ok bool
