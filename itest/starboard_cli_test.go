@@ -737,9 +737,8 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(*report).To(MatchFields(IgnoreExtras, Fields{
 					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 						"Labels": MatchAllKeys(Keys{
-							kube.LabelResourceKind:  Equal("Node"),
-							kube.LabelResourceName:  Equal(node.Name),
-							kube.LabelHistoryLatest: Equal("true"),
+							kube.LabelResourceKind: Equal("Node"),
+							kube.LabelResourceName: Equal(node.Name),
 						}),
 						"OwnerReferences": ConsistOf(metav1.OwnerReference{
 							APIVersion: "v1",

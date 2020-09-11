@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/utils/pointer"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -16,6 +18,11 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+)
+
+const (
+	clusterRoleStarboard        = "starboard"
+	clusterRoleBindingStarboard = "starboard"
 )
 
 const (
@@ -205,74 +212,39 @@ exemptions:
 `
 )
 
-// TODO This is no longer CRManager as we're creating other resources, such as ClusterRoles and ConfigMaps
-// CRManager defined methods for managing Kubernetes custom resources.
-type CRManager interface {
-	Init(ctx context.Context) error
-	Cleanup(ctx context.Context) error
-}
-
-type crManager struct {
-	clientset    kubernetes.Interface
-	clientsetext extapi.ApiextensionsV1beta1Interface
-}
-
-// NewCRManager constructs a CRManager with the given Kubernetes interface.
-func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
-	return &crManager{
-		clientset:    clientset,
-		clientsetext: clientsetext,
-	}
-}
-
-func (m *crManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilityReportsCRD)
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateCRD(ctx, &starboard.CISKubeBenchReportCRD)
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateCRD(ctx, &starboard.KubeHunterReportCRD)
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateCRD(ctx, &starboard.ConfigAuditReportCRD)
-	if err != nil {
-		return
-	}
-	// TODO We should wait for CRD statuses and make sure that the names were accepted
-
-	err = m.createNamespaceIfNotFound(ctx, NamespaceStarboard)
-	if err != nil {
-		return
-	}
-
-	err = m.initPolaris(ctx)
-	return
-}
-
-// TODO Move this logic to Polaris scanner structure
-func (m *crManager) initPolaris(ctx context.Context) (err error) {
-	err = m.createServiceAccountIfNotFound(ctx, ServiceAccountPolaris)
-	if err != nil {
-		return
-	}
-
-	err = m.createConfigMapIfNotFound(ctx, ConfigMapPolaris, map[string]string{
-		"config.yaml": polarisConfigYAML,
-	})
-	if err != nil {
-		return
-	}
-
-	err = m.createOrUpdateClusterRole(ctx, &rbac.ClusterRole{
+var (
+	namespace = &core.Namespace{
 		ObjectMeta: meta.ObjectMeta{
-			Name: "starboard-polaris",
+			Name: NamespaceStarboard,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+	}
+	serviceAccount = &core.ServiceAccount{
+		ObjectMeta: meta.ObjectMeta{
+			Name: ServiceAccountStarboard,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+		AutomountServiceAccountToken: pointer.BoolPtr(false),
+	}
+	configMap = &core.ConfigMap{
+		ObjectMeta: meta.ObjectMeta{
+			Name: ConfigMapStarboard,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+		Data: map[string]string{
+			"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+			"polaris.config.yaml": polarisConfigYAML,
+		},
+	}
+	clusterRole = &rbac.ClusterRole{
+		ObjectMeta: meta.ObjectMeta{
+			Name: clusterRoleStarboard,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
@@ -322,14 +294,10 @@ func (m *crManager) initPolaris(ctx context.Context) (err error) {
 				},
 			},
 		},
-	})
-	if err != nil {
-		return
 	}
-
-	err = m.createOrUpdateClusterRoleBinding(ctx, &rbac.ClusterRoleBinding{
+	clusterRoleBinding = &rbac.ClusterRoleBinding{
 		ObjectMeta: meta.ObjectMeta{
-			Name: "starboard-polaris",
+			Name: clusterRoleBindingStarboard,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
@@ -337,127 +305,175 @@ func (m *crManager) initPolaris(ctx context.Context) (err error) {
 		RoleRef: rbac.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     "starboard-polaris",
+			Name:     clusterRoleStarboard,
 		},
 		Subjects: []rbac.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      ServiceAccountPolaris,
+				Name:      ServiceAccountStarboard,
 				Namespace: NamespaceStarboard,
 			},
 		},
-	})
+	}
+)
+
+// TODO This is no longer CRManager as we're creating other resources, such as ClusterRoles and ConfigMaps
+// CRManager defined methods for managing Kubernetes custom resources.
+type CRManager interface {
+	Init(ctx context.Context) error
+	Cleanup(ctx context.Context) error
+}
+
+type crManager struct {
+	clientset    kubernetes.Interface
+	clientsetext extapi.ApiextensionsV1beta1Interface
+}
+
+// NewCRManager constructs a CRManager with the given Kubernetes interface.
+func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
+	return &crManager{
+		clientset:    clientset,
+		clientsetext: clientsetext,
+	}
+}
+
+func (m *crManager) Init(ctx context.Context) (err error) {
+	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilityReportsCRD)
+	if err != nil {
+		return
+	}
+
+	err = m.createOrUpdateCRD(ctx, &starboard.CISKubeBenchReportCRD)
+	if err != nil {
+		return
+	}
+
+	err = m.createOrUpdateCRD(ctx, &starboard.KubeHunterReportCRD)
+	if err != nil {
+		return
+	}
+
+	err = m.createOrUpdateCRD(ctx, &starboard.ConfigAuditReportCRD)
+	if err != nil {
+		return
+	}
+	// TODO We should wait for CRD statuses and make sure that the names were accepted
+
+	err = m.createNamespaceIfNotFound(ctx, namespace)
+	if err != nil {
+		return
+	}
+
+	err = m.createConfigMapIfNotFound(ctx, configMap)
+	if err != nil {
+		return
+	}
+
+	err = m.initRBAC(ctx)
+	return
+}
+
+func (m *crManager) initRBAC(ctx context.Context) (err error) {
+	err = m.createServiceAccountIfNotFound(ctx, serviceAccount)
+	if err != nil {
+		return
+	}
+
+	err = m.createOrUpdateClusterRole(ctx, clusterRole)
+	if err != nil {
+		return
+	}
+
+	err = m.createOrUpdateClusterRoleBinding(ctx, clusterRoleBinding)
 
 	return
 }
 
-// TODO Move this logic to Polaris scanner structure
-func (m *crManager) cleanupPolaris(ctx context.Context) (err error) {
-	klog.V(3).Infof("Deleting ClusterRoleBinding %s", "starboard-polaris")
-	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, "starboard-polaris", meta.DeleteOptions{})
+func (m *crManager) cleanupRBAC(ctx context.Context) (err error) {
+	klog.V(3).Infof("Deleting ClusterRoleBinding %q", clusterRoleBindingStarboard)
+	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
-	klog.V(3).Infof("Deleting ClusterRole: %s", "starboard-polars")
-	err = m.clientset.RbacV1().ClusterRoles().Delete(ctx, "starboard-polaris", meta.DeleteOptions{})
+	klog.V(3).Infof("Deleting ClusterRole %q", clusterRoleStarboard)
+	err = m.clientset.RbacV1().ClusterRoles().Delete(ctx, clusterRoleStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
-	klog.V(3).Infof("Deleting ServiceAccount %s/%s", NamespaceStarboard, ServiceAccountPolaris)
-	err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Delete(ctx, ServiceAccountPolaris, meta.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
-		return
-	}
-	klog.V(3).Infof("Deleting ConfigMap %s/%s", NamespaceStarboard, ConfigMapPolaris)
-	err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Delete(ctx, ConfigMapPolaris, meta.DeleteOptions{})
+	klog.V(3).Infof("Deleting ServiceAccount %q", NamespaceStarboard+"/"+ServiceAccountStarboard)
+	err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Delete(ctx, ServiceAccountStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
 	return nil
 }
 
-func (m *crManager) cleanupNamespace(ctx context.Context) (err error) {
-	klog.V(3).Infof("Deleting Namespace %s", NamespaceStarboard)
-	err = m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
+var (
+	cleanupPollingInterval = 2 * time.Second
+	cleanupTimeout         = 30 * time.Second
+)
+
+func (m *crManager) cleanupNamespace(ctx context.Context) error {
+	klog.V(3).Infof("Deleting Namespace %q", NamespaceStarboard)
+	err := m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
-		return
+		return err
 	}
 	for {
 		select {
-		// This case controls the polling interval (every 2 seconds)
-		case <-time.After(2 * time.Second):
+		// This case controls the polling interval
+		case <-time.After(cleanupPollingInterval):
 			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
 			if errors.IsNotFound(err) {
-				klog.V(3).Infof("Deleted Namespace %v", NamespaceStarboard)
+				klog.V(3).Infof("Deleted Namespace %q", NamespaceStarboard)
 				return nil
 			}
-		// This case caters for timeout (stop polling after 30 seconds)
-		case <-time.After(30 * time.Second):
+		// This case caters for polling timeout
+		case <-time.After(cleanupTimeout):
 			return fmt.Errorf("deleting namespace timed out")
 		}
 	}
-	return nil
 }
 
-func (m *crManager) createNamespaceIfNotFound(ctx context.Context, name string) (err error) {
-	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, name, meta.GetOptions{})
+func (m *crManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Namespace) (err error) {
+	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, ns.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Namespace %s already exists", name)
+		klog.V(3).Infof("Namespace %q already exists", ns.Name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating namespace %s", name)
-		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, &core.Namespace{
-			ObjectMeta: meta.ObjectMeta{
-				Name: name,
-				Labels: labels.Set{
-					"app.kubernetes.io/managed-by": "starboard",
-				},
-			},
-		}, meta.CreateOptions{})
+		klog.V(3).Infof("Creating Namespace %q", ns.Name)
+		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, ns, meta.CreateOptions{})
 		return
 	}
 	return
 }
 
-func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, name string) (err error) {
+func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
+	name := sa.Name
 	_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Get(ctx, name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ServiceAccount %s already exists", name)
+		klog.V(3).Infof("ServiceAccount %q already exists", NamespaceStarboard+"/"+name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ServiceAccount %s", name)
-		_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Create(ctx, &core.ServiceAccount{
-			ObjectMeta: meta.ObjectMeta{
-				Name: name,
-				Labels: labels.Set{
-					"app.kubernetes.io/managed-by": "starboard",
-				},
-			},
-		}, meta.CreateOptions{})
+		klog.V(3).Infof("Creating ServiceAccount %q", NamespaceStarboard+"/"+name)
+		_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Create(ctx, sa, meta.CreateOptions{})
 		return
 	}
 	return
 }
 
-func (m *crManager) createConfigMapIfNotFound(ctx context.Context, name string, data map[string]string) (err error) {
+func (m *crManager) createConfigMapIfNotFound(ctx context.Context, cm *core.ConfigMap) (err error) {
+	name := cm.Name
 	_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Get(ctx, name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ConfigMap %s already exists", name)
+		klog.V(3).Infof("ConfigMap %q already exists", NamespaceStarboard+"/"+name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ConfigMap %s", name)
-		_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Create(ctx, &core.ConfigMap{
-			ObjectMeta: meta.ObjectMeta{
-				Name: name,
-				Labels: labels.Set{
-					"app.kubernetes.io/managed-by": "starboard",
-				},
-			},
-			Data: data,
-		}, meta.CreateOptions{})
+		klog.V(3).Infof("Creating ConfigMap %q", NamespaceStarboard+"/"+name)
+		_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Create(ctx, cm, meta.CreateOptions{})
 		return
 	}
 	return
@@ -467,13 +483,13 @@ func (m *crManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.Clus
 	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating ClusterRole %s", cr.GetName())
+		klog.V(3).Infof("Updating ClusterRole %q", cr.GetName())
 		deepCopy := existingRole.DeepCopy()
 		deepCopy.Rules = cr.Rules
 		_, err = m.clientset.RbacV1().ClusterRoles().Update(ctx, deepCopy, meta.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ClusterRole %s", cr.GetName())
+		klog.V(3).Infof("Creating ClusterRole %q", cr.GetName())
 		_, err = m.clientset.RbacV1().ClusterRoles().Create(ctx, cr, meta.CreateOptions{})
 		return
 	}
@@ -484,14 +500,14 @@ func (m *crManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *r
 	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating ClusterRoleBinding %s", crb.GetName())
+		klog.V(3).Infof("Updating ClusterRoleBinding %q", crb.GetName())
 		deepCopy := existingBinding.DeepCopy()
 		deepCopy.RoleRef = crb.RoleRef
 		deepCopy.Subjects = crb.Subjects
 		_, err = m.clientset.RbacV1().ClusterRoleBindings().Update(ctx, deepCopy, meta.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ClusterRoleBinding %s", crb.GetName())
+		klog.V(3).Infof("Creating ClusterRoleBinding %q", crb.GetName())
 		_, err = m.clientset.RbacV1().ClusterRoleBindings().Create(ctx, crb, meta.CreateOptions{})
 		return
 	}
@@ -503,13 +519,13 @@ func (m *crManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating CRD: %s", crd.Name)
+		klog.V(3).Infof("Updating CRD %q", crd.Name)
 		deepCopy := existingCRD.DeepCopy()
 		deepCopy.Spec = crd.Spec
 		_, err = m.clientsetext.CustomResourceDefinitions().Update(ctx, deepCopy, meta.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating CRD: %s", crd.Name)
+		klog.V(3).Infof("Creating CRD %q", crd.Name)
 		_, err = m.clientsetext.CustomResourceDefinitions().Create(ctx, crd, meta.CreateOptions{})
 		return
 	}
@@ -517,7 +533,7 @@ func (m *crManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 }
 
 func (m *crManager) deleteCRD(ctx context.Context, name string) (err error) {
-	klog.V(3).Infof("Deleting CRD: %s", name)
+	klog.V(3).Infof("Deleting CRD %q", name)
 	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, meta.DeleteOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
@@ -542,10 +558,17 @@ func (m *crManager) Cleanup(ctx context.Context) (err error) {
 	if err != nil {
 		return
 	}
-	err = m.cleanupPolaris(ctx)
+	err = m.cleanupRBAC(ctx)
 	if err != nil {
 		return
 	}
+
+	klog.V(3).Infof("Deleting ConfigMap %q", NamespaceStarboard+"/"+ConfigMapStarboard)
+	err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Delete(ctx, ConfigMapStarboard, meta.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return
+	}
+
 	err = m.cleanupNamespace(ctx)
 	if err != nil {
 		return

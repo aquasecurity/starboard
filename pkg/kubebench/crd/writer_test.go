@@ -68,9 +68,8 @@ var _ = Describe("ReadWriter", func() {
 
 				Expect(err).ToNot(HaveOccurred())
 				Expect(report.Labels).To(MatchAllKeys(Keys{
-					kube.LabelResourceKind:  Equal(string(kube.KindNode)),
-					kube.LabelResourceName:  Equal(workerNodeName),
-					kube.LabelHistoryLatest: Equal("true"),
+					kube.LabelResourceKind: Equal(string(kube.KindNode)),
+					kube.LabelResourceName: Equal(workerNodeName),
 				}))
 			})
 
@@ -92,9 +91,8 @@ var _ = Describe("ReadWriter", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(report.Labels).To(MatchAllKeys(Keys{
-					kube.LabelResourceKind:  Equal(string(kube.KindNode)),
-					kube.LabelResourceName:  Equal(workerNodeName),
-					kube.LabelHistoryLatest: Equal("true"),
+					kube.LabelResourceKind: Equal(string(kube.KindNode)),
+					kube.LabelResourceName: Equal(workerNodeName),
 				}))
 
 				reportList, err := clientset.AquasecurityV1alpha1().CISKubeBenchReports().

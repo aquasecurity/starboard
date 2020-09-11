@@ -26,8 +26,7 @@ import (
 
 const (
 	polarisContainerName = "polaris"
-	polarisConfigVolume  = "config-volume"
-	polarisConfigMap     = "polaris"
+	configVolume         = "config"
 	polarisVersion       = "1.2"
 )
 
@@ -132,15 +131,16 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName: kube.ServiceAccountPolaris,
-					RestartPolicy:      core.RestartPolicyNever,
+					ServiceAccountName:           kube.ServiceAccountStarboard,
+					AutomountServiceAccountToken: pointer.BoolPtr(true),
+					RestartPolicy:                core.RestartPolicyNever,
 					Volumes: []core.Volume{
 						{
-							Name: polarisConfigVolume,
+							Name: configVolume,
 							VolumeSource: core.VolumeSource{
 								ConfigMap: &core.ConfigMapVolumeSource{
 									LocalObjectReference: core.LocalObjectReference{
-										Name: polarisConfigMap,
+										Name: kube.ConfigMapStarboard,
 									},
 								},
 							},
@@ -164,14 +164,14 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 							},
 							VolumeMounts: []core.VolumeMount{
 								{
-									Name:      polarisConfigVolume,
-									MountPath: "/examples",
+									Name:      configVolume,
+									MountPath: "/etc/starboard",
 								},
 							},
 							Command: []string{"polaris"},
 							Args: []string{"audit",
 								"--log-level", "error",
-								"--config", "/examples/config.yaml",
+								"--config", "/etc/starboard/polaris.config.yaml",
 								"--resource", sourceName},
 						},
 					},

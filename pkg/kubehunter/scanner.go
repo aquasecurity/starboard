@@ -111,8 +111,9 @@ func (s *Scanner) prepareKubeHunterJob() *batch.Job {
 					},
 				},
 				Spec: core.PodSpec{
-					RestartPolicy: core.RestartPolicyNever,
-					HostPID:       true,
+					ServiceAccountName: kube.ServiceAccountStarboard,
+					RestartPolicy:      core.RestartPolicyNever,
+					HostPID:            true,
 					Containers: []core.Container{
 						{
 							Name:                     kubeHunterContainerName,
