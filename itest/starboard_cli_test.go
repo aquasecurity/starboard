@@ -30,21 +30,35 @@ import (
 )
 
 // NewPodSpec returns the creation a pod spec
-func NewPodSpec(ns, name string, image string) (*corev1.Pod, error) {
-	pod, err := kubernetesClientset.CoreV1().Pods(ns).
+func NewPodSpec(podNamespace, podName string, containers map[string]string, secretName string) (*corev1.Pod, error) {
+
+	var specContainer []corev1.Container
+	for k, v := range containers {
+		specContainer = append(specContainer, corev1.Container{
+			Name:            k,
+			Image:           v,
+			ImagePullPolicy: corev1.PullIfNotPresent,
+		})
+	}
+
+	var secretSpec []corev1.LocalObjectReference
+	if secretName != "" {
+		secretSpec = []corev1.LocalObjectReference{
+			{
+				Name: secretName,
+			},
+		}
+	}
+
+	pod, err := kubernetesClientset.CoreV1().Pods(podNamespace).
 		Create(context.TODO(), &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: ns,
+				Name:      podName,
+				Namespace: podNamespace,
 			},
 			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:            name,
-						Image:           image,
-						ImagePullPolicy: corev1.PullIfNotPresent,
-					},
-				},
+				Containers:       specContainer,
+				ImagePullSecrets: secretSpec,
 			},
 		}, metav1.CreateOptions{})
 	return pod, err
@@ -172,18 +186,18 @@ var _ = Describe("Starboard CLI", func() {
 			var pod *corev1.Pod
 			var podName = "nginx"
 			var podNamespace = corev1.NamespaceDefault
-			var podImage = "nginx:1.16"
+			containers := map[string]string{"nginx": "nginx:1.16"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, podImage)
+				pod, err = NewPodSpec(podNamespace, podName, containers, "")
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("should create vulnerabilities resource", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
-					"find", "vulnerabilities", "pod/nginx",
+					"find", "vulnerabilities", "pod/" + podName,
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
@@ -237,35 +251,18 @@ var _ = Describe("Starboard CLI", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-and-tomcat"
 			var podNamespace = corev1.NamespaceDefault
+			containers := map[string]string{"nginx": "nginx:1.16", "tomcat": "tomcat:8"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = kubernetesClientset.CoreV1().Pods(podNamespace).
-					Create(context.TODO(), &corev1.Pod{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      podName,
-							Namespace: podNamespace,
-						},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "nginx",
-									Image: "nginx:1.16",
-								},
-								{
-									Name:  "tomcat",
-									Image: "tomcat:8",
-								},
-							},
-						},
-					}, metav1.CreateOptions{})
+				pod, err = NewPodSpec(podNamespace, podName, containers, "")
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("should create vulnerabilities resources", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
-					"find", "vulnerabilities", "po/nginx-and-tomcat",
+					"find", "vulnerabilities", "pod/" + podName,
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
@@ -347,6 +344,7 @@ var _ = Describe("Starboard CLI", func() {
 			var podName = "nginx-with-private-image"
 			var secretName = "registry-credentials"
 			var podNamespace = corev1.NamespaceDefault
+			containers := map[string]string{"nginx": "starboardcicd/private-nginx:1.16"}
 
 			BeforeEach(func() {
 				var err error
@@ -363,27 +361,7 @@ var _ = Describe("Starboard CLI", func() {
 					Create(context.TODO(), secret, metav1.CreateOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
-				pod, err = kubernetesClientset.CoreV1().Pods(podNamespace).
-					Create(context.TODO(), &corev1.Pod{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      podName,
-							Namespace: podNamespace,
-						},
-						Spec: corev1.PodSpec{
-							ImagePullSecrets: []corev1.LocalObjectReference{
-								{
-									Name: secretName,
-								},
-							},
-							Containers: []corev1.Container{
-								{
-									Name:            "nginx",
-									Image:           "starboardcicd/private-nginx:1.16",
-									ImagePullPolicy: corev1.PullAlways,
-								},
-							},
-						},
-					}, metav1.CreateOptions{})
+				pod, err = NewPodSpec(podNamespace, podName, containers, secretName)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -721,23 +699,24 @@ var _ = Describe("Starboard CLI", func() {
 	Describe("Command polaris", func() {
 		// containerNameAsIDFn is used as an identifier by the MatchAllElements matcher
 		// to group ConfigAuditReport by container name.
-		containerNameAsIDFn := func(element interface{}) string {
+		resourceNameAsIDFn := func(element interface{}) string {
 			return element.(v1alpha1.ConfigAuditReport).
 				Labels[kube.LabelResourceName]
 		}
-		Context("when unmanaged Pod is specified as workload", func() {
+
+		FContext("when unmanaged Pod is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-polaris"
 			var podNamespace = corev1.NamespaceDefault
-			var podImage = "nginx:1.16"
+			containers := map[string]string{"nginx": "nginx:1.16"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, podImage)
+				pod, err = NewPodSpec(podNamespace, podName, containers, "")
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should create polaris resource", func() {
+			It("should create configaudit resource", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"polaris", "pod/" + podName,
@@ -755,7 +734,7 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIDFn, Elements{
+				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
 					podName: MatchFields(IgnoreExtras, Fields{
 						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 							"Labels": MatchAllKeys(Keys{
@@ -788,6 +767,72 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 		})
+
+		FContext("when unmanaged Pod with multiple containers is specified as workload", func() {
+			var pod *corev1.Pod
+			var podName = "nginx-and-tomcat-starboard"
+			var podNamespace = corev1.NamespaceDefault
+			containers := map[string]string{"nginx": "nginx:1.16", "tomcat": "tomcat:8"}
+
+			BeforeEach(func() {
+				var err error
+				pod, err = NewPodSpec(podNamespace, podName, containers, "")
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should create configaudit resources", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"polaris", "pod/" + podName,
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+
+				reportList, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(podNamespace).
+					List(context.TODO(), metav1.ListOptions{
+						LabelSelector: labels.Set{
+							kube.LabelResourceKind:      "Pod",
+							kube.LabelResourceName:      podName,
+							kube.LabelResourceNamespace: podNamespace,
+						}.String(),
+					})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
+					podName: MatchFields(IgnoreExtras, Fields{
+
+						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+							"Labels": MatchAllKeys(Keys{
+								kube.LabelResourceKind:      Equal("Pod"),
+								kube.LabelResourceName:      Equal(podName),
+								kube.LabelResourceNamespace: Equal(podNamespace),
+							}),
+							"OwnerReferences": ConsistOf(metav1.OwnerReference{
+								APIVersion: "v1",
+								Kind:       "Pod",
+								Name:       podName,
+								UID:        pod.UID,
+							}),
+						}),
+						"Report": MatchFields(IgnoreExtras, Fields{
+							"Scanner": Equal(v1alpha1.Scanner{
+								Name:    "Polaris",
+								Vendor:  "Fairwinds Ops",
+								Version: "1.2",
+							}),
+						}),
+					}),
+				}))
+			})
+
+			AfterEach(func() {
+				err := kubernetesClientset.CoreV1().Pods(podNamespace).
+					Delete(context.TODO(), podName, metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
+
 	})
 
 	Describe("Command run kube-bench", func() {
