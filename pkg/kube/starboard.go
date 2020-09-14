@@ -5,8 +5,10 @@ import (
 )
 
 const (
+	// NamespaceStarboard the name of the namespace in which Starboard stores its
+	// configuration and runs scan Jobs.
 	NamespaceStarboard = "starboard"
-	// ServiceAccountPolaris the name of the ServiceAccount used to run scan Jobs.
+	// ServiceAccountStarboard the name of the ServiceAccount used to run scan Jobs.
 	ServiceAccountStarboard = "starboard"
 	// ConfigMapStarboard the name of the ConfigMap that stored configuration of
 	// Starboard and the underlying scanners.
