@@ -132,9 +132,11 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 					},
 				},
 				Spec: core.PodSpec{
-					RestartPolicy: core.RestartPolicyNever,
-					HostPID:       true,
-					NodeName:      node.Name,
+					ServiceAccountName:           kube.ServiceAccountStarboard,
+					AutomountServiceAccountToken: pointer.BoolPtr(true),
+					RestartPolicy:                core.RestartPolicyNever,
+					HostPID:                      true,
+					NodeName:                     node.Name,
 					Volumes: []core.Volume{
 						{
 							Name: "var-lib-etcd",

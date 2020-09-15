@@ -38,9 +38,8 @@ func (w *ReadWriter) Write(ctx context.Context, report starboard.CISKubeBenchOut
 			ObjectMeta: metav1.ObjectMeta{
 				Name: node.Name,
 				Labels: map[string]string{
-					kube.LabelResourceKind:  string(kube.KindNode),
-					kube.LabelResourceName:  node.Name,
-					kube.LabelHistoryLatest: "true",
+					kube.LabelResourceKind: string(kube.KindNode),
+					kube.LabelResourceName: node.Name,
 				},
 			},
 			Report: report,

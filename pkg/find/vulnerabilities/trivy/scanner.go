@@ -165,6 +165,19 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 
 		var envs []core.EnvVar
 
+		envs = append(envs, core.EnvVar{
+			Name: "TRIVY_SEVERITY",
+			ValueFrom: &core.EnvVarSource{
+				ConfigMapKeyRef: &core.ConfigMapKeySelector{
+					LocalObjectReference: core.LocalObjectReference{
+						Name: kube.ConfigMapStarboard,
+					},
+					Key:      "trivy.severity",
+					Optional: pointer.BoolPtr(true),
+				},
+			},
+		})
+
 		if dockerConfig, ok := credentials[c.Image]; ok {
 			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
 			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
@@ -279,7 +292,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 					},
 				},
 				Spec: core.PodSpec{
-					AutomountServiceAccountToken: pointer.BoolPtr(false),
+					ServiceAccountName: kube.ServiceAccountStarboard,
 					Volumes: []core.Volume{
 						{
 							Name: "data",
