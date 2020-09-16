@@ -18,6 +18,9 @@ jobs:
           fetch-depth: 0
       - name: Run unit tests
         run: make unit-tests
+      - name: Login to DockerHub Registry
+        run: |
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login --username ${{ secrets.DOCKERHUB_USER }} --password-stdin
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         with:

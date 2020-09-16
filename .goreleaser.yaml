@@ -33,3 +33,17 @@ changelog:
       - '^docs'
       - '^test'
       - '^release'
+dockers:
+  - image_templates:
+      - "docker.io/aquasec/starboard:{{ .Version }}"
+    binaries:
+      - starboard
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name={{ .ProjectName }}"
+      - "--label=org.label-schema.description=Kubernetes-native security toolkit"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
