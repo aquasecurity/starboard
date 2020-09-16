@@ -55,14 +55,14 @@ func TestObjectFromLabelsSet(t *testing.T) {
 				kube.LabelResourceName:      "my-deployment",
 				kube.LabelResourceNamespace: "my-namespace",
 			},
-			expectedError: errors.New("required label does not exist: starboard.resource.kind"),
+			expectedError: errors.New("required label does not exist: aquasecurity.github.io/starboard-resource-kind"),
 		},
 		{
 			name: "Should return error when object name is not specified as label",
 			labelsSet: labels.Set{
 				kube.LabelResourceKind: "Deployment",
 			},
-			expectedError: errors.New("required label does not exist: starboard.resource.name"),
+			expectedError: errors.New("required label does not exist: aquasecurity.github.io/starboard-resource-name"),
 		},
 	}
 

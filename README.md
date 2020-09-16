@@ -138,13 +138,15 @@ fetched with the standard `kubectl get` command:
 
 ```
 $ kubectl get vulnerabilityreport \
-  --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+  --selector aquasecurity.github.io/starboard-resource-kind=Deployment \
+  --selector aquasecurity.github.io/starboard-resource-name=nginx \
   --namespace dev \
   --output yaml
 ```
 
 In this example, the `nginx` deployment has a single container called `nginx`, hence only one instance of the
-`vulnerabilityreports.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`.
+`vulnerabilityreports.aquasecurity.github.io` resource is created with the label
+`aquasecurity.github.io/starboard-container-name=nginx`.
 
 To read more about custom resources and label selectors check [Custom Security Resources Specification][starboard-crds-spec].
 
@@ -180,7 +182,8 @@ or
 
 ```
 $ kubectl get configauditreport \
-  --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+  --selector aquasecurity.github.io/starboard-resource-kind=Deployment \
+  --selector aquasecurity.github.io/starboard-resource-name=nginx \
   --namespace dev \
   --output yaml
 ```

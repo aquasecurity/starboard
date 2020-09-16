@@ -16,21 +16,15 @@ const (
 )
 
 const (
-	// TODO I'm wondering if we should rename starboard.resource.* labels to starboard.object.*
-	// TODO In Kubernetes API terminology a resource is usually lowercase, plural word (e.g. pods) identifying a set of
-	// TODO HTTP endpoints (paths) exposing the CRUD semantics of a certain object type in the system
-	LabelResourceKind      = "starboard.resource.kind"
-	LabelResourceName      = "starboard.resource.name"
-	LabelResourceNamespace = "starboard.resource.namespace"
+	LabelResourceKind      = "aquasecurity.github.io/starboard-resource-kind"
+	LabelResourceName      = "aquasecurity.github.io/starboard-resource-name"
+	LabelResourceNamespace = "aquasecurity.github.io/starboard-resource-namespace"
 
-	LabelContainerName = "starboard.container.name"
-
-	LabelScannerName   = "starboard.scanner.name"
-	LabelScannerVendor = "starboard.scanner.vendor"
+	LabelContainerName = "aquasecurity.github.io/starboard-container-name"
 )
 
 const (
-	AnnotationContainerImages = "starboard.container-images"
+	AnnotationContainerImages = "aquasecurity.github.io/starboard-container-images"
 )
 
 // ScannerOpts holds configuration of the vulnerability Scanner.

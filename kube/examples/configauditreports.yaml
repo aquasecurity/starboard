@@ -3,9 +3,9 @@ apiVersion: aquasecurity.github.io/v1alpha1
 kind: ConfigAuditReport
 metadata:
   labels:
-    starboard.resource.kind: Deployment
-    starboard.resource.name: nginx
-    starboard.resource.namespace: dev
+    aquasecurity.github.io/starboard-resource-kind: Deployment
+    aquasecurity.github.io/starboard-resource-name: nginx
+    aquasecurity.github.io/starboard-resource-namespace: dev
   name: deployment.nginx
   namespace: dev
 report:

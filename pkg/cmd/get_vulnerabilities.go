@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/aquasecurity/starboard/pkg/kube"
+	"k8s.io/apimachinery/pkg/labels"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -44,10 +47,16 @@ NAME is the name of a particular Kubernetes workload.
 				return
 			}
 
+			selector := labels.Set{
+				kube.LabelResourceKind:      string(workload.Kind),
+				kube.LabelResourceName:      workload.Name,
+				kube.LabelResourceNamespace: workload.Namespace,
+			}.String()
+
 			kubectlCmd := exec.Command("kubectl",
 				"get",
 				starboard.VulnerabilityReportsCRName,
-				fmt.Sprintf("-l=starboard.resource.kind=%s,starboard.resource.name=%s", workload.Kind, workload.Name),
+				fmt.Sprintf("-l=%s", selector),
 				fmt.Sprintf("--namespace=%s", workload.Namespace),
 				fmt.Sprintf("--output=%s", cmd.Flag("output").Value.String()))
 			stdoutStderr, err := kubectlCmd.CombinedOutput()
