@@ -30,7 +30,7 @@ import (
 )
 
 // NewPodSpec returns the creation a pod spec
-func NewPodSpec(podNamespace, podName string, containers map[string]string, secretName string) (*corev1.Pod, error) {
+func NewPodSpec(podNamespace, podName string, containers map[string]string, args ...string) (*corev1.Pod, error) {
 
 	var specContainer []corev1.Container
 	for k, v := range containers {
@@ -42,10 +42,10 @@ func NewPodSpec(podNamespace, podName string, containers map[string]string, secr
 	}
 
 	var secretSpec []corev1.LocalObjectReference
-	if secretName != "" {
+	if len(args) > 1 {
 		secretSpec = []corev1.LocalObjectReference{
 			{
-				Name: secretName,
+				Name: args[0],
 			},
 		}
 	}
@@ -190,7 +190,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers, "")
+				pod, err = NewPodSpec(podNamespace, podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -255,7 +255,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers, "")
+				pod, err = NewPodSpec(podNamespace, podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -361,7 +361,7 @@ var _ = Describe("Starboard CLI", func() {
 					Create(context.TODO(), secret, metav1.CreateOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
-				pod, err = NewPodSpec(podNamespace, podName, containers, secretName)
+				pod, err = NewPodSpec(podNamespace, podName, containers, []string{secretName}...)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -704,7 +704,7 @@ var _ = Describe("Starboard CLI", func() {
 				Labels[kube.LabelResourceName]
 		}
 
-		FContext("when unmanaged Pod is specified as workload", func() {
+		Context("when unmanaged Pod is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-polaris"
 			var podNamespace = corev1.NamespaceDefault
@@ -712,7 +712,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers, "")
+				pod, err = NewPodSpec(podNamespace, podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -768,7 +768,7 @@ var _ = Describe("Starboard CLI", func() {
 
 		})
 
-		FContext("when unmanaged Pod with multiple containers is specified as workload", func() {
+		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-and-tomcat-starboard"
 			var podNamespace = corev1.NamespaceDefault
@@ -776,7 +776,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers, "")
+				pod, err = NewPodSpec(podNamespace, podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
