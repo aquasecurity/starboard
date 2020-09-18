@@ -139,6 +139,20 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 			Image:                    trivyImageRef,
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+			Env: []core.EnvVar{
+				{
+					Name: "HTTP_PROXY",
+					ValueFrom: &core.EnvVarSource{
+						ConfigMapKeyRef: &core.ConfigMapKeySelector{
+							LocalObjectReference: core.LocalObjectReference{
+								Name: kube.ConfigMapStarboard,
+							},
+							Key:      "trivy.httpProxy",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
+			},
 			Command: []string{
 				"trivy",
 			},
@@ -165,18 +179,31 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 
 		var envs []core.EnvVar
 
-		envs = append(envs, core.EnvVar{
-			Name: "TRIVY_SEVERITY",
-			ValueFrom: &core.EnvVarSource{
-				ConfigMapKeyRef: &core.ConfigMapKeySelector{
-					LocalObjectReference: core.LocalObjectReference{
-						Name: kube.ConfigMapStarboard,
+		envs = append(envs,
+			core.EnvVar{
+				Name: "TRIVY_SEVERITY",
+				ValueFrom: &core.EnvVarSource{
+					ConfigMapKeyRef: &core.ConfigMapKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: kube.ConfigMapStarboard,
+						},
+						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
 					},
-					Key:      "trivy.severity",
-					Optional: pointer.BoolPtr(true),
+				},
+			}, core.EnvVar{
+				Name: "HTTP_PROXY",
+				ValueFrom: &core.EnvVarSource{
+					ConfigMapKeyRef: &core.ConfigMapKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: kube.ConfigMapStarboard,
+						},
+						Key:      "trivy.httpProxy",
+						Optional: pointer.BoolPtr(true),
+					},
 				},
 			},
-		})
+		)
 
 		if dockerConfig, ok := credentials[c.Image]; ok {
 			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)

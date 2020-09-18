@@ -19,6 +19,7 @@
   - [From Source (Linux, macOS)](#from-source-linux-macos)
 - [Getting Started](#getting-started)
 - [Next Steps](#next-steps)
+- [Configuration](#configuration)
 - [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Starboard CLI](#starboard-cli)
 - [Troubleshooting](#troubleshooting)
@@ -99,11 +100,11 @@ scans. It also sends custom security resources definitions to the Kubernetes API
 
 ```
 $ kubectl api-resources --api-group aquasecurity.github.io
-NAME                  SHORTNAMES   APIGROUP                NAMESPACED  KIND
-ciskubebenchreports   kubebench    aquasecurity.github.io  false       CISKubeBenchReport
-configauditreports    configaudit  aquasecurity.github.io  true        ConfigAuditReport
-kubehunterreports     kubehunter   aquasecurity.github.io  false       KubeHunterReport
-vulnerabilityreports  vulns,vuln   aquasecurity.github.io  true        VulnerabilityReport
+NAME                   SHORTNAMES    APIGROUP                 NAMESPACED   KIND
+ciskubebenchreports    kubebench     aquasecurity.github.io   false        CISKubeBenchReport
+configauditreports     configaudit   aquasecurity.github.io   true         ConfigAuditReport
+kubehunterreports      kubehunter    aquasecurity.github.io   false        KubeHunterReport
+vulnerabilityreports   vulns,vuln    aquasecurity.github.io   true         VulnerabilityReport
 ```
 
 > There's also a `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
@@ -196,6 +197,38 @@ vulnerabilities as well as configuration issues that might affect stability, rel
 
 To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or
 [kube-hunter][aqua-kube-hunter], use `starboard help`.
+
+## Configuration
+
+The `starboard init` command creates the `starboard` ConfigMap in the `starboard` namespace, which contains the default
+configuration parameters. You can change the default config values with `kubectl path` or `kubectl edit` commands.
+
+For example, by default Trivy displays vulnerabilities with all severity levels (`UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`).
+However, you can opt in to display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value
+in the `starbaord` ConfigMap:
+
+```
+$ kubectl patch configmap starboard -n starboard \
+  --type merge \
+  -p '{"data": {"trivy.severity":"HIGH,CRITICAL"}}'
+```
+
+The following table lists available configuration parameters.
+
+| CONFIGMAP KEY         | DEFAULT                                                | DESCRIPTION |
+| --------------------- | ------------------------------------------------------ | ----------- |
+| `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub |
+| `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
+| `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
+
+> **Note:** You can find it handy to delete a configuration key, which was not created by default by the
+> `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
+>
+> ```
+> $ kubectl patch configmap starboard -n starboard \
+>   --type json \
+>   -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
+> ```
 
 ## Custom Security Resources Definitions
 
@@ -311,3 +344,5 @@ This repository is available under the [Apache License 2.0][license].
 [kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
 
 [krew]: https://github.com/kubernetes-sigs/krew
+
+[default-polaris-config]: ./kube/init/starboard-cm.yaml
