@@ -201,11 +201,11 @@ To learn more about the available Starboard commands and scanners, such as [kube
 ## Configuration
 
 The `starboard init` command creates the `starboard` ConfigMap in the `starboard` namespace, which contains the default
-configuration parameters. You can change the default config values with `kubectl path` or `kubectl edit` commands.
+configuration parameters. You can change the default config values with `kubectl patch` or `kubectl edit` commands.
 
 For example, by default Trivy displays vulnerabilities with all severity levels (`UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`).
 However, you can opt in to display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value
-in the `starbaord` ConfigMap:
+in the `starboard` ConfigMap:
 
 ```
 $ kubectl patch configmap starboard -n starboard \
