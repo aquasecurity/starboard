@@ -32,6 +32,9 @@ func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAudit, err erro
 
 func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string][]sec.Check) (summary sec.ConfigAuditSummary) {
 	for _, c := range podChecks {
+		if c.Success {
+			continue
+		}
 		switch c.Severity {
 		case sec.ConfigAuditDangerSeverity:
 			summary.DangerCount++
@@ -41,6 +44,9 @@ func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string]
 	}
 	for _, checks := range containerChecks {
 		for _, c := range checks {
+			if c.Success {
+				continue
+			}
 			switch c.Severity {
 			case sec.ConfigAuditDangerSeverity:
 				summary.DangerCount++
