@@ -4,6 +4,9 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aquasecurity/starboard/pkg/trivy"
 
@@ -152,6 +155,9 @@ func TestConverter_Convert(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			report, err := trivy.NewConverter().Convert(config, tc.imageRef, strings.NewReader(tc.input))
+			fakeTime := metav1.NewTime(time.Now())
+			report.UpdateTimestamp = fakeTime
+			tc.expectedReport.UpdateTimestamp = fakeTime
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)

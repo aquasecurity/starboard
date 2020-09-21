@@ -141,8 +141,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                                     scanner_name = report.Scanner.Name
                                     scanner_vendor = report.Scanner.Vendor
                                     scanner_version = report.Scanner.Version
-                                    // TODO: get the timestamp when it is intergrated
-                                    creation_timestamp = ""
+                                    creation_timestamp = report.UpdateTimestamp.String()
                                     break
                                   }
                                 %}
@@ -316,7 +315,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReport.CreationTimestamp.String() %}</p>
+                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReport.Report.UpdateTimestamp.String() %}</p>
                                 </div>
                              </div>
                         </div>

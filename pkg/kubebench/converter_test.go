@@ -5,6 +5,9 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 
@@ -68,6 +71,9 @@ func TestConverter_Convert(t *testing.T) {
 					_ = gFile.Close()
 				}()
 
+				fakeTime := metav1.NewTime(time.Now())
+				kbop.UpdateTimestamp = fakeTime
+				r.UpdateTimestamp = fakeTime
 				assert.Equal(t, kbop, r, "Converted report does not match expected report")
 			default:
 				assert.EqualError(t, err, tc.err.Error())

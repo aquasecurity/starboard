@@ -3,7 +3,7 @@ package v1alpha1
 import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -16,7 +16,7 @@ const (
 
 var (
 	KubeHunterReportCRD = extv1beta1.CustomResourceDefinition{
-		ObjectMeta: meta.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: KubeHunterReportCRName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
@@ -94,8 +94,8 @@ type KubeHunterSummary struct {
 
 // KubeHunterReport is a specification for the KubeHunterReport resource.
 type KubeHunterReport struct {
-	meta.TypeMeta   `json:",inline"`
-	meta.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Report KubeHunterOutput `json:"report"`
 }
@@ -104,13 +104,14 @@ type KubeHunterReport struct {
 
 // KubeHunterReportList is a list of KubeHunterReport resources.
 type KubeHunterReportList struct {
-	meta.TypeMeta `json:",inline"`
-	meta.ListMeta `json:"metadata"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []KubeHunterReport `json:"items"`
 }
 
 type KubeHunterOutput struct {
+	UpdateTimestamp metav1.Time               `json:"updateTimestamp"`
 	Scanner         Scanner                   `json:"scanner"`
 	Summary         KubeHunterSummary         `json:"summary"`
 	Vulnerabilities []KubeHunterVulnerability `json:"vulnerabilities"`

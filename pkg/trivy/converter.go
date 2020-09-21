@@ -3,6 +3,8 @@ package trivy
 import (
 	"encoding/json"
 	"io"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
@@ -65,6 +67,7 @@ func (c *converter) convert(config starboard.TrivyConfig, imageRef string, repor
 	}
 
 	return starboardv1alpha1.VulnerabilityScanResult{
+		UpdateTimestamp: metav1.NewTime(time.Now()),
 		Scanner: starboardv1alpha1.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",

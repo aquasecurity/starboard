@@ -3,6 +3,9 @@ package kubebench
 import (
 	"encoding/json"
 	"io"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
@@ -37,8 +40,9 @@ func (c *converter) Convert(config Config, reader io.Reader) (report aquasecurit
 			Vendor:  "Aqua Security",
 			Version: version,
 		},
-		Summary:  c.summary(section),
-		Sections: section,
+		Summary:         c.summary(section),
+		UpdateTimestamp: metav1.NewTime(time.Now()),
+		Sections:        section,
 	}
 
 	return
