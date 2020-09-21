@@ -30,6 +30,28 @@ func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAudit, err erro
 	return
 }
 
+func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string][]sec.Check) (summary sec.ConfigAuditSummary) {
+	for _, c := range podChecks {
+		switch c.Severity {
+		case sec.ConfigAuditDangerSeverity:
+			summary.DangerCount++
+		case sec.ConfigAuditWarningSeverity:
+			summary.WarningCount++
+		}
+	}
+	for _, checks := range containerChecks {
+		for _, c := range checks {
+			switch c.Severity {
+			case sec.ConfigAuditDangerSeverity:
+				summary.DangerCount++
+			case sec.ConfigAuditWarningSeverity:
+				summary.WarningCount++
+			}
+		}
+	}
+	return
+}
+
 func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 	var podChecks []sec.Check
 	containerChecks := make(map[string][]sec.Check)
@@ -65,6 +87,7 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 			Vendor:  "Fairwinds Ops",
 			Version: polarisVersion,
 		},
+		Summary:         c.toSummary(podChecks, containerChecks),
 		PodChecks:       podChecks,
 		ContainerChecks: containerChecks,
 	}
