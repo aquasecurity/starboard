@@ -30,7 +30,7 @@ import (
 )
 
 // NewPodSpec returns the creation a pod spec
-func NewPodSpec(podNamespace, podName string, containers map[string]string, args ...string) (*corev1.Pod, error) {
+func NewPodSpec(podName string, containers map[string]string, args ...string) (*corev1.Pod, error) {
 
 	var specContainer []corev1.Container
 	for k, v := range containers {
@@ -50,11 +50,11 @@ func NewPodSpec(podNamespace, podName string, containers map[string]string, args
 		}
 	}
 
-	pod, err := kubernetesClientset.CoreV1().Pods(podNamespace).
+	pod, err := kubernetesClientset.CoreV1().Pods(namespaceItest).
 		Create(context.TODO(), &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      podName,
-				Namespace: podNamespace,
+				Namespace: namespaceItest,
 			},
 			Spec: corev1.PodSpec{
 				Containers:       specContainer,
@@ -185,12 +185,12 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when unmanaged Pod is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx"
-			var podNamespace = corev1.NamespaceDefault
+			var podNamespace = namespaceItest
 			containers := map[string]string{"nginx": "nginx:1.16"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers)
+				pod, err = NewPodSpec(podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -198,7 +198,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "pod/" + podName,
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -250,12 +250,12 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-and-tomcat"
-			var podNamespace = corev1.NamespaceDefault
+			var podNamespace = namespaceItest
 			containers := map[string]string{"nginx": "nginx:1.16", "tomcat": "tomcat:8"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers)
+				pod, err = NewPodSpec(podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -263,7 +263,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "pod/" + podName,
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -343,7 +343,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			var podName = "nginx-with-private-image"
 			var secretName = "registry-credentials"
-			var podNamespace = corev1.NamespaceDefault
+			var podNamespace = namespaceItest
 			containers := map[string]string{"nginx": "starboardcicd/private-nginx:1.16"}
 
 			BeforeEach(func() {
@@ -361,7 +361,7 @@ var _ = Describe("Starboard CLI", func() {
 					Create(context.TODO(), secret, metav1.CreateOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
-				pod, err = NewPodSpec(podNamespace, podName, containers, []string{secretName}...)
+				pod, err = NewPodSpec(podName, containers, []string{secretName}...)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -369,7 +369,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "po/nginx-with-private-image",
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -425,7 +425,7 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when ReplicaSet is specified as workload", func() {
 			var rs *appsv1.ReplicaSet
 			var rsName = "nginx"
-			var rsNamespace = corev1.NamespaceDefault
+			var rsNamespace = namespaceItest
 
 			BeforeEach(func() {
 				var err error
@@ -464,7 +464,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "replicaset/nginx",
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -516,7 +516,7 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when ReplicationController is specified as workload", func() {
 			var rc *corev1.ReplicationController
 			var rcName = "nginx"
-			var rcNamespace = corev1.NamespaceDefault
+			var rcNamespace = namespaceItest
 
 			BeforeEach(func() {
 				var err error
@@ -555,7 +555,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "rc/nginx",
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -607,7 +607,7 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when Deployment is specified as workload", func() {
 			var deploy *appsv1.Deployment
 			var deployName = "nginx"
-			var deployNamespace = corev1.NamespaceDefault
+			var deployNamespace = namespaceItest
 
 			BeforeEach(func() {
 				var err error
@@ -646,7 +646,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "deployment/nginx",
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -707,12 +707,12 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when unmanaged Pod is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-polaris"
-			var podNamespace = corev1.NamespaceDefault
+			var podNamespace = namespaceItest
 			containers := map[string]string{"nginx": "nginx:1.16"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers)
+				pod, err = NewPodSpec(podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -720,7 +720,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"polaris", "pod/" + podName,
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -771,12 +771,12 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
 			var pod *corev1.Pod
 			var podName = "nginx-and-tomcat-starboard"
-			var podNamespace = corev1.NamespaceDefault
+			var podNamespace = namespaceItest
 			containers := map[string]string{"nginx": "nginx:1.16", "tomcat": "tomcat:8"}
 
 			BeforeEach(func() {
 				var err error
-				pod, err = NewPodSpec(podNamespace, podName, containers)
+				pod, err = NewPodSpec(podName, containers)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -784,7 +784,7 @@ var _ = Describe("Starboard CLI", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"polaris", "pod/" + podName,
-					"-v", starboardCLILogLevel,
+					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -841,7 +841,7 @@ var _ = Describe("Starboard CLI", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"kube-bench",
-				"-v", starboardCLILogLevel,
+				"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -879,7 +879,7 @@ var _ = Describe("Starboard CLI", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"kube-hunter",
-				"-v", starboardCLILogLevel,
+				"-v", starboardCLILogLevel, "--namespace", namespaceItest,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
