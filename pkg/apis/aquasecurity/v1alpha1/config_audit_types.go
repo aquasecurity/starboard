@@ -40,9 +40,43 @@ var (
 				Categories: []string{"all"},
 				ShortNames: []string{"configaudit"},
 			},
+			AdditionalPrinterColumns: []extv1beta1.CustomResourceColumnDefinition{
+				{
+					JSONPath: ".report.scanner.name",
+					Type:     "string",
+					Name:     "Scanner",
+				},
+				{
+					JSONPath: ".metadata.creationTimestamp",
+					Type:     "date",
+					Name:     "Age",
+				},
+				{
+					JSONPath: ".report.summary.dangerCount",
+					Type:     "integer",
+					Name:     "Danger",
+					Priority: 1,
+				},
+				{
+					JSONPath: ".report.summary.warningCount",
+					Type:     "integer",
+					Name:     "Warning",
+					Priority: 1,
+				},
+			},
 		},
 	}
 )
+
+const (
+	ConfigAuditDangerSeverity  = "danger"
+	ConfigAuditWarningSeverity = "warning"
+)
+
+type ConfigAuditSummary struct {
+	DangerCount  int `json:"dangerCount"`
+	WarningCount int `json:"warningCount"`
+}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -70,6 +104,7 @@ type ConfigAuditReportList struct {
 // TODO my-node)
 type ConfigAudit struct {
 	Scanner         Scanner            `json:"scanner"`
+	Summary         ConfigAuditSummary `json:"summary"`
 	PodChecks       []Check            `json:"podChecks"`
 	ContainerChecks map[string][]Check `json:"containerChecks"`
 }
