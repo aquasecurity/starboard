@@ -17,6 +17,7 @@
   - [From the Binary Releases](#from-the-binary-releases)
     - [As a kubectl plugin](#kubectl-plugin)
   - [From Source (Linux, macOS)](#from-source-linux-macos)
+  - [Docker](#docker)
 - [Getting Started](#getting-started)
 - [Next Steps](#next-steps)
 - [Configuration](#configuration)
@@ -83,6 +84,16 @@ $ make
 
 If required, it will fetch the dependencies and cache them. It will then compile `starboard` and place it in
 `bin/starboard`.
+
+### Docker
+
+We also release the Docker image `docker.io/aqusec/starbaord` to run Starboard as a Docker container or to manually
+schedule Kubernetes scan Jobs in your cluster.
+
+```
+$ docker container run --rm docker.io/aquasec/starboard:0.4.0 version
+Starboard Version: {Version:0.4.0 Commit:dd8e49701c1817ea174061c8731fe5bdbfb73d93 Date:2020-09-21T09:36:59Z}
+```
 
 ## Getting Started
 
