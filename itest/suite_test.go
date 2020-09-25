@@ -1,24 +1,26 @@
 package itest
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-
-	"k8s.io/client-go/tools/clientcmd"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apicorev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
+
+const namespaceItest = "starboard-itest"
 
 var (
 	kubernetesClientset    kubernetes.Interface
@@ -68,8 +70,25 @@ var _ = BeforeSuite(func() {
 
 	namespaces = kubernetesClientset.CoreV1().Namespaces()
 	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
+
+	err = createNamespace()
+	Expect(err).ToNot(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
+	err := deleteNamespace()
+	Expect(err).ToNot(HaveOccurred())
 	klog.Flush()
 })
+
+func createNamespace() error {
+	_, err := kubernetesClientset.CoreV1().Namespaces().Create(context.TODO(), &apicorev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Name: namespaceItest,
+	}}, metav1.CreateOptions{})
+	return err
+}
+
+func deleteNamespace() error {
+	err := kubernetesClientset.CoreV1().Namespaces().Delete(context.TODO(), namespaceItest, metav1.DeleteOptions{})
+	return err
+}
