@@ -14,6 +14,21 @@ func NewInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create custom resource definitions used by starboard",
+		Long: `
+Create all the resources used by starboard.  It will create the following
+in the cluster:
+
+ - custom resource definitions
+ - starboard namespace
+ - starboard service account
+ - starboard cluster role and cluster role binding
+ - config map
+
+The config map contains the default configuration parameters. However this
+can be modified to change the behaviour of the scanner.
+
+These resources can be removed from the cluster using the "cleanup" command.
+`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
