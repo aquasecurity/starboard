@@ -19,11 +19,10 @@ import (
 	"k8s.io/klog"
 )
 
-func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanKubeBenchReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:        "kube-bench",
-		Deprecated: "'kube-bench' is deprecated, please use 'scan ciskubebenchreports'",
-		Short:      "Run the CIS Kubernetes Benchmark https://www.cisecurity.org/benchmark/kubernetes",
+		Use:   "ciskubebenchreports",
+		Short: "Run the CIS Kubernetes Benchmark https://www.cisecurity.org/benchmark/kubernetes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			kubernetesConfig, err := cf.ToRESTConfig()

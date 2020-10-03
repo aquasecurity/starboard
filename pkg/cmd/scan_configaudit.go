@@ -13,12 +13,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanConfigAuditReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:        "polaris",
-		Deprecated: "'polaris' is deprecated, please use 'scan configauditreports'",
-		Short:      "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
-		Args:       cobra.MaximumNArgs(1),
+		Use:   "configauditreports",
+		Short: "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
