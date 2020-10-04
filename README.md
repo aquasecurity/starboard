@@ -229,6 +229,7 @@ The following table lists available configuration parameters.
 | CONFIGMAP KEY         | DEFAULT                                                | DESCRIPTION |
 | --------------------- | ------------------------------------------------------ | ----------- |
 | `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub |
+| `trivy.githubToken`   | N/A                                                    | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub |
 | `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
 | `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
 

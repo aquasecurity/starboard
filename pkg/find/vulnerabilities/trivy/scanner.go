@@ -152,6 +152,18 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 						},
 					},
 				},
+				{
+					Name: "TRIVY_GITHUB_TOKEN",
+					ValueFrom: &core.EnvVarSource{
+						ConfigMapKeyRef: &core.ConfigMapKeySelector{
+							LocalObjectReference: core.LocalObjectReference{
+								Name: kube.ConfigMapStarboard,
+							},
+							Key:      "trivy.githubToken",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
 			},
 			Command: []string{
 				"trivy",
