@@ -230,6 +230,7 @@ The following table lists available configuration parameters.
 | --------------------- | ------------------------------------------------------ | ----------- |
 | `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub |
 | `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
+| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.9.1`                        | Trivy image reference |
 | `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
 > **Note:** You can find it handy to delete a configuration key, which was not created by default by the
