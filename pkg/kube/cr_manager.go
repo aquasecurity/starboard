@@ -239,6 +239,7 @@ var (
 		},
 		Data: map[string]string{
 			"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+			"trivy.imageRef":      "docker.io/aquasec/trivy:0.9.1",
 			"polaris.config.yaml": polarisConfigYAML,
 		},
 	}
