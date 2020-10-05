@@ -258,7 +258,7 @@ used by Starboard and their lifecycle.
 
 ## Starboard CLI
 
-Starbord CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure Pod
+Starboard CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure Pod
 specs, in Kubernetes workloads. By default, the risk assessment reports are stored as
 [custom security resources][starboard-crds].
 
