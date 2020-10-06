@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/aquasecurity/starboard/master/docs/images/starboard-logo.png" width=300>
+
 # Hacking
 
 ## Prerequisites
