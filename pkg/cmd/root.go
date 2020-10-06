@@ -34,6 +34,7 @@ func NewRootCmd(version VersionInfo, args []string, outWriter io.Writer, errWrit
 	rootCmd.AddCommand(NewPolarisCmd(cf))
 	rootCmd.AddCommand(NewGetCmd(executable, cf))
 	rootCmd.AddCommand(NewCleanupCmd(cf))
+	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 
 	SetGlobalFlags(cf, rootCmd)
 
