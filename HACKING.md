@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [Go 1.14 or above](https://golang.org/dl/)
+- [Go 1.15 or above](https://golang.org/dl/)
 
 ## Getting Started
 
