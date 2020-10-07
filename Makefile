@@ -1,10 +1,21 @@
 SOURCES := $(shell find . -name '*.go')
-BINARY := starboard
 
 GOPATH=$(shell go env GOPATH)
 GOBIN=$(GOPATH)/bin
 
-build: $(BINARY)
+build: build-starboard build-starboard-operator build-scanner-aqua
+
+## build-starboard Builds the starboard binary.
+build-starboard: $(SOURCES)
+	CGO_ENABLED=0 go build -o ./bin/starboard ./cmd/starboard/main.go
+
+## build-starboard-operator Builds the starboard-operator binary.
+build-starboard-operator: $(SOURCES)
+	CGO_ENABLED=0 go build -o ./bin/starboard-operator ./cmd/starboard-operator/main.go
+
+## build-scanner-aqua Builds the scanner-aqua binary.
+build-scanner-aqua: $(SOURCES)
+	CGO_ENABLED=0 go build -o ./bin/scanner-aqua ./cmd/scanner-aqua/main.go
 
 .PHONY: get-ginkgo
 ## get-ginkgo Installs Ginkgo CLI.
@@ -20,9 +31,6 @@ get-qtc:
 ## compile-templates Converts quicktemplate files (*.qtpl) into Go code.
 compile-templates: get-qtc
 	$(GOBIN)/qtc
-
-$(BINARY): $(SOURCES)
-	CGO_ENABLED=0 go build -o ./bin/$(BINARY) ./cmd/starboard/main.go
 
 .PHONY: test
 ## test will run both unit tests and integration tests
