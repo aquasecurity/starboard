@@ -8,8 +8,8 @@ RUN apk update \
 
 # RUN adduser -u 10000 -D -g '' starboard starboard
 
-COPY scanner-aqua /usr/local/bin/scanner-aqua
+COPY starboard-scanner-aqua /usr/local/bin/starboard-scanner-aqua
 
 # USER starboard
 
-ENTRYPOINT ["scanner-aqua"]
+ENTRYPOINT ["starboard-scanner-aqua"]

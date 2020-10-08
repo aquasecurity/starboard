@@ -22,9 +22,9 @@ builds:
       - linux
     goarch:
       - amd64
-  - id: scanner-aqua
-    main: ./cmd/scanner-aqua/main.go
-    binary: scanner-aqua
+  - id: starboard-scanner-aqua
+    main: ./cmd/starboard-scanner-aqua/main.go
+    binary: starboard-scanner-aqua
     goos:
       - linux
     goarch:
@@ -76,11 +76,11 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
-  - dockerfile: Dockerfile.scanner-aqua
+  - dockerfile: Dockerfile.starboard-scanner-aqua
     image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
     binaries:
-      - scanner-aqua
+      - starboard-scanner-aqua
     build_flag_templates:
       - "--label=org.label-schema.schema-version=1.0"
       - "--label=org.label-schema.name=starboard-scanner-aqua"

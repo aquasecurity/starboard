@@ -1,0 +1,14 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: starboard-operator
+  namespace: starboard-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: starboard-operator
+subjects:
+  - kind: ServiceAccount
+    name: starboard-operator
+    namespace: starboard-operator
