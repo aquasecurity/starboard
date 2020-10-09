@@ -6,9 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,33 +47,33 @@ var (
 	}
 ]`
 
-	sampleReport = starboard.VulnerabilityScanResult{
-		Scanner: starboard.Scanner{
+	sampleReport = starboardv1alpha1.VulnerabilityScanResult{
+		Scanner: starboardv1alpha1.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
 			Version: "0.9.1",
 		},
-		Registry: starboard.Registry{
+		Registry: starboardv1alpha1.Registry{
 			Server: "index.docker.io",
 		},
-		Artifact: starboard.Artifact{
+		Artifact: starboardv1alpha1.Artifact{
 			Repository: "library/alpine",
 			Tag:        "3.10.2",
 		},
-		Summary: starboard.VulnerabilitySummary{
+		Summary: starboardv1alpha1.VulnerabilitySummary{
 			CriticalCount: 0,
 			MediumCount:   1,
 			LowCount:      1,
 			NoneCount:     0,
 			UnknownCount:  0,
 		},
-		Vulnerabilities: []starboard.Vulnerability{
+		Vulnerabilities: []starboardv1alpha1.Vulnerability{
 			{
 				VulnerabilityID:  "CVE-2019-1549",
 				Resource:         "openssl",
 				InstalledVersion: "1.1.1c-r0",
 				FixedVersion:     "1.1.1d-r0",
-				Severity:         starboard.SeverityMedium,
+				Severity:         starboardv1alpha1.SeverityMedium,
 				Title:            "openssl: information disclosure in fork()",
 				Links: []string{
 					"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-1549",
@@ -82,7 +84,7 @@ var (
 				Resource:         "openssl",
 				InstalledVersion: "1.1.1c-r0",
 				FixedVersion:     "1.1.1d-r0",
-				Severity:         starboard.SeverityLow,
+				Severity:         starboardv1alpha1.SeverityLow,
 				Title:            "openssl: side-channel weak encryption vulnerability",
 				Links: []string{
 					"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-1547",
@@ -93,13 +95,16 @@ var (
 )
 
 func TestConverter_Convert(t *testing.T) {
+	config := starboard.ConfigData{
+		"trivy.imageRef": "aquasec/trivy:0.9.1",
+	}
 
 	testCases := []struct {
 		name           string
 		imageRef       string
 		input          string
 		expectedError  error
-		expectedReport starboard.VulnerabilityScanResult
+		expectedReport starboardv1alpha1.VulnerabilityScanResult
 	}{
 		{
 			name:     "Should convert vulnerability report in JSON format when input is noisy",
@@ -121,20 +126,20 @@ func TestConverter_Convert(t *testing.T) {
 			input: `2020-06-21T23:10:15.162+0200	WARN	OS is not detected and vulnerabilities in OS packages are not detected.
 null`,
 			expectedError: nil,
-			expectedReport: starboard.VulnerabilityScanResult{
-				Scanner: starboard.Scanner{
+			expectedReport: starboardv1alpha1.VulnerabilityScanResult{
+				Scanner: starboardv1alpha1.Scanner{
 					Name:    "Trivy",
 					Vendor:  "Aqua Security",
 					Version: "0.9.1",
 				},
-				Registry: starboard.Registry{
+				Registry: starboardv1alpha1.Registry{
 					Server: "core.harbor.domain",
 				},
-				Artifact: starboard.Artifact{
+				Artifact: starboardv1alpha1.Artifact{
 					Repository: "library/nginx",
 					Digest:     "sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
 				},
-				Summary: starboard.VulnerabilitySummary{
+				Summary: starboardv1alpha1.VulnerabilitySummary{
 					CriticalCount: 0,
 					HighCount:     0,
 					MediumCount:   0,
@@ -142,7 +147,7 @@ null`,
 					NoneCount:     0,
 					UnknownCount:  0,
 				},
-				Vulnerabilities: []starboard.Vulnerability{},
+				Vulnerabilities: []starboardv1alpha1.Vulnerability{},
 			},
 		},
 		{
@@ -155,7 +160,7 @@ null`,
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			report, err := trivy.NewConverter().Convert(tc.imageRef, strings.NewReader(tc.input))
+			report, err := trivy.NewConverter().Convert(config, tc.imageRef, strings.NewReader(tc.input))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)

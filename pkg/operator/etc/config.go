@@ -12,12 +12,6 @@ const (
 	LabelPodSpecHash = "pod-spec-hash"
 )
 
-type VersionInfo struct {
-	Version string
-	Commit  string
-	Date    string
-}
-
 type Config struct {
 	Operator       Operator
 	ScannerAquaCSP ScannerAquaCSP
@@ -36,8 +30,11 @@ type Operator struct {
 
 type ScannerTrivy struct {
 	Enabled  bool   `env:"OPERATOR_SCANNER_TRIVY_ENABLED" envDefault:"true"`
-	Version  string `env:"OPERATOR_SCANNER_TRIVY_VERSION" envDefault:"0.11.0"`
 	ImageRef string `env:"OPERATOR_SCANNER_TRIVY_IMAGE" envDefault:"aquasec/trivy:0.11.0"`
+}
+
+func (c ScannerTrivy) GetTrivyImageRef() string {
+	return c.ImageRef
 }
 
 type ScannerAquaCSP struct {

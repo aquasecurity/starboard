@@ -8,6 +8,7 @@ metadata:
 data:
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.imageRef: docker.io/aquasec/trivy:0.9.1
+  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.4.0
   polaris.config.yaml: |
     checks:
       # reliability

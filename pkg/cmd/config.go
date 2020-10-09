@@ -3,19 +3,18 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"io"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 )
 
 type LocalFlags struct {
-	get string
+	get      string
 	nameOnly bool
 }
 
@@ -26,19 +25,19 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 		Short: "View the configuration parameters used by starboard scanners",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
-			config, err := cf.ToRESTConfig()
+			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			clientset, err := kubernetes.NewForConfig(config)
+			clientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}
-			configMap, err := clientset.CoreV1().ConfigMaps(kube.NamespaceStarboard).Get(ctx, kube.NamespaceStarboard, metav1.GetOptions{})
+			config, err := starboard.NewConfigReader(clientset).Read(ctx)
 			if err != nil {
 				return
 			}
-			filteredValues, err := getFilteredValues(configMap, &localFlags)
+			filteredValues, err := getFilteredValues(config, &localFlags)
 			if err != nil {
 				return
 			}
@@ -50,8 +49,7 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 	return cmd
 }
 
-func getFilteredValues(configMap *v1.ConfigMap, localFlags *LocalFlags) (string, error) {
-	data := configMap.Data
+func getFilteredValues(data starboard.ConfigData, localFlags *LocalFlags) (string, error) {
 	if localFlags.get != "" {
 		value := data[localFlags.get]
 		if value != "" {
@@ -81,4 +79,3 @@ func setLocalFlags(cmd *cobra.Command, localFlags *LocalFlags) {
 	cmd.Flags().BoolVar(&localFlags.nameOnly, "name-only", false, "List parameters by name only")
 	cmd.Flags().StringVar(&localFlags.get, "get", "", "Get configuration parameters for a specified key")
 }
-

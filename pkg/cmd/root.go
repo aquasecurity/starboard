@@ -6,13 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/spf13/pflag"
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewRootCmd(version VersionInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
+func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
 	var cf *genericclioptions.ConfigFlags
 
 	rootCmd := &cobra.Command{
@@ -54,7 +56,7 @@ func executable(args []string) string {
 
 // Run is the entry point of the Starboard CLI. It runs the specified
 // command based on the specified args.
-func Run(version VersionInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
+func Run(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
 
 	initFlags()
 

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/cmd"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -30,7 +30,7 @@ var (
 
 var (
 	starboardCLILogLevel = "0"
-	versionInfo          = cmd.VersionInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	versionInfo          = starboard.BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 )
 
 var (

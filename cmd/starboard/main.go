@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"k8s.io/klog"
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
@@ -23,7 +25,7 @@ func main() {
 	defer klog.Flush()
 	klog.InitFlags(nil)
 
-	version := cmd.VersionInfo{Version: version, Commit: commit, Date: date}
+	version := starboard.BuildInfo{Version: version, Commit: commit, Date: date}
 	if err := cmd.Run(version, os.Args, os.Stdout, os.Stderr); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)

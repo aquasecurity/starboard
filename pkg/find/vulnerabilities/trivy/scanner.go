@@ -3,12 +3,11 @@ package trivy
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/kube/secrets"
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
@@ -27,17 +26,14 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-const (
-	trivyVersion = "0.9.1"
-)
-
-var (
-	trivyImageRef = fmt.Sprintf("docker.io/aquasec/trivy:%s", trivyVersion)
-)
+type Config interface {
+	GetTrivyImageRef() string
+}
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		config:    config,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -46,6 +42,7 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 }
 
 type Scanner struct {
+	config    Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
@@ -86,8 +83,8 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	}
 
 	if imagePullSecret != nil {
-		klog.V(3).Infof("Creating image pull secret: %s/%s", kube.NamespaceStarboard, imagePullSecret.Name)
-		_, err = s.clientset.CoreV1().Secrets(kube.NamespaceStarboard).Create(ctx, imagePullSecret, meta.CreateOptions{})
+		klog.V(3).Infof("Creating image pull secret: %s/%s", starboard.NamespaceName, imagePullSecret.Name)
+		_, err = s.clientset.CoreV1().Secrets(starboard.NamespaceName).Create(ctx, imagePullSecret, meta.CreateOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -133,15 +130,11 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 	imagePullSecretName := jobName
 	imagePullSecretData := make(map[string][]byte)
 	var imagePullSecret *core.Secret
-	trivyImage, err := s.getTrivyImageRef()
-	if err != nil {
-		return nil, nil, err
-	}
 
 	initContainers := []core.Container{
 		{
 			Name:                     initContainerName,
-			Image:                    trivyImage,
+			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 			Env: []core.EnvVar{
@@ -150,7 +143,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 					ValueFrom: &core.EnvVarSource{
 						ConfigMapKeyRef: &core.ConfigMapKeySelector{
 							LocalObjectReference: core.LocalObjectReference{
-								Name: kube.ConfigMapStarboard,
+								Name: starboard.ConfigMapName,
 							},
 							Key:      "trivy.httpProxy",
 							Optional: pointer.BoolPtr(true),
@@ -162,7 +155,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 					ValueFrom: &core.EnvVarSource{
 						ConfigMapKeyRef: &core.ConfigMapKeySelector{
 							LocalObjectReference: core.LocalObjectReference{
-								Name: kube.ConfigMapStarboard,
+								Name: starboard.ConfigMapName,
 							},
 							Key:      "trivy.githubToken",
 							Optional: pointer.BoolPtr(true),
@@ -202,7 +195,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 				ValueFrom: &core.EnvVarSource{
 					ConfigMapKeyRef: &core.ConfigMapKeySelector{
 						LocalObjectReference: core.LocalObjectReference{
-							Name: kube.ConfigMapStarboard,
+							Name: starboard.ConfigMapName,
 						},
 						Key:      "trivy.severity",
 						Optional: pointer.BoolPtr(true),
@@ -213,7 +206,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 				ValueFrom: &core.EnvVarSource{
 					ConfigMapKeyRef: &core.ConfigMapKeySelector{
 						LocalObjectReference: core.LocalObjectReference{
-							Name: kube.ConfigMapStarboard,
+							Name: starboard.ConfigMapName,
 						},
 						Key:      "trivy.httpProxy",
 						Optional: pointer.BoolPtr(true),
@@ -254,7 +247,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 
 		scanJobContainers[i] = core.Container{
 			Name:                     c.Name,
-			Image:                    trivyImage,
+			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 			Env:                      envs,
@@ -299,7 +292,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 		imagePullSecret = &core.Secret{
 			ObjectMeta: meta.ObjectMeta{
 				Name:      imagePullSecretName,
-				Namespace: kube.NamespaceStarboard,
+				Namespace: starboard.NamespaceName,
 				Labels: map[string]string{
 					kube.LabelResourceKind:      string(workload.Kind),
 					kube.LabelResourceName:      workload.Name,
@@ -313,7 +306,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 	return &batch.Job{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      jobName,
-			Namespace: kube.NamespaceStarboard,
+			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
 				kube.LabelResourceName:      workload.Name,
@@ -336,7 +329,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 					},
 				},
 				Spec: core.PodSpec{
-					ServiceAccountName: kube.ServiceAccountStarboard,
+					ServiceAccountName: starboard.ServiceAccountName,
 					Volumes: []core.Volume{
 						{
 							Name: "data",
@@ -381,26 +374,11 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return
 		}
-		reports[c.Name], err = s.converter.Convert(containerImages[c.Name], logReader)
+		reports[c.Name], err = s.converter.Convert(s.config, containerImages[c.Name], logReader)
 		_ = logReader.Close()
 		if err != nil {
 			return
 		}
 	}
 	return
-}
-
-func (s *Scanner) getTrivyImageRef() (string, error) {
-	cm, err := s.clientset.CoreV1().ConfigMaps(kube.NamespaceStarboard).Get(context.Background(), kube.ConfigMapStarboard, meta.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		return trivyImageRef, nil
-	}
-	if err != nil {
-		return "", err
-	}
-	imageRef := cm.Data["trivy.imageRef"]
-	if imageRef != "" {
-		return imageRef, nil
-	}
-	return trivyImageRef, nil
 }
