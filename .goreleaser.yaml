@@ -15,6 +15,20 @@ builds:
       - windows
     goarch:
       - amd64
+  - id: starboard-operator
+    main: ./cmd/starboard-operator/main.go
+    binary: starboard-operator
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - id: starboard-scanner-aqua
+    main: ./cmd/starboard-scanner-aqua/main.go
+    binary: starboard-scanner-aqua
+    goos:
+      - linux
+    goarch:
+      - amd64
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     replacements:
@@ -34,14 +48,43 @@ changelog:
       - '^test'
       - '^release'
 dockers:
-  - image_templates:
+  - dockerfile: Dockerfile.starboard
+    image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}"
     binaries:
       - starboard
     build_flag_templates:
       - "--label=org.label-schema.schema-version=1.0"
       - "--label=org.label-schema.name={{ .ProjectName }}"
-      - "--label=org.label-schema.description=Kubernetes-native security toolkit"
+      - "--label=org.label-schema.description=Command line interface for Starboard"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+  - dockerfile: Dockerfile.starboard-operator
+    image_templates:
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}"
+    binaries:
+      - starboard-operator
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name=starboard-operator"
+      - "--label=org.label-schema.description=Keeps Starboard resources updated"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+  - dockerfile: Dockerfile.starboard-scanner-aqua
+    image_templates:
+      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
+    binaries:
+      - starboard-scanner-aqua
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name=starboard-scanner-aqua"
+      - "--label=org.label-schema.description=Aqua scanner for Starboard"
       - "--label=org.label-schema.vendor=Aqua Security"
       - "--label=org.label-schema.version={{ .Version }}"
       - "--label=org.label-schema.build-date={{ .Date }}"

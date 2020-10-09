@@ -22,7 +22,6 @@ func toSummary(vulnerabilities []sec.KubeHunterVulnerability) (summary sec.KubeH
 	return
 }
 
-
 func OutputFrom(reader io.Reader) (report sec.KubeHunterOutput, err error) {
 	report.Scanner = sec.Scanner{
 		Name:    "kube-hunter",
