@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"io"
 	"strings"
 
@@ -18,9 +19,8 @@ type LocalFlags struct {
 	nameOnly bool
 }
 
-var localFlags LocalFlags
-
 func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+	var localFlags LocalFlags
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "View the configuration parameters used by starboard scanners",
@@ -34,28 +34,36 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 			if err != nil {
 				return
 			}
-			starboard := "starboard"	// the configmap name and namespace are both currently "starboard"
-			configMap, err := clientset.CoreV1().ConfigMaps(starboard).Get(ctx, starboard, metav1.GetOptions{})
+			configMap, err := clientset.CoreV1().ConfigMaps(kube.NamespaceStarboard).Get(ctx, kube.NamespaceStarboard, metav1.GetOptions{})
 			if err != nil {
 				return
 			}
-			_, _ = fmt.Fprintf(outWriter, "%s\n", getFilteredValues(configMap))
+			filteredValues, err := getFilteredValues(configMap, &localFlags)
+			if err != nil {
+				return
+			}
+			_, _ = fmt.Fprintf(outWriter, "%s\n", filteredValues)
 			return
 		},
 	}
-	setLocalFlags(cmd)
+	setLocalFlags(cmd, &localFlags)
 	return cmd
 }
 
-func getFilteredValues(configMap *v1.ConfigMap) string {
+func getFilteredValues(configMap *v1.ConfigMap, localFlags *LocalFlags) (string, error) {
 	data := configMap.Data
 	if localFlags.get != "" {
-		return data[localFlags.get]
+		value := data[localFlags.get]
+		if value != "" {
+			return data[localFlags.get], nil
+		} else {
+			return "", fmt.Errorf("no such key exists: %s", localFlags.get)
+		}
 	}
 	if localFlags.nameOnly {
-		return convertMapToString(data, true)
+		return convertMapToString(data, true), nil
 	}
-	return convertMapToString(data, false)
+	return convertMapToString(data, false), nil
 }
 
 func convertMapToString(mapToConvert map[string]string, nameOnly bool) string {
@@ -69,7 +77,7 @@ func convertMapToString(mapToConvert map[string]string, nameOnly bool) string {
 	return strings.Join(asString, "\n")
 }
 
-func setLocalFlags(cmd *cobra.Command) {
+func setLocalFlags(cmd *cobra.Command, localFlags *LocalFlags) {
 	cmd.Flags().BoolVar(&localFlags.nameOnly, "name-only", false, "List parameters by name only")
 	cmd.Flags().StringVar(&localFlags.get, "get", "", "Get configuration parameters for a specified key")
 }
