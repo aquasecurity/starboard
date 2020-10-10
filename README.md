@@ -16,7 +16,7 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
   - [From the Binary Releases](#from-the-binary-releases)
-    - [kubectl plugin](#kubectl-plugin)
+  - [As a kubectl plugin](#as-a-kubectl-plugin)
   - [From Source (Linux, macOS)](#from-source-linux-macos)
   - [Docker](#docker)
 - [Getting Started](#getting-started)
@@ -25,7 +25,6 @@
 - [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Starboard CLI](#starboard-cli)
 - [Troubleshooting](#troubleshooting)
-  - ["starboard" cannot be opened because the developer cannot be verified. (macOS)](#starboard-cannot-be-opened-because-the-developer-cannot-be-verified-macos)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -58,7 +57,7 @@ binary versions can be manually downloaded and installed.
 
 From there, you should be able to run Starboard CLI commands: `starboard help`
 
-#### kubectl plugin
+### As a kubectl plugin
 
 The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kubectl plugin][kubectl-plugins],
 but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
