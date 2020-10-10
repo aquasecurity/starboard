@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"github.com/spf13/pflag"
-
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -34,7 +33,7 @@ func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer,
 	rootCmd.AddCommand(NewKubeBenchCmd(cf))
 	rootCmd.AddCommand(NewKubeHunterCmd(cf))
 	rootCmd.AddCommand(NewPolarisCmd(cf))
-	rootCmd.AddCommand(NewGetCmd(executable, cf))
+	rootCmd.AddCommand(NewGetCmd(executable, cf, outWriter))
 	rootCmd.AddCommand(NewCleanupCmd(cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 
@@ -72,4 +71,8 @@ func initFlags() {
 			pflag.Lookup(f.Name).Hidden = true
 		}
 	})
+}
+
+func init() {
+	_ = starboardv1alpha1.AddToScheme(GetScheme())
 }
