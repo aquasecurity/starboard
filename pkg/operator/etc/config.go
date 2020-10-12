@@ -39,7 +39,6 @@ func (c ScannerTrivy) GetTrivyImageRef() string {
 
 type ScannerAquaCSP struct {
 	Enabled  bool   `env:"OPERATOR_SCANNER_AQUA_CSP_ENABLED" envDefault:"false"`
-	Version  string `env:"OPERATOR_SCANNER_AQUA_CSP_VERSION" envDefault:"5.0"`
 	ImageRef string `env:"OPERATOR_SCANNER_AQUA_CSP_IMAGE" envDefault:"aquasec/scanner:5.0"`
 	Host     string `env:"OPERATOR_SCANNER_AQUA_CSP_HOST"`
 	Username string `env:"OPERATOR_SCANNER_AQUA_CSP_USERNAME"`
