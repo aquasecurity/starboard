@@ -120,8 +120,13 @@ vulnerabilityreports   vulns,vuln    aquasecurity.github.io   true         Vulne
 
 > There's also a `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
 
-As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the
-`dev` namespace:
+As an example let's run an old version of `nginx` that we know has vulnerabilities. First, let's create a `dev` namespace:
+
+```
+$ kubectl create namespace dev
+```
+
+Create an `nginx` Deployment in the `dev` namespace:
 
 ```
 $ kubectl create deployment nginx --image nginx:1.16 --namespace dev
