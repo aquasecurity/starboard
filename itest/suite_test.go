@@ -17,6 +17,8 @@ import (
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
+
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -36,6 +38,10 @@ var (
 var (
 	namespaces                corev1.NamespaceInterface
 	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
+	configmaps                corev1.ConfigMapInterface
+	serviceAccounts           corev1.ServiceAccountInterface
+	clusterRoles              rbacv1.ClusterRoleInterface
+	clusterRoleBindings       rbacv1.ClusterRoleBindingInterface
 )
 
 // TestStarboardCLI is a spec that describes the behavior of Starboard CLI.
@@ -70,6 +76,10 @@ var _ = BeforeSuite(func() {
 
 	namespaces = kubernetesClientset.CoreV1().Namespaces()
 	customResourceDefinitions = apiextensionsClientset.CustomResourceDefinitions()
+	configmaps = kubernetesClientset.CoreV1().ConfigMaps(namespaceItest)
+	serviceAccounts = kubernetesClientset.CoreV1().ServiceAccounts(namespaceItest)
+	clusterRoles = kubernetesClientset.RbacV1().ClusterRoles()
+	clusterRoleBindings = kubernetesClientset.RbacV1().ClusterRoleBindings()
 
 	err = createNamespace()
 	Expect(err).ToNot(HaveOccurred())

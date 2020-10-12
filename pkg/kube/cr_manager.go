@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"io"
 	"time"
 
 	"k8s.io/utils/pointer"
@@ -138,17 +139,23 @@ type CRManager interface {
 type crManager struct {
 	clientset    kubernetes.Interface
 	clientsetext extapi.ApiextensionsV1beta1Interface
+	initOptions  *InitOptions
+	outWriter    io.Writer
 }
 
 // NewCRManager constructs a CRManager with the given Kubernetes interface.
-func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
+func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.ApiextensionsV1beta1Interface, initOptions *InitOptions, outWriter io.Writer) CRManager {
 	return &crManager{
 		clientset:    clientset,
 		clientsetext: clientsetext,
+		initOptions: initOptions,
+		outWriter: outWriter,
 	}
 }
 
 func (m *crManager) Init(ctx context.Context) (err error) {
+	klog.V(3).Infof("In DryRun mode=%v", m.initOptions.DryRun)
+
 	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.VulnerabilityReportsCRD)
 	if err != nil {
 		return
@@ -251,40 +258,83 @@ func (m *crManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Name
 	switch {
 	case err == nil:
 		klog.V(3).Infof("Namespace %q already exists", ns.Name)
+		if m.initOptions.DryRun {
+			_, _ = fmt.Fprintf(m.outWriter, "namespace/%s created (dry run)\n", ns.Name)
+			return
+		}
 		return
 	case errors.IsNotFound(err):
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		klog.V(3).Infof("Creating Namespace %q", ns.Name)
-		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, ns, meta.CreateOptions{})
+		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, ns, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "namespace/%s created (dry run)\n", ns.Name)
+		}
 		return
 	}
 	return
 }
 
 func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
-	name := sa.Name
-	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
+	// FIXME We cannot generate a service account if the namespace doesn't exist. This will work for a dry-run,
+	// but will not work later when we want to get the object as yaml.
+	if m.initOptions.DryRun {
+		_, _ = fmt.Fprintf(m.outWriter, "serviceaccount/%s created (dry run)\n", sa.Name)
+		return
+	}
+	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, sa.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ServiceAccount %q already exists", starboard.NamespaceName+"/"+name)
+		klog.V(3).Infof("ServiceAccount %q already exists", starboard.NamespaceName+"/"+sa.Name)
+		if m.initOptions.DryRun {
+			_, _ = fmt.Fprintf(m.outWriter, "serviceaccount/%s created (dry run)\n", sa.Name)
+			return
+		}
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ServiceAccount %q", starboard.NamespaceName+"/"+name)
-		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, meta.CreateOptions{})
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
+		klog.V(3).Infof("Creating ServiceAccount %q", starboard.NamespaceName+"/"+sa.Name)
+		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "serviceaccount/%s created (dry run)\n", sa.Name)
+		}
 		return
 	}
 	return
 }
 
 func (m *crManager) createConfigMapIfNotFound(ctx context.Context, cm *core.ConfigMap) (err error) {
-	name := cm.Name
-	_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
+	// FIXME We cannot generate a configmap if the namespace doesn't exist. This will work for a dry-run,
+	// but will not work later when we want to get the object as yaml.
+	if m.initOptions.DryRun {
+		_, _ = fmt.Fprintf(m.outWriter, "configmap/%s created (dry run)\n", cm.Name)
+		return
+	}
+	_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(ctx, cm.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ConfigMap %q already exists", starboard.NamespaceName+"/"+name)
+		klog.V(3).Infof("ConfigMap %q already exists", starboard.NamespaceName+"/"+cm.Name)
+		if m.initOptions.DryRun {
+			_, _ = fmt.Fprintf(m.outWriter, "configmap/%s created (dry run)\n", cm.Name)
+			return
+		}
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ConfigMap %q", starboard.NamespaceName+"/"+name)
-		_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Create(ctx, cm, meta.CreateOptions{})
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
+		klog.V(3).Infof("Creating ConfigMap %q", starboard.NamespaceName+"/"+cm.Name)
+		_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Create(ctx, cm, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "configmap/%s created (dry run)\n", cm.Name)
+		}
 		return
 	}
 	return
@@ -294,14 +344,28 @@ func (m *crManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.Clus
 	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating ClusterRole %q", cr.GetName())
+		options := meta.UpdateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		deepCopy := existingRole.DeepCopy()
 		deepCopy.Rules = cr.Rules
-		_, err = m.clientset.RbacV1().ClusterRoles().Update(ctx, deepCopy, meta.UpdateOptions{})
+		klog.V(3).Infof("Updating ClusterRole %q", cr.GetName())
+		_, err = m.clientset.RbacV1().ClusterRoles().Update(ctx, deepCopy, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "clusterrole.rbac.authorization.k8s.io/%s updated (dry run)\n", cr.Name)
+		}
 		return
 	case errors.IsNotFound(err):
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		klog.V(3).Infof("Creating ClusterRole %q", cr.GetName())
-		_, err = m.clientset.RbacV1().ClusterRoles().Create(ctx, cr, meta.CreateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoles().Create(ctx, cr, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "clusterrole.rbac.authorization.k8s.io/%s created (dry run)\n", cr.Name)
+		}
 		return
 	}
 	return
@@ -311,15 +375,29 @@ func (m *crManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *r
 	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating ClusterRoleBinding %q", crb.GetName())
+		options := meta.UpdateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		deepCopy := existingBinding.DeepCopy()
 		deepCopy.RoleRef = crb.RoleRef
 		deepCopy.Subjects = crb.Subjects
-		_, err = m.clientset.RbacV1().ClusterRoleBindings().Update(ctx, deepCopy, meta.UpdateOptions{})
+		klog.V(3).Infof("Updating ClusterRoleBinding %q", crb.GetName())
+		_, err = m.clientset.RbacV1().ClusterRoleBindings().Update(ctx, deepCopy, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "clusterrolebinding.rbac.authorization.k8s.io/%s updated (dry run)\n", crb.Name)
+		}
 		return
 	case errors.IsNotFound(err):
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		klog.V(3).Infof("Creating ClusterRoleBinding %q", crb.GetName())
-		_, err = m.clientset.RbacV1().ClusterRoleBindings().Create(ctx, crb, meta.CreateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoleBindings().Create(ctx, crb, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "clusterrolebinding.rbac.authorization.k8s.io/%s created (dry run)\n", crb.Name)
+		}
 		return
 	}
 	return
@@ -330,14 +408,28 @@ func (m *crManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 
 	switch {
 	case err == nil:
-		klog.V(3).Infof("Updating CRD %q", crd.Name)
+		options := meta.UpdateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		deepCopy := existingCRD.DeepCopy()
 		deepCopy.Spec = crd.Spec
-		_, err = m.clientsetext.CustomResourceDefinitions().Update(ctx, deepCopy, meta.UpdateOptions{})
+		klog.V(3).Infof("Updating CRD %q", crd.Name)
+		_, err = m.clientsetext.CustomResourceDefinitions().Update(ctx, deepCopy, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "crd/%s updated (dry run)\n", crd.Name)
+		}
 		return
 	case errors.IsNotFound(err):
+		options := meta.CreateOptions{}
+		if m.initOptions.DryRun {
+			options.DryRun = []string{meta.DryRunAll}
+		}
 		klog.V(3).Infof("Creating CRD %q", crd.Name)
-		_, err = m.clientsetext.CustomResourceDefinitions().Create(ctx, crd, meta.CreateOptions{})
+		_, err = m.clientsetext.CustomResourceDefinitions().Create(ctx, crd, options)
+		if err == nil {
+			_, _ = fmt.Fprintf(m.outWriter, "crd/%s created (dry run)\n", crd.Name)
+		}
 		return
 	}
 	return

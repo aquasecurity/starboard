@@ -27,3 +27,8 @@ type ScannerOpts struct {
 	ScanJobTimeout time.Duration
 	DeleteScanJob  bool
 }
+
+// InitOptions stores the commandline options for 'init' sub command
+type InitOptions struct {
+	DryRun bool
+}

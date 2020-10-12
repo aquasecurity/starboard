@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"context"
-
-	"github.com/aquasecurity/starboard/pkg/kube"
+	starboard "github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
+	"io"
 	extensionsapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 )
 
-func NewInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewInitCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+	options := &starboard.InitOptions{}
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create custom resource definitions used by starboard",
@@ -43,9 +44,12 @@ These resources can be removed from the cluster using the "cleanup" command.
 			if err != nil {
 				return
 			}
-			err = kube.NewCRManager(clientset, clientsetext).Init(ctx)
+
+			err = starboard.NewCRManager(clientset, clientsetext, options, outWriter).Init(ctx)
 			return
 		},
 	}
+	cmd.Flags().BoolVar(&options.DryRun, "dry-run", false, "Only print the object that would be sent, without sending it.")
+
 	return cmd
 }

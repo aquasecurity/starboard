@@ -64,6 +64,100 @@ func NewPodSpec(podName string, containers map[string]string, args ...string) (*
 	return pod, err
 }
 
+var _ = Describe("Starboard CLI dryrun", func() {
+
+	Describe("Command init with dryrun", func() {
+
+		It("should return an error if the wrong dryrun flag is provided", func() {
+			out := NewBuffer()
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"init",
+				"--dry",
+				"-v", starboardCLILogLevel,
+			}, out, out)
+			Expect(err).To(HaveOccurred())
+
+			// Expectation: No resources should have been created, so lets check
+
+			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(crdList.Items).Should(HaveLen(0))
+		})
+
+		It("should return an error if dryrun flag provides invalid parameters", func() {
+			out := NewBuffer()
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"init",
+				"--dry-run=client",
+				"-v", starboardCLILogLevel,
+			}, out, out)
+			Expect(err).To(HaveOccurred())
+
+			// Expectation: No resources should have been created, so lets check
+
+			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(crdList.Items).Should(HaveLen(0))
+		})
+
+		It("should show which resources will be created", func() {
+			out := NewBuffer()
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"init",
+				"--dry-run",
+				"-v", starboardCLILogLevel,
+			}, out, out)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Expectation: No resources should have been created, so lets check
+
+			Eventually(out).Should(Say(`crd/vulnerabilityreports.aquasecurity.github.io created \(dry run\)`))
+			Eventually(out).Should(Say(`crd/ciskubebenchreports.aquasecurity.github.io created \(dry run\)`))
+			Eventually(out).Should(Say(`crd/kubehunterreports.aquasecurity.github.io created \(dry run\)`))
+			Eventually(out).Should(Say(`crd/configauditreports.aquasecurity.github.io created \(dry run\)`))
+			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/managed-by=starboard"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(crdList.Items).Should(HaveLen(0))
+
+			Eventually(out).Should(Say(`namespace/starboard created \(dry run\)`))
+			Eventually(out).Should(Say(`configmap/starboard created \(dry run\)`))
+			cm, err := configmaps.List(context.TODO(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cm.Items).Should(HaveLen(0))
+
+			Eventually(out).Should(Say(`serviceaccount/starboard created \(dry run\)`))
+			sa, err := serviceAccounts.List(context.TODO(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/managed-by=starboard"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sa.Items).Should(HaveLen(0))
+
+			Eventually(out).Should(Say(`clusterrole.rbac.authorization.k8s.io/starboard created \(dry run\)`))
+			cr, err := clusterRoles.List(context.TODO(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/managed-by=starboard"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cr.Items).Should(HaveLen(0))
+
+			Eventually(out).Should(Say(`clusterrolebinding.rbac.authorization.k8s.io/starboard created \(dry run\)`))
+			crb, err := clusterRoleBindings.List(context.TODO(), metav1.ListOptions{LabelSelector: "app.kubernetes.io/managed-by=starboard"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(crb.Items).Should(HaveLen(0))
+		})
+
+	})
+
+	AfterEach(func() {
+		err := cmd.Run(versionInfo, []string{
+			"starboard",
+			"cleanup",
+			"-v",
+			starboardCLILogLevel,
+		}, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+})
+
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {

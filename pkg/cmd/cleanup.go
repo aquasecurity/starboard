@@ -28,7 +28,7 @@ func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			err = kube.NewCRManager(clientset, clientsetext).Cleanup(ctx)
+			err = kube.NewCRManager(clientset, clientsetext, &kube.InitOptions{}, nil).Cleanup(ctx)
 			return
 		},
 	}
