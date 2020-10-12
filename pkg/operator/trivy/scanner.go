@@ -140,11 +140,9 @@ func (s *trivyScanner) NewScanJob(meta scanner.JobMeta, options scanner.Options,
 }
 
 func (s *trivyScanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	result, err := trivy.DefaultConverter.Convert(imageRef, logsReader)
+	result, err := trivy.DefaultConverter.Convert(s.config, imageRef, logsReader)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
-	// TODO The Default converter has hardcoded version to 0.9.2
-	result.Scanner.Version = s.config.Version
 	return result, nil
 }

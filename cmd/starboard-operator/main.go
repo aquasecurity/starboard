@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
@@ -44,7 +45,7 @@ var (
 )
 
 var (
-	versionInfo = etc.VersionInfo{
+	versionInfo = starboard.BuildInfo{
 		Version: version,
 		Commit:  commit,
 		Date:    date,
@@ -199,7 +200,7 @@ func getEnabledScanner(config etc.Config) (scanner.VulnerabilityScanner, error) 
 		return nil, fmt.Errorf("invalid configuration: none vulnerability scanner enabled")
 	}
 	if config.ScannerTrivy.Enabled {
-		setupLog.Info("Using Trivy as vulnerability scanner", "version", config.ScannerTrivy.Version)
+		setupLog.Info("Using Trivy as vulnerability scanner", "image", config.ScannerTrivy.ImageRef)
 		return trivy.NewScanner(config.ScannerTrivy), nil
 	}
 	if config.ScannerAquaCSP.Enabled {

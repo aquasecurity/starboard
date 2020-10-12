@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -26,11 +28,11 @@ const (
 )
 
 type aquaScanner struct {
-	version etc.VersionInfo
+	version starboard.BuildInfo
 	config  etc.ScannerAquaCSP
 }
 
-func NewScanner(version etc.VersionInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
+func NewScanner(version starboard.BuildInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
 	return &aquaScanner{
 		version: version,
 		config:  config,

@@ -3,13 +3,14 @@ package kube
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"time"
 
 	"k8s.io/utils/pointer"
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -25,197 +26,10 @@ const (
 	clusterRoleBindingStarboard = "starboard"
 )
 
-const (
-	polarisConfigYAML = `checks:
-  # reliability
-  multipleReplicasForDeployment: ignore
-  priorityClassNotSet: ignore
-  # resources
-  cpuRequestsMissing: warning
-  cpuLimitsMissing: warning
-  memoryRequestsMissing: warning
-  memoryLimitsMissing: warning
-  # images
-  tagNotSpecified: danger
-  pullPolicyNotAlways: ignore
-  # healthChecks
-  readinessProbeMissing: warning
-  livenessProbeMissing: warning
-  # networking
-  hostNetworkSet: warning
-  hostPortSet: warning
-  # security
-  hostIPCSet: danger
-  hostPIDSet: danger
-  notReadOnlyRootFilesystem: warning
-  privilegeEscalationAllowed: danger
-  runAsRootAllowed: warning
-  runAsPrivileged: danger
-  dangerousCapabilities: danger
-  insecureCapabilities: warning
-exemptions:
-  - controllerNames:
-    - kube-apiserver
-    - kube-proxy
-    - kube-scheduler
-    - etcd-manager-events
-    - kube-controller-manager
-    - kube-dns
-    - etcd-manager-main
-    rules:
-    - hostPortSet
-    - hostNetworkSet
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - cpuRequestsMissing
-    - cpuLimitsMissing
-    - memoryRequestsMissing
-    - memoryLimitsMissing
-    - runAsRootAllowed
-    - runAsPrivileged
-    - notReadOnlyRootFilesystem
-    - hostPIDSet
-  - controllerNames:
-    - kube-flannel-ds
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - notReadOnlyRootFilesystem
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - cpuLimitsMissing
-  - controllerNames:
-    - cert-manager
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-  - controllerNames:
-    - cluster-autoscaler
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - readinessProbeMissing
-  - controllerNames:
-    - vpa
-    rules:
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - datadog
-    rules:
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - nginx-ingress-controller
-    rules:
-    - privilegeEscalationAllowed
-    - insecureCapabilities
-    - runAsRootAllowed
-  - controllerNames:
-    - dns-controller
-    - datadog-datadog
-    - kube-flannel-ds
-    - kube2iam
-    - aws-iam-authenticator
-    - datadog
-    - kube2iam
-    rules:
-    - hostNetworkSet
-  - controllerNames:
-    - aws-iam-authenticator
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - dnsmasq
-    - autoscaler
-    - kubernetes-dashboard
-    - install-cni
-    - kube2iam
-    rules:
-    - readinessProbeMissing
-    - livenessProbeMissing
-  - controllerNames:
-    - aws-iam-authenticator
-    - nginx-ingress-default-backend
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - tiller
-    - kube2iam
-    rules:
-    - runAsRootAllowed
-  - controllerNames:
-    - aws-iam-authenticator
-    - nginx-ingress-controller
-    - nginx-ingress-default-backend
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - tiller
-    - kube2iam
-    rules:
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - cert-manager
-    - dns-controller
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - insights-agent-goldilocks-vpa-install
-    - datadog
-    rules:
-    - cpuRequestsMissing
-    - cpuLimitsMissing
-    - memoryRequestsMissing
-    - memoryLimitsMissing
-  - controllerNames:
-    - kube2iam
-    - kube-flannel-ds
-    rules:
-    - runAsPrivileged
-  - controllerNames:
-    - kube-hunter
-    rules:
-    - hostPIDSet
-  - controllerNames:
-    - polaris
-    - kube-hunter
-    - goldilocks
-    - insights-agent-goldilocks-vpa-install
-    rules:
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - insights-agent-goldilocks-controller
-    rules:
-    - livenessProbeMissing
-    - readinessProbeMissing
-  - controllerNames:
-    - insights-agent-goldilocks-vpa-install
-    - kube-hunter
-    rules:
-    - runAsRootAllowed
-`
-)
-
 var (
 	namespace = &core.Namespace{
 		ObjectMeta: meta.ObjectMeta{
-			Name: NamespaceStarboard,
+			Name: starboard.NamespaceName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
@@ -223,7 +37,7 @@ var (
 	}
 	serviceAccount = &core.ServiceAccount{
 		ObjectMeta: meta.ObjectMeta{
-			Name: ServiceAccountStarboard,
+			Name: starboard.ServiceAccountName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
@@ -232,16 +46,12 @@ var (
 	}
 	configMap = &core.ConfigMap{
 		ObjectMeta: meta.ObjectMeta{
-			Name: ConfigMapStarboard,
+			Name: starboard.ConfigMapName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
 		},
-		Data: map[string]string{
-			"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-			"trivy.imageRef":      "docker.io/aquasec/trivy:0.9.1",
-			"polaris.config.yaml": polarisConfigYAML,
-		},
+		Data: starboard.GetDefaultConfig(),
 	}
 	clusterRole = &rbac.ClusterRole{
 		ObjectMeta: meta.ObjectMeta{
@@ -311,8 +121,8 @@ var (
 		Subjects: []rbac.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      ServiceAccountStarboard,
-				Namespace: NamespaceStarboard,
+				Name:      starboard.ServiceAccountName,
+				Namespace: starboard.NamespaceName,
 			},
 		},
 	}
@@ -339,22 +149,22 @@ func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.Apiextensi
 }
 
 func (m *crManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &starboard.VulnerabilityReportsCRD)
+	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.VulnerabilityReportsCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &starboard.CISKubeBenchReportCRD)
+	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.CISKubeBenchReportCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &starboard.KubeHunterReportCRD)
+	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.KubeHunterReportCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &starboard.ConfigAuditReportCRD)
+	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.ConfigAuditReportCRD)
 	if err != nil {
 		return
 	}
@@ -401,8 +211,8 @@ func (m *crManager) cleanupRBAC(ctx context.Context) (err error) {
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
-	klog.V(3).Infof("Deleting ServiceAccount %q", NamespaceStarboard+"/"+ServiceAccountStarboard)
-	err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Delete(ctx, ServiceAccountStarboard, meta.DeleteOptions{})
+	klog.V(3).Infof("Deleting ServiceAccount %q", starboard.NamespaceName+"/"+starboard.ServiceAccountName)
+	err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Delete(ctx, starboard.ServiceAccountName, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
@@ -415,8 +225,8 @@ var (
 )
 
 func (m *crManager) cleanupNamespace(ctx context.Context) error {
-	klog.V(3).Infof("Deleting Namespace %q", NamespaceStarboard)
-	err := m.clientset.CoreV1().Namespaces().Delete(ctx, NamespaceStarboard, meta.DeleteOptions{})
+	klog.V(3).Infof("Deleting Namespace %q", starboard.NamespaceName)
+	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -424,9 +234,9 @@ func (m *crManager) cleanupNamespace(ctx context.Context) error {
 		select {
 		// This case controls the polling interval
 		case <-time.After(cleanupPollingInterval):
-			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, NamespaceStarboard, meta.GetOptions{})
+			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, starboard.NamespaceName, meta.GetOptions{})
 			if errors.IsNotFound(err) {
-				klog.V(3).Infof("Deleted Namespace %q", NamespaceStarboard)
+				klog.V(3).Infof("Deleted Namespace %q", starboard.NamespaceName)
 				return nil
 			}
 		// This case caters for polling timeout
@@ -452,14 +262,14 @@ func (m *crManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Name
 
 func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
 	name := sa.Name
-	_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Get(ctx, name, meta.GetOptions{})
+	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ServiceAccount %q already exists", NamespaceStarboard+"/"+name)
+		klog.V(3).Infof("ServiceAccount %q already exists", starboard.NamespaceName+"/"+name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ServiceAccount %q", NamespaceStarboard+"/"+name)
-		_, err = m.clientset.CoreV1().ServiceAccounts(NamespaceStarboard).Create(ctx, sa, meta.CreateOptions{})
+		klog.V(3).Infof("Creating ServiceAccount %q", starboard.NamespaceName+"/"+name)
+		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, meta.CreateOptions{})
 		return
 	}
 	return
@@ -467,14 +277,14 @@ func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core
 
 func (m *crManager) createConfigMapIfNotFound(ctx context.Context, cm *core.ConfigMap) (err error) {
 	name := cm.Name
-	_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Get(ctx, name, meta.GetOptions{})
+	_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ConfigMap %q already exists", NamespaceStarboard+"/"+name)
+		klog.V(3).Infof("ConfigMap %q already exists", starboard.NamespaceName+"/"+name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ConfigMap %q", NamespaceStarboard+"/"+name)
-		_, err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Create(ctx, cm, meta.CreateOptions{})
+		klog.V(3).Infof("Creating ConfigMap %q", starboard.NamespaceName+"/"+name)
+		_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Create(ctx, cm, meta.CreateOptions{})
 		return
 	}
 	return
@@ -543,19 +353,19 @@ func (m *crManager) deleteCRD(ctx context.Context, name string) (err error) {
 }
 
 func (m *crManager) Cleanup(ctx context.Context) (err error) {
-	err = m.deleteCRD(ctx, starboard.VulnerabilityReportsCRName)
+	err = m.deleteCRD(ctx, aquasecurityv1alpha1.VulnerabilityReportsCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, starboard.CISKubeBenchReportCRName)
+	err = m.deleteCRD(ctx, aquasecurityv1alpha1.CISKubeBenchReportCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, starboard.KubeHunterReportCRName)
+	err = m.deleteCRD(ctx, aquasecurityv1alpha1.KubeHunterReportCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, starboard.ConfigAuditReportCRName)
+	err = m.deleteCRD(ctx, aquasecurityv1alpha1.ConfigAuditReportCRName)
 	if err != nil {
 		return
 	}
@@ -564,8 +374,8 @@ func (m *crManager) Cleanup(ctx context.Context) (err error) {
 		return
 	}
 
-	klog.V(3).Infof("Deleting ConfigMap %q", NamespaceStarboard+"/"+ConfigMapStarboard)
-	err = m.clientset.CoreV1().ConfigMaps(NamespaceStarboard).Delete(ctx, ConfigMapStarboard, meta.DeleteOptions{})
+	klog.V(3).Infof("Deleting ConfigMap %q", starboard.NamespaceName+"/"+starboard.ConfigMapName)
+	err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Delete(ctx, starboard.ConfigMapName, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}

@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/spf13/cobra"
 )
 
-type VersionInfo struct {
-	Version string
-	Commit  string
-	Date    string
-}
-
-func NewVersionCmd(version VersionInfo, outWriter io.Writer) *cobra.Command {
+func NewVersionCmd(version starboard.BuildInfo, outWriter io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version information",

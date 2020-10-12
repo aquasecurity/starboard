@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"strings"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/google/go-containerregistry/pkg/name"
 )
 
@@ -15,7 +17,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(imageRef string, reader io.Reader) (starboard.VulnerabilityScanResult, error)
+	Convert(config Config, imageRef string, reader io.Reader) (starboardv1alpha1.VulnerabilityScanResult, error)
 }
 
 type converter struct {
@@ -27,7 +29,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard.VulnerabilityScanResult, err error) {
+func (c *converter) Convert(config Config, imageRef string, reader io.Reader) (report starboardv1alpha1.VulnerabilityScanResult, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -37,7 +39,7 @@ func (c *converter) Convert(imageRef string, reader io.Reader) (report starboard
 	if err != nil {
 		return
 	}
-	return c.convert(imageRef, scanReports)
+	return c.convert(config, imageRef, scanReports)
 }
 
 // TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
@@ -60,12 +62,12 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	return strings.NewReader(inputAsString), nil
 }
 
-func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.VulnerabilityScanResult, error) {
-	vulnerabilities := make([]starboard.Vulnerability, 0)
+func (c *converter) convert(config Config, imageRef string, reports []ScanReport) (starboardv1alpha1.VulnerabilityScanResult, error) {
+	vulnerabilities := make([]starboardv1alpha1.Vulnerability, 0)
 
 	for _, report := range reports {
 		for _, sr := range report.Vulnerabilities {
-			vulnerabilities = append(vulnerabilities, starboard.Vulnerability{
+			vulnerabilities = append(vulnerabilities, starboardv1alpha1.Vulnerability{
 				VulnerabilityID:  sr.VulnerabilityID,
 				Resource:         sr.PkgName,
 				InstalledVersion: sr.InstalledVersion,
@@ -80,14 +82,19 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (starboard.Vu
 
 	registry, artifact, err := c.parseImageRef(imageRef)
 	if err != nil {
-		return starboard.VulnerabilityScanResult{}, err
+		return starboardv1alpha1.VulnerabilityScanResult{}, err
 	}
 
-	return starboard.VulnerabilityScanResult{
-		Scanner: starboard.Scanner{
+	version, err := starboard.GetVersionFromImageRef(config.GetTrivyImageRef())
+	if err != nil {
+		return starboardv1alpha1.VulnerabilityScanResult{}, err
+	}
+
+	return starboardv1alpha1.VulnerabilityScanResult{
+		Scanner: starboardv1alpha1.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
-			Version: trivyVersion,
+			Version: version,
 		},
 		Registry:        registry,
 		Artifact:        artifact,
@@ -103,16 +110,16 @@ func (c *converter) toLinks(references []string) []string {
 	return references
 }
 
-func (c *converter) toSummary(vulnerabilities []starboard.Vulnerability) (vs starboard.VulnerabilitySummary) {
+func (c *converter) toSummary(vulnerabilities []starboardv1alpha1.Vulnerability) (vs starboardv1alpha1.VulnerabilitySummary) {
 	for _, v := range vulnerabilities {
 		switch v.Severity {
-		case starboard.SeverityCritical:
+		case starboardv1alpha1.SeverityCritical:
 			vs.CriticalCount++
-		case starboard.SeverityHigh:
+		case starboardv1alpha1.SeverityHigh:
 			vs.HighCount++
-		case starboard.SeverityMedium:
+		case starboardv1alpha1.SeverityMedium:
 			vs.MediumCount++
-		case starboard.SeverityLow:
+		case starboardv1alpha1.SeverityLow:
 			vs.LowCount++
 		default:
 			vs.UnknownCount++
@@ -121,15 +128,15 @@ func (c *converter) toSummary(vulnerabilities []starboard.Vulnerability) (vs sta
 	return
 }
 
-func (c *converter) parseImageRef(imageRef string) (starboard.Registry, starboard.Artifact, error) {
+func (c *converter) parseImageRef(imageRef string) (starboardv1alpha1.Registry, starboardv1alpha1.Artifact, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
-		return starboard.Registry{}, starboard.Artifact{}, err
+		return starboardv1alpha1.Registry{}, starboardv1alpha1.Artifact{}, err
 	}
-	registry := starboard.Registry{
+	registry := starboardv1alpha1.Registry{
 		Server: ref.Context().RegistryStr(),
 	}
-	artifact := starboard.Artifact{
+	artifact := starboardv1alpha1.Artifact{
 		Repository: ref.Context().RepositoryStr(),
 	}
 	switch t := ref.(type) {

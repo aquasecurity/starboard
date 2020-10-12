@@ -4,20 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
 	"k8s.io/klog"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/google/uuid"
-	batch "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
 )
@@ -45,7 +47,7 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context) (report starboardv1alpha1.KubeHunterOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
 	job := s.prepareKubeHunterJob()
 
@@ -63,8 +65,8 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, 
 		}
 		// 5. Delete the kube-hunter Job
 		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
-		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
+		background := metav1.DeletePropagationBackground
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
@@ -91,45 +93,45 @@ func (s *Scanner) Scan(ctx context.Context) (report starboard.KubeHunterOutput, 
 	return
 }
 
-func (s *Scanner) prepareKubeHunterJob() *batch.Job {
-	return &batch.Job{
-		ObjectMeta: meta.ObjectMeta{
+func (s *Scanner) prepareKubeHunterJob() *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      uuid.New().String(),
-			Namespace: kube.NamespaceStarboard,
+			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
 				"app": "kube-hunter",
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
-			Template: core.PodTemplateSpec{
-				ObjectMeta: meta.ObjectMeta{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"app": "kube-hunter",
 					},
 				},
-				Spec: core.PodSpec{
-					ServiceAccountName: kube.ServiceAccountStarboard,
-					RestartPolicy:      core.RestartPolicyNever,
+				Spec: corev1.PodSpec{
+					ServiceAccountName: starboard.ServiceAccountName,
+					RestartPolicy:      corev1.RestartPolicyNever,
 					HostPID:            true,
-					Containers: []core.Container{
+					Containers: []corev1.Container{
 						{
 							Name:                     kubeHunterContainerName,
 							Image:                    kubeHunterContainerImage,
-							ImagePullPolicy:          core.PullIfNotPresent,
-							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							ImagePullPolicy:          corev1.PullIfNotPresent,
+							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"python", "kube-hunter.py"},
 							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
-							Resources: core.ResourceRequirements{
-								Limits: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("300m"),
-									core.ResourceMemory: resource.MustParse("400M"),
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("300m"),
+									corev1.ResourceMemory: resource.MustParse("400M"),
 								},
-								Requests: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("50m"),
-									core.ResourceMemory: resource.MustParse("100M"),
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("50m"),
+									corev1.ResourceMemory: resource.MustParse("100M"),
 								},
 							},
 						},

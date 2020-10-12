@@ -3,6 +3,7 @@ package aqua
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"io"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -26,11 +27,11 @@ const (
 )
 
 type aquaScanner struct {
-	version etc.VersionInfo
+	version starboard.BuildInfo
 	config  etc.ScannerAquaCSP
 }
 
-func NewScanner(version etc.VersionInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
+func NewScanner(version starboard.BuildInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
 	return &aquaScanner{
 		version: version,
 		config:  config,

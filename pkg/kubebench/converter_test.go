@@ -1,17 +1,23 @@
-package kubebench
+package kubebench_test
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"os"
 	"testing"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConverter_Convert(t *testing.T) {
+	config := starboard.ConfigData{
+		"kube-bench.imageRef": "aquasec/kube-bench:0.3.1",
+	}
 	var testcases = []struct {
 		name string
 		in   string // input File
@@ -45,8 +51,8 @@ func TestConverter_Convert(t *testing.T) {
 				_ = inFile.Close()
 			}()
 
-			var r starboard.CISKubeBenchOutput
-			r, err = DefaultConverter.Convert(inFile)
+			var r starboardv1alpha1.CISKubeBenchOutput
+			r, err = kubebench.DefaultConverter.Convert(config, inFile)
 
 			switch {
 			case tc.err == nil:
@@ -54,7 +60,7 @@ func TestConverter_Convert(t *testing.T) {
 				gFile, err := os.Open(tc.op)
 				require.NoError(t, err)
 				dec := json.NewDecoder(gFile)
-				var kbop starboard.CISKubeBenchOutput
+				var kbop starboardv1alpha1.CISKubeBenchOutput
 				err = dec.Decode(&kbop)
 				require.NoError(t, err)
 				defer func() {
