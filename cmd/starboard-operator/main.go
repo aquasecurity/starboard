@@ -204,7 +204,7 @@ func getEnabledScanner(config etc.Config) (scanner.VulnerabilityScanner, error) 
 		return trivy.NewScanner(config.ScannerTrivy), nil
 	}
 	if config.ScannerAquaCSP.Enabled {
-		setupLog.Info("Using Aqua CSP as vulnerability scanner", "version", config.ScannerAquaCSP.Version)
+		setupLog.Info("Using Aqua CSP as vulnerability scanner", "image", config.ScannerAquaCSP.ImageRef)
 		return aqua.NewScanner(versionInfo, config.ScannerAquaCSP), nil
 	}
 	return nil, errors.New("invalid configuration: unhandled vulnerability scanners config")

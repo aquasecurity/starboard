@@ -3,12 +3,13 @@ package aqua
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/starboard"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 
 	"github.com/google/uuid"
@@ -27,14 +28,14 @@ const (
 )
 
 type aquaScanner struct {
-	version starboard.BuildInfo
-	config  etc.ScannerAquaCSP
+	buildInfo starboard.BuildInfo
+	config    etc.ScannerAquaCSP
 }
 
-func NewScanner(version starboard.BuildInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
+func NewScanner(buildInfo starboard.BuildInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
 	return &aquaScanner{
-		version: version,
-		config:  config,
+		buildInfo: buildInfo,
+		config:    config,
 	}
 }
 
@@ -44,7 +45,11 @@ func (s *aquaScanner) NewScanJob(meta scanner.JobMeta, options scanner.Options, 
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
 	for i, container := range spec.Containers {
-		scanJobContainers[i] = s.newScanJobContainer(container)
+		var err error
+		scanJobContainers[i], err = s.newScanJobContainer(container)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &batchv1.Job{
@@ -108,21 +113,30 @@ func (s *aquaScanner) NewScanJob(meta scanner.JobMeta, options scanner.Options, 
 	}, nil
 }
 
-func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) corev1.Container {
+func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
+	version, err := starboard.GetVersionFromImageRef(s.config.ImageRef)
+	if err != nil {
+		return corev1.Container{}, err
+	}
+
 	return corev1.Container{
 		Name:            podContainer.Name,
-		Image:           fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.version.Version),
+		Image:           fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			fmt.Sprintf("/usr/local/bin/starboard-scanner-aqua --host $(OPERATOR_SCANNER_AQUA_CSP_HOST) --user $(OPERATOR_SCANNER_AQUA_CSP_USERNAME) --password $(OPERATOR_SCANNER_AQUA_CSP_PASSWORD) %s 2> %s",
+			fmt.Sprintf("/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) --host $(AQUA_CSP_HOST) --user $(AQUA_CSP_USERNAME) --password $(AQUA_CSP_PASSWORD) %s 2> %s",
 				podContainer.Image,
 				corev1.TerminationMessagePathDefault),
 		},
 		Env: []corev1.EnvVar{
 			{
-				Name: "OPERATOR_SCANNER_AQUA_CSP_HOST",
+				Name:  "AQUA_VERSION",
+				Value: version,
+			},
+			{
+				Name: "AQUA_CSP_HOST",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -133,7 +147,7 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) corev1.
 				},
 			},
 			{
-				Name: "OPERATOR_SCANNER_AQUA_CSP_USERNAME",
+				Name: "AQUA_CSP_USERNAME",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -144,7 +158,7 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) corev1.
 				},
 			},
 			{
-				Name: "OPERATOR_SCANNER_AQUA_CSP_PASSWORD",
+				Name: "AQUA_CSP_PASSWORD",
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
@@ -176,11 +190,11 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) corev1.
 				MountPath: "/var/run/docker.sock",
 			},
 		},
-	}
+	}, nil
 }
 
-func (s *aquaScanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	var report v1alpha1.VulnerabilityScanResult
+func (s *aquaScanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (aquasecurityv1alpha1.VulnerabilityScanResult, error) {
+	var report aquasecurityv1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
 }

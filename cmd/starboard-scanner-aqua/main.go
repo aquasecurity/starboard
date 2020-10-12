@@ -14,12 +14,14 @@ import (
 )
 
 const (
+	versionFlag  = "version"
 	hostFlag     = "host"
 	userFlag     = "user"
 	passwordFlag = "password"
 )
 
 type options struct {
+	version     string
 	baseURL     string
 	credentials client.UsernameAndPassword
 }
@@ -47,10 +49,12 @@ func run() error {
 		},
 	}
 
+	rootCmd.Flags().StringVarP(&opt.version, versionFlag, "V", "", "Version of Aqua")
 	rootCmd.Flags().StringVarP(&opt.baseURL, hostFlag, "H", "", "Aqua management console address (required)")
 	rootCmd.Flags().StringVarP(&opt.credentials.Username, userFlag, "U", "", "Aqua management console username (required)")
 	rootCmd.Flags().StringVarP(&opt.credentials.Password, passwordFlag, "P", "", "Aqua management console password (required)")
 
+	_ = rootCmd.MarkFlagRequired(versionFlag)
 	_ = rootCmd.MarkFlagRequired(hostFlag)
 	_ = rootCmd.MarkFlagRequired(userFlag)
 	_ = rootCmd.MarkFlagRequired(passwordFlag)
@@ -65,14 +69,14 @@ func scan(opt options, imageRef string) (report v1alpha1.VulnerabilityScanResult
 		Basic: &opt.credentials,
 	})
 
-	report, err = api.NewScanner(clientset).Scan(imageRef)
+	report, err = api.NewScanner(opt.version, clientset).Scan(imageRef)
 	if err == nil {
 		return
 	}
 	if err != client.ErrNotFound {
 		return
 	}
-	report, err = cli.NewScanner(opt.baseURL, opt.credentials).Scan(imageRef)
+	report, err = cli.NewScanner(opt.version, opt.baseURL, opt.credentials).Scan(imageRef)
 	if err != nil {
 		return
 	}

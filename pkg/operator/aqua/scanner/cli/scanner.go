@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -11,12 +13,14 @@ import (
 )
 
 type Scanner struct {
+	version     string
 	baseURL     string
 	credentials client.UsernameAndPassword
 }
 
-func NewScanner(baseURL string, credentials client.UsernameAndPassword) *Scanner {
+func NewScanner(version string, baseURL string, credentials client.UsernameAndPassword) *Scanner {
 	return &Scanner{
+		version:     version,
 		baseURL:     baseURL,
 		credentials: credentials,
 	}
@@ -35,8 +39,11 @@ func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityScanResult
 	}
 	command := exec.Command("scannercli", args...)
 
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
 	out, err := command.Output()
 	if err != nil {
+		_, _ = fmt.Fprint(os.Stderr, stderr.String())
 		err = fmt.Errorf("running scannercli: %w", err)
 		return
 	}
@@ -91,9 +98,9 @@ func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alph
 
 	report = v1alpha1.VulnerabilityScanResult{
 		Scanner: v1alpha1.Scanner{
-			Name:   "Aqua CSP",
-			Vendor: "Aqua Security",
-			//Version: c.config.Version,
+			Name:    "Aqua CSP",
+			Vendor:  "Aqua Security",
+			Version: s.version,
 		},
 		Registry: v1alpha1.Registry{
 			Server: ref.Context().RegistryStr(),

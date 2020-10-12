@@ -13,11 +13,13 @@ const (
 )
 
 type Scanner struct {
+	version   string
 	clientset client.Clientset
 }
 
-func NewScanner(clientset client.Clientset) *Scanner {
+func NewScanner(version string, clientset client.Clientset) *Scanner {
 	return &Scanner{
+		version:   version,
 		clientset: clientset,
 	}
 }
@@ -84,7 +86,8 @@ func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesRes
 	return v1alpha1.VulnerabilityScanResult{
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",
-			Version: "Aqua Security",
+			Vendor:  "Aqua Security",
+			Version: s.version,
 		},
 		Registry: v1alpha1.Registry{
 			Server: ref.Context().RegistryStr(),

@@ -6,10 +6,6 @@ RUN apk update \
     && apk upgrade musl \
     && apk add ca-certificates dpkg@edge rpm@edge expat@edge libbz2@edge libarchive@edge db@edge
 
-# RUN adduser -u 10000 -D -g '' starboard starboard
-
 COPY starboard-scanner-aqua /usr/local/bin/starboard-scanner-aqua
-
-# USER starboard
 
 ENTRYPOINT ["starboard-scanner-aqua"]
