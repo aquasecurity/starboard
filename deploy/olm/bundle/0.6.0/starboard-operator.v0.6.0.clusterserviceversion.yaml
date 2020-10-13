@@ -1,14 +1,14 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: starboard-operator.v0.0.1
+  name: starboard-operator.v0.6.0
   namespace: starboard-operator
   annotations:
     capabilities: Basic Install
     categories: Security
     description: Keeps security report resources updated
     certified: "false"
-    containerImage: aquasec/starboard-operator:0.0.1
+    containerImage: aquasec/starboard-operator:0.6.0
     createdAt: 2020-09-15T08:00:00Z
     support: Aqua Security
     repository: https://github.com/aquasecurity/starboard-operator
@@ -16,7 +16,7 @@ metadata:
       []
 spec:
   displayName: Starboard Operator
-  version: 0.0.1
+  version: 0.6.0
   description: |-
     This operator for Starboard automatically updates security report resources in response to workload and other
     changes on a Kubernetes cluster - for example, initiating a vulnerability scan when a new pod is started. Please see
@@ -266,7 +266,7 @@ spec:
                   fsGroup: 10000
                 containers:
                   - name: starboard-operator
-                    image: aquasec/starboard-operator:0.0.1
+                    image: aquasec/starboard-operator:0.6.0
                     imagePullPolicy: IfNotPresent
                     securityContext:
                       privileged: false
