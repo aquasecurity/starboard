@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "starboard.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "starboard.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "starboard.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "starboard.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "starboard.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.image.metricsPort }}
+              protocol: TCP
+            - name: probes
+              containerPort: {{ .Values.image.probesPort }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz/
+              port: probes
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz/
+              port: probes
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: OPERATOR_NAMESPACE
+              value: {{ .Values.namespace }}
+            - name: OPERATOR_TARGET_NAMESPACES
+              value: {{ .Values.envs.operator_target_namespace }}
+            - name: OPERATOR_SCANNER_TRIVY_ENABLED
+              value: {{ .Values.envs.operator_scanner_trivy_enabled | quote }}
+            - name: OPERATOR_SCANNER_TRIVY_VERSION
+              value: {{ .Values.envs.operator_scanner_trivy_version }}
+            - name: OPERATOR_SCANNER_AQUA_CSP_ENABLED
+              value: {{ .Values.envs.operator_scanner_aqua_csp_enabled | quote }}
+            - name: OPERATOR_SCANNER_AQUA_CSP_VERSION
+              value: {{ .Values.envs.operator_scanner_aqua_csp_version }}
+            - name: OPERATOR_SCANNER_AQUA_CSP_HOST
+              value: {{ .Values.envs.operator_scanner_aqua_csp_host }}
+            - name: OPERATOR_SCANNER_AQUA_CSP_USER
+              value: {{ .Values.envs.operator_scanner_aqua_csp_user }}
+            - name: OPERATOR_SCANNER_AQUA_CSP_PASSWORD
+              value: {{ .Values.envs.operator_scanner_aqua_csp_password }}
+            - name: OPERATOR_METRICS_BIND_ADDRESS
+              value: {{ print ":" .Values.image.metricsPort | quote }}
+            - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
+              value: {{ print ":" .Values.image.probesPort | quote }}
+            - name: OPERATOR_LOG_DEV_MODE
+              value: {{ .Values.envs.operator_log_dev_mode | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
