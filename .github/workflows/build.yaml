@@ -42,7 +42,7 @@ jobs:
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.143.0
+          version: v0.145.0
           args: release --snapshot --skip-publish --rm-dist
   itest-starboard-cli:
     name: Integration tests / Starboard CLI
