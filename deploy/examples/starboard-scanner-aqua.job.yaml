@@ -16,7 +16,6 @@ spec:
           emptyDir: {}
         - name: dockersock
           hostPath:
-            ## TODO This works only for Docker container runtime
             path: "/var/run/docker.sock"
       initContainers:
         - name: download
@@ -35,23 +34,23 @@ spec:
           command:
             - "/bin/sh"
             - "-c"
-            - "/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) --host $(OPERATOR_SCANNER_AQUA_CSP_HOST) --user $(OPERATOR_SCANNER_AQUA_CSP_USERNAME) --password $(OPERATOR_SCANNER_AQUA_CSP_PASSWORD) $(IMAGE_REF) 2> /dev/termination-log"
+            - "/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) --host $(AQUA_CSP_HOST) --user $(AQUA_CSP_USERNAME) --password $(AQUA_CSP_PASSWORD) $(IMAGE_REF) 2> /dev/termination-log"
           env:
             - name: IMAGE_REF
               value: nginx:1.16
             - name: AQUA_VERSION
               value: "5.0"
-            - name: OPERATOR_SCANNER_AQUA_CSP_HOST
+            - name: AQUA_CSP_HOST
               valueFrom:
                 secretKeyRef:
                   name: starboard-operator
                   key: OPERATOR_SCANNER_AQUA_CSP_HOST
-            - name: OPERATOR_SCANNER_AQUA_CSP_USERNAME
+            - name: AQUA_CSP_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: starboard-operator
                   key: OPERATOR_SCANNER_AQUA_CSP_USERNAME
-            - name: OPERATOR_SCANNER_AQUA_CSP_PASSWORD
+            - name: AQUA_CSP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: starboard-operator

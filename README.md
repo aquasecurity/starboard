@@ -9,6 +9,7 @@
 [![Go Report Card][report-card-img]][report-card]
 [![License][license-img]][license]
 [![GitHub All Releases][github-all-releases-img]][release]
+![Docker Pulls Starboard][docker-pulls-starboard]
 
 ## Table of Contents
 
@@ -317,9 +318,10 @@ At this early stage we would love your feedback on the overall concept of Starbo
 contributions integrating different security tools so that users can access security information in standard,
 Kubernetes-native ways.
 
-See our [hacking](HACKING.md) guide for getting your development environment setup.
-
-See our [roadmap](ROADMAP.md) for tentative features in a 1.0 release.
+* See [CONTRIBUTING.md](CONTRIBUTING.md) for information about setting up your development environment, and the
+  contribution workflow that we expect.
+* See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
+* Join our [discussions][discussions].
 
 ## License
 
@@ -337,20 +339,19 @@ This repository is available under the [Apache License 2.0][license].
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard.svg
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 [github-all-releases-img]: https://img.shields.io/github/downloads/aquasecurity/starboard/total?logo=github
+[docker-pulls-starboard]: https://img.shields.io/docker/pulls/aquasec/starboard?logo=docker&label=docker%20pulls%20%2F%20starboard
 
 [aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions
 [starboard-crds]: #custom-security-resources-definitions
 [starboard-crds-spec]: ./SECURITY_CRDS_SPEC.md
-[vulnerabilityreports-crd]: ./kube/crd/vulnerabilityreports-crd.yaml
-[ciskubebenchreports-crd]: ./kube/crd/ciskubebenchreports-crd.yaml
-[kubehunterreports-crd]: ./kube/crd/kubehunterreports-crd.yaml
-[configauditreports-crd]: ./kube/crd/configauditreports-crd.yaml
+[vulnerabilityreports-crd]: ./deploy/crd/vulnerabilityreports.crd.yaml
+[ciskubebenchreports-crd]: ./deploy/crd/ciskubebenchreports.crd.yaml
+[kubehunterreports-crd]: ./deploy/crd/kubehunterreports.crd.yaml
+[configauditreports-crd]: ./deploy/crd/configauditreports.crd.yaml
 [starboard-go-module]: ./pkg
 [starboard-cli]: #starboard-cli
 [starboard-octant-plugin]: https://github.com/aquasecurity/octant-starboard-plugin
-[starboard-security-operator]: https://github.com/aquasecurity/starboard-security-operator
-[starboard-harbor-webhook]: https://github.com/aquasecurity/starboard-harbor-webhook
 [aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
 [aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter
 [octant]: https://github.com/vmware-tanzu/octant
@@ -363,4 +364,4 @@ This repository is available under the [Apache License 2.0][license].
 
 [krew]: https://github.com/kubernetes-sigs/krew
 
-[default-polaris-config]: ./kube/init/starboard-cm.yaml
+[default-polaris-config]: ./deploy/init/03-starboard.cm.yaml
