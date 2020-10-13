@@ -78,8 +78,8 @@ endif
 .PHONY: clean
 ## Removes build artifacts
 clean:
-	rm -r ./bin
-	rm -r ./dist
+	@rm -r ./bin 2> /dev/null || true
+	@rm -r ./dist 2> /dev/null || true
 
 ## Builds Docker images for all binaries
 docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-build-starboard-scanner-aqua

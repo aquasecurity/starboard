@@ -1,5 +1,6 @@
 env:
   - GO111MODULE=on
+  - CGO_ENABLED=0
 before:
   hooks:
     - go mod download
@@ -7,8 +8,6 @@ builds:
   - id: starboard
     main: ./cmd/starboard/main.go
     binary: starboard
-    env:
-      - CGO_ENABLED=0
     goos:
       - darwin
       - linux
@@ -31,6 +30,8 @@ builds:
       - amd64
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    builds:
+      - starboard
     replacements:
       amd64: x86_64
     format_overrides:

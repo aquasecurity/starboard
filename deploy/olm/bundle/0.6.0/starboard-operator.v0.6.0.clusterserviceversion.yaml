@@ -11,7 +11,7 @@ metadata:
     containerImage: aquasec/starboard-operator:0.6.0
     createdAt: 2020-09-15T08:00:00Z
     support: Aqua Security
-    repository: https://github.com/aquasecurity/starboard-operator
+    repository: https://github.com/aquasecurity/starboard
     alm-examples: |-
       []
 spec:
