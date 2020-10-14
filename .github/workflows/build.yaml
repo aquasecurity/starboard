@@ -7,7 +7,6 @@ on:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
-      - 'kube/**'
       - 'LICENSE'
       - 'NOTICE'
   pull_request:
@@ -15,7 +14,6 @@ on:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
-      - 'kube/**'
       - 'LICENSE'
       - 'NOTICE'
 jobs:

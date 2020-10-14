@@ -178,10 +178,10 @@ started with a basic development workflow. For other install modes see [Operator
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/kubectl/01-starboard-operator.ns.yaml \
-       -f deploy/kubectl/02-starboard-operator.sa.yaml \
-       -f deploy/kubectl/03-starboard-operator.clusterrole.yaml \
-       -f deploy/kubectl/04-starboard-operator.clusterrolebinding.yaml
+   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+       -f deploy/static/02-starboard-operator.sa.yaml \
+       -f deploy/static/03-starboard-operator.clusterrole.yaml \
+       -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
    ```
 
    This will create the `starboard-operator` namespace, and the `starboard-operator` service account. Beyond that,
@@ -193,7 +193,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl apply -f deploy/kubectl/05-starboard-operator.deployment.yaml
+   $ kubectl apply -f deploy/static/05-starboard-operator.deployment.yaml
    ```
 
 ### Out of cluster

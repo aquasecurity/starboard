@@ -24,7 +24,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: operator
-          image: docker.io/aquasec/starboard-operator:dev
+          image: docker.io/aquasec/starboard-operator:0.6.0
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
