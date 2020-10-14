@@ -11,10 +11,11 @@ spec:
       {{- include "starboard-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/secret: {{ .Values.envSecret.stringData | toYaml | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- . | toYaml | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "starboard-operator.selectorLabels" . | nindent 8 }}
     spec:
