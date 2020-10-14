@@ -86,12 +86,12 @@ docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-
 
 ## Builds Docker image for Starboard CLI
 docker-build-starboard-cli: build-starboard-cli
-	docker build --no-cache -t $(STARBOARD_CLI_IMAGE) -f Dockerfile.starboard bin
+	docker build --no-cache -t $(STARBOARD_CLI_IMAGE) -f starboard.Dockerfile bin
 
 ## Builds Docker image for Starboard operator
 docker-build-starboard-operator: build-starboard-operator
-	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f Dockerfile.starboard-operator bin
+	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f starboard-operator.Dockerfile bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
-	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f Dockerfile.starboard-scanner-aqua bin
+	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f starboard-scanner-aqua.Dockerfile bin
