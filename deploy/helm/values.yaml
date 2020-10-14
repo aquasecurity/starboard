@@ -35,8 +35,11 @@ envSecret:
   # the named k8s Secret.
   create: true
   # name specifies the name of the k8s Secret to reference. If not set, a name
-  # is generated using the fullname template.
-  name: ""
+  # is generated using the fullname template. name is currently required to be
+  # hardcoded to starboard-operator as the starboard-operator binary makes a
+  # hardcoded reference to that name:
+  # https://github.com/aquasecurity/starboard/blob/ad6b9b99931d7524806f79b1329fdda82c75a715/pkg/operator/scanner.go#L26-L28
+  name: "starboard-operator"
   # stringData specifies key value pairs to be added to the k8s Secret and
   # mounted by the Pod as environment variables.
   #
