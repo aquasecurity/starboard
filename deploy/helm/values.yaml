@@ -17,8 +17,6 @@ image:
   pullPolicy: ""
   pullSecrets: []
 
-replicaCount: 1
-
 # service only expose a metrics endpoint for prometheus to scrape,
 # starboard-operator does not have a user interface.
 service:

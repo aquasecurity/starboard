@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "starboard-operator.selectorLabels" . | nindent 6 }}
