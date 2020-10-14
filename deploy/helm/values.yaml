@@ -12,7 +12,8 @@ fullnameOverride: ""
 
 image:
   repository: "aquasec/starboard-operator"
-  # Overrides the image tag whose default is the chart appVersion.
+  # tag is an override of the image tag, which is by default set by the
+  # appVersion field in Chart.yaml.
   tag: ""
   pullPolicy: ""
   pullSecrets: []
