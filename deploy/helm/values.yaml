@@ -11,9 +11,9 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  repository: "docker.io/aquasec/starboard-operator"
+  repository: "aquasec/starboard-operator"
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "dev"
+  tag: ""
   pullPolicy: ""
   pullSecrets: []
 

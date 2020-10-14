@@ -24,8 +24,8 @@ spec:
           env:
             - name: OPERATOR_NAMESPACE
               value: {{ .Release.Namespace | quote }}
-            - OPERATOR_TARGET_NAMESPACES:
-              value: {{ .Values.targetNamespaces | quote }}
+            - name: OPERATOR_TARGET_NAMESPACES
+              value: {{ tpl .Values.targetNamespaces . | quote }}
             - name: OPERATOR_METRICS_BIND_ADDRESS
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
