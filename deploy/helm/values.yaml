@@ -1,12 +1,14 @@
-# Default values for starboard-operator.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# Default values for the starboard-operator Helm chart, these are used to render
+# the templates into valid k8s Resources.
 
 # targetNamespace defines where you want starboard-operator to operate. By
 # default it will only operate in the namespace its installed in, but you can
 # specify another namespace, or a comma separated list of namespaces, or set it
 # to a blank string to let it operate in all namespaces.
 targetNamespaces: "{{ .Release.Namespace }}"
+
+nameOverride: ""
+fullnameOverride: ""
 
 image:
   repository: "docker.io/aquasec/starboard-operator"
@@ -17,8 +19,14 @@ image:
 
 replicaCount: 1
 
-nameOverride: ""
-fullnameOverride: ""
+# service only expose a metrics endpoint for prometheus to scrape,
+# starboard-operator does not have a user interface.
+service:
+  type: ClusterIP
+  port: 80
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
 
 # envSecret represent a k8s Secret resource that will be referenced to mount
 # environment variables.

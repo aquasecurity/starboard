@@ -42,8 +42,13 @@ spec:
             {{- end }}
             {{- end }}
           ports:
+            # metrics port is exposed by the k8s Service and by default also
+            # have annotations which will help prometheus as a target for
+            # scraping of metrics
             - name: metrics
               containerPort: 8080
+            # probes port is not exposed by the k8s Service and used directly by
+            # kubelet for the readinessProbe and livenessProbe
             - name: probes
               containerPort: 9090
           readinessProbe:
