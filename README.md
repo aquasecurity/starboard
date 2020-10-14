@@ -1,3 +1,13 @@
+Starboard is a new Kubernetes-native, 
+extensible security toolkit, created by Aqua,
+for finding risks in your Kubernetes workloads 
+and environments. The tool, which is licensed 
+under Apache 2.0, uses custom resource
+definitions to integrate security tools and
+make the results accessible via the Kubernetes API.
+
+
+
 ![Starboard logo](docs/images/starboard-logo.png)
 
 > Kubernetes-native security tool kit.
