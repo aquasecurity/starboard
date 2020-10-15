@@ -112,7 +112,7 @@ $ make unit-tests
 To open the test coverage report in your web browser, run:
 
 ```
-$ go tool cover -html=coverage.txt`.
+$ go tool cover -html=coverage.txt
 ```
 
 ### Run Integration Tests
