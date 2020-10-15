@@ -38,15 +38,17 @@ rules:
       - watch
   - apiGroups:
       - apps
-    resources:
+    resources: # resources that own pods are inspected
       - replicasets
+      - statefulsets
+      - daemonsets
     verbs:
       - get
       - list
       - watch
   - apiGroups:
       - batch
-    resources:
+    resources: # jobs are inspected and directly used by the starboard-operator
       - jobs
     verbs:
       - get
