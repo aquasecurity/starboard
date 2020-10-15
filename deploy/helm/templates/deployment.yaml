@@ -5,7 +5,14 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 spec:
+  # NOTE: replicas and strategy.type is set like this explicitly to avoid ending
+  #       up with starboard-operator instances disrupting each other. If
+  #       starboard-operator is confirmed to be highly available,
+  #       strategy.type==Recreate can be removed and replicas can be allowed to
+  #       be configurable.
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "starboard-operator.selectorLabels" . | nindent 6 }}
