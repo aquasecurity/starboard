@@ -22,7 +22,7 @@ image:
 # starboard-operator does not have a user interface.
 service:
   type: ClusterIP
-  port: 80
+  metricsPort: 80
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: /metrics
