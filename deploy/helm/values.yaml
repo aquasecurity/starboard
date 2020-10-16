@@ -76,8 +76,8 @@ podSecurityContext: {}
 securityContext:
   runAsNonRoot: true
   allowPrivilegeEscalation: false
-  runAsUser: 65534
-  runAsGroup: 65534
+  runAsUser: 10000
+  runAsGroup: 10000
   readOnlyRootFilesystem: true
   capabilities:
     drop:
