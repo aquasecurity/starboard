@@ -44,7 +44,8 @@ envSecret:
   # stringData specifies key value pairs to be added to the k8s Secret and
   # mounted by the Pod as environment variables.
   #
-  # NOTE: It is important that you specify targetNamespace instead of
+  # NOTE: OPEARTOR_NAMESPACE will be set based on where this Helm chart was
+  #       installed, and you are required to specify targetNamespace instead of
   #       OPERATOR_TARGET_NAMESPACE below for this Helm chart to function
   #       properly.
   stringData:
