@@ -96,7 +96,7 @@ $ docker container run --rm docker.io/aquasec/starboard:0.4.0 version
 Starboard Version: {Version:0.4.0 Commit:dd8e49701c1817ea174061c8731fe5bdbfb73d93 Date:2020-09-21T09:36:59Z}
 ```
 
-## Getting Started
+## How to get started?
 
 The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
 workloads deployed in your cluster.
@@ -312,7 +312,7 @@ To open this pane on your Mac, choose Apple menu > System Preferences, click Sec
   <img src="docs/images/troubleshooting/developer-not-verified-remediation.png">
 </p>
 
-## Contributing
+## Let's Contribute
 
 At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
 contributions integrating different security tools so that users can access security information in standard,
@@ -323,7 +323,7 @@ Kubernetes-native ways.
 * See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
 * Join our [discussions][discussions].
 
-## License
+## Licensing
 
 This repository is available under the [Apache License 2.0][license].
 
