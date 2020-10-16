@@ -1,0 +1,84 @@
+{{- if .Values.serviceAccount.create -}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "starboard-operator.serviceAccountName" . }}
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.rbac.create }}
+---
+{{- /*
+Create (Cluster)Role and (Cluster)RoleBinding depending on if the Helm chart is
+installed in a namespace different from the targetNamespace.
+*/}}
+{{- $clusterWide := not (eq .Release.Namespace (tpl .Values.targetNamespaces .)) }}
+{{- $conditionalClusterPrefix := $clusterWide | ternary "Cluster" "" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ $conditionalClusterPrefix }}Role
+metadata:
+  name: {{ include "starboard-operator.fullname" . }}
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - "pods"
+      - "pods/log"
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources: # resources that own pods are inspected
+      - replicasets
+      - statefulsets
+      - daemonsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources: # jobs are inspected and directly used by the starboard-operator
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+  - apiGroups:
+      - aquasecurity.github.io
+    resources:
+      - vulnerabilityreports
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ $conditionalClusterPrefix }}RoleBinding
+metadata:
+  name: {{ include "starboard-operator.fullname" . }}
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ $conditionalClusterPrefix }}Role
+  name: {{ include "starboard-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "starboard-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "starboard-operator.fullname" . }}
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.metricsPort }}
+      targetPort: metrics
+      name: metrics
+  selector:
+    {{- include "starboard-operator.selectorLabels" . | nindent 4 }}

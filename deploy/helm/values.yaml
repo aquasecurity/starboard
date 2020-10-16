@@ -1,0 +1,102 @@
+# Default values for the starboard-operator Helm chart, these are used to render
+# the templates into valid k8s Resources.
+
+# targetNamespace defines where you want starboard-operator to operate. By
+# default it will only operate in the namespace its installed in, but you can
+# specify another namespace, or a comma separated list of namespaces, or set it
+# to a blank string to let it operate in all namespaces.
+targetNamespaces: "{{ .Release.Namespace }}"
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: "aquasec/starboard-operator"
+  # tag is an override of the image tag, which is by default set by the
+  # appVersion field in Chart.yaml.
+  tag: ""
+  pullPolicy: ""
+  pullSecrets: []
+
+# service only expose a metrics endpoint for prometheus to scrape,
+# starboard-operator does not have a user interface.
+service:
+  type: ClusterIP
+  metricsPort: 80
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+
+# envSecret represent a k8s Secret resource that will be referenced to mount
+# environment variables.
+envSecret:
+  # create specifies whether a k8s Secret should be created with a given
+  # stringData. If this is set to false, only the keys defined in stringData
+  # will be optionally mounted from the named secret, rather than all keys in
+  # the named k8s Secret.
+  create: true
+  # name specifies the name of the k8s Secret to reference. If not set, a name
+  # is generated using the fullname template. name is currently required to be
+  # hardcoded to starboard-operator as the starboard-operator binary makes a
+  # hardcoded reference to that name:
+  # https://github.com/aquasecurity/starboard/blob/ad6b9b99931d7524806f79b1329fdda82c75a715/pkg/operator/scanner.go#L26-L28
+  name: "starboard-operator"
+  # stringData specifies key value pairs to be added to the k8s Secret and
+  # mounted by the Pod as environment variables.
+  #
+  # NOTE: OPEARTOR_NAMESPACE will be set based on where this Helm chart was
+  #       installed, and you are required to specify targetNamespace instead of
+  #       OPERATOR_TARGET_NAMESPACE below for this Helm chart to function
+  #       properly.
+  stringData:
+    OPERATOR_LOG_DEV_MODE: "false"
+    OPERATOR_SCANNER_TRIVY_ENABLED: "true"
+    OPERATOR_SCANNER_TRIVY_VERSION: "0.12.0"    # https://hub.docker.com/r/aquasec/trivy/tags
+    OPERATOR_SCANNER_AQUA_CSP_ENABLED: "false"
+    OPERATOR_SCANNER_AQUA_CSP_VERSION: ""
+    OPERATOR_SCANNER_AQUA_CSP_HOST: ""
+    OPERATOR_SCANNER_AQUA_CSP_USER: ""
+    OPERATOR_SCANNER_AQUA_CSP_PASSWORD: ""
+
+rbac:
+  create: true
+serviceAccount:
+  # Specifies whether a service account should be created.
+  create: true
+  annotations: {}
+  # name specifies the name of the k8s Service Account. If not set and create is
+  # true, a name is generated using the fullname template.
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  runAsUser: 10000
+  runAsGroup: 10000
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
