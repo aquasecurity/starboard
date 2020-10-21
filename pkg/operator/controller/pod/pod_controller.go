@@ -4,6 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/ext"
+
+	"github.com/aquasecurity/starboard/pkg/scanners"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -28,11 +34,12 @@ var (
 )
 
 type PodController struct {
-	Config  etc.Operator
-	Client  client.Client
-	Store   reports.StoreInterface
-	Scanner scanner.VulnerabilityScanner
-	Scheme  *runtime.Scheme
+	Config      etc.Operator
+	Client      client.Client
+	IDGenerator ext.IDGenerator
+	Store       reports.StoreInterface
+	Scanner     scanner.VulnerabilityScanner
+	Scheme      *runtime.Scheme
 }
 
 // Reconcile resolves the actual state of the system against the desired state of the system.
@@ -49,7 +56,6 @@ type PodController struct {
 // should requeue the request.
 func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-
 	pod := &corev1.Pod{}
 
 	log := log.WithValues("pod", req.NamespacedName)
@@ -143,17 +149,39 @@ func (r *PodController) ensureScanJob(ctx context.Context, owner kube.Object, ha
 		return err
 	}
 
-	scanJob, err := r.Scanner.NewScanJob(jobMeta, scanner.Options{
+	scanJob, err := r.NewScanJob(pod.Spec, scanner.Options{
 		Namespace:          r.Config.Namespace,
 		ServiceAccountName: r.Config.ServiceAccount,
 		ScanJobTimeout:     r.Config.ScanJobTimeout,
-	}, pod.Spec)
+	}, jobMeta)
 	if err != nil {
 		return fmt.Errorf("constructing scan job: %w", err)
 	}
 	log.V(1).Info("Creating scan job",
 		"job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
 	return r.Client.Create(ctx, scanJob)
+}
+
+func (r *PodController) NewScanJob(spec corev1.PodSpec, options scanner.Options, meta scanner.JobMeta) (*batchv1.Job, error) {
+	template, err := r.Scanner.GetPodTemplateSpec(spec, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        meta.Name,
+			Namespace:   options.Namespace,
+			Labels:      meta.Labels,
+			Annotations: meta.Annotations,
+		},
+		Spec: batchv1.JobSpec{
+			BackoffLimit:          pointer.Int32Ptr(0),
+			Completions:           pointer.Int32Ptr(1),
+			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(options.ScanJobTimeout),
+			Template:              template,
+		},
+	}, nil
 }
 
 func (r *PodController) GetJobMetaFrom(owner kube.Object, hash string, spec corev1.PodSpec) (scanner.JobMeta, error) {
@@ -164,6 +192,7 @@ func (r *PodController) GetJobMetaFrom(owner kube.Object, hash string, spec core
 	}
 
 	return scanner.JobMeta{
+		Name: r.IDGenerator.GenerateID(),
 		Labels: map[string]string{
 			kube.LabelResourceKind:         string(owner.Kind),
 			kube.LabelResourceName:         owner.Name,

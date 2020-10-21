@@ -6,11 +6,16 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Options are arguments passed to VulnerabilityScanner.NewScanJob constructor.
+type JobMeta struct {
+	Name        string
+	Labels      map[string]string
+	Annotations map[string]string
+}
+
+// Options are arguments passed to the VulnerabilityScanner.GetPodTemplateSpec method.
 type Options struct {
 	// Namespace the namespace to run the scan Job in.
 	Namespace string
@@ -20,17 +25,15 @@ type Options struct {
 	ScanJobTimeout time.Duration
 }
 
-type JobMeta struct {
-	Labels      map[string]string
-	Annotations map[string]string
-}
-
-// VulnerabilityScanner defines vulnerability scanner interface.
-//
-// NewScanJob constructs a new Job descriptor, which can be sent to Kubernetes API and scheduled to scan
-// the specified Kubernetes workload with the given Pod descriptor and Options.
-//
+// VulnerabilityScanner defines methods implemented by vulnerability scanner vendors.
 type VulnerabilityScanner interface {
-	NewScanJob(meta JobMeta, options Options, spec corev1.PodSpec) (*batchv1.Job, error)
-	ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error)
+
+	// GetPodTemplateSpec describes the pod that will be created when executing a scan job
+	// for the specified pod descriptor.
+	GetPodTemplateSpec(spec corev1.PodSpec, options Options) (corev1.PodTemplateSpec, error)
+
+	// ParseVulnerabilityScanResult is a callback to parse and convert logs of the pod controlled
+	// by a scan job to the Starboard model.
+	ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (
+		v1alpha1.VulnerabilityScanResult, error)
 }
