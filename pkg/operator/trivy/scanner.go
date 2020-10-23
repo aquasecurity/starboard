@@ -17,12 +17,12 @@ import (
 
 type trivyScanner struct {
 	idGenerator ext.IDGenerator
-	config      trivy.Config
+	config      starboard.Config
 }
 
 // NewScanner constructs a new VulnerabilityScanner, which is using an official
 // Trivy container image to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, config trivy.Config) scanner.VulnerabilityScanner {
+func NewScanner(idGenerator ext.IDGenerator, config starboard.Config) scanner.VulnerabilityScanner {
 	return &trivyScanner{
 		idGenerator: idGenerator,
 		config:      config,
@@ -33,7 +33,7 @@ func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.O
 	initContainers := []corev1.Container{
 		{
 			Name:                     s.idGenerator.GenerateID(),
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    s.config.GetImageRef(starboard.TrivyImageRef),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env: []corev1.EnvVar{
@@ -95,7 +95,7 @@ func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.O
 
 		containers[i] = corev1.Container{
 			Name:                     c.Name,
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    s.config.GetImageRef(starboard.TrivyImageRef),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env: []corev1.EnvVar{

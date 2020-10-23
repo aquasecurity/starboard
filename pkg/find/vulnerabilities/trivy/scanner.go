@@ -27,12 +27,8 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-type Config interface {
-	GetTrivyImageRef() string
-}
-
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(config starboard.Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
 		config:    config,
 		opts:      opts,
@@ -43,7 +39,7 @@ func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Inter
 }
 
 type Scanner struct {
-	config    Config
+	config    starboard.Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
@@ -135,7 +131,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 	initContainers := []core.Container{
 		{
 			Name:                     initContainerName,
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    s.config.GetImageRef(starboard.TrivyImageRef),
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 			Env: []core.EnvVar{
@@ -248,7 +244,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 
 		scanJobContainers[i] = core.Container{
 			Name:                     c.Name,
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    s.config.GetImageRef(starboard.TrivyImageRef),
 			ImagePullPolicy:          core.PullIfNotPresent,
 			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 			Env:                      envs,

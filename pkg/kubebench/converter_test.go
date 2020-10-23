@@ -17,7 +17,7 @@ import (
 
 func TestConverter_Convert(t *testing.T) {
 	config := starboard.ConfigData{
-		"kube-bench.imageRef": "aquasec/kube-bench:0.3.1",
+		starboard.KubeBenchImageRef: "aquasec/kube-bench:0.3.1",
 	}
 	var testcases = []struct {
 		name string

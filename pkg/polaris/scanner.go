@@ -29,22 +29,19 @@ import (
 const (
 	polarisContainerName = "polaris"
 	configVolume         = "config"
-	polarisVersion       = "1.2"
-)
-
-var (
-	polarisContainerImage = fmt.Sprintf("quay.io/fairwinds/polaris:%s", polarisVersion)
 )
 
 type Scanner struct {
+	config    starboard.Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
 }
 
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(config starboard.Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		config:    config,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -87,7 +84,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		return
 	}
 
-	report, err = s.converter.Convert(logsReader)
+	report, err = s.converter.Convert(s.config, logsReader)
 	defer func() {
 		_ = logsReader.Close()
 	}()
@@ -151,7 +148,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 					Containers: []core.Container{
 						{
 							Name:                     polarisContainerName,
-							Image:                    polarisContainerImage,
+							Image:                    s.config.GetImageRef(starboard.PolarisImageRef),
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Resources: core.ResourceRequirements{

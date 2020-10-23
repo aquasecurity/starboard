@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,13 +13,16 @@ import (
 func TestConverter_Convert(t *testing.T) {
 	// FIXME Deterministic assert!
 	t.Skip("Fix me - the assert is not deterministic")
+	config := starboard.ConfigData{
+		starboard.PolarisImageRef: starboard.GetDefaultConfig()[starboard.PolarisImageRef],
+	}
 	file, err := os.Open("testdata/polaris-report.json")
 	require.NoError(t, err)
 	defer func() {
 		_ = file.Close()
 	}()
 
-	reports, err := NewConverter().Convert(file)
+	reports, err := NewConverter().Convert(config, file)
 	require.NoError(t, err)
 	assert.Equal(t, []v1alpha1.ConfigAudit{
 		{

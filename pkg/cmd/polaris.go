@@ -6,6 +6,7 @@ import (
 	starboard "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/polaris/crd"
+	s "github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -30,11 +31,11 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			config, err := cf.ToRESTConfig()
+			kubernetesconfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			clientset, err := kubernetes.NewForConfig(config)
+			clientset, err := kubernetes.NewForConfig(kubernetesconfig)
 			if err != nil {
 				return
 			}
@@ -42,11 +43,15 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, owner, err := polaris.NewScanner(opts, clientset).Scan(ctx, workload, gvk)
+			config, err := s.NewConfigManager(clientset, s.NamespaceName).Read(ctx)
+			if err != nil {
+				return err
+			}
+			report, owner, err := polaris.NewScanner(config, opts, clientset).Scan(ctx, workload, gvk)
 			if err != nil {
 				return
 			}
-			starboardClientset, err := starboard.NewForConfig(config)
+			starboardClientset, err := starboard.NewForConfig(kubernetesconfig)
 			if err != nil {
 				return
 			}

@@ -5,10 +5,11 @@ import (
 	"io"
 
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 )
 
 type Converter interface {
-	Convert(reader io.Reader) (sec.ConfigAudit, error)
+	Convert(config starboard.Config, reader io.Reader) (sec.ConfigAudit, error)
 }
 
 type converter struct {
@@ -20,13 +21,18 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAudit, err error) {
+func (c *converter) Convert(config starboard.Config, reader io.Reader) (reports sec.ConfigAudit, err error) {
 	var report Report
 	err = json.NewDecoder(reader).Decode(&report)
 	if err != nil {
 		return
 	}
-	reports = c.toConfigAudit(report.Results[0])
+	version, err := starboard.GetVersionFromImageRef(config.GetImageRef(starboard.PolarisImageRef))
+	if err != nil {
+		return sec.ConfigAudit{}, err
+	}
+
+	reports = c.toConfigAudit(version, report.Results[0])
 	return
 }
 
@@ -58,7 +64,7 @@ func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string]
 	return
 }
 
-func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
+func (c *converter) toConfigAudit(polarisVersion string, result Result) (report sec.ConfigAudit) {
 	var podChecks []sec.Check
 	containerChecks := make(map[string][]sec.Check)
 

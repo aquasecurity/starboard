@@ -17,7 +17,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(config Config, imageRef string, reader io.Reader) (starboardv1alpha1.VulnerabilityScanResult, error)
+	Convert(config starboard.Config, imageRef string, reader io.Reader) (starboardv1alpha1.VulnerabilityScanResult, error)
 }
 
 type converter struct {
@@ -29,7 +29,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(config Config, imageRef string, reader io.Reader) (report starboardv1alpha1.VulnerabilityScanResult, err error) {
+func (c *converter) Convert(config starboard.Config, imageRef string, reader io.Reader) (report starboardv1alpha1.VulnerabilityScanResult, err error) {
 	var scanReports []ScanReport
 	skipReader, err := c.skippingNoisyOutputReader(reader)
 	if err != nil {
@@ -62,7 +62,7 @@ func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error
 	return strings.NewReader(inputAsString), nil
 }
 
-func (c *converter) convert(config Config, imageRef string, reports []ScanReport) (starboardv1alpha1.VulnerabilityScanResult, error) {
+func (c *converter) convert(config starboard.Config, imageRef string, reports []ScanReport) (starboardv1alpha1.VulnerabilityScanResult, error) {
 	vulnerabilities := make([]starboardv1alpha1.Vulnerability, 0)
 
 	for _, report := range reports {
@@ -85,7 +85,7 @@ func (c *converter) convert(config Config, imageRef string, reports []ScanReport
 		return starboardv1alpha1.VulnerabilityScanResult{}, err
 	}
 
-	version, err := starboard.GetVersionFromImageRef(config.GetTrivyImageRef())
+	version, err := starboard.GetVersionFromImageRef(config.GetImageRef(starboard.TrivyImageRef))
 	if err != nil {
 		return starboardv1alpha1.VulnerabilityScanResult{}, err
 	}

@@ -64,7 +64,7 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 		{
 			name: "Should return image reference from config data",
 			configData: starboard.ConfigData{
-				"trivy.imageRef": "gcr.io/aquasecurity/trivy:0.8.0",
+				starboard.TrivyImageRef: "gcr.io/aquasecurity/trivy:0.8.0",
 			},
 			expectedImageRef: "gcr.io/aquasecurity/trivy:0.8.0",
 		},
@@ -72,7 +72,7 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetTrivyImageRef()
+			imageRef := tc.configData.GetImageRef(starboard.TrivyImageRef)
 			assert.Equal(t, tc.expectedImageRef, imageRef)
 		})
 	}
@@ -100,7 +100,7 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetKubeBenchImageRef()
+			imageRef := tc.configData.GetImageRef(starboard.KubeBenchImageRef)
 			assert.Equal(t, tc.expectedImageRef, imageRef)
 		})
 	}

@@ -13,8 +13,13 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 )
 
+// ImageRef constants for referring to the configuration keys
 const (
-	polarisConfigYAML = `checks:
+	TrivyImageRef      = "trivy.imageRef"
+	KubeBenchImageRef  = "kube-bench.imageRef"
+	KubeHunterImageRef = "kube-hunter.imageRef"
+	PolarisImageRef    = "polaris.imageRef"
+	polarisConfigYAML  = `checks:
   # reliability
   multipleReplicasForDeployment: ignore
   priorityClassNotSet: ignore
@@ -208,6 +213,10 @@ type BuildInfo struct {
 	Date    string
 }
 
+type Config interface {
+	GetImageRef(string) string
+}
+
 // ConfigData holds Starboard configuration settings as a set
 // of key-value pairs.
 type ConfigData map[string]string
@@ -223,25 +232,20 @@ type ConfigManager interface {
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
 		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef":      "docker.io/aquasec/trivy:0.9.1",
-		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
+		TrivyImageRef:         "docker.io/aquasec/trivy:0.9.1",
+		KubeBenchImageRef:     "docker.io/aquasec/kube-bench:0.4.0",
+		PolarisImageRef:       "quay.io/fairwinds/polaris:1.2",
+		KubeHunterImageRef:    "docker.io/aquasec/kube-hunter:0.3.1",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
-func (c ConfigData) GetTrivyImageRef() string {
-	if imageRef, ok := c["trivy.imageRef"]; ok {
+// GetImageRef returns the container version based on the type of scanner
+func (c ConfigData) GetImageRef(k string) string {
+	if imageRef, ok := c[k]; ok {
 		return imageRef
 	}
-	return "docker.io/aquasec/trivy:0.9.1"
-}
-
-// GetKubeBenchImageRef returns Docker image of kube-bench scanner.
-func (c ConfigData) GetKubeBenchImageRef() string {
-	if imageRef, ok := c["kube-bench.imageRef"]; ok {
-		return imageRef
-	}
-	return "docker.io/aquasec/kube-bench:0.4.0"
+	return GetDefaultConfig()[k]
 }
 
 // GetVersionFromImageRef returns the image identifier for the specified image reference.

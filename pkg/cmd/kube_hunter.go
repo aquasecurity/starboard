@@ -6,6 +6,7 @@ import (
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
 	"github.com/aquasecurity/starboard/pkg/kubehunter/crd"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -17,11 +18,11 @@ func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 		Short: "Hunt for security weaknesses",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
-			config, err := cf.ToRESTConfig()
+			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return
 			}
-			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}
@@ -29,11 +30,15 @@ func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return
 			}
-			report, err := kubehunter.NewScanner(opts, kubernetesClientset).Scan(ctx)
+			config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
+			if err != nil {
+				return err
+			}
+			report, err := kubehunter.NewScanner(config, opts, kubernetesClientset).Scan(ctx)
 			if err != nil {
 				return
 			}
-			starboardClientset, err := starboardapi.NewForConfig(config)
+			starboardClientset, err := starboardapi.NewForConfig(kubernetesConfig)
 			if err != nil {
 				return
 			}

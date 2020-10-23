@@ -33,7 +33,7 @@ const (
 )
 
 type Config interface {
-	GetKubeBenchImageRef() string
+	GetImageRef(string) string
 }
 
 type Scanner struct {
@@ -185,7 +185,7 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 					Containers: []core.Container{
 						{
 							Name:                     kubeBenchContainerName,
-							Image:                    s.config.GetKubeBenchImageRef(),
+							Image:                    s.config.GetImageRef(starboard.KubeBenchImageRef),
 							ImagePullPolicy:          core.PullIfNotPresent,
 							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"kube-bench", target},

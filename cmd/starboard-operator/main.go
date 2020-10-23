@@ -216,7 +216,7 @@ func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config, starboard
 		return nil, fmt.Errorf("invalid configuration: none vulnerability scanner enabled")
 	}
 	if config.ScannerTrivy.Enabled {
-		setupLog.Info("Using Trivy as vulnerability scanner", "image", starboardConfig.GetTrivyImageRef())
+		setupLog.Info("Using Trivy as vulnerability scanner", "image", starboardConfig.GetImageRef(starboard.TrivyImageRef))
 		return trivy.NewScanner(idGenerator, starboardConfig), nil
 	}
 	if config.ScannerAquaCSP.Enabled {

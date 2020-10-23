@@ -26,7 +26,7 @@ func (c *converter) Convert(config Config, reader io.Reader) (report aquasecurit
 		return
 	}
 
-	version, err := starboard.GetVersionFromImageRef(config.GetKubeBenchImageRef())
+	version, err := starboard.GetVersionFromImageRef(config.GetImageRef(starboard.KubeBenchImageRef))
 	if err != nil {
 		return aquasecurityv1alpha1.CISKubeBenchOutput{}, err
 	}

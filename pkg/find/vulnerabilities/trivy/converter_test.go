@@ -96,7 +96,7 @@ var (
 
 func TestConverter_Convert(t *testing.T) {
 	config := starboard.ConfigData{
-		"trivy.imageRef": "aquasec/trivy:0.9.1",
+		starboard.TrivyImageRef: "aquasec/trivy:0.9.1",
 	}
 
 	testCases := []struct {

@@ -25,22 +25,22 @@ import (
 )
 
 const (
-	kubeHunterVersion       = "0.3.1"
 	kubeHunterContainerName = "kube-hunter"
 )
 
-var (
-	kubeHunterContainerImage = fmt.Sprintf("aquasec/kube-hunter:%s", kubeHunterVersion)
-)
+// KubeHunterVersion version of kube-hunter being used
+var KubeHunterVersion string
 
 type Scanner struct {
+	config    starboard.Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 }
 
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(config starboard.Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		config:    config,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -84,7 +84,13 @@ func (s *Scanner) Scan(ctx context.Context) (report starboardv1alpha1.KubeHunter
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	report, err = OutputFrom(logsReader)
+	version, err := starboard.GetVersionFromImageRef(s.config.GetImageRef(starboard.KubeHunterImageRef))
+	if err != nil {
+		err = fmt.Errorf("getting version from image ref: %w", err)
+		version = starboard.GetDefaultConfig()[starboard.KubeHunterImageRef]
+	}
+
+	report, err = OutputFrom(logsReader, version)
 	if err != nil {
 		err = fmt.Errorf("parsing kube hunter report: %w", err)
 		return
@@ -119,7 +125,7 @@ func (s *Scanner) prepareKubeHunterJob() *batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:                     kubeHunterContainerName,
-							Image:                    kubeHunterContainerImage,
+							Image:                    s.config.GetImageRef(starboard.KubeHunterImageRef),
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"python", "kube-hunter.py"},
