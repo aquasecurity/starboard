@@ -3,8 +3,9 @@ package kube
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/starboard"
 	"time"
+
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"k8s.io/utils/pointer"
 
@@ -43,15 +44,6 @@ var (
 			},
 		},
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
-	}
-	configMap = &core.ConfigMap{
-		ObjectMeta: meta.ObjectMeta{
-			Name: starboard.ConfigMapName,
-			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
-			},
-		},
-		Data: starboard.GetDefaultConfig(),
 	}
 	clusterRole = &rbac.ClusterRole{
 		ObjectMeta: meta.ObjectMeta{
@@ -136,15 +128,20 @@ type CRManager interface {
 }
 
 type crManager struct {
-	clientset    kubernetes.Interface
-	clientsetext extapi.ApiextensionsV1beta1Interface
+	configManager starboard.ConfigManager
+	clientset     kubernetes.Interface
+	clientsetext  extapi.ApiextensionsV1beta1Interface
 }
 
-// NewCRManager constructs a CRManager with the given Kubernetes interface.
-func NewCRManager(clientset kubernetes.Interface, clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
+// NewCRManager constructs a CRManager with the given starboard.ConfigManager and kubernetes.Interface.
+func NewCRManager(
+	configManager starboard.ConfigManager,
+	clientset kubernetes.Interface,
+	clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
 	return &crManager{
-		clientset:    clientset,
-		clientsetext: clientsetext,
+		configManager: configManager,
+		clientset:     clientset,
+		clientsetext:  clientsetext,
 	}
 }
 
@@ -175,7 +172,7 @@ func (m *crManager) Init(ctx context.Context) (err error) {
 		return
 	}
 
-	err = m.createConfigMapIfNotFound(ctx, configMap)
+	err = m.configManager.EnsureDefault(ctx)
 	if err != nil {
 		return
 	}
@@ -275,21 +272,6 @@ func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core
 	return
 }
 
-func (m *crManager) createConfigMapIfNotFound(ctx context.Context, cm *core.ConfigMap) (err error) {
-	name := cm.Name
-	_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
-	switch {
-	case err == nil:
-		klog.V(3).Infof("ConfigMap %q already exists", starboard.NamespaceName+"/"+name)
-		return
-	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ConfigMap %q", starboard.NamespaceName+"/"+name)
-		_, err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Create(ctx, cm, meta.CreateOptions{})
-		return
-	}
-	return
-}
-
 func (m *crManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.ClusterRole) (err error) {
 	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), meta.GetOptions{})
 	switch {
@@ -374,9 +356,8 @@ func (m *crManager) Cleanup(ctx context.Context) (err error) {
 		return
 	}
 
-	klog.V(3).Infof("Deleting ConfigMap %q", starboard.NamespaceName+"/"+starboard.ConfigMapName)
-	err = m.clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Delete(ctx, starboard.ConfigMapName, meta.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
+	err = m.configManager.Delete(ctx)
+	if err != nil {
 		return
 	}
 

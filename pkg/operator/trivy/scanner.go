@@ -3,12 +3,12 @@ package trivy
 import (
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -17,12 +17,12 @@ import (
 
 type trivyScanner struct {
 	idGenerator ext.IDGenerator
-	config      etc.ScannerTrivy
+	config      trivy.Config
 }
 
 // NewScanner constructs a new VulnerabilityScanner, which is using an official
 // Trivy container image to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, config etc.ScannerTrivy) scanner.VulnerabilityScanner {
+func NewScanner(idGenerator ext.IDGenerator, config trivy.Config) scanner.VulnerabilityScanner {
 	return &trivyScanner{
 		idGenerator: idGenerator,
 		config:      config,
@@ -33,9 +33,35 @@ func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.O
 	initContainers := []corev1.Container{
 		{
 			Name:                     s.idGenerator.GenerateID(),
-			Image:                    s.config.ImageRef,
+			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+			Env: []corev1.EnvVar{
+				{
+					Name: "HTTP_PROXY",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: starboard.ConfigMapName,
+							},
+							Key:      "trivy.httpProxy",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
+				{
+					Name: "GITHUB_TOKEN",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: starboard.ConfigMapName,
+							},
+							Key:      "trivy.githubToken",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
+			},
 			Command: []string{
 				"trivy",
 			},
@@ -66,14 +92,38 @@ func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.O
 
 	containers := make([]corev1.Container, len(spec.Containers))
 	for i, c := range spec.Containers {
-		var envs []corev1.EnvVar
 
 		containers[i] = corev1.Container{
 			Name:                     c.Name,
-			Image:                    s.config.ImageRef,
+			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-			Env:                      envs,
+			Env: []corev1.EnvVar{
+				{
+					Name: "TRIVY_SEVERITY",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: starboard.ConfigMapName,
+							},
+							Key:      "trivy.severity",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
+				{
+					Name: "HTTP_PROXY",
+					ValueFrom: &corev1.EnvVarSource{
+						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: starboard.ConfigMapName,
+							},
+							Key:      "trivy.httpProxy",
+							Optional: pointer.BoolPtr(true),
+						},
+					},
+				},
+			},
 			Command: []string{
 				"trivy",
 			},

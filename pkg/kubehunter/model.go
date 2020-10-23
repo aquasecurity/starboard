@@ -2,8 +2,9 @@ package kubehunter
 
 import (
 	"encoding/json"
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"io"
+
+	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
 func toSummary(vulnerabilities []sec.KubeHunterVulnerability) (summary sec.KubeHunterSummary) {

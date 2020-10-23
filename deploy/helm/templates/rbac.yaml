@@ -37,6 +37,13 @@ rules:
       - list
       - watch
   - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - create
+  - apiGroups:
       - apps
     resources: # resources that own pods are inspected
       - replicasets

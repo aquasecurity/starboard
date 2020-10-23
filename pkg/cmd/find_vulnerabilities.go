@@ -72,7 +72,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			config, err := starboard.NewConfigReader(kubernetesClientset).Read(ctx)
+			config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
 				return
 			}

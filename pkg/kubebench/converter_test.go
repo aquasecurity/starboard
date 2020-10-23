@@ -3,9 +3,10 @@ package kubebench_test
 import (
 	"encoding/json"
 	"errors"
-	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"os"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 

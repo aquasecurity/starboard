@@ -3,8 +3,9 @@ package trivy
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/starboard"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/kube/secrets"

@@ -2,8 +2,9 @@ package ext
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"sync/atomic"
+
+	"github.com/google/uuid"
 )
 
 // IDGenerator defines contract for generating universally unique identifiers.
