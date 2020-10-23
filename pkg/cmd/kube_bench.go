@@ -46,7 +46,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				err = fmt.Errorf("listing nodes: %w", err)
 				return
 			}
-			config, err := starboard.NewConfigReader(kubernetesClientset).Read(ctx)
+			config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
 				return err
 			}

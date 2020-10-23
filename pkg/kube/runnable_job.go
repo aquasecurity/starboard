@@ -3,8 +3,9 @@ package kube
 import (
 	"context"
 	"fmt"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
+
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/klog"
 

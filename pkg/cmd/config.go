@@ -33,7 +33,7 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 			if err != nil {
 				return
 			}
-			config, err := starboard.NewConfigReader(clientset).Read(ctx)
+			config, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
 				return
 			}

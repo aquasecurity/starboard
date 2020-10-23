@@ -2,6 +2,7 @@ package vulnerabilities
 
 import (
 	"context"
+
 	"github.com/aquasecurity/starboard/pkg/docker"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"

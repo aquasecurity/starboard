@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -209,8 +212,11 @@ type BuildInfo struct {
 // of key-value pairs.
 type ConfigData map[string]string
 
-type ConfigReader interface {
+// ConfigManager defines methods for managing ConfigData.
+type ConfigManager interface {
+	EnsureDefault(ctx context.Context) error
 	Read(ctx context.Context) (ConfigData, error)
+	Delete(ctx context.Context) error
 }
 
 // GetDefaultConfig returns the default configuration data.
@@ -256,22 +262,50 @@ func GetVersionFromImageRef(imageRef string) (string, error) {
 	return version, nil
 }
 
-// NewConfigReader constructs a new ConfigReader that is using client-go
-// interfaces to read ConfigData from the ConfigMap.
-func NewConfigReader(client kubernetes.Interface) ConfigReader {
-	return &configReader{
-		client: client,
+// NewConfigManager constructs a new ConfigManager that is using kubernetes.Interface
+// to manage ConfigData backed by the the ConfigMap stored in the specified namespace.
+func NewConfigManager(client kubernetes.Interface, namespace string) ConfigManager {
+	return &configManager{
+		client:    client,
+		namespace: namespace,
 	}
 }
 
-type configReader struct {
-	client kubernetes.Interface
+type configManager struct {
+	client    kubernetes.Interface
+	namespace string
 }
 
-func (c *configReader) Read(ctx context.Context) (ConfigData, error) {
-	cm, err := c.client.CoreV1().ConfigMaps(NamespaceName).Get(ctx, ConfigMapName, metav1.GetOptions{})
+func (c *configManager) EnsureDefault(ctx context.Context) error {
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.namespace,
+			Name:      ConfigMapName,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+		Data: GetDefaultConfig(),
+	}
+	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, cm, metav1.CreateOptions{})
+	if !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
+func (c *configManager) Read(ctx context.Context) (ConfigData, error) {
+	cm, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, ConfigMapName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return cm.Data, nil
+}
+
+func (c *configManager) Delete(ctx context.Context) error {
+	err := c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, ConfigMapName, metav1.DeleteOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	return err
 }

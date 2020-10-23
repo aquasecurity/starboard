@@ -29,12 +29,7 @@ type Operator struct {
 }
 
 type ScannerTrivy struct {
-	Enabled  bool   `env:"OPERATOR_SCANNER_TRIVY_ENABLED" envDefault:"true"`
-	ImageRef string `env:"OPERATOR_SCANNER_TRIVY_IMAGE" envDefault:"aquasec/trivy:0.11.0"`
-}
-
-func (c ScannerTrivy) GetTrivyImageRef() string {
-	return c.ImageRef
+	Enabled bool `env:"OPERATOR_SCANNER_TRIVY_ENABLED" envDefault:"true"`
 }
 
 type ScannerAquaCSP struct {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -74,22 +75,22 @@ func main() {
 
 func run() error {
 	setupLog.Info("Starting operator", "version", versionInfo)
-	config, err := etc.GetOperatorConfig()
+	operatorConfig, err := etc.GetOperatorConfig()
 	if err != nil {
 		return fmt.Errorf("getting operator config: %w", err)
 	}
 
-	log.SetLogger(zap.New(zap.UseDevMode(config.Operator.LogDevMode)))
+	log.SetLogger(zap.New(zap.UseDevMode(operatorConfig.Operator.LogDevMode)))
 
 	// Validate configured namespaces to resolve install mode.
-	operatorNamespace, err := config.Operator.GetOperatorNamespace()
+	operatorNamespace, err := operatorConfig.Operator.GetOperatorNamespace()
 	if err != nil {
 		return fmt.Errorf("getting operator namespace: %w", err)
 	}
 
-	targetNamespaces := config.Operator.GetTargetNamespaces()
+	targetNamespaces := operatorConfig.Operator.GetTargetNamespaces()
 
-	installMode, err := config.Operator.GetInstallMode()
+	installMode, err := operatorConfig.Operator.GetInstallMode()
 	if err != nil {
 		return fmt.Errorf("getting install mode: %w", err)
 	}
@@ -100,8 +101,8 @@ func run() error {
 	// Set the default manager options.
 	options := manager.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     config.Operator.MetricsBindAddress,
-		HealthProbeBindAddress: config.Operator.HealthProbeBindAddress,
+		MetricsBindAddress:     operatorConfig.Operator.MetricsBindAddress,
+		HealthProbeBindAddress: operatorConfig.Operator.HealthProbeBindAddress,
 	}
 
 	switch installMode {
@@ -158,16 +159,27 @@ func run() error {
 		return err
 	}
 
+	configManager := starboard.NewConfigManager(kubernetesClientset, operatorNamespace)
+	err = configManager.EnsureDefault(context.Background())
+	if err != nil {
+		return err
+	}
+
+	starboardConfig, err := configManager.Read(context.Background())
+	if err != nil {
+		return err
+	}
+
 	store := reports.NewStore(mgr.GetClient(), scheme)
 	idGenerator := ext.NewGoogleUUIDGenerator()
 
-	scanner, err := getEnabledScanner(idGenerator, config)
+	scanner, err := getEnabledScanner(idGenerator, operatorConfig, starboardConfig)
 	if err != nil {
 		return err
 	}
 
 	if err = (&pod.PodController{
-		Config:      config.Operator,
+		Config:      operatorConfig.Operator,
 		Client:      mgr.GetClient(),
 		IDGenerator: idGenerator,
 		Store:       store,
@@ -178,7 +190,7 @@ func run() error {
 	}
 
 	if err = (&job.JobController{
-		Config:     config.Operator,
+		Config:     operatorConfig.Operator,
 		LogsReader: logs.NewReader(kubernetesClientset),
 		Client:     mgr.GetClient(),
 		Store:      store,
@@ -196,7 +208,7 @@ func run() error {
 	return nil
 }
 
-func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config) (scanner.VulnerabilityScanner, error) {
+func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config, starboardConfig starboard.ConfigData) (scanner.VulnerabilityScanner, error) {
 	if config.ScannerTrivy.Enabled && config.ScannerAquaCSP.Enabled {
 		return nil, fmt.Errorf("invalid configuration: multiple vulnerability scanners enabled")
 	}
@@ -204,8 +216,8 @@ func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config) (scanner.
 		return nil, fmt.Errorf("invalid configuration: none vulnerability scanner enabled")
 	}
 	if config.ScannerTrivy.Enabled {
-		setupLog.Info("Using Trivy as vulnerability scanner", "image", config.ScannerTrivy.ImageRef)
-		return trivy.NewScanner(idGenerator, config.ScannerTrivy), nil
+		setupLog.Info("Using Trivy as vulnerability scanner", "image", starboardConfig.GetTrivyImageRef())
+		return trivy.NewScanner(idGenerator, starboardConfig), nil
 	}
 	if config.ScannerAquaCSP.Enabled {
 		setupLog.Info("Using Aqua CSP as vulnerability scanner", "image", config.ScannerAquaCSP.ImageRef)

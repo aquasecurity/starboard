@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,7 +106,7 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	}
 }
 
-func TestConfigReader_Read(t *testing.T) {
+func TestConfigManager_Read(t *testing.T) {
 	clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: starboard.NamespaceName,
@@ -114,9 +116,77 @@ func TestConfigReader_Read(t *testing.T) {
 			"foo": "bar",
 		},
 	})
-	configData, err := starboard.NewConfigReader(clientset).Read(context.TODO())
+	configData, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Read(context.TODO())
 	require.NoError(t, err)
 	assert.Equal(t, starboard.ConfigData{
 		"foo": "bar",
 	}, configData)
+}
+
+func TestConfigManager_EnsureDefault(t *testing.T) {
+
+	t.Run("Should create the ConfigMap with the default configuration settings", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset()
+
+		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).EnsureDefault(context.TODO())
+		require.NoError(t, err)
+
+		cm, err := clientset.CoreV1().
+			ConfigMaps(starboard.NamespaceName).
+			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, starboard.GetDefaultConfig(), starboard.ConfigData(cm.Data))
+	})
+
+	t.Run("Should not modify the ConfigMap if it already exists", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: starboard.NamespaceName,
+				Name:      starboard.ConfigMapName,
+			},
+			Data: map[string]string{
+				"foo": "bar",
+			},
+		})
+
+		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).EnsureDefault(context.TODO())
+		require.NoError(t, err)
+
+		cm, err := clientset.CoreV1().
+			ConfigMaps(starboard.NamespaceName).
+			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, map[string]string{
+			"foo": "bar",
+		}, cm.Data)
+	})
+
+}
+
+func TestConfigManager_Delete(t *testing.T) {
+
+	t.Run("Should not return error when ConfigMap does not exist", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset()
+		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
+		require.NoError(t, err)
+	})
+
+	t.Run("Should delete the ConfigMap", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: starboard.NamespaceName,
+				Name:      starboard.ConfigMapName,
+			},
+			Data: map[string]string{
+				"foo": "bar",
+			},
+		})
+
+		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
+		require.NoError(t, err)
+
+		_, err = clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		assert.True(t, errors.IsNotFound(err))
+	})
 }
