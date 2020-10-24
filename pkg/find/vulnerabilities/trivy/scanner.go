@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/docker"
@@ -16,7 +18,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/runner"
 
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/google/uuid"
 	batch "k8s.io/api/batch/v1"
@@ -50,7 +51,7 @@ type Scanner struct {
 	converter Converter
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilities.WorkloadVulnerabilities, owner meta.Object, err error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilityreport.WorkloadVulnerabilities, owner meta.Object, err error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 	podSpec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
@@ -350,7 +351,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 	}, imagePullSecret, nil
 }
 
-func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilities.WorkloadVulnerabilities, err error) {
+func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilityreport.WorkloadVulnerabilities, err error) {
 	reports = make(map[string]sec.VulnerabilityScanResult)
 
 	var containerImagesAsJSON string

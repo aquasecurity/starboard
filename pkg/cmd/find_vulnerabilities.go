@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -88,7 +89,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return
 			}
-			err = crd.NewReadWriter(GetScheme(), starboardClientset).Write(ctx, reports, owner)
+			err = vulnerabilityreport.NewReadWriter(GetScheme(), starboardClientset).Write(ctx, reports, owner)
 			return
 		},
 	}

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	vulnsCrd "github.com/aquasecurity/starboard/pkg/find/vulnerabilities/crd"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris/crd"
 	"github.com/aquasecurity/starboard/pkg/report"
@@ -23,35 +24,33 @@ NAME is the name of a particular Kubernetes workload.
 `,
 		Example: fmt.Sprintf(`  # Save report to a file
   %[1]s get report deploy/nginx > report.html`, "starboard"),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config, err := cf.ToRESTConfig()
 			if err != nil {
-				return
+				return err
 			}
 			starboardClientset, err := clientset.NewForConfig(config)
 			if err != nil {
-				return
+				return err
 			}
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
-				return
+				return err
 			}
 			mapper, err := cf.ToRESTMapper()
 			if err != nil {
-				return
+				return err
 			}
 			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
-				return
+				return err
 			}
 
 			caReader := configAuditCrd.NewReadWriter(GetScheme(), starboardClientset)
-			vulnsReader := vulnsCrd.NewReadWriter(GetScheme(), starboardClientset)
+			vulnsReader := vulnerabilityreport.NewReadWriter(GetScheme(), starboardClientset)
 
 			reporter := report.NewHTMLReporter(caReader, vulnsReader, workload)
-			err = reporter.GenerateReport(os.Stdout)
-
-			return
+			return reporter.GenerateReport(os.Stdout)
 		},
 	}
 

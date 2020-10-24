@@ -6,22 +6,22 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
-	vulnsCrd "github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 )
 
 type HTMLReporter struct {
-	vulnerabilityReportsReader vulnsCrd.ReadWriter
+	vulnerabilityReportsReader vulnerabilityreport.ReadWriter
 	configAuditReportsReader   configAuditCrd.ReadWriter
 	workload                   kube.Object
 }
 
-func NewHTMLReporter(configAuditReportsReader configAuditCrd.ReadWriter, vulnerabilityReportsReader vulnsCrd.ReadWriter, workload kube.Object) HTMLReporter {
+func NewHTMLReporter(configAuditReportsReader configAuditCrd.ReadWriter, vulnerabilityReportsReader vulnerabilityreport.ReadWriter, workload kube.Object) HTMLReporter {
 	return HTMLReporter{
 		vulnerabilityReportsReader: vulnerabilityReportsReader,
 		configAuditReportsReader:   configAuditReportsReader,
@@ -29,7 +29,7 @@ func NewHTMLReporter(configAuditReportsReader configAuditCrd.ReadWriter, vulnera
 	}
 }
 
-func (h *HTMLReporter) readVulnerabilitiesAndConfigAudits() (vulnsReports vulnerabilities.WorkloadVulnerabilities, configAudit v1alpha1.ConfigAuditReport, err error) {
+func (h *HTMLReporter) readVulnerabilitiesAndConfigAudits() (vulnsReports vulnerabilityreport.WorkloadVulnerabilities, configAudit v1alpha1.ConfigAuditReport, err error) {
 	ctx := context.Background()
 	configAudit, err = h.configAuditReportsReader.Read(ctx, h.workload)
 	if err != nil {

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
@@ -26,8 +28,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/trivy"
 
 	appsv1 "k8s.io/api/apps/v1"
-
-	"github.com/aquasecurity/starboard/pkg/operator/reports"
 
 	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
@@ -170,7 +170,7 @@ func run() error {
 		return err
 	}
 
-	store := reports.NewStore(mgr.GetClient(), scheme)
+	store := vulnerabilityreport.NewStore(mgr.GetClient(), scheme)
 	idGenerator := ext.NewGoogleUUIDGenerator()
 
 	scanner, err := getEnabledScanner(idGenerator, operatorConfig, starboardConfig)
