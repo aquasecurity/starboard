@@ -132,7 +132,7 @@ func (r *PodController) ensureScanJob(ctx context.Context, owner kube.Object, ha
 		kube.LabelResourceNamespace: pod.Namespace,
 		kube.LabelResourceKind:      string(owner.Kind),
 		kube.LabelResourceName:      owner.Name,
-		etc.LabelPodSpecHash:        hash,
+		kube.LabelPodSpecHash:       hash,
 	}, client.InNamespace(r.Config.Namespace))
 	if err != nil {
 		return fmt.Errorf("listing jos: %w", err)
@@ -198,7 +198,7 @@ func (r *PodController) GetJobMetaFrom(owner kube.Object, hash string, spec core
 			kube.LabelResourceName:         owner.Name,
 			kube.LabelResourceNamespace:    owner.Namespace,
 			"app.kubernetes.io/managed-by": "starboard-operator",
-			etc.LabelPodSpecHash:           hash,
+			kube.LabelPodSpecHash:          hash,
 		},
 		Annotations: map[string]string{
 			kube.AnnotationContainerImages: containerImagesAsJSON,

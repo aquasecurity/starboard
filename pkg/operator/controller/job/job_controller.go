@@ -86,9 +86,9 @@ func (r *JobController) processCompleteScanJob(ctx context.Context, scanJob *bat
 		return fmt.Errorf("getting container images: %w", err)
 	}
 
-	hash, ok := scanJob.Labels[etc.LabelPodSpecHash]
+	hash, ok := scanJob.Labels[kube.LabelPodSpecHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", etc.LabelPodSpecHash)
+		return fmt.Errorf("expected label %s not set", kube.LabelPodSpecHash)
 	}
 
 	hasVulnerabilityReports, err := r.Store.HasVulnerabilityReports(ctx, workload, hash, containerImages)
@@ -124,7 +124,7 @@ func (r *JobController) processCompleteScanJob(ctx context.Context, scanJob *bat
 	}
 
 	log.Info("Writing VulnerabilityReports", "owner", workload)
-	err = r.Store.SaveVulnerabilityReports(ctx, workload, hash, vulnerabilityReports)
+	err = r.Store.SaveVulnerabilityReports(ctx, vulnerabilityReports, workload, hash)
 	if err != nil {
 		return fmt.Errorf("writing vulnerability reports: %w", err)
 	}

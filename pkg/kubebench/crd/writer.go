@@ -3,6 +3,8 @@ package crd
 import (
 	"context"
 
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
@@ -44,7 +46,7 @@ func (w *ReadWriter) Write(ctx context.Context, report starboard.CISKubeBenchOut
 			},
 			Report: report,
 		}
-		err = kube.SetOwnerReference(node, report, w.scheme)
+		err = controllerutil.SetOwnerReference(node, report, w.scheme)
 		if err != nil {
 			return err
 		}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -61,7 +63,7 @@ func (w *ReadWriter) Write(ctx context.Context, report starboard.ConfigAudit, ow
 			},
 			Report: report,
 		}
-		err = kube.SetOwnerReference(owner, report, w.scheme)
+		err = controllerutil.SetOwnerReference(owner, report, w.scheme)
 		if err != nil {
 			return
 		}

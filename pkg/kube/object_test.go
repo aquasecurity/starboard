@@ -5,18 +5,11 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// TODO Migrate to Ginkgo
 func TestObjectFromLabelsSet(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -80,7 +73,6 @@ func TestObjectFromLabelsSet(t *testing.T) {
 	}
 }
 
-// TODO Migrate to Ginkgo
 func TestContainerImages_AsJSON_And_FromJSON(t *testing.T) {
 	containerImages := kube.ContainerImages{
 		"nginx": "nginx:1.16",
@@ -94,82 +86,3 @@ func TestContainerImages_AsJSON_And_FromJSON(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, containerImages, newContainerImages)
 }
-
-func TestKubePackage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Kube Package Suite")
-}
-
-var _ = Describe("Kube package", func() {
-
-	Describe("SetOwnerReference", func() {
-
-		It("should set ownerRef on an empty list", func() {
-			rs := &appsv1.ReplicaSet{}
-			dep := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", UID: "foo-uid"},
-			}
-			Expect(kube.SetOwnerReference(dep, rs, scheme.Scheme)).ToNot(HaveOccurred())
-			Expect(rs.OwnerReferences).To(ConsistOf(metav1.OwnerReference{
-				Name:       "foo",
-				Kind:       "Deployment",
-				APIVersion: "apps/v1",
-				UID:        "foo-uid",
-			}))
-		})
-
-		It("should not duplicate owner references", func() {
-			rs := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							Name:       "foo",
-							Kind:       "Deployment",
-							APIVersion: "apps/v1",
-							UID:        "foo-uid",
-						},
-					},
-				},
-			}
-			dep := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", UID: "foo-uid"},
-			}
-
-			Expect(kube.SetOwnerReference(dep, rs, scheme.Scheme)).ToNot(HaveOccurred())
-			Expect(rs.OwnerReferences).To(ConsistOf(metav1.OwnerReference{
-				Name:       "foo",
-				Kind:       "Deployment",
-				APIVersion: "apps/v1",
-				UID:        "foo-uid",
-			}))
-		})
-
-		It("should update the reference", func() {
-			rs := &appsv1.ReplicaSet{
-				ObjectMeta: metav1.ObjectMeta{
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							Name:       "foo",
-							Kind:       "Deployment",
-							APIVersion: "apps/v1",
-							UID:        "foo-uid-1",
-						},
-					},
-				},
-			}
-			dep := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", UID: "foo-uid-2"},
-			}
-
-			Expect(kube.SetOwnerReference(dep, rs, scheme.Scheme)).ToNot(HaveOccurred())
-			Expect(rs.OwnerReferences).To(ConsistOf(metav1.OwnerReference{
-				Name:       "foo",
-				Kind:       "Deployment",
-				APIVersion: "apps/v1",
-				UID:        "foo-uid-2",
-			}))
-
-		})
-	})
-
-})
