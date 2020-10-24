@@ -13,6 +13,7 @@ const (
 	LabelResourceNamespace = "starboard.resource.namespace"
 
 	LabelContainerName = "starboard.container.name"
+	LabelPodSpecHash   = "pod-spec-hash"
 
 	LabelScannerName   = "starboard.scanner.name"
 	LabelScannerVendor = "starboard.scanner.vendor"

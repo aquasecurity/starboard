@@ -8,10 +8,6 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
-const (
-	LabelPodSpecHash = "pod-spec-hash"
-)
-
 type Config struct {
 	Operator       Operator
 	ScannerAquaCSP ScannerAquaCSP
