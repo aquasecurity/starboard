@@ -1,11 +1,11 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 {% import "github.com/aquasecurity/starboard/pkg/kube" %}
-{% import "github.com/aquasecurity/starboard/pkg/find/vulnerabilities" %}
+{% import "github.com/aquasecurity/starboard/pkg/vulnerabilityreport" %}
 
 
 {% code
 type ReportPage struct {
-	VulnsReports vulnerabilities.WorkloadVulnerabilities
+	VulnsReports vulnerabilityreport.WorkloadVulnerabilities
 	ConfigAuditReport v1alpha1.ConfigAuditReport
   Workload kube.Object
 }

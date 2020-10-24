@@ -11,7 +11,7 @@ import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 import "github.com/aquasecurity/starboard/pkg/kube"
 
 //line pkg/report/templates/default.qtpl:3
-import "github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
+import "github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 //line pkg/report/templates/default.qtpl:6
 import (
@@ -28,7 +28,7 @@ var (
 
 //line pkg/report/templates/default.qtpl:7
 type ReportPage struct {
-	VulnsReports      vulnerabilities.WorkloadVulnerabilities
+	VulnsReports      vulnerabilityreport.WorkloadVulnerabilities
 	ConfigAuditReport v1alpha1.ConfigAuditReport
 	Workload          kube.Object
 }

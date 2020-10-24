@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"github.com/aquasecurity/starboard/pkg/scanners"
@@ -17,7 +19,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/resources"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	"github.com/aquasecurity/starboard/pkg/operator/reports"
 	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 	batchv1 "k8s.io/api/batch/v1"
 
@@ -37,7 +38,7 @@ type PodController struct {
 	Config      etc.Operator
 	Client      client.Client
 	IDGenerator ext.IDGenerator
-	Store       reports.StoreInterface
+	Store       vulnerabilityreport.StoreInterface
 	Scanner     scanner.VulnerabilityScanner
 	Scheme      *runtime.Scheme
 }

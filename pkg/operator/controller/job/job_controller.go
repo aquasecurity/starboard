@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/operator/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,7 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/operator/reports"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -35,7 +36,7 @@ type JobController struct {
 	LogsReader *logs.Reader
 	Scheme     *runtime.Scheme
 	Scanner    scanner.VulnerabilityScanner
-	Store      reports.StoreInterface
+	Store      vulnerabilityreport.StoreInterface
 }
 
 func (r *JobController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
