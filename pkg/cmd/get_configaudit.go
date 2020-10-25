@@ -1,15 +1,19 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
+	"io"
 
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewGetConfigAuditCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewGetConfigAuditCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configaudit (NAME | TYPE/NAME)",
 		Short: "Get configuration audit report",
@@ -28,8 +32,19 @@ NAME is the name of a particular Kubernetes workload.
   %[1]s get configaudit replicaset/nginx
 
   # Get vulnerabilities for a CronJob with the specified name in JSON output format
-  %[1]s get configaudit cj/my-job -o json`, "starboard"),
+  %[1]s get configaudit cj/my-job -o json`, executable),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
+
+			config, err := cf.ToRESTConfig()
+			if err != nil {
+				return
+			}
+			client, err := clientset.NewForConfig(config)
+			if err != nil {
+				return
+			}
+
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return
@@ -43,18 +58,33 @@ NAME is the name of a particular Kubernetes workload.
 				return
 			}
 
-			kubectlCmd := exec.Command("kubectl",
-				"get",
-				starboard.ConfigAuditReportCRName,
-				fmt.Sprintf("-l=starboard.resource.kind=%s,starboard.resource.name=%s", workload.Kind, workload.Name),
-				fmt.Sprintf("--namespace=%s", workload.Namespace),
-				fmt.Sprintf("--output=%s", cmd.Flag("output").Value.String()))
-			stdoutStderr, err := kubectlCmd.CombinedOutput()
+			list, err := client.AquasecurityV1alpha1().
+				ConfigAuditReports(workload.Namespace).
+				List(ctx, metav1.ListOptions{
+					LabelSelector: labels.Set{
+						kube.LabelResourceKind:      string(workload.Kind),
+						kube.LabelResourceName:      workload.Name,
+						kube.LabelResourceNamespace: workload.Namespace,
+					}.String(),
+				})
 			if err != nil {
-				return
+				return fmt.Errorf("list config audit reports: %v", err)
 			}
-			fmt.Printf("%s", stdoutStderr)
-			return
+
+			format := cmd.Flag("output").Value.String()
+			printer, err := genericclioptions.NewPrintFlags("").
+				WithTypeSetter(GetScheme()).
+				WithDefaultOutput(format).
+				ToPrinter()
+			if err != nil {
+				return fmt.Errorf("create printer: %v", err)
+			}
+
+			if err := printer.PrintObj(list, outWriter); err != nil {
+				return fmt.Errorf("print vulnerability reports: %v", err)
+			}
+
+			return nil
 		},
 	}
 
