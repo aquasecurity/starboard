@@ -29,7 +29,7 @@ var (
 //line pkg/report/templates/default.qtpl:7
 type ReportPage struct {
 	VulnsReports      vulnerabilityreport.WorkloadVulnerabilities
-	ConfigAuditReport v1alpha1.ConfigAuditReport
+	ConfigAuditReport *v1alpha1.ConfigAuditReport
 	Workload          kube.Object
 }
 

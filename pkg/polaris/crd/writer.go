@@ -74,26 +74,20 @@ func (w *ReadWriter) Write(ctx context.Context, report starboard.ConfigAudit, ow
 	return
 }
 
-func (w *ReadWriter) WriteAll(ctx context.Context, reports []starboard.ConfigAudit, owner metav1.Object) (err error) {
-	for _, report := range reports {
-		err = w.Write(ctx, report, owner)
-	}
-	return
-}
-
-func (w *ReadWriter) Read(ctx context.Context, workload kube.Object) (starboard.ConfigAuditReport, error) {
+func (w *ReadWriter) FindByOwner(ctx context.Context, workload kube.Object) (*starboard.ConfigAuditReport, error) {
 	list, err := w.client.AquasecurityV1alpha1().ConfigAuditReports(workload.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.Set{
-			kube.LabelResourceKind: string(workload.Kind),
-			kube.LabelResourceName: workload.Name,
+			kube.LabelResourceKind:      string(workload.Kind),
+			kube.LabelResourceName:      workload.Name,
+			kube.LabelResourceNamespace: workload.Namespace,
 		}.String(),
 	})
 	if err != nil {
-		return starboard.ConfigAuditReport{}, err
+		return nil, err
 	}
 	// Only one config audit per specific workload exists on the cluster
 	if len(list.Items) > 0 {
-		return list.Items[0], nil
+		return &list.DeepCopy().Items[0], nil
 	}
-	return starboard.ConfigAuditReport{}, nil
+	return nil, nil
 }

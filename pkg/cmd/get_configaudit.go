@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/polaris/crd"
+
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -33,42 +32,39 @@ NAME is the name of a particular Kubernetes workload.
 
   # Get vulnerabilities for a CronJob with the specified name in JSON output format
   %[1]s get configaudit cj/my-job -o json`, executable),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 
 			config, err := cf.ToRESTConfig()
 			if err != nil {
-				return
+				return err
 			}
 			client, err := clientset.NewForConfig(config)
 			if err != nil {
-				return
+				return err
 			}
 
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
-				return
+				return err
 			}
 			mapper, err := cf.ToRESTMapper()
 			if err != nil {
-				return
+				return err
 			}
 			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
-				return
+				return err
 			}
 
-			list, err := client.AquasecurityV1alpha1().
-				ConfigAuditReports(workload.Namespace).
-				List(ctx, metav1.ListOptions{
-					LabelSelector: labels.Set{
-						kube.LabelResourceKind:      string(workload.Kind),
-						kube.LabelResourceName:      workload.Name,
-						kube.LabelResourceNamespace: workload.Namespace,
-					}.String(),
-				})
+			report, err := crd.NewReadWriter(GetScheme(), client).FindByOwner(ctx, workload)
 			if err != nil {
-				return fmt.Errorf("list config audit reports: %v", err)
+				return nil
+			}
+
+			if report == nil {
+				fmt.Fprintf(outWriter, "No reports found in %s namespace.\n", workload.Namespace)
+				return nil
 			}
 
 			format := cmd.Flag("output").Value.String()
@@ -80,7 +76,7 @@ NAME is the name of a particular Kubernetes workload.
 				return fmt.Errorf("create printer: %v", err)
 			}
 
-			if err := printer.PrintObj(list, outWriter); err != nil {
+			if err := printer.PrintObj(report, outWriter); err != nil {
 				return fmt.Errorf("print vulnerability reports: %v", err)
 			}
 
