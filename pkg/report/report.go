@@ -1,7 +1,11 @@
 package report
 
-import "io"
+import (
+	"io"
+
+	"github.com/aquasecurity/starboard/pkg/kube"
+)
 
 type Reporter interface {
-	GenerateReport(writer io.Writer) error
+	GenerateReport(workload kube.Object, writer io.Writer) error
 }

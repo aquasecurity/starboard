@@ -49,8 +49,8 @@ NAME is the name of a particular Kubernetes workload.
 			caReader := configAuditCrd.NewReadWriter(GetScheme(), starboardClientset)
 			vulnsReader := vulnerabilityreport.NewReadWriter(GetScheme(), starboardClientset)
 
-			reporter := report.NewHTMLReporter(caReader, vulnsReader, workload)
-			return reporter.GenerateReport(os.Stdout)
+			return report.NewHTMLReporter(caReader, vulnsReader).
+				GenerateReport(workload, os.Stdout)
 		},
 	}
 

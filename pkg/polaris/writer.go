@@ -17,11 +17,11 @@ type Writer interface {
 	Write(ctx context.Context, report sec.ConfigAudit, owner metav1.Object) (err error)
 }
 
-// Reader is the interface that wraps basic methods for persistent reading of ConfigAudit reports.
+// Reader is the interface that wraps basic methods for reading ConfigAudit reports.
 //
 // Read will return a single ConfigAuditReport that match a specific workload
 type Reader interface {
-	Read(ctx context.Context, workload kube.Object) (starboard.ConfigAuditReport, error)
+	FindByOwner(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error)
 }
 
 type ReadWriter interface {
