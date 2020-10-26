@@ -13,7 +13,7 @@ func NewGetCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter i
 		Short: "Get security reports",
 	}
 	getCmd.AddCommand(NewGetVulnerabilitiesCmd(executable, cf, outWriter))
-	getCmd.AddCommand(NewGetConfigAuditCmd(cf))
+	getCmd.AddCommand(NewGetConfigAuditCmd(executable, cf, outWriter))
 	getCmd.AddCommand(NewGetReportCmd(cf))
 	getCmd.PersistentFlags().StringP("output", "o", "yaml", "Output format. One of yaml|json")
 
