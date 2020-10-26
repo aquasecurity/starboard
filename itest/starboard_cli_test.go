@@ -4,29 +4,21 @@ import (
 	"context"
 	"os"
 
-	"github.com/aquasecurity/starboard/pkg/kube/secrets"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
-	. "github.com/onsi/gomega/gbytes"
-
 	"github.com/aquasecurity/starboard/pkg/cmd"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/pointer"
-
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
-	. "github.com/onsi/gomega/gstruct"
-
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/aquasecurity/starboard/pkg/kube/secrets"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gstruct"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/yaml"
 )
 
 // NewPodSpec returns the creation a pod spec
@@ -694,6 +686,105 @@ var _ = Describe("Starboard CLI", func() {
 			})
 		})
 
+	})
+
+	Describe("Command get vulnerabilities", func() {
+		Context("for deployment/nginx resource", func() {
+			ctx := context.TODO()
+
+			resourceKind := "Deployment"
+			resourceName := "nginx"
+			resourceNamespace := namespaceItest
+
+			reportName := "0e1e25ab-8c55-4cdc-af64-21fb8f412cb0"
+			reportNamespace := namespaceItest
+
+			report := &v1alpha1.VulnerabilityReport{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      reportName,
+					Namespace: reportNamespace,
+					Labels: map[string]string{
+						"starboard.container.name":     "nginx",
+						"starboard.resource.kind":      resourceKind,
+						"starboard.resource.name":      resourceName,
+						"starboard.resource.namespace": resourceNamespace,
+					},
+				},
+				Report: v1alpha1.VulnerabilityScanResult{
+					Scanner: v1alpha1.Scanner{
+						Name:    "Trivy",
+						Vendor:  "Aqua Security",
+						Version: "0.9.1",
+					},
+					Registry: v1alpha1.Registry{
+						Server: "index.docker.io",
+					},
+					Artifact: v1alpha1.Artifact{
+						Repository: "library/nginx",
+						Tag:        "1.16",
+					},
+					Summary: v1alpha1.VulnerabilitySummary{
+						MediumCount: 1,
+					},
+					Vulnerabilities: []v1alpha1.Vulnerability{
+						{
+							VulnerabilityID:  "CVE-2020-3810",
+							Resource:         "apt",
+							InstalledVersion: "1.8.2",
+							FixedVersion:     "1.8.2.1",
+							Severity:         v1alpha1.SeverityMedium,
+							Title:            "",
+							Description:      "Missing input validation in the ar/tar implementations of APT before version 2.1.2 could result in denial of service when processing specially crafted deb files.",
+							Links: []string{
+								"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-3810",
+							},
+						},
+					},
+				},
+			}
+
+			BeforeEach(func() {
+				_, err := starboardClientset.AquasecurityV1alpha1().
+					VulnerabilityReports(reportNamespace).
+					Create(ctx, report, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should return a list of vulnerabilities resources", func() {
+				stdout := NewBuffer()
+				stderr := NewBuffer()
+
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"get",
+					"vulnerabilities",
+					"deployment/nginx",
+					"-v",
+					starboardCLILogLevel,
+					"--namespace",
+					reportNamespace,
+				}, stdout, stderr)
+				Expect(err).ToNot(HaveOccurred())
+
+				var list v1alpha1.VulnerabilityReportList
+				err = yaml.Unmarshal(stdout.Contents(), &list)
+				Expect(err).ToNot(HaveOccurred())
+
+				if Expect(len(list.Items)).To(Equal(1)) {
+					item := list.Items[0]
+					Expect(item.Report).To(Equal(report.Report))
+				}
+
+				Expect(stderr).Should(Say(""))
+			})
+
+			AfterEach(func() {
+				err := starboardClientset.AquasecurityV1alpha1().
+					VulnerabilityReports(reportNamespace).
+					Delete(ctx, reportName, metav1.DeleteOptions{})
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
 	})
 
 	Describe("Command polaris", func() {
