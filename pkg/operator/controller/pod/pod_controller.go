@@ -4,28 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
-	"github.com/aquasecurity/starboard/pkg/ext"
-
-	"github.com/aquasecurity/starboard/pkg/scanners"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
-
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/aquasecurity/starboard/pkg/operator/resources"
+	"github.com/aquasecurity/starboard/pkg/resources"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	"github.com/aquasecurity/starboard/pkg/operator/scanner"
-	batchv1 "k8s.io/api/batch/v1"
-
-	"github.com/aquasecurity/starboard/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -35,33 +22,19 @@ var (
 )
 
 type PodController struct {
-	Config      etc.Operator
-	Client      client.Client
-	IDGenerator ext.IDGenerator
-	Store       vulnerabilityreport.StoreInterface
-	Scanner     scanner.VulnerabilityScanner
-	Scheme      *runtime.Scheme
+	etc.Operator
+	client.Client
+	controller.Analyzer
+	controller.Reconciler
 }
 
-// Reconcile resolves the actual state of the system against the desired state of the system.
-// The desired state is that there is a vulnerability report associated with the controller
-// managing the given Pod.
-// Since the scanning is asynchronous, the desired state is also when there's a pending scan
-// Job for the underlying workload.
-//
-// As Kubernetes invokes the Reconcile() function multiple times throughout the lifecycle
-// of a Pod, it is important that the implementation be idempotent to prevent the
-// creation of duplicate scan Jobs or vulnerability reports.
-//
-// The Reconcile function returns two object which indicate whether or not Kubernetes
-// should requeue the request.
 func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	pod := &corev1.Pod{}
 
 	log := log.WithValues("pod", req.NamespacedName)
 
-	installMode, err := r.Config.GetInstallMode()
+	installMode, err := r.GetInstallMode()
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("getting install mode: %w", err)
 	}
@@ -72,11 +45,12 @@ func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Retrieve the Pod from cache.
-	err = r.Client.Get(ctx, req.NamespacedName, pod)
-	if err != nil && errors.IsNotFound(err) {
-		log.V(1).Info("Ignoring Pod that must have been deleted")
-		return ctrl.Result{}, nil
-	} else if err != nil {
+	err = r.Get(ctx, req.NamespacedName, pod)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring Pod that must have been deleted")
+			return ctrl.Result{}, nil
+		}
 		return ctrl.Result{}, fmt.Errorf("getting pod from cache: %w", err)
 	}
 
@@ -99,12 +73,14 @@ func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	owner := resources.GetImmediateOwnerReference(pod)
-	log.V(1).Info("Resolving immediate Pod owner", "owner", owner)
+	containerImages := resources.GetContainerImagesFromPodSpec(pod.Spec)
+	hash := resources.ComputeHash(pod.Spec)
 
-	hash := controller.ComputeHash(pod.Spec)
+	log.V(1).Info("Resolving workload properties",
+		"owner", owner, "hash", hash, "containerImages", containerImages)
 
 	// Check if containers of the Pod have corresponding VulnerabilityReports.
-	hasVulnerabilityReports, err := r.Store.HasVulnerabilityReports(ctx, owner, hash, resources.GetContainerImagesFromPodSpec(pod.Spec))
+	hasVulnerabilityReports, err := r.HasVulnerabilityReports(ctx, owner, containerImages, hash)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("getting vulnerability reports: %w", err)
 	}
@@ -114,97 +90,28 @@ func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, nil
 	}
 
-	// Create a scan Job to create VulnerabilityReports for the Pod containers images.
-	err = r.ensureScanJob(ctx, owner, hash, pod)
+	scanJob, err := r.GetActiveScanJob(ctx, owner, hash)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("ensuring scan job: %w", err)
+		return ctrl.Result{}, fmt.Errorf("checking scan job: %w", err)
 	}
 
-	return ctrl.Result{}, nil
-}
-
-func (r *PodController) ensureScanJob(ctx context.Context, owner kube.Object, hash string, pod *corev1.Pod) error {
-	log := log.WithValues("pod", fmt.Sprintf("%s/%s", pod.Namespace, pod.Name), "hash", hash)
-
-	log.V(1).Info("Ensuring scan Job")
-
-	jobList := &batchv1.JobList{}
-	err := r.Client.List(ctx, jobList, client.MatchingLabels{
-		kube.LabelResourceNamespace: pod.Namespace,
-		kube.LabelResourceKind:      string(owner.Kind),
-		kube.LabelResourceName:      owner.Name,
-		kube.LabelPodSpecHash:       hash,
-	}, client.InNamespace(r.Config.Namespace))
-	if err != nil {
-		return fmt.Errorf("listing jos: %w", err)
-	}
-
-	if len(jobList.Items) > 0 {
+	if scanJob != nil {
 		log.V(1).Info("Scan job already exists",
-			"job", fmt.Sprintf("%s/%s", jobList.Items[0].Namespace, jobList.Items[0].Name))
-		return nil
+			"job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
+		return ctrl.Result{}, nil
 	}
 
-	jobMeta, err := r.GetJobMetaFrom(owner, hash, pod.Spec)
+	limitExceeded, scanJobsCount, err := r.IsConcurrentScanJobsLimitExceeded(ctx)
 	if err != nil {
-		return err
+		return ctrl.Result{}, err
 	}
 
-	scanJob, err := r.NewScanJob(pod.Spec, scanner.Options{
-		Namespace:          r.Config.Namespace,
-		ServiceAccountName: r.Config.ServiceAccount,
-		ScanJobTimeout:     r.Config.ScanJobTimeout,
-	}, jobMeta)
-	if err != nil {
-		return fmt.Errorf("constructing scan job: %w", err)
-	}
-	log.V(1).Info("Creating scan job",
-		"job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
-	return r.Client.Create(ctx, scanJob)
-}
-
-func (r *PodController) NewScanJob(spec corev1.PodSpec, options scanner.Options, meta scanner.JobMeta) (*batchv1.Job, error) {
-	template, err := r.Scanner.GetPodTemplateSpec(spec, options)
-	if err != nil {
-		return nil, err
+	if limitExceeded {
+		log.Info("Pushing back scan job", "count", scanJobsCount, "retryAfter", r.ScanJobRetryAfter)
+		return ctrl.Result{RequeueAfter: r.ScanJobRetryAfter}, nil
 	}
 
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        meta.Name,
-			Namespace:   options.Namespace,
-			Labels:      meta.Labels,
-			Annotations: meta.Annotations,
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(0),
-			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(options.ScanJobTimeout),
-			Template:              template,
-		},
-	}, nil
-}
-
-func (r *PodController) GetJobMetaFrom(owner kube.Object, hash string, spec corev1.PodSpec) (scanner.JobMeta, error) {
-	containerImages := resources.GetContainerImagesFromPodSpec(spec)
-	containerImagesAsJSON, err := containerImages.AsJSON()
-	if err != nil {
-		return scanner.JobMeta{}, err
-	}
-
-	return scanner.JobMeta{
-		Name: r.IDGenerator.GenerateID(),
-		Labels: map[string]string{
-			kube.LabelResourceKind:         string(owner.Kind),
-			kube.LabelResourceName:         owner.Name,
-			kube.LabelResourceNamespace:    owner.Namespace,
-			"app.kubernetes.io/managed-by": "starboard-operator",
-			kube.LabelPodSpecHash:          hash,
-		},
-		Annotations: map[string]string{
-			kube.AnnotationContainerImages: containerImagesAsJSON,
-		},
-	}, nil
+	return ctrl.Result{}, r.SubmitScanJob(ctx, pod.Spec, owner, containerImages, hash)
 }
 
 // IgnorePodInOperatorNamespace determines whether to reconcile the specified Pod
@@ -223,13 +130,13 @@ func (r *PodController) GetJobMetaFrom(owner kube.Object, hash string, spec core
 // of target namespaces.
 func (r *PodController) IgnorePodInOperatorNamespace(installMode etc.InstallMode, pod types.NamespacedName) bool {
 	if installMode == etc.InstallModeSingleNamespace &&
-		pod.Namespace == r.Config.Namespace {
+		pod.Namespace == r.Namespace {
 		return true
 	}
 
 	if installMode == etc.InstallModeMultiNamespace &&
-		pod.Namespace == r.Config.Namespace &&
-		!SliceContainsString(r.Config.GetTargetNamespaces(), r.Config.Namespace) {
+		pod.Namespace == r.Namespace &&
+		!SliceContainsString(r.GetTargetNamespaces(), r.Namespace) {
 		return true
 	}
 

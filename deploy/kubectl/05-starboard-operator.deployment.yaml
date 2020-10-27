@@ -38,6 +38,10 @@ spec:
               value: "starboard-operator"
             - name: OPERATOR_TARGET_NAMESPACES
               value: "default"
+            - name: OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT
+              value: "3"
+            - name: OPERATOR_SCAN_JOB_RETRY_AFTER
+              value: "30s"
             - name: OPERATOR_SCANNER_TRIVY_ENABLED
               value: "true"
             - name: OPERATOR_SCANNER_TRIVY_VERSION
