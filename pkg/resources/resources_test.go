@@ -1,10 +1,10 @@
-package controller_test
+package resources_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/operator/controller"
+	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -45,7 +45,7 @@ func TestComputeHash(t *testing.T) {
 
 		assert.NotSame(t, booleanValue1Ptr, booleanValue2Ptr)
 		assert.Equal(t, booleanValue1, booleanValue2)
-		assert.Equal(t, controller.ComputeHash(spec1), controller.ComputeHash(spec2))
+		assert.Equal(t, resources.ComputeHash(spec1), resources.ComputeHash(spec2))
 	})
 
 	t.Run("Should return different hash when pointers point to different values", func(t *testing.T) {
@@ -75,13 +75,13 @@ func TestComputeHash(t *testing.T) {
 
 		assert.NotSame(t, booleanValue1Ptr, booleanValue3Ptr)
 		assert.NotEqual(t, booleanValue1, booleanValue3)
-		assert.Equal(t, controller.ComputeHash(spec1), controller.ComputeHash(spec2))
+		assert.Equal(t, resources.ComputeHash(spec1), resources.ComputeHash(spec2))
 	})
 
 	t.Run("Should return unique hashes", func(t *testing.T) {
 		hashes := make(map[string]bool)
 		for tag := 0; tag < 100; tag++ {
-			hash := controller.ComputeHash(corev1.PodSpec{
+			hash := resources.ComputeHash(corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
 						Name:  "nginx",

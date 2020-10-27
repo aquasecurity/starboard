@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/operator/controller"
+
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -178,24 +180,32 @@ func run() error {
 		return err
 	}
 
+	analyzer := controller.NewAnalyzer(operatorConfig.Operator,
+		store,
+		mgr.GetClient())
+
+	reconciler := controller.NewReconciler(mgr.GetScheme(),
+		operatorConfig.Operator,
+		mgr.GetClient(),
+		store,
+		idGenerator,
+		scanner,
+		logs.NewReader(kubernetesClientset))
+
 	if err = (&pod.PodController{
-		Config:      operatorConfig.Operator,
-		Client:      mgr.GetClient(),
-		IDGenerator: idGenerator,
-		Store:       store,
-		Scanner:     scanner,
-		Scheme:      mgr.GetScheme(),
+		Operator:   operatorConfig.Operator,
+		Client:     mgr.GetClient(),
+		Analyzer:   analyzer,
+		Reconciler: reconciler,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create pod controller: %w", err)
 	}
 
 	if err = (&job.JobController{
-		Config:     operatorConfig.Operator,
-		LogsReader: logs.NewReader(kubernetesClientset),
+		Operator:   operatorConfig.Operator,
 		Client:     mgr.GetClient(),
-		Store:      store,
-		Scanner:    scanner,
-		Scheme:     mgr.GetScheme(),
+		Analyzer:   analyzer,
+		Reconciler: reconciler,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create job controller: %w", err)
 	}
