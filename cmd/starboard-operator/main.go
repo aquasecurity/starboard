@@ -26,7 +26,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/operator/aqua"
 
-	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 	"github.com/aquasecurity/starboard/pkg/operator/trivy"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -218,7 +217,7 @@ func run() error {
 	return nil
 }
 
-func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config, starboardConfig starboard.ConfigData) (scanner.VulnerabilityScanner, error) {
+func getEnabledScanner(idGenerator ext.IDGenerator, config etc.Config, starboardConfig starboard.ConfigData) (vulnerabilityreport.Scanner, error) {
 	if config.ScannerTrivy.Enabled && config.ScannerAquaCSP.Enabled {
 		return nil, fmt.Errorf("invalid configuration: multiple vulnerability scanners enabled")
 	}

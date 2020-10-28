@@ -17,6 +17,9 @@ const (
 
 	LabelScannerName   = "starboard.scanner.name"
 	LabelScannerVendor = "starboard.scanner.vendor"
+
+	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
+	AppStarboardOperator = "starboard-operator"
 )
 
 const (

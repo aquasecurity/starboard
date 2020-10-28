@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	corev1 "k8s.io/api/core/v1"
@@ -30,7 +31,7 @@ type aquaScanner struct {
 
 // NewScanner constructs a new VulnerabilityScanner, which is using the Aqua scanner
 // to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, config etc.ScannerAquaCSP) scanner.VulnerabilityScanner {
+func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, config etc.ScannerAquaCSP) vulnerabilityreport.Scanner {
 	return &aquaScanner{
 		idGenerator: idGenerator,
 		buildInfo:   buildInfo,
@@ -38,7 +39,7 @@ func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, conf
 	}
 }
 
-func (s *aquaScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.Options) (corev1.PodTemplateSpec, error) {
+func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
@@ -46,51 +47,48 @@ func (s *aquaScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.Op
 		var err error
 		scanJobContainers[i], err = s.newScanJobContainer(container)
 		if err != nil {
-			return corev1.PodTemplateSpec{}, err
+			return corev1.PodSpec{}, err
 		}
 	}
 
-	return corev1.PodTemplateSpec{
-		Spec: corev1.PodSpec{
-			RestartPolicy:                corev1.RestartPolicyNever,
-			ServiceAccountName:           options.ServiceAccountName,
-			AutomountServiceAccountToken: pointer.BoolPtr(false),
-			NodeName:                     spec.NodeName,
-			Volumes: []corev1.Volume{
-				{
-					Name: "scannercli",
-					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{},
-					},
+	return corev1.PodSpec{
+		RestartPolicy:                corev1.RestartPolicyNever,
+		AutomountServiceAccountToken: pointer.BoolPtr(false),
+		NodeName:                     spec.NodeName,
+		Volumes: []corev1.Volume{
+			{
+				Name: "scannercli",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
 				},
-				{
-					Name: "dockersock",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/run/docker.sock",
-						},
+			},
+			{
+				Name: "dockersock",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/var/run/docker.sock",
 					},
 				},
 			},
-			InitContainers: []corev1.Container{
-				{
-					Name:  initContainerName,
-					Image: s.config.ImageRef,
-					Command: []string{
-						"cp",
-						"/opt/aquasec/scannercli",
-						"/downloads/scannercli",
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "scannercli",
-							MountPath: "/downloads",
-						},
-					},
-				},
-			},
-			Containers: scanJobContainers,
 		},
+		InitContainers: []corev1.Container{
+			{
+				Name:  initContainerName,
+				Image: s.config.ImageRef,
+				Command: []string{
+					"cp",
+					"/opt/aquasec/scannercli",
+					"/downloads/scannercli",
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "scannercli",
+						MountPath: "/downloads",
+					},
+				},
+			},
+		},
+		Containers: scanJobContainers,
 	}, nil
 }
 

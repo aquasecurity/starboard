@@ -3,13 +3,14 @@ package trivy
 import (
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
-	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
@@ -22,14 +23,14 @@ type trivyScanner struct {
 
 // NewScanner constructs a new VulnerabilityScanner, which is using an official
 // Trivy container image to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, config trivy.Config) scanner.VulnerabilityScanner {
+func NewScanner(idGenerator ext.IDGenerator, config trivy.Config) vulnerabilityreport.Scanner {
 	return &trivyScanner{
 		idGenerator: idGenerator,
 		config:      config,
 	}
 }
 
-func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.Options) (corev1.PodTemplateSpec, error) {
+func (s *trivyScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 	initContainers := []corev1.Container{
 		{
 			Name:                     s.idGenerator.GenerateID(),
@@ -156,24 +157,21 @@ func (s *trivyScanner) GetPodTemplateSpec(spec corev1.PodSpec, options scanner.O
 		}
 	}
 
-	return corev1.PodTemplateSpec{
-		Spec: corev1.PodSpec{
-			RestartPolicy:                corev1.RestartPolicyNever,
-			ServiceAccountName:           options.ServiceAccountName,
-			AutomountServiceAccountToken: pointer.BoolPtr(false),
-			Volumes: []corev1.Volume{
-				{
-					Name: "data",
-					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{
-							Medium: corev1.StorageMediumDefault,
-						},
+	return corev1.PodSpec{
+		RestartPolicy:                corev1.RestartPolicyNever,
+		AutomountServiceAccountToken: pointer.BoolPtr(false),
+		Volumes: []corev1.Volume{
+			{
+				Name: "data",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						Medium: corev1.StorageMediumDefault,
 					},
 				},
 			},
-			InitContainers: initContainers,
-			Containers:     containers,
 		},
+		InitContainers: initContainers,
+		Containers:     containers,
 	}, nil
 }
 
