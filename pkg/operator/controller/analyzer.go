@@ -73,7 +73,7 @@ func (a *analyzer) GetActiveScanJob(ctx context.Context, owner kube.Object, hash
 }
 
 func (a *analyzer) IsConcurrentScanJobsLimitExceeded(ctx context.Context) (bool, int, error) {
-	scanJobsCount, err := a.countScanJobs(ctx, a.config.Namespace)
+	scanJobsCount, err := a.countScanJobs(ctx)
 	if err != nil {
 		return false, 0, err
 	}
@@ -81,11 +81,11 @@ func (a *analyzer) IsConcurrentScanJobsLimitExceeded(ctx context.Context) (bool,
 	return scanJobsCount >= a.config.ConcurrentScanJobsLimit, scanJobsCount, nil
 }
 
-func (a *analyzer) countScanJobs(ctx context.Context, namespace string) (int, error) {
+func (a *analyzer) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
 	err := a.client.List(ctx, &scanJobs, client.MatchingLabels{
-		"app.kubernetes.io/managed-by": "starboard-operator",
-	}, client.InNamespace(namespace))
+		kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+	}, client.InNamespace(a.config.Namespace))
 	if err != nil {
 		return 0, err
 	}

@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/logs"
-	"github.com/aquasecurity/starboard/pkg/operator/scanner"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,7 +33,7 @@ func NewReconciler(scheme *runtime.Scheme,
 	client client.Client,
 	store vulnerabilityreport.StoreInterface,
 	idGenerator ext.IDGenerator,
-	scanner scanner.VulnerabilityScanner,
+	scanner vulnerabilityreport.Scanner,
 	logsReader *logs.Reader) Reconciler {
 	return &reconciler{
 		scheme:      scheme,
@@ -53,71 +52,57 @@ type reconciler struct {
 	client      client.Client
 	store       vulnerabilityreport.StoreInterface
 	idGenerator ext.IDGenerator
-	scanner     scanner.VulnerabilityScanner
+	scanner     vulnerabilityreport.Scanner
 	logsReader  *logs.Reader
 }
 
-// this should be a template method
-func (r *reconciler) SubmitScanJob(ctx context.Context, podSpec corev1.PodSpec, owner kube.Object, containerImages kube.ContainerImages, hash string) error {
-	jobMeta, err := r.getJobMetaFrom(owner, hash, containerImages)
+func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, owner kube.Object, images kube.ContainerImages, hash string) error {
+	templateSpec, err := r.scanner.GetPodSpec(spec)
 	if err != nil {
 		return err
 	}
 
-	scanJob, err := r.newScanJob(podSpec, scanner.Options{
-		Namespace:          r.config.Namespace,
-		ServiceAccountName: r.config.ServiceAccount,
-		ScanJobTimeout:     r.config.ScanJobTimeout,
-	}, jobMeta)
+	containerImagesAsJSON, err := images.AsJSON()
 	if err != nil {
-		return fmt.Errorf("constructing scan job: %w", err)
-	}
-	//log.V(1).Info("Creating scan job",
-	//	"job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
-	return r.client.Create(ctx, scanJob)
-}
-
-func (r *reconciler) getJobMetaFrom(owner kube.Object, hash string, containerImages kube.ContainerImages) (scanner.JobMeta, error) {
-	containerImagesAsJSON, err := containerImages.AsJSON()
-	if err != nil {
-		return scanner.JobMeta{}, err
+		return err
 	}
 
-	return scanner.JobMeta{
-		Name: r.idGenerator.GenerateID(),
-		Labels: map[string]string{
-			kube.LabelResourceKind:         string(owner.Kind),
-			kube.LabelResourceName:         owner.Name,
-			kube.LabelResourceNamespace:    owner.Namespace,
-			"app.kubernetes.io/managed-by": "starboard-operator",
-			kube.LabelPodSpecHash:          hash,
-		},
-		Annotations: map[string]string{
-			kube.AnnotationContainerImages: containerImagesAsJSON,
-		},
-	}, nil
-}
+	templateSpec.ServiceAccountName = r.config.ServiceAccount
 
-func (r *reconciler) newScanJob(spec corev1.PodSpec, options scanner.Options, meta scanner.JobMeta) (*batchv1.Job, error) {
-	template, err := r.scanner.GetPodTemplateSpec(spec, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return &batchv1.Job{
+	scanJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        meta.Name,
-			Namespace:   options.Namespace,
-			Labels:      meta.Labels,
-			Annotations: meta.Annotations,
+			Name:      r.idGenerator.GenerateID(),
+			Namespace: r.config.Namespace,
+			Labels: map[string]string{
+				kube.LabelResourceKind:      string(owner.Kind),
+				kube.LabelResourceName:      owner.Name,
+				kube.LabelResourceNamespace: owner.Namespace,
+				kube.LabelPodSpecHash:       hash,
+				kube.LabelK8SAppManagedBy:   kube.AppStarboardOperator,
+			},
+			Annotations: map[string]string{
+				kube.AnnotationContainerImages: containerImagesAsJSON,
+			},
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(options.ScanJobTimeout),
-			Template:              template,
+			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(r.config.ScanJobTimeout),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						kube.LabelResourceKind:      string(owner.Kind),
+						kube.LabelResourceName:      owner.Name,
+						kube.LabelResourceNamespace: owner.Namespace,
+						kube.LabelPodSpecHash:       hash,
+						kube.LabelK8SAppManagedBy:   kube.AppStarboardOperator,
+					},
+				},
+				Spec: templateSpec,
+			},
 		},
-	}, nil
+	}
+	return r.client.Create(ctx, scanJob)
 }
 
 func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, scanJob *batchv1.Job, workload kube.Object, containerImages kube.ContainerImages, hash string) error {
