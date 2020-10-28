@@ -59,8 +59,8 @@ You can read more about the motivations and use cases [here][aqua-starboard-blog
 The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
 workloads deployed in your cluster.
 
-> **NOTE:** Even though manual scanning through the command-line is useful, it doesn't scale well with a huge number
-> of Kubernetes workloads and / or multi-tenant clusters. Therefore, the [Starboard Operator][starboard-operator]
+> **NOTE:** Even though manual scanning through the command-line is useful, the fact that it's not automated makes it less suitable with a large number
+> of Kubernetes workloads. Therefore, the [Starboard Operator][starboard-operator]
 > provides a better option for these scenarios, constantly monitoring built-in Kubernetes resources, such as Deployments,
 > and running appropriate scanners against the underlying deployment descriptors.
 
