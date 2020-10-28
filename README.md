@@ -14,19 +14,26 @@
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Installation](#installation)
-  - [From the Binary Releases](#from-the-binary-releases)
-    - [As a kubectl plugin](#kubectl-plugin)
-  - [From Source (Linux, macOS)](#from-source-linux-macos)
-  - [Docker](#docker)
 - [Getting Started](#getting-started)
 - [Next Steps](#next-steps)
-- [Configuration](#configuration)
-- [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Starboard CLI](#starboard-cli)
-- [Troubleshooting](#troubleshooting)
+  - [Installation](#installation)
+    - [From the Binary Releases](#from-the-binary-releases)
+      - [As a kubectl plugin](#kubectl-plugin)
+    - [From Source (Linux, macOS)](#from-source-linux-macos)
+    - [Docker](#docker)
+  - [Configuration](#configuration)
+- [Starboard Operator](#starboard-operator)
+  - [Deployment](#deployment)
+    - [With Static YAML Manifests](#with-static-yaml-manifests)
+    - [With Helm](#with-helm)
+    - [From OperatorHub.io or ArtifactHUB](#from-operatorhubio-or-artifacthub)
+  - [Environment Variables](#environment-variables)
+  - [Install Modes](#install-modes)
+  - [Supported Vulnerability Scanners](#supported-vulnerability-scanners)
+- [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Contributing](#contributing)
-- [License](#license)
+- [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
@@ -36,70 +43,26 @@ relate to different resources in a Kubernetes-native way. Starboard provides
 of existing security tools, as well as a `kubectl`-compatible command-line tool and an Octant plug-in that make security
 reports available through familiar Kubernetes tools.
 
+Starboard can be run in two different modes:
+
+* As a [command-line tool][starboard-cli], so you can trigger scans and view the risks in a `kubectl`-compatible way
+  or as part of your CI/CD pipeline.
+* As an [operator][starboard-operator] to automatically update security report resources in response to workload and
+  other changes on a Kubernetes cluster - for example, initiating a vulnerability scan when a new pod is started.
+
 You can read more about the motivations and use cases [here][aqua-starboard-blog] and join our discussions [here][discussions]. 
 
 ![](docs/images/starboard-cli-with-octant-demo.gif)
-
-## Installation
-
-This guide shows how to install the [Starboard CLI][starboard-cli] from source,
-or from pre-built binary releases.
-
-### From the Binary Releases
-
-Every [release][release] of Starboard provides binary releases for a variety of operating systems. These
-binary versions can be manually downloaded and installed.
-
-1. Download your [desired version][release]
-2. Unpack it (`tar -zxvf starboard_darwin_x86_64.tar.gz`)
-3. Find the `starboard` binary in the unpacked directory, and move it to its desired destination
-   (`mv starboard_darwin_x86_64/starboard /usr/local/bin/starboard`)
-
-From there, you should be able to run Starboard CLI commands: `starboard help`
-
-#### kubectl plugin
-
-The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kubectl plugin][kubectl-plugins],
-but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
-`kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard`.
-
-You can also install Starboard as a kubectl plugin with the [Krew][krew] plugins manager:
-
-```
-$ kubectl krew install starboard
-$ kubectl starboard help
-```
-
-### From Source (Linux, macOS)
-
-Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
-version of Starboard.
-
-You must have a working Go environment.
-
-```
-$ git clone git@github.com:aquasecurity/starboard.git
-$ cd starboard
-$ make
-```
-
-If required, it will fetch the dependencies and cache them. It will then compile `starboard` and place it in
-`bin/starboard`.
-
-### Docker
-
-We also release the Docker image `docker.io/aqusec/starbaord` to run Starboard as a Docker container or to manually
-schedule Kubernetes scan Jobs in your cluster.
-
-```
-$ docker container run --rm docker.io/aquasec/starboard:0.4.0 version
-Starboard Version: {Version:0.4.0 Commit:dd8e49701c1817ea174061c8731fe5bdbfb73d93 Date:2020-09-21T09:36:59Z}
-```
 
 ## Getting Started
 
 The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
 workloads deployed in your cluster.
+
+> **NOTE:** Even though manual scanning through the command-line is useful, the fact that it's not automated makes it less suitable with a large number
+> of Kubernetes workloads. Therefore, the [Starboard Operator][starboard-operator]
+> provides a better option for these scenarios, constantly monitoring built-in Kubernetes resources, such as Deployments,
+> and running appropriate scanners against the underlying deployment descriptors.
 
 To begin with, execute the following one-time setup command:
 
@@ -215,7 +178,78 @@ vulnerabilities as well as configuration issues that might affect stability, rel
 To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or
 [kube-hunter][aqua-kube-hunter], use `starboard help`.
 
-## Configuration
+
+
+## Starboard CLI
+
+Starboard CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure Pod
+specs, in Kubernetes workloads. By default, the risk assessment reports are stored as
+[custom security resources][starboard-crds].
+
+To learn more about the available Starboard CLI commands, run `starboard help` or type a command followed by the
+`-h` flag:
+
+```
+$ starboard kube-hunter -h
+```
+
+### Installation
+
+This guide shows how to install the [Starboard CLI][starboard-cli] from source,
+or from pre-built binary releases.
+
+#### From the Binary Releases
+
+Every [release][release] of Starboard provides binary releases for a variety of operating systems. These
+binary versions can be manually downloaded and installed.
+
+1. Download your [desired version][release]
+2. Unpack it (`tar -zxvf starboard_darwin_x86_64.tar.gz`)
+3. Find the `starboard` binary in the unpacked directory, and move it to its desired destination
+   (`mv starboard_darwin_x86_64/starboard /usr/local/bin/starboard`)
+
+From there, you should be able to run Starboard CLI commands: `starboard help`
+
+##### kubectl plugin
+
+The Starboard CLI is compatible with [kubectl][kubectl] and is intended as [kubectl plugin][kubectl-plugins],
+but it's perfectly fine to run it as a stand-alone executable. If you rename the `starboard` executable to
+`kubectl-starboard` and if it's in your path, you can invoke it using `kubectl starboard`.
+
+You can also install Starboard as a kubectl plugin with the [Krew][krew] plugins manager:
+
+```
+$ kubectl krew install starboard
+$ kubectl starboard help
+```
+
+#### From Source (Linux, macOS)
+
+Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
+version of Starboard.
+
+You must have a working Go environment.
+
+```
+$ git clone git@github.com:aquasecurity/starboard.git
+$ cd starboard
+$ make
+```
+
+If required, it will fetch the dependencies and cache them. It will then compile `starboard` and place it in
+`bin/starboard`.
+
+#### Docker
+
+We also release the Docker image `docker.io/aqusec/starbaord` to run Starboard as a Docker container or to manually
+schedule Kubernetes scan Jobs in your cluster.
+
+```
+$ docker container run --rm docker.io/aquasec/starboard:0.4.0 version
+Starboard Version: {Version:0.4.0 Commit:dd8e49701c1817ea174061c8731fe5bdbfb73d93 Date:2020-09-21T09:36:59Z}
+```
+
+### Configuration
 
 The `starboard init` command creates the `starboard` ConfigMap in the `starboard` namespace, which contains the default
 configuration parameters. You can change the default config values with `kubectl patch` or `kubectl edit` commands.
@@ -249,6 +283,182 @@ The following table lists available configuration parameters.
 >   -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
 > ```
 
+## Starboard Operator
+
+This operator automatically updates security report resources in response to workload and other changes on a Kubernetes
+cluster - for example, initiating a vulnerability scan when a new pod is started. In other words, the desired state
+for this operator is that for each workload there are security reports stored in the cluster as custom resources.
+
+Currently, the operator implements two reconciliation loops and only supports [vulnerabilityreports][vulnerabilityreports-crd]
+security resources as depicted below. However, we plan to support all [custom security resources][starboard-crds].
+
+| Controller | Description |
+| ---------- | ----------- |
+| [PodController](pkg/operator/controller/pod/pod_controller.go) | Watches for pod events in target namespaces to lookup the immediate owner of a pod. Then it checks whether there's the VulnerabilityReport owned by this owner. If not, it schedules a scan job in the operator's namespace. |
+| [JobController](pkg/operator/controller/job/job_controller.go) | Watches for job events in the operator's namespace. If a given job is completed it parses the logs of the controlee pod and converts the logs output to an instance of the VulnerabilityReport resource. |
+
+![](docs/images/operator/starboard-operator.png)
+
+### Deployment
+
+#### With Static YAML Manifests
+
+You can install the operator with provided static YAML manifests with fixed values. However, this approach has its
+shortcomings. For example, if you want to change the container image or modify default configuration parameters, you
+have to create new manifests or edit existing ones.
+
+To deploy the operator in the `starboard-operator` namespace and configure it to watch the `default`
+namespace:
+
+1. Send the definition of the [vulnerabilityreports][vulnerabilityreports-crd] custom resource to the Kubernetes API:
+
+   ```
+   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml
+   ```
+2. Send the following Kubernetes objects definitions to the Kubernetes API:
+
+   ```
+   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+       -f deploy/static/02-starboard-operator.sa.yaml \
+       -f deploy/static/03-starboard-operator.clusterrole.yaml \
+       -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+   ```
+3. Create the `starboard-operator` deployment in the `starboard-operator` namespace to run the operator's container:
+
+   ```
+   $ kubectl apply -f deploy/static/05-starboard-operator.deployment.yaml
+   ```
+
+#### With Helm
+
+[Helm][helm], which is de facto standard package manager for Kubernetes, allows installing applications from
+parameterized YAML manifests called Helm [charts][helm-charts].
+
+To address shortcomings of static YAML manifests we provide the Helm chart to deploy the Starboard operator. The
+[starboard-operator](./deploy/helm) Helm chart supports all [install modes](#install-modes). For example, to install
+the operator in the `starboard-operator` namespace and configure it to watch `foo` and `bar` namespaces, run:
+
+```
+$ helm install starboard-operator ./deploy/helm \
+    -n starboard-operator \
+    --create-namespace \
+    --set="targetNamespaces=foo\,bar"
+```
+
+#### From OperatorHub.io or ArtifactHUB
+
+The [Operator Lifecycle Manager (OLM)][olm] provides a declarative way to install and upgrade operators and their
+dependencies.
+
+You can install the Starboard operator from [OperatorHub.io](https://operatorhub.io/operator/starboard-operator)
+or [ArtifactHUB](https://artifacthub.io/) by creating an optional OperatorGroup, which defines the operator's
+multitenancy, and Subscription that links everything together to run the operator's pod.
+
+1. Install the Operator Lifecycle Manager:
+
+   ```
+   $ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/install.sh | bash -s 0.16.1
+   ```
+2. Create the namespace to install the operator in:
+
+   ```
+   $ kubectl create ns starboard-operator
+   ```
+3. Declare the target namespaces by creating the OperatorGroup:
+
+   ```
+   cat << EOF | kubectl apply -f -
+   apiVersion: operators.coreos.com/v1alpha2
+   kind: OperatorGroup
+   metadata:
+     name: starboard-operator
+     namespace: starboard-operator
+   spec:
+     targetNamespaces:
+     - foo
+     - bar
+   EOF
+   ```
+4. Install the operator by creating the Subscription:
+
+   ```
+   cat << EOF | kubectl apply -f -
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     name: starboard-operator
+     namespace: starboard-operator
+   spec:
+     channel: alpha
+     name: starboard-operator
+     source: operatorhubio-catalog
+     sourceNamespace: olm
+   EOF
+   ```
+
+   The operator will be installed in the `starboard-operator` namespace and will be usable from `foo` and `bar`
+   namespaces.
+5. After install, watch the operator come up using the following command:
+
+   ```
+   $ kubectl get csv -n starboard-operator
+   NAME                        DISPLAY              VERSION   REPLACES   PHASE
+   starboard-operator.v0.6.0   Starboard Operator   0.6.0                Succeeded
+   ```
+
+### Environment Variables
+
+Configuration of the operator is done via environment variables at startup.
+
+| NAME                                 | DEFAULT                | DESCRIPTION |
+| ------------------------------------ | ---------------------- | ----------- |
+| `OPERATOR_NAMESPACE`                 | N/A                    | See [Install modes](#install-modes) |
+| `OPERATOR_TARGET_NAMESPACES`         | N/A                    | See [Install modes](#install-modes) |
+| `OPERATOR_SCANNER_TRIVY_ENABLED`     | `true`                 | The flag to enable Trivy vulnerability scanner |
+| `OPERATOR_SCANNER_TRIVY_VERSION`     | `0.11.0`               | The version of Trivy to be used |
+| `OPERATOR_SCANNER_TRIVY_IMAGE`       | `aquasec/trivy:0.11.0` | The Docker image of Trivy to be used |
+| `OPERATOR_SCANNER_AQUA_CSP_ENABLED`  | `false`                | The flag to enable Aqua vulnerability scanner |
+| `OPERATOR_SCANNER_AQUA_CSP_VERSION`  | `5.0`                  | The version of Aqua scanner to be used |
+| `OPERATOR_SCANNER_AQUA_CSP_IMAGE`    | `aquasec/scanner:5.0`  | The Docker image of Aqua scanner to be used |
+| `OPERATOR_LOG_DEV_MODE`              | `false`                | The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc). |
+| `OPERATOR_SCAN_JOB_TIMEOUT`          | `5m`                   | The length of time to wait before giving up on a scan job |
+| `OPERATOR_METRICS_BIND_ADDRESS`      | `:8080`                | The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to `0` to disable the metrics serving. |
+| `OPERATOR_HEALTH_PROBE_BIND_ADDRESS` | `:9090`                | The TCP address to bind to for serving health probes, i.e. `/healthz/` and `/readyz/` endpoints. |
+
+### Install Modes
+
+The values of the `OPERATOR_NAMESPACE` and `OPERATOR_TARGET_NAMESPACES` determine the install mode,
+which in turn determines the multitenancy support of the operator.
+
+| MODE            | OPERATOR_NAMESPACE | OPERATOR_TARGET_NAMESPACES | DESCRIPTION |
+| --------------- | ------------------ | -------------------------- | ----------- |
+| OwnNamespace    | `operators`        | `operators`                | The operator can be configured to watch events in the namespace it is deployed in. |
+| SingleNamespace | `operators`        | `foo`                      | The operator can be configured to watch for events in a single namespace that the operator is not deployed in. |
+| MultiNamespace  | `operators`        | `foo,bar,baz`              | The operator can be configured to watch for events in more than one namespace. |
+| AllNamespaces   | `operators`        |                            | The operator can be configured to watch for events in all namespaces. |
+
+> **CAUTION:** Although we do support the *AllNamespaces* install mode, please use it with caution when your cluster
+> runs a moderate or high number of workloads. If the desired state of the cluster is much different from the actual
+> state, the operator might spin up too many scan jobs and negatively impact the performance of your cluster.
+> We're planning improvements to limit the number of parallel scan jobs and implement a back pressure logic.
+> See [#202](https://github.com/aquasecurity/starboard/issues/202) to check the progress on that.
+
+### Supported Vulnerability Scanners
+
+To enable Aqua as vulnerability scanner set the value of the `OPERATOR_SCANNER_AQUA_CSP_ENABLED` to `true` and
+disable the default Trivy scanner by setting `OPERATOR_SCANNER_TRIVY_ENABLED` to `false`.
+
+To configure the Aqua scanner create the `starboard-operator` secret in the `operators` namespace:
+
+```
+$ kubectl create secret generic starboard-operator \
+ --namespace $OPERATOR_NAMESPACE \
+ --from-literal OPERATOR_SCANNER_AQUA_CSP_USERNAME=$AQUA_CONSOLE_USERNAME \
+ --from-literal OPERATOR_SCANNER_AQUA_CSP_PASSWORD=$AQUA_CONSOLE_PASSWORD \
+ --from-literal OPERATOR_SCANNER_AQUA_CSP_VERSION=$AQUA_VERSION \
+ --from-literal OPERATOR_SCANNER_AQUA_CSP_HOST=http://csp-console-svc.aqua:8080
+```
+
 ## Custom Security Resources Definitions
 
 This project houses CustomResourceDefinitions (CRDs) related to security and compliance checks along with the code
@@ -264,18 +474,16 @@ generated by Kubernetes [code generators][k8s-code-generator] to write such cust
 See [Custom Security Resources Specification][starboard-crds-spec] for the detailed explanation of custom resources
 used by Starboard and their lifecycle.
 
-## Starboard CLI
+## Contributing
 
-Starboard CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure Pod
-specs, in Kubernetes workloads. By default, the risk assessment reports are stored as
-[custom security resources][starboard-crds].
+At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
+contributions integrating different security tools so that users can access security information in standard,
+Kubernetes-native ways.
 
-To learn more about the available Starboard CLI commands, run `starboard help` or type a command followed by the
-`-h` flag:
-
-```
-$ starboard kube-hunter -h
-```
+* See [CONTRIBUTING.md](CONTRIBUTING.md) for information about setting up your development environment, and the
+  contribution workflow that we expect.
+* See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
+* Join our [discussions][discussions].
 
 ## Troubleshooting
 
@@ -312,20 +520,6 @@ To open this pane on your Mac, choose Apple menu > System Preferences, click Sec
   <img src="docs/images/troubleshooting/developer-not-verified-remediation.png">
 </p>
 
-## Contributing
-
-At this early stage we would love your feedback on the overall concept of Starboard. Over time we'd love to see
-contributions integrating different security tools so that users can access security information in standard,
-Kubernetes-native ways.
-
-* See [CONTRIBUTING.md](CONTRIBUTING.md) for information about setting up your development environment, and the
-  contribution workflow that we expect.
-* See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
-* Join our [discussions][discussions].
-
-## License
-
-This repository is available under the [Apache License 2.0][license].
 
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
@@ -351,17 +545,22 @@ This repository is available under the [Apache License 2.0][license].
 [configauditreports-crd]: ./deploy/crd/configauditreports.crd.yaml
 [starboard-go-module]: ./pkg
 [starboard-cli]: #starboard-cli
+[starboard-operator]: #starboard-operator
 [starboard-octant-plugin]: https://github.com/aquasecurity/octant-starboard-plugin
 [aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
 [aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter
 [octant]: https://github.com/vmware-tanzu/octant
 [polaris]: https://github.com/FairwindsOps/polaris
 [trivy]: https://github.com/aquasecurity/trivy
+[prometheus]: https://github.com/prometheus
 
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [kubectl]: https://kubernetes.io/docs/reference/kubectl
 [kubectl-plugins]: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins
 
 [krew]: https://github.com/kubernetes-sigs/krew
+[helm]: https://helm.sh/
+[helm-charts]: https://helm.sh/docs/topics/charts/
+[olm]: https://github.com/operator-framework/operator-lifecycle-manager/
 
 [default-polaris-config]: ./deploy/init/03-starboard.cm.yaml
