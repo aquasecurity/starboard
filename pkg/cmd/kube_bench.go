@@ -23,28 +23,27 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kube-bench",
 		Short: "Run the CIS Kubernetes Benchmark https://www.cisecurity.org/benchmark/kubernetes",
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
-				return
+				return err
 			}
 			kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
-				return
+				return err
 			}
 			opts, err := getScannerOpts(cmd)
 			if err != nil {
-				return
+				return err
 			}
 			starboardClientset, err := starboardapi.NewForConfig(kubernetesConfig)
 			if err != nil {
-				return
+				return err
 			}
 			nodeList, err := kubernetesClientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 			if err != nil {
-				err = fmt.Errorf("listing nodes: %w", err)
-				return
+				return fmt.Errorf("listing nodes: %w", err)
 			}
 			config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
@@ -52,7 +51,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			}
 
 			scanner := kubebench.NewScanner(config, opts, kubernetesClientset)
-			writer := crd.NewReadWriter(GetScheme(), starboardClientset)
+			writer := crd.NewReadWriter(starboard.NewScheme(), starboardClientset)
 
 			var wg sync.WaitGroup
 
@@ -76,7 +75,7 @@ func NewKubeBenchCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			}
 
 			wg.Wait()
-			return
+			return nil
 		},
 	}
 
