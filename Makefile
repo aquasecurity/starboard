@@ -44,31 +44,46 @@ compile-templates: get-qtc
 
 .PHONY: test
 ## Runs both unit and integration tests
-test: unit-tests integration-tests
+test: unit-tests itests-starboard itests-starboard-operator
 
 .PHONY: unit-tests
 ## Runs unit tests with code coverage enabled
 unit-tests: $(SOURCES)
 	go test -v -short -race -timeout 30s -coverprofile=coverage.txt ./...
 
-.PHONY: integration-tests
-## Runs integration tests with code coverage enabled
-integration-tests: check-env get-ginkgo
+.PHONY: itests-starboard
+## Runs integration tests for Starboard CLI with code coverage enabled
+itests-starboard: check-env get-ginkgo
 	$(GOBIN)/ginkgo \
 	--progress \
 	--v \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/cmd,\
-	github.com/aquasecurity/starboard/pkg/kube \
-	github.com/aquasecurity/starboard/pkg/kube/pod \
-	github.com/aquasecurity/starboard/pkg/kube/secrets \
-	github.com/aquasecurity/starboard/pkg/kubebench \
-	github.com/aquasecurity/starboard/pkg/kubehunter \
-	github.com/aquasecurity/starboard/pkg/polaris \
-	github.com/aquasecurity/starboard/pkg/polaris/crd \
-	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy \
+	github.com/aquasecurity/starboard/pkg/kube,\
+	github.com/aquasecurity/starboard/pkg/kube/pod,\
+	github.com/aquasecurity/starboard/pkg/kube/secrets,\
+	github.com/aquasecurity/starboard/pkg/kubebench,\
+	github.com/aquasecurity/starboard/pkg/kubehunter,\
+	github.com/aquasecurity/starboard/pkg/polaris,\
+	github.com/aquasecurity/starboard/pkg/polaris/crd,\
+	github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
-	./itest
+	./itest/starboard
+
+.PHONY: itests-starboard-operator
+## Runs integration tests for Starboard Operator with code coverage enabled
+itests-starboard-operator: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	--v \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/operator/controller/job,\
+	github.com/aquasecurity/starboard/pkg/operator/controller/pod,\
+	github.com/aquasecurity/starboard/pkg/operator/logs,\
+	github.com/aquasecurity/starboard/pkg/operator/trivy \
+	./itest/starboard-operator
 
 check-env:
 ifndef KUBECONFIG
