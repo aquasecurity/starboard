@@ -51,23 +51,23 @@ NAME is the name of a particular Kubernetes workload.
 
   # Scan a cronjob with the specified name and the specified scan job timeout
   %[1]s find vulns cj/my-cronjob --scan-job-timeout 2m`, executable),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
-				return
+				return err
 			}
 			mapper, err := cf.ToRESTMapper()
 			if err != nil {
-				return
+				return err
 			}
 			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
-				return
+				return err
 			}
 			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
-				return
+				return err
 			}
 			kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
@@ -75,22 +75,22 @@ NAME is the name of a particular Kubernetes workload.
 			}
 			config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
-				return
+				return err
 			}
 			opts, err := getScannerOpts(cmd)
 			if err != nil {
-				return
+				return err
 			}
-			reports, owner, err := trivy.NewScanner(config, opts, kubernetesClientset).Scan(ctx, workload)
+			scheme := starboard.NewScheme()
+			reports, err := trivy.NewScanner(scheme, config, opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
-				return
+				return err
 			}
 			starboardClientset, err := starboardapi.NewForConfig(kubernetesConfig)
 			if err != nil {
-				return
+				return err
 			}
-			err = vulnerabilityreport.NewReadWriter(GetScheme(), starboardClientset).Write(ctx, reports, owner)
-			return
+			return vulnerabilityreport.NewReadWriter(scheme, starboardClientset).Write(ctx, reports)
 		},
 	}
 

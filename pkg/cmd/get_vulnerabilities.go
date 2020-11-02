@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
@@ -59,7 +61,8 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			items, err := vulnerabilityreport.NewReadWriter(GetScheme(), client).FindByOwner(ctx, workload)
+			scheme := starboard.NewScheme()
+			items, err := vulnerabilityreport.NewReadWriter(scheme, client).FindByOwner(ctx, workload)
 			if err != nil {
 				return fmt.Errorf("list vulnerability reports: %v", err)
 			}
@@ -70,7 +73,7 @@ NAME is the name of a particular Kubernetes workload.
 
 			format := cmd.Flag("output").Value.String()
 			printer, err := genericclioptions.NewPrintFlags("").
-				WithTypeSetter(GetScheme()).
+				WithTypeSetter(scheme).
 				WithDefaultOutput(format).
 				ToPrinter()
 			if err != nil {

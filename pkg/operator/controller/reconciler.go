@@ -132,17 +132,9 @@ func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, s
 		}
 		_ = logsReader.Close()
 
-		reportName, err := vulnerabilityreport.NewNameBuilder(r.scheme).
-			Owner(owner).
-			Container(container.Name).Get()
-		if err != nil {
-			return err
-		}
-
 		report, err := vulnerabilityreport.NewBuilder(r.scheme).
 			Owner(owner).
 			Container(container.Name).
-			ReportName(reportName).
 			ScanResult(scanResult).
 			PodSpecHash(hash).Get()
 		if err != nil {

@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -199,6 +204,15 @@ exemptions:
     - runAsRootAllowed
 `
 )
+
+func NewScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme)
+	_ = batchv1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = starboardv1alpha1.AddToScheme(scheme)
+	return scheme
+}
 
 // BuildInfo holds build info such as Git revision, Git SHA-1,
 // and build datetime.

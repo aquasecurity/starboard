@@ -28,15 +28,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/operator/trivy"
 
-	appsv1 "k8s.io/api/apps/v1"
-
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	batchv1 "k8s.io/api/batch/v1"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -57,16 +49,8 @@ var (
 )
 
 var (
-	scheme   = runtime.NewScheme()
 	setupLog = log.Log.WithName("main")
 )
-
-func init() {
-	_ = corev1.AddToScheme(scheme)
-	_ = batchv1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-	_ = starboardv1alpha1.AddToScheme(scheme)
-}
 
 func main() {
 	if err := run(); err != nil {
@@ -101,7 +85,7 @@ func run() error {
 
 	// Set the default manager options.
 	options := manager.Options{
-		Scheme:                 scheme,
+		Scheme:                 starboard.NewScheme(),
 		MetricsBindAddress:     operatorConfig.Operator.MetricsBindAddress,
 		HealthProbeBindAddress: operatorConfig.Operator.HealthProbeBindAddress,
 	}
@@ -171,7 +155,7 @@ func run() error {
 		return err
 	}
 
-	store := vulnerabilityreport.NewStore(mgr.GetClient(), scheme)
+	store := vulnerabilityreport.NewStore(mgr.GetClient(), mgr.GetScheme())
 	idGenerator := ext.NewGoogleUUIDGenerator()
 
 	scanner, err := getEnabledScanner(idGenerator, operatorConfig, starboardConfig)

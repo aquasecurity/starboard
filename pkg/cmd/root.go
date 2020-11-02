@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -71,8 +70,4 @@ func initFlags() {
 			pflag.Lookup(f.Name).Hidden = true
 		}
 	})
-}
-
-func init() {
-	_ = starboardv1alpha1.AddToScheme(GetScheme())
 }

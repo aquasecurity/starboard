@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
@@ -33,8 +34,9 @@ type Config interface {
 }
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(scheme *runtime.Scheme, config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		scheme:    scheme,
 		config:    config,
 		opts:      opts,
 		clientset: clientset,
@@ -44,6 +46,7 @@ func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Inter
 }
 
 type Scanner struct {
+	scheme    *runtime.Scheme
 	config    Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
@@ -51,22 +54,21 @@ type Scanner struct {
 	converter Converter
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (reports vulnerabilityreport.WorkloadVulnerabilities, owner meta.Object, err error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 	podSpec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
-		err = fmt.Errorf("getting Pod template: %w", err)
-		return
+		return nil, fmt.Errorf("getting Pod template: %w", err)
 	}
 
-	reports, err = s.ScanByPodSpec(ctx, workload, podSpec)
+	reports, err := s.ScanByPodSpec(ctx, workload, podSpec, owner)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return
+	return reports, nil
 }
 
-func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec) (map[string]sec.VulnerabilityScanResult, error) {
+func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec, owner meta.Object) ([]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 
 	imagePullSecrets, err := s.pods.GetImagePullSecrets(ctx, workload.Namespace, spec)
@@ -122,7 +124,7 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 		return nil, fmt.Errorf("getting scan job: %w", err)
 	}
 
-	return s.GetVulnerabilityReportsByScanJob(ctx, job)
+	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
 func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
@@ -351,22 +353,19 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 	}, imagePullSecret, nil
 }
 
-func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job) (reports vulnerabilityreport.WorkloadVulnerabilities, err error) {
-	reports = make(map[string]sec.VulnerabilityScanResult)
+func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job, owner meta.Object) ([]sec.VulnerabilityReport, error) {
+	var reports []sec.VulnerabilityReport
 
 	var containerImagesAsJSON string
 	var ok bool
 
 	if containerImagesAsJSON, ok = job.Annotations[kube.AnnotationContainerImages]; !ok {
-		err = fmt.Errorf("scan job does not have required annotation: %s", kube.AnnotationContainerImages)
-		return
-
+		return nil, fmt.Errorf("scan job does not have required annotation: %s", kube.AnnotationContainerImages)
 	}
 	containerImages := kube.ContainerImages{}
-	err = containerImages.FromJSON(containerImagesAsJSON)
+	err := containerImages.FromJSON(containerImagesAsJSON)
 	if err != nil {
-		err = fmt.Errorf("reading scan job annotation: %s: %w", kube.AnnotationContainerImages, err)
-		return
+		return nil, fmt.Errorf("reading scan job annotation: %s: %w", kube.AnnotationContainerImages, err)
 	}
 
 	for _, c := range job.Spec.Template.Spec.Containers {
@@ -374,13 +373,22 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		var logReader io.ReadCloser
 		logReader, err = s.pods.GetContainerLogsByJob(ctx, job, c.Name)
 		if err != nil {
-			return
+			return nil, err
 		}
-		reports[c.Name], err = s.converter.Convert(s.config, containerImages[c.Name], logReader)
-		_ = logReader.Close()
+		result, err := s.converter.Convert(s.config, containerImages[c.Name], logReader)
+
+		report, err := vulnerabilityreport.NewBuilder(s.scheme).
+			Owner(owner).
+			Container(c.Name).
+			ScanResult(result).
+			PodSpecHash("").Get()
 		if err != nil {
-			return
+			return nil, err
 		}
+
+		reports = append(reports, report)
+
+		_ = logReader.Close()
 	}
-	return
+	return reports, nil
 }
