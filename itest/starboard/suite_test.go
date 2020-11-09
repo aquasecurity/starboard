@@ -1,4 +1,4 @@
-package itest
+package starboard
 
 import (
 	"context"
