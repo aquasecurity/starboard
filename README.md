@@ -59,6 +59,15 @@ You can read more about the motivations and use cases [here][aqua-starboard-blog
 The easiest way to get started with Starboard is to use [Starboard CLI][starboard-cli], which allows scanning Kubernetes
 workloads deployed in your cluster.
 
+By default, starboard will operate in the **starboard** namespace for a ConfigMap named **starboard**, and run scans using a **starboard** service account.  This can be overridden using environment variables, eg
+
+```
+echo 'STARBOARD_CONFIG_NAMESPACE=security-team
+STARBOARD_SA_NAME=starboard_scanner
+STARBOARD_CONFIGMAP_NAME=scan-config' >> ~/.bashrc
+. ~/.bashrc
+starboard init
+```
 > **NOTE:** Even though manual scanning through the command-line is useful, the fact that it's not automated makes it less suitable with a large number
 > of Kubernetes workloads. Therefore, the [Starboard Operator][starboard-operator]
 > provides a better option for these scenarios, constantly monitoring built-in Kubernetes resources, such as Deployments,
