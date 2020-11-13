@@ -29,12 +29,8 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-type Config interface {
-	GetTrivyImageRef() string
-}
-
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(scheme *runtime.Scheme, config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(scheme *runtime.Scheme, config starboard.TrivyConfig, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
 		scheme:    scheme,
 		config:    config,
@@ -47,7 +43,7 @@ func NewScanner(scheme *runtime.Scheme, config Config, opts kube.ScannerOpts, cl
 
 type Scanner struct {
 	scheme    *runtime.Scheme
-	config    Config
+	config    starboard.TrivyConfig
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
@@ -262,7 +258,7 @@ func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec c
 				"--skip-update",
 				"--cache-dir",
 				"/var/lib/trivy",
-				"--no-progress",
+				"--quiet",
 				"--format",
 				"json",
 				c.Image,

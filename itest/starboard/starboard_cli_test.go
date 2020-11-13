@@ -224,7 +224,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -289,7 +289,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -312,7 +312,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -395,7 +395,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -490,7 +490,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -581,7 +581,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -672,7 +672,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Trivy",
 								Vendor:  "Aqua Security",
-								Version: "0.9.1",
+								Version: "0.12.0",
 							}),
 						}),
 					}),
@@ -714,7 +714,7 @@ var _ = Describe("Starboard CLI", func() {
 					Scanner: v1alpha1.Scanner{
 						Name:    "Trivy",
 						Vendor:  "Aqua Security",
-						Version: "0.9.1",
+						Version: "0.12.0",
 					},
 					Registry: v1alpha1.Registry{
 						Server: "index.docker.io",

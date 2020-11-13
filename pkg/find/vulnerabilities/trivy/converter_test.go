@@ -2,7 +2,6 @@ package trivy_test
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -107,13 +106,6 @@ func TestConverter_Convert(t *testing.T) {
 		expectedReport starboardv1alpha1.VulnerabilityScanResult
 	}{
 		{
-			name:     "Should convert vulnerability report in JSON format when input is noisy",
-			imageRef: "alpine:3.10.2",
-			input: fmt.Sprintf("2020-06-17T23:37:45.320+0200	[34mINFO[0m	Detecting Alpine vulnerabilities...\n%s", sampleReportAsString),
-			expectedError:  nil,
-			expectedReport: sampleReport,
-		},
-		{
 			name:           "Should convert vulnerability report in JSON format when input is quiet",
 			imageRef:       "alpine:3.10.2",
 			input:          sampleReportAsString,
@@ -121,10 +113,9 @@ func TestConverter_Convert(t *testing.T) {
 			expectedReport: sampleReport,
 		},
 		{
-			name:     "Should convert vulnerability report in JSON format when OS is not detected",
-			imageRef: "core.harbor.domain/library/nginx@sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
-			input: `2020-06-21T23:10:15.162+0200	WARN	OS is not detected and vulnerabilities in OS packages are not detected.
-null`,
+			name:          "Should convert vulnerability report in JSON format when OS is not detected",
+			imageRef:      "core.harbor.domain/library/nginx@sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
+			input:         `null`,
 			expectedError: nil,
 			expectedReport: starboardv1alpha1.VulnerabilityScanResult{
 				Scanner: starboardv1alpha1.Scanner{

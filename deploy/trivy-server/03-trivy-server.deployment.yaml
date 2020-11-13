@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: trivy-server
+  name: trivy-server
+  namespace: trivy-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trivy-server
+  template:
+    metadata:
+      labels:
+        app: trivy-server
+    spec:
+      serviceAccountName: trivy-server
+      automountServiceAccountToken: false
+      volumes:
+        - name: trivy-cache
+          emptyDir: {}
+      containers:
+        - name: trivy-server
+          image: docker.io/aquasec/trivy:0.12.0
+          command:
+            - trivy
+            - server
+            - --debug
+            - --listen
+            - 0.0.0.0:4954
+          volumeMounts:
+            - name: trivy-cache
+              mountPath: /root/.cache/trivy
+          ports:
+            - containerPort: 4954
+              name: twirp

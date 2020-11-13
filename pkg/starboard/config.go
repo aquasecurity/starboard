@@ -222,6 +222,20 @@ type BuildInfo struct {
 	Date    string
 }
 
+// TrivyMode describes mode in which Trivy client operates.
+type TrivyMode string
+
+const (
+	Standalone   TrivyMode = "Standalone"
+	ClientServer TrivyMode = "ClientServer"
+)
+
+type TrivyConfig interface {
+	GetTrivyImageRef() string
+	GetTrivyMode() TrivyMode
+	GetTrivyServerURL() string
+}
+
 // ConfigData holds Starboard configuration settings as a set
 // of key-value pairs.
 type ConfigData map[string]string
@@ -237,7 +251,9 @@ type ConfigManager interface {
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
 		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef":      "docker.io/aquasec/trivy:0.9.1",
+		"trivy.imageRef":      "docker.io/aquasec/trivy:0.12.0",
+		"trivy.mode":          "Standalone",
+		"trivy.serverURL":     "http://trivy-server.trivy-server:4954",
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
@@ -247,7 +263,21 @@ func (c ConfigData) GetTrivyImageRef() string {
 	if imageRef, ok := c["trivy.imageRef"]; ok {
 		return imageRef
 	}
-	return "docker.io/aquasec/trivy:0.9.1"
+	return "docker.io/aquasec/trivy:0.12.0"
+}
+
+func (c ConfigData) GetTrivyMode() TrivyMode {
+	if mode, ok := c["trivy.mode"]; ok {
+		return TrivyMode(mode)
+	}
+	return Standalone
+}
+
+func (c ConfigData) GetTrivyServerURL() string {
+	if url, ok := c["trivy.serverURL"]; ok {
+		return url
+	}
+	return "http://trivy-server.trivy-server:4954"
 }
 
 // GetKubeBenchImageRef returns Docker image of kube-bench scanner.
