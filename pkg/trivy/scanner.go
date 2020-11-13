@@ -16,13 +16,32 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+var (
+	defaultResourceRequirements = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("100m"),
+			corev1.ResourceMemory: resource.MustParse("100M"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("500M"),
+		},
+	}
+)
+
 type trivyScanner struct {
 	idGenerator ext.IDGenerator
 	config      starboard.TrivyConfig
 }
 
-// NewScanner constructs a new VulnerabilityScanner, which is using an official
-// Trivy container image to scan pod containers.
+// NewScanner constructs a new vulnerabilityreport.Scanner, which is using an official
+// Trivy container image to scan Kubernetes workloads.
+//
+// This vulnerabilityreport.Scanner supports both trivy.Standalone and trivy.ClientServer
+// client modes depending on the current starboard.TrivyConfig.
+//
+// The trivy.ClientServer more is usually more performant, however it requires a Trivy server
+// to be hosted and accessible at the configurable URL.
 func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Scanner {
 	return &trivyScanner{
 		idGenerator: idGenerator,
@@ -41,77 +60,72 @@ func (s *trivyScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 	}
 }
 
-// In Standalone mode we have an init container that is responsible for downloading
-// Trivy DB file and stored it to empty volume shared with the main containers.
-// Note that then umber of the main containers corresponds to the number of containers
-// of the scanner workload.
+// In the Standalone mode there is the init container responsible for downloading
+// the latest Trivy DB file from GitHub and storing it to the empty volume shared
+// with main containers. In other words, the init container runs the following
+// Trivy command:
+//
 // trivy --download-db-only --cache-dir /var/lib/trivy
-// trivy --skip-update --cache-dir /var/lib/trivy --no-progress --format json <container image>
+//
+// The number of main containers correspond to the number of containers
+// defined for the scanned workload. What's more, each container runs the Trivy
+// scan command and skips the database update:
+//
+// trivy --skip-update --cache-dir /var/lib/trivy --format json <container image>
 func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.PodSpec, error) {
-	initContainers := []corev1.Container{
-		{
-			Name:                     s.idGenerator.GenerateID(),
-			Image:                    s.config.GetTrivyImageRef(),
-			ImagePullPolicy:          corev1.PullIfNotPresent,
-			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-			Env: []corev1.EnvVar{
-				{
-					Name: "HTTP_PROXY",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.httpProxy",
-							Optional: pointer.BoolPtr(true),
+	initContainer := corev1.Container{
+		Name:                     s.idGenerator.GenerateID(),
+		Image:                    s.config.GetTrivyImageRef(),
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		Env: []corev1.EnvVar{
+			{
+				Name: "HTTP_PROXY",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
 						},
-					},
-				},
-				{
-					Name: "GITHUB_TOKEN",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.githubToken",
-							Optional: pointer.BoolPtr(true),
-						},
+						Key:      "trivy.httpProxy",
+						Optional: pointer.BoolPtr(true),
 					},
 				},
 			},
-			Command: []string{
-				"trivy",
-			},
-			Args: []string{
-				"--download-db-only",
-				"--cache-dir",
-				"/var/lib/trivy",
-			},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("100M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("500m"),
-					corev1.ResourceMemory: resource.MustParse("500M"),
+			{
+				Name: "GITHUB_TOKEN",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.githubToken",
+						Optional: pointer.BoolPtr(true),
+					},
 				},
 			},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "data",
-					ReadOnly:  false,
-					MountPath: "/var/lib/trivy",
-				},
+		},
+		Command: []string{
+			"trivy",
+		},
+		Args: []string{
+			"--download-db-only",
+			"--cache-dir",
+			"/var/lib/trivy",
+		},
+		Resources: defaultResourceRequirements,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "data",
+				MountPath: "/var/lib/trivy",
+				ReadOnly:  false,
 			},
 		},
 	}
 
-	containers := make([]corev1.Container, len(spec.Containers))
-	for i, c := range spec.Containers {
+	var containers []corev1.Container
 
-		containers[i] = corev1.Container{
+	for _, c := range spec.Containers {
+		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
@@ -154,16 +168,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 				"json",
 				c.Image,
 			},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("100M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("500m"),
-					corev1.ResourceMemory: resource.MustParse("500M"),
-				},
-			},
+			Resources: defaultResourceRequirements,
 			VolumeMounts: []corev1.VolumeMount{
 				{
 					Name:      "data",
@@ -171,7 +176,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 					MountPath: "/var/lib/trivy",
 				},
 			},
-		}
+		})
 	}
 
 	return corev1.PodSpec{
@@ -187,12 +192,16 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 				},
 			},
 		},
-		InitContainers: initContainers,
+		InitContainers: []corev1.Container{initContainer},
 		Containers:     containers,
 	}, nil
 }
 
-// / # trivy client --format json --token ABC --remote http://trivy-server.trivy-server:4954 wordpress:5.5
+// In the ClientServer mode the number of containers of the pod created by the scan job
+// equals the number of containers defined for the scanned workload.
+// Each container runs Trivy scan command pointing to a remote Trivy server:
+//
+// trivy client --remote http://trivy-server.trivy-server:4954 --format json <container image>
 func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev1.PodSpec, error) {
 	var containers []corev1.Container
 	for _, container := range spec.Containers {
@@ -226,6 +235,7 @@ func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev
 				s.config.GetTrivyServerURL(),
 				container.Image,
 			},
+			Resources: defaultResourceRequirements,
 		})
 	}
 	return corev1.PodSpec{

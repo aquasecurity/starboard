@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/resources"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"github.com/aquasecurity/starboard/pkg/trivy"
@@ -14,8 +16,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
-	"github.com/aquasecurity/starboard/pkg/docker"
-	"github.com/aquasecurity/starboard/pkg/kube/secrets"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"k8s.io/klog"
 
@@ -24,36 +24,37 @@ import (
 
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
-	"github.com/google/uuid"
-	batch "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
 )
 
 // NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
 func NewScanner(scheme *runtime.Scheme, config starboard.TrivyConfig, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+	idGenerator := ext.NewGoogleUUIDGenerator()
 	return &Scanner{
-		scheme:    scheme,
-		config:    config,
-		opts:      opts,
-		clientset: clientset,
-		pods:      pod.NewPodManager(clientset),
-		converter: trivy.DefaultConverter,
-		delegate:  trivy.NewScanner(ext.NewGoogleUUIDGenerator(), config),
+		scheme:      scheme,
+		config:      config,
+		opts:        opts,
+		clientset:   clientset,
+		pods:        pod.NewPodManager(clientset),
+		converter:   trivy.DefaultConverter,
+		idGenerator: idGenerator,
+		delegate:    trivy.NewScanner(idGenerator, config),
 	}
 }
 
 type Scanner struct {
-	scheme    *runtime.Scheme
-	config    starboard.TrivyConfig
-	opts      kube.ScannerOpts
-	clientset kubernetes.Interface
-	pods      *pod.Manager
-	converter trivy.Converter
-	delegate  vulnerabilityreport.Scanner
+	scheme      *runtime.Scheme
+	config      starboard.TrivyConfig
+	opts        kube.ScannerOpts
+	clientset   kubernetes.Interface
+	pods        *pod.Manager
+	converter   trivy.Converter
+	idGenerator ext.IDGenerator
+	delegate    vulnerabilityreport.Scanner
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]sec.VulnerabilityReport, error) {
@@ -70,30 +71,12 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]sec.Vulnera
 	return reports, nil
 }
 
-func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec core.PodSpec, owner meta.Object) ([]sec.VulnerabilityReport, error) {
+func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec corev1.PodSpec, owner metav1.Object) ([]sec.VulnerabilityReport, error) {
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 
-	imagePullSecrets, err := s.pods.GetImagePullSecrets(ctx, workload.Namespace, spec)
-	if err != nil {
-		return nil, err
-	}
-
-	auths, err := secrets.MapContainerImagesToAuths(spec, imagePullSecrets)
-	if err != nil {
-		return nil, err
-	}
-
-	job, imagePullSecret, err := s.PrepareScanJob(workload, spec, auths)
+	job, err := s.PrepareScanJob(workload, spec)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
-	}
-
-	if imagePullSecret != nil {
-		klog.V(3).Infof("Creating image pull secret: %s/%s", starboard.NamespaceName, imagePullSecret.Name)
-		_, err = s.clientset.CoreV1().Secrets(starboard.NamespaceName).Create(ctx, imagePullSecret, meta.CreateOptions{})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
@@ -108,20 +91,15 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 			return
 		}
 		klog.V(3).Infof("Deleting scan job: %s/%s", job.Namespace, job.Name)
-		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
+		background := metav1.DeletePropagationBackground
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &background,
 		})
-
-		if imagePullSecret != nil {
-			klog.V(3).Infof("Deleting image pull secret: %s/%s", imagePullSecret.Namespace, imagePullSecret.Name)
-			_ = s.clientset.CoreV1().Secrets(imagePullSecret.Namespace).Delete(ctx, imagePullSecret.Name, meta.DeleteOptions{})
-		}
 	}()
 
 	klog.V(3).Infof("Scan job completed: %s/%s", job.Namespace, job.Name)
 
-	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, meta.GetOptions{})
+	job, err = s.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("getting scan job: %w", err)
 	}
@@ -129,189 +107,22 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
-func (s *Scanner) PrepareScanJob(workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
-	jobName := fmt.Sprintf(uuid.New().String())
-
-	initContainerName := jobName
-	imagePullSecretName := jobName
-	imagePullSecretData := make(map[string][]byte)
-	var imagePullSecret *core.Secret
-
-	initContainers := []core.Container{
-		{
-			Name:                     initContainerName,
-			Image:                    s.config.GetTrivyImageRef(),
-			ImagePullPolicy:          core.PullIfNotPresent,
-			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
-			Env: []core.EnvVar{
-				{
-					Name: "HTTP_PROXY",
-					ValueFrom: &core.EnvVarSource{
-						ConfigMapKeyRef: &core.ConfigMapKeySelector{
-							LocalObjectReference: core.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.httpProxy",
-							Optional: pointer.BoolPtr(true),
-						},
-					},
-				},
-				{
-					Name: "GITHUB_TOKEN",
-					ValueFrom: &core.EnvVarSource{
-						ConfigMapKeyRef: &core.ConfigMapKeySelector{
-							LocalObjectReference: core.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.githubToken",
-							Optional: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
-			Command: []string{
-				"trivy",
-			},
-			Args: []string{
-				"--download-db-only",
-				"--cache-dir",
-				"/var/lib/trivy",
-			},
-			VolumeMounts: []core.VolumeMount{
-				{
-					Name:      "data",
-					ReadOnly:  false,
-					MountPath: "/var/lib/trivy",
-				},
-			},
-		},
-	}
-
-	containerImages := kube.ContainerImages{}
-
-	scanJobContainers := make([]core.Container, len(spec.Containers))
-	for i, c := range spec.Containers {
-		containerImages[c.Name] = c.Image
-
-		var envs []core.EnvVar
-
-		envs = append(envs,
-			core.EnvVar{
-				Name: "TRIVY_SEVERITY",
-				ValueFrom: &core.EnvVarSource{
-					ConfigMapKeyRef: &core.ConfigMapKeySelector{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: starboard.ConfigMapName,
-						},
-						Key:      "trivy.severity",
-						Optional: pointer.BoolPtr(true),
-					},
-				},
-			}, core.EnvVar{
-				Name: "HTTP_PROXY",
-				ValueFrom: &core.EnvVarSource{
-					ConfigMapKeyRef: &core.ConfigMapKeySelector{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: starboard.ConfigMapName,
-						},
-						Key:      "trivy.httpProxy",
-						Optional: pointer.BoolPtr(true),
-					},
-				},
-			},
-		)
-
-		if dockerConfig, ok := credentials[c.Image]; ok {
-			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
-			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
-
-			imagePullSecretData[registryUsernameKey] = []byte(dockerConfig.Username)
-			imagePullSecretData[registryPasswordKey] = []byte(dockerConfig.Password)
-
-			envs = append(envs, core.EnvVar{
-				Name: "TRIVY_USERNAME",
-				ValueFrom: &core.EnvVarSource{
-					SecretKeyRef: &core.SecretKeySelector{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: imagePullSecretName,
-						},
-						Key: registryUsernameKey,
-					},
-				},
-			}, core.EnvVar{
-				Name: "TRIVY_PASSWORD",
-				ValueFrom: &core.EnvVarSource{
-					SecretKeyRef: &core.SecretKeySelector{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: imagePullSecretName,
-						},
-						Key: registryPasswordKey,
-					},
-				},
-			})
-		}
-
-		scanJobContainers[i] = core.Container{
-			Name:                     c.Name,
-			Image:                    s.config.GetTrivyImageRef(),
-			ImagePullPolicy:          core.PullIfNotPresent,
-			TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
-			Env:                      envs,
-			Command: []string{
-				"trivy",
-			},
-			Args: []string{
-				"--skip-update",
-				"--cache-dir",
-				"/var/lib/trivy",
-				"--quiet",
-				"--format",
-				"json",
-				c.Image,
-			},
-			Resources: core.ResourceRequirements{
-				Limits: core.ResourceList{
-					core.ResourceCPU:    resource.MustParse("500m"),
-					core.ResourceMemory: resource.MustParse("500M"),
-				},
-				Requests: core.ResourceList{
-					core.ResourceCPU:    resource.MustParse("100m"),
-					core.ResourceMemory: resource.MustParse("100M"),
-				},
-			},
-			VolumeMounts: []core.VolumeMount{
-				{
-					Name:      "data",
-					ReadOnly:  false,
-					MountPath: "/var/lib/trivy",
-				},
-			},
-		}
-	}
-
-	containerImagesAsJSON, err := containerImages.AsJSON()
+func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec) (*batchv1.Job, error) {
+	templateSpec, err := s.delegate.GetPodSpec(spec)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	if len(imagePullSecretData) > 0 {
-		imagePullSecret = &core.Secret{
-			ObjectMeta: meta.ObjectMeta{
-				Name:      imagePullSecretName,
-				Namespace: starboard.NamespaceName,
-				Labels: map[string]string{
-					kube.LabelResourceKind:      string(workload.Kind),
-					kube.LabelResourceName:      workload.Name,
-					kube.LabelResourceNamespace: workload.Namespace,
-				},
-			},
-			Data: imagePullSecretData,
-		}
+	templateSpec.ServiceAccountName = starboard.ServiceAccountName
+
+	containerImagesAsJSON, err := resources.GetContainerImagesFromPodSpec(spec).AsJSON()
+	if err != nil {
+		return nil, err
 	}
 
-	return &batch.Job{
-		ObjectMeta: meta.ObjectMeta{
-			Name:      jobName,
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s.idGenerator.GenerateID(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
@@ -322,40 +133,25 @@ func (s *Scanner) PrepareScanJob(workload kube.Object, spec core.PodSpec, creden
 				kube.AnnotationContainerImages: containerImagesAsJSON,
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
-			Template: core.PodTemplateSpec{
-				ObjectMeta: meta.ObjectMeta{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						kube.LabelResourceKind:      string(workload.Kind),
 						kube.LabelResourceName:      workload.Name,
 						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
-				Spec: core.PodSpec{
-					ServiceAccountName: starboard.ServiceAccountName,
-					Volumes: []core.Volume{
-						{
-							Name: "data",
-							VolumeSource: core.VolumeSource{
-								EmptyDir: &core.EmptyDirVolumeSource{
-									Medium: core.StorageMediumDefault,
-								},
-							},
-						},
-					},
-					RestartPolicy:  core.RestartPolicyNever,
-					InitContainers: initContainers,
-					Containers:     scanJobContainers,
-				},
+				Spec: templateSpec,
 			},
 		},
-	}, imagePullSecret, nil
+	}, nil
 }
 
-func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batch.Job, owner meta.Object) ([]sec.VulnerabilityReport, error) {
+func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job, owner metav1.Object) ([]sec.VulnerabilityReport, error) {
 	var reports []sec.VulnerabilityReport
 
 	var containerImagesAsJSON string
