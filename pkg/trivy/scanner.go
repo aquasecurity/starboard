@@ -11,7 +11,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
@@ -237,7 +236,7 @@ func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev
 }
 
 func (s *trivyScanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	result, err := trivy.DefaultConverter.Convert(s.config, imageRef, logsReader)
+	result, err := DefaultConverter.Convert(s.config, imageRef, logsReader)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}

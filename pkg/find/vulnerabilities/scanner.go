@@ -1,9 +1,13 @@
-package trivy
+package vulnerabilities
 
 import (
 	"context"
 	"fmt"
 	"io"
+
+	"github.com/aquasecurity/starboard/pkg/ext"
+
+	"github.com/aquasecurity/starboard/pkg/trivy"
 
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,7 +41,8 @@ func NewScanner(scheme *runtime.Scheme, config starboard.TrivyConfig, opts kube.
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
-		converter: DefaultConverter,
+		converter: trivy.DefaultConverter,
+		delegate:  trivy.NewScanner(ext.NewGoogleUUIDGenerator(), config),
 	}
 }
 
@@ -47,7 +52,8 @@ type Scanner struct {
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
-	converter Converter
+	converter trivy.Converter
+	delegate  vulnerabilityreport.Scanner
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]sec.VulnerabilityReport, error) {
@@ -77,7 +83,7 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 		return nil, err
 	}
 
-	job, imagePullSecret, err := s.PrepareScanJob(ctx, workload, spec, auths)
+	job, imagePullSecret, err := s.PrepareScanJob(workload, spec, auths)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
@@ -123,7 +129,7 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
-func (s *Scanner) PrepareScanJob(_ context.Context, workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
+func (s *Scanner) PrepareScanJob(workload kube.Object, spec core.PodSpec, credentials map[string]docker.Auth) (*batch.Job, *core.Secret, error) {
 	jobName := fmt.Sprintf(uuid.New().String())
 
 	initContainerName := jobName

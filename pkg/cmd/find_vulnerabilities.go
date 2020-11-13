@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
+
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -82,7 +83,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 			scheme := starboard.NewScheme()
-			reports, err := trivy.NewScanner(scheme, config, opts, kubernetesClientset).Scan(ctx, workload)
+			reports, err := vulnerabilities.NewScanner(scheme, config, opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return err
 			}

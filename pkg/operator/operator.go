@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/trivy"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
@@ -12,7 +14,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/controller/pod"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/logs"
-	"github.com/aquasecurity/starboard/pkg/operator/trivy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"

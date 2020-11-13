@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/trivy"
 
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities/trivy"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
