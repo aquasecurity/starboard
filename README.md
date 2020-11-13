@@ -268,10 +268,12 @@ The following table lists available configuration parameters.
 
 | CONFIGMAP KEY         | DEFAULT                                                | DESCRIPTION |
 | --------------------- | ------------------------------------------------------ | ----------- |
-| `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub |
-| `trivy.githubToken`   | N/A                                                    | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub |
+| `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
+| `trivy.githubToken`   | N/A                                                    | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
 | `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.9.1`                        | Trivy image reference |
+| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.12.0`                       | Trivy image reference |
+| `trivy.mode`          | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. |
+| `trivy.serverURL`     | `http://trivy-server.trivy-server:4954`                | The endpoint URL of the Trivy server. This parameter is required when Trivy runs in the `ClientServer` mode. |
 | `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
 > **Note:** You can find it handy to delete a configuration key, which was not created by default by the
@@ -415,10 +417,7 @@ Configuration of the operator is done via environment variables at startup.
 | `OPERATOR_NAMESPACE`                 | N/A                    | See [Install modes](#install-modes) |
 | `OPERATOR_TARGET_NAMESPACES`         | N/A                    | See [Install modes](#install-modes) |
 | `OPERATOR_SCANNER_TRIVY_ENABLED`     | `true`                 | The flag to enable Trivy vulnerability scanner |
-| `OPERATOR_SCANNER_TRIVY_VERSION`     | `0.11.0`               | The version of Trivy to be used |
-| `OPERATOR_SCANNER_TRIVY_IMAGE`       | `aquasec/trivy:0.11.0` | The Docker image of Trivy to be used |
 | `OPERATOR_SCANNER_AQUA_CSP_ENABLED`  | `false`                | The flag to enable Aqua vulnerability scanner |
-| `OPERATOR_SCANNER_AQUA_CSP_VERSION`  | `5.0`                  | The version of Aqua scanner to be used |
 | `OPERATOR_SCANNER_AQUA_CSP_IMAGE`    | `aquasec/scanner:5.0`  | The Docker image of Aqua scanner to be used |
 | `OPERATOR_LOG_DEV_MODE`              | `false`                | The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc). |
 | `OPERATOR_SCAN_JOB_TIMEOUT`          | `5m`                   | The length of time to wait before giving up on a scan job |

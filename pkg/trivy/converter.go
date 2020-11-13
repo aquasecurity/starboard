@@ -3,8 +3,6 @@ package trivy
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
-	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
@@ -17,7 +15,7 @@ import (
 // Convert converts the vulnerabilities model used by Trivy
 // to a generic model defined by the Custom Security Resource Specification.
 type Converter interface {
-	Convert(config Config, imageRef string, reader io.Reader) (starboardv1alpha1.VulnerabilityScanResult, error)
+	Convert(config starboard.TrivyConfig, imageRef string, reader io.Reader) (starboardv1alpha1.VulnerabilityScanResult, error)
 }
 
 type converter struct {
@@ -29,40 +27,16 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(config Config, imageRef string, reader io.Reader) (report starboardv1alpha1.VulnerabilityScanResult, err error) {
+func (c *converter) Convert(config starboard.TrivyConfig, imageRef string, reader io.Reader) (report starboardv1alpha1.VulnerabilityScanResult, err error) {
 	var scanReports []ScanReport
-	skipReader, err := c.skippingNoisyOutputReader(reader)
-	if err != nil {
-		return
-	}
-	err = json.NewDecoder(skipReader).Decode(&scanReports)
+	err = json.NewDecoder(reader).Decode(&scanReports)
 	if err != nil {
 		return
 	}
 	return c.convert(config, imageRef, scanReports)
 }
 
-// TODO Normally I'd use Trivy with the --quiet flag, but in case of errors it does suppress the error message.
-// TODO Therefore, as a workaround I do sanitize the input reader before we start parsing the JSON output.
-func (c *converter) skippingNoisyOutputReader(input io.Reader) (io.Reader, error) {
-	inputAsBytes, err := ioutil.ReadAll(input)
-	if err != nil {
-		return nil, err
-	}
-	inputAsString := string(inputAsBytes)
-
-	index := strings.Index(inputAsString, "\n[")
-	if index > 0 {
-		return strings.NewReader(inputAsString[index:]), nil
-	}
-	index = strings.LastIndex(inputAsString, "null")
-	if index > 0 {
-		return strings.NewReader(inputAsString[index:]), nil
-	}
-	return strings.NewReader(inputAsString), nil
-}
-
-func (c *converter) convert(config Config, imageRef string, reports []ScanReport) (starboardv1alpha1.VulnerabilityScanResult, error) {
+func (c *converter) convert(config starboard.TrivyConfig, imageRef string, reports []ScanReport) (starboardv1alpha1.VulnerabilityScanResult, error) {
 	vulnerabilities := make([]starboardv1alpha1.Vulnerability, 0)
 
 	for _, report := range reports {
