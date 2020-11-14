@@ -3,6 +3,9 @@ package polaris
 import (
 	"encoding/json"
 	"io"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
@@ -94,6 +97,7 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 			Version: polarisVersion,
 		},
 		Summary:         c.toSummary(podChecks, containerChecks),
+		UpdateTimestamp: metav1.NewTime(time.Now()),
 		PodChecks:       podChecks,
 		ContainerChecks: containerChecks,
 	}

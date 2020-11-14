@@ -3,6 +3,7 @@ package starboard
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
@@ -711,6 +712,7 @@ var _ = Describe("Starboard CLI", func() {
 					},
 				},
 				Report: v1alpha1.VulnerabilityScanResult{
+					UpdateTimestamp: metav1.NewTime(time.Now()),
 					Scanner: v1alpha1.Scanner{
 						Name:    "Trivy",
 						Vendor:  "Aqua Security",
@@ -772,6 +774,7 @@ var _ = Describe("Starboard CLI", func() {
 
 				if Expect(len(list.Items)).To(Equal(1)) {
 					item := list.Items[0]
+					item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
 					Expect(item.Report).To(Equal(report.Report))
 				}
 

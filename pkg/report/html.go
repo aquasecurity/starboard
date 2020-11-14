@@ -58,7 +58,6 @@ func (h *htmlReporter) GenerateReport(workload kube.Object, writer io.Writer) er
 		ConfigAuditReport: configAuditReport,
 		Workload:          workload,
 	}
-
 	templates.WritePageTemplate(writer, p)
 	return nil
 }
