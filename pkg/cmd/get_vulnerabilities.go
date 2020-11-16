@@ -61,8 +61,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			scheme := starboard.NewScheme()
-			items, err := vulnerabilityreport.NewReadWriter(scheme, client).FindByOwner(ctx, workload)
+			items, err := vulnerabilityreport.NewReadWriter(client).FindByOwner(ctx, workload)
 			if err != nil {
 				return fmt.Errorf("list vulnerability reports: %v", err)
 			}
@@ -73,7 +72,7 @@ NAME is the name of a particular Kubernetes workload.
 
 			format := cmd.Flag("output").Value.String()
 			printer, err := genericclioptions.NewPrintFlags("").
-				WithTypeSetter(scheme).
+				WithTypeSetter(starboard.NewScheme()).
 				WithDefaultOutput(format).
 				ToPrinter()
 			if err != nil {

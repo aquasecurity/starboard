@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,14 +40,16 @@ var (
 )
 
 type Scanner struct {
+	scheme    *runtime.Scheme
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
 	pods      *pod.Manager
 	converter Converter
 }
 
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(scheme *runtime.Scheme, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
 	return &Scanner{
+		scheme:    scheme,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
@@ -52,19 +57,21 @@ func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner 
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (report starboardv1alpha1.ConfigAudit, owner meta.Object, err error) {
-	_, owner, err = s.pods.GetPodSpecByWorkload(ctx, workload)
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (starboardv1alpha1.ConfigAuditReport, error) {
+	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
+
+	_, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
-		return
+		return starboardv1alpha1.ConfigAuditReport{}, err
 	}
 
+	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 	job := s.preparePolarisJob(workload, gvk)
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
 	if err != nil {
 		s.pods.LogRunnerErrors(ctx, job)
-		err = fmt.Errorf("running polaris job: %w", err)
-		return
+		return starboardv1alpha1.ConfigAuditReport{}, fmt.Errorf("running polaris job: %w", err)
 	}
 
 	defer func() {
@@ -83,15 +90,18 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		job.Namespace, job.Name)
 	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, polarisContainerName)
 	if err != nil {
-		err = fmt.Errorf("getting logs: %w", err)
-		return
+		return starboardv1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	report, err = s.converter.Convert(logsReader)
+	result, err := s.converter.Convert(logsReader)
 	defer func() {
 		_ = logsReader.Close()
 	}()
-	return
+
+	return configauditreport.NewBuilder(s.scheme).
+		Owner(owner).
+		Result(result).
+		Get()
 }
 
 func (s *Scanner) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKind) string {

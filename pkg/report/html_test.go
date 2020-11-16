@@ -56,7 +56,7 @@ var (
 		}}
 	sampleConfigAudits = []starboard.ConfigAuditReport{
 		{
-			Report: starboard.ConfigAudit{
+			Report: starboard.ConfigAuditResult{
 
 				Scanner: starboard.Scanner{
 					Name:    "Polaris",

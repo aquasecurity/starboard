@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
 
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris/crd"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -48,9 +47,8 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			scheme := starboard.NewScheme()
-			caReader := configAuditCrd.NewReadWriter(scheme, starboardClientset)
-			vulnsReader := vulnerabilityreport.NewReadWriter(scheme, starboardClientset)
+			caReader := configauditreport.NewReadWriter(starboardClientset)
+			vulnsReader := vulnerabilityreport.NewReadWriter(starboardClientset)
 
 			return report.NewHTMLReporter(caReader, vulnsReader).
 				GenerateReport(workload, os.Stdout)

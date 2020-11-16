@@ -82,8 +82,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			scheme := starboard.NewScheme()
-			reports, err := vulnerabilities.NewScanner(scheme, config, opts, kubernetesClientset).Scan(ctx, workload)
+			reports, err := vulnerabilities.NewScanner(starboard.NewScheme(), config, opts, kubernetesClientset).Scan(ctx, workload)
 			if err != nil {
 				return err
 			}
@@ -91,7 +90,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			return vulnerabilityreport.NewReadWriter(scheme, starboardClientset).Write(ctx, reports)
+			return vulnerabilityreport.NewReadWriter(starboardClientset).Write(ctx, reports)
 		},
 	}
 

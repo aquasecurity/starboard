@@ -86,7 +86,7 @@ type ConfigAuditReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report ConfigAudit `json:"report"`
+	Report ConfigAuditResult `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -99,7 +99,7 @@ type ConfigAuditReportList struct {
 	Items []ConfigAuditReport `json:"items"`
 }
 
-type ConfigAudit struct {
+type ConfigAuditResult struct {
 	UpdateTimestamp metav1.Time        `json:"updateTimestamp"`
 	Scanner         Scanner            `json:"scanner"`
 	Summary         ConfigAuditSummary `json:"summary"`
