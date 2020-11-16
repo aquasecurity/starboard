@@ -135,7 +135,7 @@ func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, s
 		report, err := vulnerabilityreport.NewBuilder(r.scheme).
 			Owner(owner).
 			Container(container.Name).
-			ScanResult(scanResult).
+			Result(scanResult).
 			PodSpecHash(hash).Get()
 		if err != nil {
 			return err

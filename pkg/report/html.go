@@ -6,21 +6,22 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
+
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 )
 
 type htmlReporter struct {
 	vulnerabilityReportsReader vulnerabilityreport.ReadWriter
-	configAuditReportsReader   configAuditCrd.ReadWriter
+	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewHTMLReporter(configAuditReportsReader configAuditCrd.ReadWriter, vulnerabilityReportsReader vulnerabilityreport.ReadWriter) Reporter {
+func NewHTMLReporter(configAuditReportsReader configauditreport.ReadWriter, vulnerabilityReportsReader vulnerabilityreport.ReadWriter) Reporter {
 	return &htmlReporter{
 		vulnerabilityReportsReader: vulnerabilityReportsReader,
 		configAuditReportsReader:   configAuditReportsReader,

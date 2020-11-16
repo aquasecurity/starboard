@@ -11,7 +11,7 @@ import (
 )
 
 type Converter interface {
-	Convert(reader io.Reader) (sec.ConfigAudit, error)
+	Convert(reader io.Reader) (sec.ConfigAuditResult, error)
 }
 
 type converter struct {
@@ -23,7 +23,7 @@ func NewConverter() Converter {
 	return &converter{}
 }
 
-func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAudit, err error) {
+func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAuditResult, err error) {
 	var report Report
 	err = json.NewDecoder(reader).Decode(&report)
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string]
 	return
 }
 
-func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
+func (c *converter) toConfigAudit(result Result) (report sec.ConfigAuditResult) {
 	var podChecks []sec.Check
 	containerChecks := make(map[string][]sec.Check)
 
@@ -90,7 +90,7 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAudit) {
 		containerChecks[cr.Name] = checks
 	}
 
-	report = sec.ConfigAudit{
+	report = sec.ConfigAuditResult{
 		Scanner: sec.Scanner{
 			Name:    "Polaris",
 			Vendor:  "Fairwinds Ops",

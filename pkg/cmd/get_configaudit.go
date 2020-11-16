@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
 
-	"github.com/aquasecurity/starboard/pkg/polaris/crd"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/spf13/cobra"
@@ -58,8 +58,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			scheme := starboard.NewScheme()
-			report, err := crd.NewReadWriter(scheme, client).FindByOwner(ctx, workload)
+			report, err := configauditreport.NewReadWriter(client).FindByOwner(ctx, workload)
 			if err != nil {
 				return nil
 			}
@@ -71,7 +70,7 @@ NAME is the name of a particular Kubernetes workload.
 
 			format := cmd.Flag("output").Value.String()
 			printer, err := genericclioptions.NewPrintFlags("").
-				WithTypeSetter(scheme).
+				WithTypeSetter(starboard.NewScheme()).
 				WithDefaultOutput(format).
 				ToPrinter()
 			if err != nil {

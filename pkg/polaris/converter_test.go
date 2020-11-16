@@ -1,8 +1,10 @@
-package polaris
+package polaris_test
 
 import (
 	"os"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/polaris"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +20,9 @@ func TestConverter_Convert(t *testing.T) {
 		_ = file.Close()
 	}()
 
-	reports, err := NewConverter().Convert(file)
+	reports, err := polaris.NewConverter().Convert(file)
 	require.NoError(t, err)
-	assert.Equal(t, []v1alpha1.ConfigAudit{
+	assert.Equal(t, []v1alpha1.ConfigAuditResult{
 		{
 			Scanner: v1alpha1.Scanner{
 				Name:    "Polaris",

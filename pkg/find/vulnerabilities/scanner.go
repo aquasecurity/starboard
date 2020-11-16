@@ -178,7 +178,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		report, err := vulnerabilityreport.NewBuilder(s.scheme).
 			Owner(owner).
 			Container(c.Name).
-			ScanResult(result).
+			Result(result).
 			PodSpecHash("").Get()
 		if err != nil {
 			return nil, err
