@@ -29,6 +29,7 @@ func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer,
 	rootCmd.AddCommand(NewVersionCmd(version, outWriter))
 	rootCmd.AddCommand(NewInitCmd(cf))
 	rootCmd.AddCommand(NewFindCmd(executable, cf))
+	rootCmd.AddCommand(NewScanCmd(executable, cf))
 	rootCmd.AddCommand(NewKubeBenchCmd(cf))
 	rootCmd.AddCommand(NewKubeHunterCmd(cf))
 	rootCmd.AddCommand(NewPolarisCmd(cf))

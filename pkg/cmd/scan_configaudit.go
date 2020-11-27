@@ -3,22 +3,21 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
+	"github.com/aquasecurity/starboard/pkg/polaris/crd"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 )
 
-func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanConfigAuditReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:        "polaris",
-		Deprecated: "'polaris' is deprecated, please use 'scan configauditreports'",
-		Short:      "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
-		Args:       cobra.MaximumNArgs(1),
+		Use:   "configauditreports",
+		Short: "Run a variety of checks to ensure that Kubernetes pods and controllers are configured using best practices",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
@@ -45,7 +44,7 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			report, err := polaris.NewScanner(starboard.NewScheme(), opts, clientset).Scan(ctx, workload, gvk)
+			report, owner, err := polaris.NewScanner(opts, clientset).Scan(ctx, workload, gvk)
 			if err != nil {
 				return err
 			}
@@ -53,7 +52,11 @@ func NewPolarisCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return nil
 			}
-			return configauditreport.NewReadWriter(starboardClientset).Write(ctx, report)
+			err = crd.NewReadWriter(starboard.NewScheme(), starboardClientset).Write(ctx, report, owner)
+			if err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 

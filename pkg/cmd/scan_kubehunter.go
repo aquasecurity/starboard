@@ -11,11 +11,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func NewKubeHunterCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanKubeHunterReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:        "kube-hunter",
-		Deprecated: "'kube-hunter' is deprecated, please use 'scan kubehunterreports'",
-		Short:      "Hunt for security weaknesses",
+		Use:   "kubehunterreports",
+		Short: "Hunt for security weaknesses",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
