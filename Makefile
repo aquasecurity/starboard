@@ -13,6 +13,10 @@ STARBOARD_CLI_IMAGE := aquasec/starboard:$(IMAGE_TAG)
 STARBOARD_OPERATOR_IMAGE := aquasec/starboard-operator:$(IMAGE_TAG)
 STARBOARD_SCANNER_AQUA_IMAGE := aquasec/starboard-scanner-aqua:$(IMAGE_TAG)
 
+.PHONY: all
+all: build
+
+.PHONY: build
 build: build-starboard-cli build-starboard-operator build-starboard-scanner-aqua
 
 ## Builds the starboard binary
@@ -98,17 +102,18 @@ clean:
 	@rm -r ./bin 2> /dev/null || true
 	@rm -r ./dist 2> /dev/null || true
 
+.PHONY: docker-build
 ## Builds Docker images for all binaries
 docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-build-starboard-scanner-aqua
 
 ## Builds Docker image for Starboard CLI
 docker-build-starboard-cli: build-starboard-cli
-	docker build --no-cache -t $(STARBOARD_CLI_IMAGE) -f starboard.Dockerfile bin
+	docker build --no-cache -t $(STARBOARD_CLI_IMAGE) -f build/starboard/Dockerfile bin
 
 ## Builds Docker image for Starboard operator
 docker-build-starboard-operator: build-starboard-operator
-	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f starboard-operator.Dockerfile bin
+	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
-	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f starboard-scanner-aqua.Dockerfile bin
+	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f build/scanner-aqua/Dockerfile bin
