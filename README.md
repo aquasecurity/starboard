@@ -4,12 +4,12 @@
 
 [![GitHub Release][release-img]][release]
 [![GitHub Build Actions][build-action-img]][actions]
-[![GitHub Release Action][release-action-img]][actions]
 [![Coverage Status][cov-img]][cov]
 [![Go Report Card][report-card-img]][report-card]
 [![License][license-img]][license]
 [![GitHub All Releases][github-all-releases-img]][release]
 ![Docker Pulls Starboard][docker-pulls-starboard]
+![Docker Pulls Starboard Operator][docker-pulls-starboard-operator]
 
 ## Table of Contents
 
@@ -523,7 +523,6 @@ To open this pane on your Mac, choose Apple menu > System Preferences, click Sec
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
 [build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
-[release-action-img]: https://github.com/aquasecurity/starboard/workflows/release/badge.svg
 [actions]: https://github.com/aquasecurity/starboard/actions
 [cov-img]: https://codecov.io/github/aquasecurity/starboard/branch/master/graph/badge.svg
 [cov]: https://codecov.io/github/aquasecurity/starboard
@@ -533,6 +532,7 @@ To open this pane on your Mac, choose Apple menu > System Preferences, click Sec
 [license]: https://github.com/aquasecurity/starboard/blob/master/LICENSE
 [github-all-releases-img]: https://img.shields.io/github/downloads/aquasecurity/starboard/total?logo=github
 [docker-pulls-starboard]: https://img.shields.io/docker/pulls/aquasec/starboard?logo=docker&label=docker%20pulls%20%2F%20starboard
+[docker-pulls-starboard-operator]: https://img.shields.io/docker/pulls/aquasec/starboard-operator?logo=docker&label=docker%20pulls%20%2F%20starboard%20operator
 
 [aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions
