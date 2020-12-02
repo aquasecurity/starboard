@@ -22,7 +22,7 @@ builds:
     goarch:
       - amd64
   - id: starboard-scanner-aqua
-    main: ./cmd/starboard-scanner-aqua/main.go
+    main: ./cmd/scanner-aqua/main.go
     binary: starboard-scanner-aqua
     goos:
       - linux

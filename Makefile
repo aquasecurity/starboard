@@ -29,7 +29,7 @@ build-starboard-operator: $(SOURCES)
 
 ## Builds the scanner-aqua binary
 build-starboard-scanner-aqua: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-scanner-aqua ./cmd/starboard-scanner-aqua/main.go
+	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-scanner-aqua ./cmd/scanner-aqua/main.go
 
 .PHONY: get-ginkgo
 ## Installs Ginkgo CLI
