@@ -44,14 +44,13 @@ envSecret:
   # stringData specifies key value pairs to be added to the k8s Secret and
   # mounted by the Pod as environment variables.
   #
-  # NOTE: OPEARTOR_NAMESPACE will be set based on where this Helm chart was
+  # NOTE: OPERATOR_NAMESPACE will be set based on where this Helm chart was
   #       installed, and you are required to specify targetNamespace instead of
   #       OPERATOR_TARGET_NAMESPACE below for this Helm chart to function
   #       properly.
   stringData:
     OPERATOR_LOG_DEV_MODE: "false"
     OPERATOR_SCANNER_TRIVY_ENABLED: "true"
-    OPERATOR_SCANNER_TRIVY_VERSION: "0.12.0"    # https://hub.docker.com/r/aquasec/trivy/tags
     OPERATOR_SCANNER_AQUA_CSP_ENABLED: "false"
     OPERATOR_SCANNER_AQUA_CSP_VERSION: ""
     OPERATOR_SCANNER_AQUA_CSP_HOST: ""
