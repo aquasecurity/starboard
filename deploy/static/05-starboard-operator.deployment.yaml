@@ -24,7 +24,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: operator
-          image: docker.io/aquasec/starboard-operator:0.6.0
+          image: docker.io/aquasec/starboard-operator:0.7.0
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
@@ -44,8 +44,6 @@ spec:
               value: "30s"
             - name: OPERATOR_SCANNER_TRIVY_ENABLED
               value: "true"
-            - name: OPERATOR_SCANNER_TRIVY_VERSION
-              value: "0.11.0"
             - name: OPERATOR_SCANNER_AQUA_CSP_ENABLED
               value: "false"
             - name: OPERATOR_SCANNER_AQUA_CSP_VERSION
