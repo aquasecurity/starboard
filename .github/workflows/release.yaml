@@ -28,7 +28,7 @@ jobs:
           kubectl cluster-info
       - name: Run integration tests
         run: |
-          make integration-tests
+          make itests-starboard
         env:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_CLI_LOG_LEVEL: "0"
