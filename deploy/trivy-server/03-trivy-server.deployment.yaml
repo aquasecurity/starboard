@@ -23,7 +23,7 @@ spec:
           emptyDir: {}
       containers:
         - name: trivy-server
-          image: docker.io/aquasec/trivy:0.12.0
+          image: docker.io/aquasec/trivy:0.14.0
           command:
             - trivy
             - server

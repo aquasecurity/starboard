@@ -271,7 +271,7 @@ The following table lists available configuration parameters.
 | `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
 | `trivy.githubToken`   | N/A                                                    | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
 | `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.12.0`                       | Trivy image reference |
+| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.14.0`                       | Trivy image reference |
 | `trivy.mode`          | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. |
 | `trivy.serverURL`     | `http://trivy-server.trivy-server:4954`                | The endpoint URL of the Trivy server. This parameter is required when Trivy runs in the `ClientServer` mode. |
 | `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |

@@ -251,8 +251,8 @@ type ConfigManager interface {
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
 		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef":      "docker.io/aquasec/trivy:0.12.0",
-		"trivy.mode":          "Standalone",
+		"trivy.imageRef":      "docker.io/aquasec/trivy:0.14.0",
+		"trivy.mode":          string(Standalone),
 		"trivy.serverURL":     "http://trivy-server.trivy-server:4954",
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
 		"polaris.config.yaml": polarisConfigYAML,
@@ -263,7 +263,7 @@ func (c ConfigData) GetTrivyImageRef() string {
 	if imageRef, ok := c["trivy.imageRef"]; ok {
 		return imageRef
 	}
-	return "docker.io/aquasec/trivy:0.12.0"
+	return "docker.io/aquasec/trivy:0.14.0"
 }
 
 func (c ConfigData) GetTrivyMode() TrivyMode {

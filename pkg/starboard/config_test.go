@@ -59,7 +59,7 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 		{
 			name:             "Should return default image reference",
 			configData:       starboard.ConfigData{},
-			expectedImageRef: "docker.io/aquasec/trivy:0.12.0",
+			expectedImageRef: "docker.io/aquasec/trivy:0.14.0",
 		},
 		{
 			name: "Should return image reference from config data",
