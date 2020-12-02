@@ -40,7 +40,7 @@ func NewScanner(scheme *runtime.Scheme, config starboard.TrivyConfig, opts kube.
 		opts:        opts,
 		clientset:   clientset,
 		pods:        pod.NewPodManager(clientset),
-		converter:   trivy.DefaultConverter,
+		converter:   trivy.NewConverter(config),
 		idGenerator: idGenerator,
 		delegate:    trivy.NewScanner(idGenerator, config),
 	}
@@ -173,7 +173,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return nil, err
 		}
-		result, err := s.converter.Convert(s.config, containerImages[c.Name], logReader)
+		result, err := s.converter.Convert(containerImages[c.Name], logReader)
 
 		report, err := vulnerabilityreport.NewBuilder(s.scheme).
 			Owner(owner).

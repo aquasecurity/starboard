@@ -32,6 +32,7 @@ var (
 type trivyScanner struct {
 	idGenerator ext.IDGenerator
 	config      starboard.TrivyConfig
+	converter   Converter
 }
 
 // NewScanner constructs a new vulnerabilityreport.Scanner, which is using an official
@@ -46,6 +47,7 @@ func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulne
 	return &trivyScanner{
 		idGenerator: idGenerator,
 		config:      config,
+		converter:   NewConverter(config),
 	}
 }
 
@@ -246,7 +248,7 @@ func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev
 }
 
 func (s *trivyScanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	result, err := DefaultConverter.Convert(s.config, imageRef, logsReader)
+	result, err := s.converter.Convert(imageRef, logsReader)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
