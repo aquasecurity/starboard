@@ -1,0 +1,322 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: starboard-operator.v0.7.0
+  namespace: starboard-operator
+  annotations:
+    capabilities: Basic Install
+    categories: Security
+    description: Keeps security report resources updated
+    certified: "false"
+    containerImage: aquasec/starboard-operator:0.7.0
+    createdAt: 2020-09-15T08:00:00Z
+    support: Aqua Security
+    repository: https://github.com/aquasecurity/starboard
+    alm-examples: |-
+      []
+spec:
+  displayName: Starboard Operator
+  version: 0.7.0
+  replaces: starboard-operator.v0.6.0
+  description: |-
+    This operator for Starboard automatically updates security report resources in response to workload and other
+    changes on a Kubernetes cluster - for example, initiating a vulnerability scan when a new pod is started. Please see
+    the [Starboard](https://github.io/aquasecurity/starboard) repo for more info about the Starboard project, which manages a variety of security tools to make their reports accessible as Kubernetes custom resources.
+
+    ## Deployment
+
+    ### Determine install mode
+
+    The Starboard Operator supports all install modes as defined by the Operator Lifecycle Manager spec. You'll need an
+    OperatorGroup to denote which namespaces the operator should watch.
+
+    ### OwnNamespace
+
+    Configure the operator to watch for events in the namespace it is deployed in:
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha2
+    kind: OperatorGroup
+    metadata:
+      name: starboard
+      namespace: operators
+    spec:
+      targetNamespaces:
+      - operators
+    EOF
+    ```
+
+    ### SingleNamespace
+
+    Configure the operator to watch for events in a single namespace that the operator is not deployed in:
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha2
+    kind: OperatorGroup
+    metadata:
+      name: starboard
+      namespace: operators
+    spec:
+      targetNamespaces:
+      - foo
+    EOF
+    ```
+
+    ### MultiNamespace
+
+    Configure the operator to watch for events in more than one namespace:
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha2
+    kind: OperatorGroup
+    metadata:
+      name: starboard
+      namespace: operators
+    spec:
+      targetNamespaces:
+      - foo
+      - bar
+      - baz
+    EOF
+    ```
+
+    ### AllNamespaces
+
+    Configure the operator to watch for events in all namespaces:
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha2
+    kind: OperatorGroup
+    metadata:
+      name: starboard
+      namespace: operators
+    spec: {}
+    EOF
+    ```
+
+    ## Install operator
+
+    To install the operator create a new Subscription to the selected channel for the Starboard Operator.
+    OLM uses this information to create the ClusterServiceVersion and eventually start the operator pod.
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: starboard-operator
+      namespace: operators
+    spec:
+      channel: alpha
+      name: starboard-operator
+      source: upstream-community-operators
+      sourceNamespace: marketplace
+    EOF
+    ```
+
+    ## Vulnerability scanners
+
+    By default the operator uses [Trivy](https://github.com/aquasecurity/trivy) to find security vulnerabilities in
+    container images. However, you can configure it to use the Aqua CSP scanner instead.
+
+    Start by creating the `starboard-operator` secret in the `operators` namespace, which holds Aqua CSP config
+    keys to connect to the management console:
+
+    ```
+    $ kubectl create secret generic starboard-operator \
+      --namespace operators \
+      --from-literal OPERATOR_SCANNER_AQUA_CSP_USERNAME=$AQUA_CONSOLE_USERNAME \
+      --from-literal OPERATOR_SCANNER_AQUA_CSP_PASSWORD=$AQUA_CONSOLE_PASSWORD \
+      --from-literal OPERATOR_SCANNER_AQUA_CSP_VERSION=$AQUA_VERSION \
+      --from-literal OPERATOR_SCANNER_AQUA_CSP_HOST=http://csp-console-svc.aqua:8080
+    ```
+
+    Create a new Subscription to the selected channel for the Starboard Operator and enable Aqua CSP scanner via
+    the `config` filed in the Subscription object:
+
+    ```
+    cat << EOF | kubectl apply -f -
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: starboard-operator
+      namespace: operators
+    spec:
+      channel: alpha
+      name: starboard-operator
+      source: upstream-community-operators
+      sourceNamespace: marketplace
+      config:
+        env:
+        - name: OPERATOR_SCANNER_TRIVY_ENABLED
+          value: "false"
+        - name: OPERATOR_SCANNER_AQUA_CSP_ENABLED
+          value: "true"
+        envFrom:
+        - secretRef:
+            name: starboard-operator
+    EOF
+    ```
+
+  keywords: ['aqua-security', 'scanning', 'security']
+  maintainers:
+    - name: Daniel Pacak
+      email: daniel.pacak@aquasec.com
+  provider:
+    name: Aqua Security
+  maturity: alpha
+  labels:
+    name: starboard-operator
+  selector:
+    matchLabels:
+      name: starboard-operator
+  links:
+    - name: Starboard on GitHub
+      url: https://github.com/aquasecurity/starboard
+    - name: Introduction to Starboard by Liz Rice
+      url: https://blog.aquasec.com/starboard-kubernetes-tools
+  icon:
+    - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI0LjIuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJzdGFyYm9hcmQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNTAwcHgiIGhlaWdodD0iNTAwcHgiIHZpZXdCb3g9IjAgMCA1MDAgNTAwIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA1MDAgNTAwIiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnPg0KCTxwYXRoIGZpbGw9IiMwRDgxOUIiIGQ9Ik00NDAuMjA0LDI2MS43ODNsLTIwLjA1OSwyNC44MWwwLjk0Niw4Ljk3N2MwLjM5NSwxLjcxNiwwLjQ0MSwzLjU5NywwLjE0LDUuNDE0bC0wLjE2NywwLjg2OA0KCQljLTAuMzczLDEuNjQzLTEuMDMyLDMuMjE5LTEuOSw0LjU0NmMtMC4yOCwwLjQyNC0wLjU3NiwwLjgzOS0wLjgxOSwxLjE0NWwtOTcuNjcsMTIxLjQzNmMtMS40ODgsMS44NDYtMy41MTYsMy4zMy01Ljg2Nyw0LjI4OA0KCQljLTEuNzY4LDAuNzIxLTMuNjUzLDEuMTAxLTUuNDUxLDEuMTAxbC0xNTYuNjQ4LTAuMDM3Yy0xLjg4MSwwLTMuODUyLTAuNDE5LTUuNzAzLTEuMjExYy0yLjI0NC0wLjk2MS00LjE4NS0yLjQwMy01LjU5NS00LjE1NA0KCQlMNDMuNzc0LDMwNy41MTFjLTAuODMxLTEuMDM1LTEuNTItMi4yMzEtMi4wNDctMy41NTNjLTAuMjQ1LTAuNjItMC40NDktMS4yNTgtMC42MTEtMS45MWMtMC41NDQtMi4yMDItMC41ODEtNC40NTMtMC4xMS02LjUwNw0KCQlsMzQuODY5LTE1MS40NTNjMC40ODgtMi4xMjMsMS40ODgtNC4xNDQsMi44OTEtNS44NDNjMS4zMjktMS42MDgsMi45NS0yLjg3OSw0LjgxMy0zLjc2OWwxNDEuMjA5LTY3LjQyMw0KCQljMS45MzctMC45MjcsNC4xMDktMS40MTcsNi4yODctMS40MjJsMC4xMSwwLjAwNWwwLjczMSwwLjAyNWMxLjg4MywwLjEwMywzLjc3NiwwLjU4Niw1LjQ3LDEuMzk1bDE0MS4xMDYsNjcuNDINCgkJYzEuNzcsMC44NDYsMy4zMjcsMi4wMyw0LjYyNCwzLjUxOWMxLjU1NywxLjc4NSwyLjY1NSwzLjkzMywzLjE4LDYuMjE2bDEyLjkwOSw1Ni40ODJsMjQuNzU0LTQuMzg3bC0xMy4xOTMtNTcuNzE5DQoJCWMtMS40NDktNi4yOTctNC40NjUtMTIuMjA2LTguNzI5LTE3LjA5NWMtMy41Ni00LjA4Mi03LjgzNi03LjMzNC0xMi43MTYtOS42NjhMMjQ4LjIwOCw0NC40Yy00LjU2My0yLjE4LTkuNDMzLTMuNDUtMTQuNDc5LTMuNzgxDQoJCWwtMC42NTItMC4wNDdjLTAuNTc0LTAuMDI3LTEuMTU1LTAuMDMyLTEuMjQ4LTAuMDMybC0wLjc5OS0wLjAxN2MtNS44OSwwLjAxLTExLjc5NCwxLjM1My0xNy4wNjgsMy44NzZsLTE0MS4yMDYsNjcuNDINCgkJYy01LjE4MywyLjQ3OS05LjY3NSw1Ljk5LTEzLjM0NiwxMC40MzNjLTMuODc2LDQuNjkxLTYuNjQ1LDEwLjI5My04LjAwMywxNi4yMDJMMTYuNTM4LDI4OS45MDkNCgkJYy0xLjM1MSw1Ljg4LTEuMjgsMTIuMTY0LDAuMjA0LDE4LjE2NGMwLjQzNCwxLjc1OCwwLjk5MywzLjQ5NiwxLjY1Nyw1LjE3MWMxLjQ1NCwzLjY0OCwzLjQwNiw3LjAxLDUuODA2LDkuOTk5bDk3LjY0OCwxMjEuNDczDQoJCWMzLjk5Miw0Ljk0Niw5LjI3MSw4LjkxOCwxNS4yNjgsMTEuNDg1YzQuOTQ2LDIuMTE4LDEwLjMzNSwzLjIzOSwxNS42MDIsMy4yMzlsMTU2LjYzOCwwLjAzN2M1LjA4NSwwLDEwLjEwNy0wLjk5NSwxNC45MjItMi45NTcNCgkJYzYuMjgyLTIuNTYsMTEuNzk2LTYuNjM3LDE1Ljk1Mi0xMS43OTlsOTcuNzQ2LTEyMS41MzJjMC43Ny0wLjk3NiwxLjQ5OC0xLjk4NCwyLjE4Ny0zLjAzOGMyLjUyOC0zLjg2Miw0LjMzNy04LjE0OCw1LjM3Ny0xMi43MzMNCgkJYzAuMTcyLTAuNzUsMC4zMTYtMS41MSwwLjQ0OS0yLjI5N2MwLjg0OC01LjExNywwLjcwNC0xMC4yMi0wLjQzNC0xNS4xNzJMNDQwLjIwNCwyNjEuNzgzeiIvPg0KCTxnPg0KCQk8cG9seWdvbiBmaWxsPSIjMEQ4MTlCIiBwb2ludHM9IjU2LjQ5MSwyOTEuNTk1IDE2Mi4zNzMsMjk1Ljc2NiA0ODQuNTQ2LDE5My4wNzUgMjIwLjI3NCwyNDMuNTE0IAkJIi8+DQoJCTxwb2x5Z29uIGZpbGw9IiM5OUQ1RUIiIHBvaW50cz0iMjAyLjI5NSwxMDAuOTk4IDE5OC4wOTEsMzMyLjkxIDMxNS4yMjEsMjcxLjI0MSAJCSIvPg0KCQk8cG9seWdvbiBmaWxsPSIjMDJCMEQ0IiBwb2ludHM9IjIwMi4yNjUsMTAxLjA1OCAxOTguMzk1LDMzNi41MjggMTM2Ljc4MSwyOTIuNCAJCSIvPg0KCQk8cG9seWdvbiBmaWxsPSIjRjc5NDIwIiBwb2ludHM9IjU2LjQ4NywyOTEuNTkyIDE2MC45NzcsMjg5LjM5MyAxMjIuMDM0LDM3Mi40MDggCQkiLz4NCgkJPHBvbHlnb24gZmlsbD0iI0YwREUzNCIgcG9pbnRzPSI0ODQuODEzLDE5Mi44NzEgMTYwLjQ4MSwyODkuNCAzMDYuMTc1LDQxMy44MTggCQkiLz4NCgkJPHBvbHlnb24gZmlsbD0iI0ZBQUY0MCIgcG9pbnRzPSIxNjAuNDczLDI4OS40MDQgMzA2LjE3NSw0MTMuODYyIDEyMS45OCwzNzIuMzY0IAkJIi8+DQoJPC9nPg0KPC9nPg0KPC9zdmc+DQo=
+      mediatype: image/svg+xml
+  miniKubeVersion: 1.11.0
+  installModes:
+    - type: OwnNamespace
+      supported: true
+    - type: SingleNamespace
+      supported: true
+    - type: MultiNamespace
+      supported: true
+    - type: AllNamespaces
+      supported: true
+  install:
+    strategy: deployment
+    spec:
+      permissions:
+        - serviceAccountName: starboard-operator
+          rules:
+            - apiGroups:
+              - ""
+              resources:
+                - configmaps
+              verbs:
+                - get
+                - create
+            - apiGroups:
+                - ""
+              resources:
+                - replicationcontrollers
+                - pods
+                - pods/log
+              verbs:
+                - get
+                - list
+                - watch
+            - apiGroups:
+                - apps
+              resources:
+                - daemonsets
+                - deployments
+                - replicasets
+                - statefulsets
+              verbs:
+                - get
+                - list
+                - watch
+            - apiGroups:
+                - batch
+              resources:
+                - cronjobs
+              verbs:
+                - get
+                - list
+                - watch
+            - apiGroups:
+                - batch
+              resources:
+                - jobs
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - delete
+            - apiGroups:
+                - aquasecurity.github.io
+              resources:
+                - vulnerabilityreports
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+      deployments:
+        - name: starboard-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                name: starboard-operator
+            template:
+              metadata:
+                labels:
+                  name: starboard-operator
+              spec:
+                serviceAccountName: starboard-operator
+                automountServiceAccountToken: true
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 10000
+                  fsGroup: 10000
+                containers:
+                  - name: starboard-operator
+                    image: aquasec/starboard-operator:0.7.0
+                    imagePullPolicy: IfNotPresent
+                    securityContext:
+                      privileged: false
+                      readOnlyRootFilesystem: true
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                    env:
+                      - name: OPERATOR_NAMESPACE
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.annotations['olm.operatorNamespace']
+                      - name: OPERATOR_TARGET_NAMESPACES
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.annotations['olm.targetNamespaces']
+                    ports:
+                      - name: metrics
+                        containerPort: 8080
+                      - name: probes
+                        containerPort: 9090
+                    readinessProbe:
+                      httpGet:
+                        path: /readyz/
+                        port: probes
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                      successThreshold: 1
+                      failureThreshold: 3
+                    livenessProbe:
+                      httpGet:
+                        path: /healthz/
+                        port: probes
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                      successThreshold: 1
+                      failureThreshold: 10
+  customresourcedefinitions:
+    owned:
+      - kind: VulnerabilityReport
+        name: vulnerabilityreports.aquasecurity.github.io
+        version: v1alpha1
+        displayName: VulnerabilityReport
+        description: Represents the result of scanning a container image for known security vulnerabilities.
