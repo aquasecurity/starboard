@@ -5,12 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua/client"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua/scanner/api"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua/scanner/cli"
+	"github.com/spf13/cobra"
 )
 
 const (

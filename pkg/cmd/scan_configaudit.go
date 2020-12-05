@@ -4,11 +4,9 @@ import (
 	"context"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -58,7 +56,7 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		report, err := polaris.NewScanner(starboard.NewScheme(), opts, clientset).Scan(ctx, workload, gvk)
+		report, err := polaris.NewScanner(starboard.NewScheme(), clientset, opts).Scan(ctx, workload, gvk)
 		if err != nil {
 			return err
 		}

@@ -4,23 +4,18 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/operator"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var (
-	// GoReleaser sets three ldflags:
+	// These variables are populated by GoReleaser via ldflags
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
-)
 
-var (
 	buildInfo = starboard.BuildInfo{
 		Version: version,
 		Commit:  commit,
@@ -32,9 +27,10 @@ var (
 	setupLog = log.Log.WithName("main")
 )
 
+// main is the entrypoint of the Starboard Operator executable command.
 func main() {
 	if err := run(); err != nil {
-		setupLog.Error(err, "Unable to run manager")
+		setupLog.Error(err, "Unable to run starboard operator")
 	}
 }
 

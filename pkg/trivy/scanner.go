@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"github.com/aquasecurity/starboard/pkg/ext"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/docker"
+	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/resources"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
 
@@ -29,7 +30,7 @@ var (
 	}
 )
 
-type trivyScanner struct {
+type scanner struct {
 	idGenerator ext.IDGenerator
 	config      starboard.TrivyConfig
 	converter   Converter
@@ -44,23 +45,39 @@ type trivyScanner struct {
 // The trivy.ClientServer more is usually more performant, however it requires a Trivy server
 // to be hosted and accessible at the configurable URL.
 func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Scanner {
-	return &trivyScanner{
+	return &scanner{
 		idGenerator: idGenerator,
 		config:      config,
 		converter:   NewConverter(config),
 	}
 }
 
-func (s *trivyScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
+func (s *scanner) GetPodSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	switch s.config.GetTrivyMode() {
 	case starboard.Standalone:
-		return s.getPodSpecForStandaloneMode(spec)
+		return s.getPodSpecForStandaloneMode(spec, credentials)
 	case starboard.ClientServer:
-		return s.getPodSpecForClientServerMode(spec)
+		return s.getPodSpecForClientServerMode(spec, credentials)
 	default:
-		return corev1.PodSpec{}, fmt.Errorf("unrecognized trivy mode: %v", s.config.GetTrivyMode())
+		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", s.config.GetTrivyMode())
 	}
 }
+
+func (s *scanner) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
+	containerImages := resources.GetContainerImagesFromPodSpec(spec)
+	secretData := kube.AggregateImagePullSecretsData(containerImages, credentials)
+
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: s.idGenerator.GenerateID(),
+		},
+		Data: secretData,
+	}
+}
+
+const (
+	sharedVolumeName = "data"
+)
 
 // In the Standalone mode there is the init container responsible for downloading
 // the latest Trivy DB file from GitHub and storing it to the empty volume shared
@@ -74,7 +91,15 @@ func (s *trivyScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 // scan command and skips the database update:
 //
 // trivy --skip-update --cache-dir /var/lib/trivy --format json <container image>
-func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.PodSpec, error) {
+func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	var secret *corev1.Secret
+	var secrets []*corev1.Secret
+
+	if len(credentials) > 0 {
+		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secrets = append(secrets, secret)
+	}
+
 	initContainer := corev1.Container{
 		Name:                     s.idGenerator.GenerateID(),
 		Image:                    s.config.GetTrivyImageRef(),
@@ -117,7 +142,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 		Resources: defaultResourceRequirements,
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      "data",
+				Name:      sharedVolumeName,
 				MountPath: "/var/lib/trivy",
 				ReadOnly:  false,
 			},
@@ -127,37 +152,67 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 	var containers []corev1.Container
 
 	for _, c := range spec.Containers {
+
+		env := []corev1.EnvVar{
+			{
+				Name: "TRIVY_SEVERITY",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "HTTP_PROXY",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.httpProxy",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+		}
+
+		if _, ok := credentials[c.Name]; ok && secret != nil {
+			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
+			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+
+			env = append(env, corev1.EnvVar{
+				Name: "TRIVY_USERNAME",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: registryUsernameKey,
+					},
+				},
+			}, corev1.EnvVar{
+				Name: "TRIVY_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: registryPasswordKey,
+					},
+				},
+			})
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    s.config.GetTrivyImageRef(),
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-			Env: []corev1.EnvVar{
-				{
-					Name: "TRIVY_SEVERITY",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.severity",
-							Optional: pointer.BoolPtr(true),
-						},
-					},
-				},
-				{
-					Name: "HTTP_PROXY",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.httpProxy",
-							Optional: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
+			Env:                      env,
 			Command: []string{
 				"trivy",
 			},
@@ -173,7 +228,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 			Resources: defaultResourceRequirements,
 			VolumeMounts: []corev1.VolumeMount{
 				{
-					Name:      "data",
+					Name:      sharedVolumeName,
 					ReadOnly:  false,
 					MountPath: "/var/lib/trivy",
 				},
@@ -186,7 +241,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Volumes: []corev1.Volume{
 			{
-				Name: "data",
+				Name: sharedVolumeName,
 				VolumeSource: corev1.VolumeSource{
 					EmptyDir: &corev1.EmptyDirVolumeSource{
 						Medium: corev1.StorageMediumDefault,
@@ -196,7 +251,7 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 		},
 		InitContainers: []corev1.Container{initContainer},
 		Containers:     containers,
-	}, nil
+	}, secrets, nil
 }
 
 // In the ClientServer mode the number of containers of the pod created by the scan job
@@ -204,27 +259,66 @@ func (s *trivyScanner) getPodSpecForStandaloneMode(spec corev1.PodSpec) (corev1.
 // Each container runs Trivy scan command pointing to a remote Trivy server:
 //
 // trivy client --remote http://trivy-server.trivy-server:4954 --format json <container image>
-func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev1.PodSpec, error) {
+func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	var secret *corev1.Secret
+	var secrets []*corev1.Secret
+
+	if len(credentials) > 0 {
+		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secrets = append(secrets, secret)
+	}
+
 	var containers []corev1.Container
+
 	for _, container := range spec.Containers {
+
+		env := []corev1.EnvVar{
+			{
+				Name: "TRIVY_SEVERITY",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+		}
+
+		if _, ok := credentials[container.Name]; ok && secret != nil {
+			registryUsernameKey := fmt.Sprintf("%s.username", container.Name)
+			registryPasswordKey := fmt.Sprintf("%s.password", container.Name)
+
+			env = append(env, corev1.EnvVar{
+				Name: "TRIVY_USERNAME",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: registryUsernameKey,
+					},
+				},
+			}, corev1.EnvVar{
+				Name: "TRIVY_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+						Key: registryPasswordKey,
+					},
+				},
+			})
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:            container.Name,
 			Image:           s.config.GetTrivyImageRef(),
 			ImagePullPolicy: corev1.PullIfNotPresent,
-			Env: []corev1.EnvVar{
-				{
-					Name: "TRIVY_SEVERITY",
-					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
-							},
-							Key:      "trivy.severity",
-							Optional: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
+			Env:             env,
 			Command: []string{
 				"trivy",
 			},
@@ -244,10 +338,10 @@ func (s *trivyScanner) getPodSpecForClientServerMode(spec corev1.PodSpec) (corev
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Containers:                   containers,
-	}, nil
+	}, secrets, nil
 }
 
-func (s *trivyScanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *scanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	result, err := s.converter.Convert(imageRef, logsReader)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err

@@ -96,7 +96,7 @@ func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra
 		if err != nil {
 			return err
 		}
-		reports, err := vulnerabilities.NewScanner(starboard.NewScheme(), config, opts, kubernetesClientset).Scan(ctx, workload)
+		reports, err := vulnerabilities.NewScanner(starboard.NewScheme(), kubernetesClientset, config, opts).Scan(ctx, workload)
 		if err != nil {
 			return err
 		}

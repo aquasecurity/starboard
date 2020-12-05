@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/docker"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -57,7 +59,7 @@ type reconciler struct {
 }
 
 func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, owner kube.Object, images kube.ContainerImages, hash string) error {
-	templateSpec, err := r.scanner.GetPodSpec(spec)
+	templateSpec, _, err := r.scanner.GetPodSpec(spec, map[string]docker.Auth{})
 	if err != nil {
 		return err
 	}

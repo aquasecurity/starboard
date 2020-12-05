@@ -5,12 +5,10 @@ import (
 	"io"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/go-containerregistry/pkg/name"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Converter is the interface that wraps the Convert method.

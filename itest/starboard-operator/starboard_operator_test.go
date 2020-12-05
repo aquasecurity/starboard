@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"

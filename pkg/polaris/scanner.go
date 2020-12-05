@@ -4,29 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/scanners"
-
-	"k8s.io/utils/pointer"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/runner"
-	"k8s.io/klog"
-
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
+	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/scanners"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
-	batch "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -47,31 +41,35 @@ type Scanner struct {
 	converter Converter
 }
 
-func NewScanner(scheme *runtime.Scheme, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(
+	scheme *runtime.Scheme,
+	clientset kubernetes.Interface,
+	opts kube.ScannerOpts,
+) *Scanner {
 	return &Scanner{
 		scheme:    scheme,
-		opts:      opts,
 		clientset: clientset,
+		opts:      opts,
 		pods:      pod.NewPodManager(clientset),
 		converter: DefaultConverter,
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (starboardv1alpha1.ConfigAuditReport, error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 
 	_, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
-		return starboardv1alpha1.ConfigAuditReport{}, err
+		return v1alpha1.ConfigAuditReport{}, err
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 	job := s.preparePolarisJob(workload, gvk)
 
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
 		s.pods.LogRunnerErrors(ctx, job)
-		return starboardv1alpha1.ConfigAuditReport{}, fmt.Errorf("running polaris job: %w", err)
+		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("running polaris job: %w", err)
 	}
 
 	defer func() {
@@ -80,8 +78,8 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 			return
 		}
 		klog.V(3).Infof("Deleting scan job: %s/%s", job.Namespace, job.Name)
-		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
+		background := metav1.DeletePropagationBackground
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
@@ -90,7 +88,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		job.Namespace, job.Name)
 	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, polarisContainerName)
 	if err != nil {
-		return starboardv1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
+		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
 	result, err := s.converter.Convert(logsReader)
@@ -118,10 +116,10 @@ func (s *Scanner) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKi
 	)
 }
 
-func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) *batch.Job {
+func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) *batchv1.Job {
 	sourceName := s.sourceNameFrom(workload, gvk)
-	return &batch.Job{
-		ObjectMeta: meta.ObjectMeta{
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
@@ -130,51 +128,51 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 				kube.LabelResourceNamespace: workload.Namespace,
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
-			Template: core.PodTemplateSpec{
-				ObjectMeta: meta.ObjectMeta{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						kube.LabelResourceKind:      string(workload.Kind),
 						kube.LabelResourceName:      workload.Name,
 						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
-				Spec: core.PodSpec{
+				Spec: corev1.PodSpec{
 					ServiceAccountName:           starboard.ServiceAccountName,
 					AutomountServiceAccountToken: pointer.BoolPtr(true),
-					RestartPolicy:                core.RestartPolicyNever,
-					Volumes: []core.Volume{
+					RestartPolicy:                corev1.RestartPolicyNever,
+					Volumes: []corev1.Volume{
 						{
 							Name: configVolume,
-							VolumeSource: core.VolumeSource{
-								ConfigMap: &core.ConfigMapVolumeSource{
-									LocalObjectReference: core.LocalObjectReference{
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
 										Name: starboard.ConfigMapName,
 									},
 								},
 							},
 						},
 					},
-					Containers: []core.Container{
+					Containers: []corev1.Container{
 						{
 							Name:                     polarisContainerName,
 							Image:                    polarisContainerImage,
-							ImagePullPolicy:          core.PullIfNotPresent,
-							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
-							Resources: core.ResourceRequirements{
-								Limits: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("300m"),
-									core.ResourceMemory: resource.MustParse("300M"),
+							ImagePullPolicy:          corev1.PullIfNotPresent,
+							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("300m"),
+									corev1.ResourceMemory: resource.MustParse("300M"),
 								},
-								Requests: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("50m"),
-									core.ResourceMemory: resource.MustParse("50M"),
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("50m"),
+									corev1.ResourceMemory: resource.MustParse("50M"),
 								},
 							},
-							VolumeMounts: []core.VolumeMount{
+							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      configVolume,
 									MountPath: "/etc/starboard",

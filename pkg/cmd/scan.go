@@ -7,8 +7,9 @@ import (
 
 func NewScanCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	scanCmd := &cobra.Command{
-		Use:   "scan",
-		Short: "Manage security weakness identification tools",
+		Use:     "scan",
+		Aliases: []string{"generate"},
+		Short:   "Manage security weakness identification tools",
 	}
 	scanCmd.AddCommand(NewScanConfigAuditReportsCmd(cf))
 	scanCmd.AddCommand(NewScanKubeBenchReportsCmd(cf))
