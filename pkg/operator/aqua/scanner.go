@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/docker"
+
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -39,7 +41,7 @@ func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, conf
 	}
 }
 
-func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
+func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
@@ -47,7 +49,7 @@ func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 		var err error
 		scanJobContainers[i], err = s.newScanJobContainer(container)
 		if err != nil {
-			return corev1.PodSpec{}, err
+			return corev1.PodSpec{}, nil, err
 		}
 	}
 
@@ -89,7 +91,7 @@ func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 			},
 		},
 		Containers: scanJobContainers,
-	}, nil
+	}, nil, nil
 }
 
 func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {

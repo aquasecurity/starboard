@@ -63,8 +63,9 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			return err
 		}
 
-		scanner := kubebench.NewScanner(config, opts, kubernetesClientset)
-		writer := crd.NewReadWriter(starboard.NewScheme(), starboardClientset)
+		scheme := starboard.NewScheme()
+		scanner := kubebench.NewScanner(scheme, kubernetesClientset, config, opts)
+		writer := crd.NewReadWriter(scheme, starboardClientset)
 
 		var wg sync.WaitGroup
 

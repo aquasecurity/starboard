@@ -17,10 +17,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const (
-	serviceAccountDefault = "default"
-)
-
 type Manager struct {
 	clientset kubernetes.Interface
 }
@@ -110,44 +106,6 @@ func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Objec
 	}
 	err = fmt.Errorf("unrecognized workload: %s", workload.Kind)
 	return
-}
-
-// GetImagePullSecrets returns the union of image pull Secrets specified on the given PodSpec
-// and image pull secrets added to the Service Account.
-func (pw *Manager) GetImagePullSecrets(ctx context.Context, namespace string, spec core.PodSpec) ([]core.Secret, error) {
-	secrets := make([]core.Secret, 0)
-
-	for _, secretRef := range spec.ImagePullSecrets {
-		secret, err := pw.clientset.CoreV1().Secrets(namespace).
-			Get(ctx, secretRef.Name, meta.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("getting secret by name: %s/%s: %w", namespace, secretRef.Name, err)
-		}
-		secrets = append(secrets, *secret)
-	}
-
-	serviceAccountName := spec.ServiceAccountName
-	// Note: For Kubernetes controllers the ServiceAccountName field might be blank.
-	if serviceAccountName == "" {
-		serviceAccountName = serviceAccountDefault
-	}
-
-	serviceAccount, err := pw.clientset.CoreV1().ServiceAccounts(namespace).
-		Get(ctx, serviceAccountName, meta.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("getting service account by name: %s/%s: %w", namespace, serviceAccountName, err)
-	}
-
-	for _, secretRef := range serviceAccount.ImagePullSecrets {
-		secret, err := pw.clientset.CoreV1().Secrets(namespace).
-			Get(ctx, secretRef.Name, meta.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("getting secret by name: %s/%s: %w", namespace, secretRef.Name, err)
-		}
-		secrets = append(secrets, *secret)
-	}
-
-	return secrets, nil
 }
 
 func (pw *Manager) GetPodByName(ctx context.Context, namespace, name string) (*core.Pod, error) {

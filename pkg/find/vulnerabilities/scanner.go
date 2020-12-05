@@ -5,46 +5,25 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/resources"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
-
-	"github.com/aquasecurity/starboard/pkg/trivy"
-
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"github.com/aquasecurity/starboard/pkg/scanners"
-	"k8s.io/klog"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/runner"
-
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
+	"github.com/aquasecurity/starboard/pkg/resources"
+	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/scanners"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/trivy"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"k8s.io/utils/pointer"
 )
-
-// NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
-func NewScanner(scheme *runtime.Scheme, config starboard.TrivyConfig, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
-	idGenerator := ext.NewGoogleUUIDGenerator()
-	return &Scanner{
-		scheme:      scheme,
-		config:      config,
-		opts:        opts,
-		clientset:   clientset,
-		pods:        pod.NewPodManager(clientset),
-		converter:   trivy.NewConverter(config),
-		idGenerator: idGenerator,
-		delegate:    trivy.NewScanner(idGenerator, config),
-	}
-}
 
 type Scanner struct {
 	scheme      *runtime.Scheme
@@ -55,31 +34,50 @@ type Scanner struct {
 	converter   trivy.Converter
 	idGenerator ext.IDGenerator
 	delegate    vulnerabilityreport.Scanner
+	kube.SecretsReader
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]sec.VulnerabilityReport, error) {
+// NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
+func NewScanner(
+	scheme *runtime.Scheme,
+	clientset kubernetes.Interface,
+	config starboard.TrivyConfig,
+	opts kube.ScannerOpts,
+) *Scanner {
+	idGenerator := ext.NewGoogleUUIDGenerator()
+	return &Scanner{
+		scheme:        scheme,
+		config:        config,
+		opts:          opts,
+		clientset:     clientset,
+		pods:          pod.NewPodManager(clientset),
+		converter:     trivy.NewConverter(config),
+		idGenerator:   idGenerator,
+		delegate:      trivy.NewScanner(idGenerator, config),
+		SecretsReader: kube.NewReader(clientset),
+	}
+}
+
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.VulnerabilityReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-	podSpec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
+	spec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
 	if err != nil {
 		return nil, fmt.Errorf("getting Pod template: %w", err)
 	}
 
-	reports, err := s.ScanByPodSpec(ctx, workload, podSpec, owner)
+	klog.V(3).Infof("Scanning with options: %+v", s.opts)
+
+	credentials, err := s.GetCredentials(ctx, spec, workload.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	return reports, nil
-}
 
-func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec corev1.PodSpec, owner metav1.Object) ([]sec.VulnerabilityReport, error) {
-	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-
-	job, err := s.PrepareScanJob(workload, spec)
+	job, secrets, err := s.PrepareScanJob(workload, spec, credentials)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
 
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job, secrets...))
 	if err != nil {
 		s.pods.LogRunnerErrors(ctx, job)
 		return nil, fmt.Errorf("running scan job: %w", err)
@@ -107,17 +105,25 @@ func (s *Scanner) ScanByPodSpec(ctx context.Context, workload kube.Object, spec 
 	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
-func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec) (*batchv1.Job, error) {
-	templateSpec, err := s.delegate.GetPodSpec(spec)
+func (s *Scanner) GetCredentials(ctx context.Context, spec corev1.PodSpec, ns string) (map[string]docker.Auth, error) {
+	imagePullSecrets, err := s.ListImagePullSecretsByPodSpec(ctx, spec, ns)
 	if err != nil {
 		return nil, err
+	}
+	return kube.MapContainerNamesToDockerAuths(resources.GetContainerImagesFromPodSpec(spec), imagePullSecrets)
+}
+
+func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec, credentials map[string]docker.Auth) (*batchv1.Job, []*corev1.Secret, error) {
+	templateSpec, secrets, err := s.delegate.GetPodSpec(spec, credentials)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	templateSpec.ServiceAccountName = starboard.ServiceAccountName
 
 	containerImagesAsJSON, err := resources.GetContainerImagesFromPodSpec(spec).AsJSON()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &batchv1.Job{
@@ -148,11 +154,11 @@ func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec) (*ba
 				Spec: templateSpec,
 			},
 		},
-	}, nil
+	}, secrets, nil
 }
 
-func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job, owner metav1.Object) ([]sec.VulnerabilityReport, error) {
-	var reports []sec.VulnerabilityReport
+func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job, owner metav1.Object) ([]v1alpha1.VulnerabilityReport, error) {
+	var reports []v1alpha1.VulnerabilityReport
 
 	var containerImagesAsJSON string
 	var ok bool

@@ -8,7 +8,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/secrets"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -342,7 +341,7 @@ var _ = Describe("Starboard CLI", func() {
 			BeforeEach(func() {
 				var err error
 				var secret *corev1.Secret
-				secret, err = secrets.NewImagePullSecret(metav1.ObjectMeta{
+				secret, err = kube.NewImagePullSecret(metav1.ObjectMeta{
 					Name:      secretName,
 					Namespace: podNamespace,
 				}, "https://index.docker.io/v1",

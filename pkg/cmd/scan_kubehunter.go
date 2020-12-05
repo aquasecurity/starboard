@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
 	"github.com/aquasecurity/starboard/pkg/kubehunter/crd"
@@ -27,33 +29,33 @@ func NewScanKubeHunterReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Comma
 	return cmd
 }
 
+const (
+	kubeHunterReportName = "cluster"
+)
+
 func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) (err error) {
-	return func(cmd *cobra.Command, args []string) (err error) {
+	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		config, err := cf.ToRESTConfig()
 		if err != nil {
-			return
+			return err
 		}
 		kubernetesClientset, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return
+			return err
 		}
 		opts, err := getScannerOpts(cmd)
 		if err != nil {
-			return
+			return err
 		}
-		report, err := kubehunter.NewScanner(opts, kubernetesClientset).Scan(ctx)
+		report, err := kubehunter.NewScanner(starboard.NewScheme(), kubernetesClientset, opts).Scan(ctx)
 		if err != nil {
-			return
+			return err
 		}
 		starboardClientset, err := starboardapi.NewForConfig(config)
 		if err != nil {
-			return
+			return err
 		}
-		err = crd.NewWriter(starboardClientset).Write(ctx, report, "cluster")
-		if err != nil {
-			return
-		}
-		return
+		return crd.NewWriter(starboardClientset).Write(ctx, report, kubeHunterReportName)
 	}
 }
