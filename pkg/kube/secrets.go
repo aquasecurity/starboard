@@ -103,7 +103,9 @@ type SecretsReader interface {
 	ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error)
 }
 
-func NewReader(clientset kubernetes.Interface) SecretsReader {
+// NewSecretsReader constructs a new SecretsReader which is using the client-go
+// module for interacting with the Kubernetes API server.
+func NewSecretsReader(clientset kubernetes.Interface) SecretsReader {
 	return &reader{
 		clientset: clientset,
 	}
@@ -157,7 +159,10 @@ func (r *reader) ListByLocalObjectReferences(ctx context.Context, refs []corev1.
 	return secrets, nil
 }
 
-func NewControllerRuntimeReader(client client.Client) SecretsReader {
+// NewControllerRuntimeSecretsReader constructs a new SecretsReader which is
+// using the client package provided by the controller-runtime libraries for
+// interacting with the Kubernetes API server.
+func NewControllerRuntimeSecretsReader(client client.Client) SecretsReader {
 	return &crReader{client: client}
 }
 

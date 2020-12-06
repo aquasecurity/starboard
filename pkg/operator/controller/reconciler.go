@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/docker"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/logs"
+	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type Reconciler interface {
@@ -35,16 +36,18 @@ func NewReconciler(scheme *runtime.Scheme,
 	client client.Client,
 	store vulnerabilityreport.StoreInterface,
 	idGenerator ext.IDGenerator,
-	scanner vulnerabilityreport.Scanner,
-	logsReader *logs.Reader) Reconciler {
+	scanner vulnerabilityreport.Plugin,
+	logsReader *logs.Reader,
+) Reconciler {
 	return &reconciler{
-		scheme:      scheme,
-		config:      config,
-		client:      client,
-		store:       store,
-		idGenerator: idGenerator,
-		scanner:     scanner,
-		logsReader:  logsReader,
+		scheme:        scheme,
+		config:        config,
+		client:        client,
+		store:         store,
+		idGenerator:   idGenerator,
+		scanner:       scanner,
+		logsReader:    logsReader,
+		SecretsReader: kube.NewControllerRuntimeSecretsReader(client),
 	}
 }
 
@@ -54,12 +57,18 @@ type reconciler struct {
 	client      client.Client
 	store       vulnerabilityreport.StoreInterface
 	idGenerator ext.IDGenerator
-	scanner     vulnerabilityreport.Scanner
+	scanner     vulnerabilityreport.Plugin
 	logsReader  *logs.Reader
+	kube.SecretsReader
 }
 
 func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, owner kube.Object, images kube.ContainerImages, hash string) error {
-	templateSpec, _, err := r.scanner.GetPodSpec(spec, map[string]docker.Auth{})
+	credentials, err := r.getCredentials(ctx, spec, owner.Namespace)
+	if err != nil {
+		return err
+	}
+
+	templateSpec, secrets, err := r.scanner.GetScanJobSpec(spec, credentials)
 	if err != nil {
 		return err
 	}
@@ -104,7 +113,33 @@ func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, own
 			},
 		},
 	}
-	return r.client.Create(ctx, scanJob)
+
+	err = r.client.Create(ctx, scanJob)
+	if err != nil {
+		return err
+	}
+
+	for _, secret := range secrets {
+		secret.Namespace = r.config.Namespace
+		err = controllerutil.SetOwnerReference(scanJob, secret, r.scheme)
+		if err != nil {
+			return err
+		}
+		err := r.client.Create(ctx, secret)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *reconciler) getCredentials(ctx context.Context, spec corev1.PodSpec, ns string) (map[string]docker.Auth, error) {
+	imagePullSecrets, err := r.ListImagePullSecretsByPodSpec(ctx, spec, ns)
+	if err != nil {
+		return nil, err
+	}
+	return kube.MapContainerNamesToDockerAuths(resources.GetContainerImagesFromPodSpec(spec), imagePullSecrets)
 }
 
 func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, scanJob *batchv1.Job, workload kube.Object, containerImages kube.ContainerImages, hash string) error {

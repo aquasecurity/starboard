@@ -33,7 +33,7 @@ type Scanner struct {
 	pods        *pod.Manager
 	converter   trivy.Converter
 	idGenerator ext.IDGenerator
-	delegate    vulnerabilityreport.Scanner
+	delegate    vulnerabilityreport.Plugin
 	kube.SecretsReader
 }
 
@@ -54,7 +54,7 @@ func NewScanner(
 		converter:     trivy.NewConverter(config),
 		idGenerator:   idGenerator,
 		delegate:      trivy.NewScanner(idGenerator, config),
-		SecretsReader: kube.NewReader(clientset),
+		SecretsReader: kube.NewSecretsReader(clientset),
 	}
 }
 
@@ -67,7 +67,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.Vu
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 
-	credentials, err := s.GetCredentials(ctx, spec, workload.Namespace)
+	credentials, err := s.getCredentials(ctx, spec, workload.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.Vu
 	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
-func (s *Scanner) GetCredentials(ctx context.Context, spec corev1.PodSpec, ns string) (map[string]docker.Auth, error) {
+func (s *Scanner) getCredentials(ctx context.Context, spec corev1.PodSpec, ns string) (map[string]docker.Auth, error) {
 	imagePullSecrets, err := s.ListImagePullSecretsByPodSpec(ctx, spec, ns)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *Scanner) GetCredentials(ctx context.Context, spec corev1.PodSpec, ns st
 }
 
 func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec, credentials map[string]docker.Auth) (*batchv1.Job, []*corev1.Secret, error) {
-	templateSpec, secrets, err := s.delegate.GetPodSpec(spec, credentials)
+	templateSpec, secrets, err := s.delegate.GetScanJobSpec(spec, credentials)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -5,19 +5,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/docker"
-
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
 	"github.com/aquasecurity/starboard/pkg/ext"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-	"k8s.io/apimachinery/pkg/api/resource"
-
-	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 )
 
@@ -25,23 +20,27 @@ const (
 	secretName = "starboard-operator"
 )
 
-type aquaScanner struct {
+type scanner struct {
 	idGenerator ext.IDGenerator
 	buildInfo   starboard.BuildInfo
 	config      etc.ScannerAquaCSP
 }
 
-// NewScanner constructs a new VulnerabilityScanner, which is using the Aqua scanner
-// to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, config etc.ScannerAquaCSP) vulnerabilityreport.Scanner {
-	return &aquaScanner{
+// NewScanner constructs a new vulnerability scanner Plugin, which is using
+// the Aqua CSP to scan container images of Kubernetes workloads.
+func NewScanner(
+	idGenerator ext.IDGenerator,
+	buildInfo starboard.BuildInfo,
+	config etc.ScannerAquaCSP,
+) vulnerabilityreport.Plugin {
+	return &scanner{
 		idGenerator: idGenerator,
 		buildInfo:   buildInfo,
 		config:      config,
 	}
 }
 
-func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
@@ -94,7 +93,7 @@ func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec, _ map[string]docker.Auth) 
 	}, nil, nil
 }
 
-func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
+func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
 	version, err := starboard.GetVersionFromImageRef(s.config.ImageRef)
 	if err != nil {
 		return corev1.Container{}, err
@@ -174,8 +173,8 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1
 	}, nil
 }
 
-func (s *aquaScanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (aquasecurityv1alpha1.VulnerabilityScanResult, error) {
-	var report aquasecurityv1alpha1.VulnerabilityScanResult
+func (s *scanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+	var report v1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
 }

@@ -40,9 +40,14 @@ rules:
       - ""
     resources:
       - configmaps
+      - secrets
+      - serviceaccounts
     verbs:
+      - list
+      - watch
       - get
       - create
+      - update
   - apiGroups:
       - apps
     resources: # resources that own pods are inspected

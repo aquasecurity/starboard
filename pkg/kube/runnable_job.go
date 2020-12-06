@@ -5,22 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"k8s.io/klog"
-
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/tools/cache"
-
 	"github.com/aquasecurity/starboard/pkg/runner"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -66,30 +61,23 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	var err error
 
-	for i, s := range r.secrets {
-		klog.V(3).Infof("Creating secret %q", r.job.Namespace+"/"+s.Name)
-		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Create(ctx, s, metav1.CreateOptions{})
-		if err != nil {
-			return err
-		}
-	}
-
 	klog.V(3).Infof("Creating job: %s/%s", r.job.Namespace, r.job.Name)
 	r.job, err = r.clientset.BatchV1().Jobs(r.job.Namespace).Create(ctx, r.job, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("creating job: %w", err)
 	}
 
-	for i, s := range r.secrets {
-		klog.V(3).Infof("Setting owner reference for secret %q", r.job.Namespace+"/"+s.Name)
-		err = controllerutil.SetOwnerReference(r.job, s, r.scheme)
+	for i, secret := range r.secrets {
+		secret.Namespace = r.job.Namespace
+		klog.V(3).Infof("Setting owner reference for secret %q", r.job.Namespace+"/"+secret.Name)
+		err = controllerutil.SetOwnerReference(r.job, secret, r.scheme)
 		if err != nil {
 			return err
 		}
-		klog.V(3).Infof("Updating secret %q", r.job.Namespace+"/"+s.Name)
-		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Update(ctx, s, metav1.UpdateOptions{})
+		klog.V(3).Infof("Creating secret %q", r.job.Namespace+"/"+secret.Name)
+		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("creating secret: %w", err)
 		}
 	}
 
