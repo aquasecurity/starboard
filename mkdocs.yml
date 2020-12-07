@@ -1,0 +1,17 @@
+# Project information
+site_name: Starboard
+site_url: https://aquasecurity.github.io/starboard/
+site_description: >-
+  Kubernetes-native security toolkit
+
+# Repository
+repo_name: aquasecurity/starboard
+repo_url: https://github.com/aquasecurity/starboard
+edit_uri: ""
+
+# Theme
+theme: readthedocs
+
+nav:
+  - Home: index.md
+
