@@ -15,7 +15,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/batch/v1beta1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -80,6 +80,14 @@ func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, own
 
 	templateSpec.ServiceAccountName = r.config.ServiceAccount
 
+	for _, secret := range secrets {
+		secret.Namespace = r.config.Namespace
+		err := r.client.Create(ctx, secret)
+		if err != nil {
+			return fmt.Errorf("creating secret: %w", err)
+		}
+	}
+
 	scanJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.idGenerator.GenerateID(),
@@ -116,18 +124,17 @@ func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, own
 
 	err = r.client.Create(ctx, scanJob)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating job: %w", err)
 	}
 
 	for _, secret := range secrets {
-		secret.Namespace = r.config.Namespace
 		err = controllerutil.SetOwnerReference(scanJob, secret, r.scheme)
 		if err != nil {
-			return err
+			return fmt.Errorf("setting owner reference: %w", err)
 		}
-		err := r.client.Create(ctx, secret)
+		err := r.client.Update(ctx, secret)
 		if err != nil {
-			return err
+			return fmt.Errorf("updating secret: %w", err)
 		}
 	}
 
@@ -201,7 +208,7 @@ func (r *reconciler) getRuntimeObjectFor(ctx context.Context, workload kube.Obje
 	case kube.KindDaemonSet:
 		obj = &appsv1.DaemonSet{}
 	case kube.KindCronJob:
-		obj = &v1beta1.CronJob{}
+		obj = &batchv1beta1.CronJob{}
 	case kube.KindJob:
 		obj = &batchv1.Job{}
 	default:

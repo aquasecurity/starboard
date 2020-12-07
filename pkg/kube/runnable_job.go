@@ -26,7 +26,7 @@ type runnableJob struct {
 	scheme    *runtime.Scheme
 	clientset kubernetes.Interface
 
-	job     *batchv1.Job     //  job to be run
+	job     *batchv1.Job     // job to be run
 	secrets []*corev1.Secret // secrets that the job references
 }
 
@@ -61,23 +61,30 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	var err error
 
-	klog.V(3).Infof("Creating job: %s/%s", r.job.Namespace, r.job.Name)
+	for i, secret := range r.secrets {
+		klog.V(3).Infof("Creating secret %q", r.job.Namespace+"/"+secret.Name)
+		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("creating secret: %w", err)
+		}
+	}
+
+	klog.V(3).Infof("Creating job %q", r.job.Namespace+"/"+r.job.Name)
 	r.job, err = r.clientset.BatchV1().Jobs(r.job.Namespace).Create(ctx, r.job, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("creating job: %w", err)
 	}
 
 	for i, secret := range r.secrets {
-		secret.Namespace = r.job.Namespace
-		klog.V(3).Infof("Setting owner reference for secret %q", r.job.Namespace+"/"+secret.Name)
+		klog.V(3).Infof("Setting owner reference secret %q -> job %q", r.job.Namespace+"/"+secret.Name, r.job.Namespace+"/"+r.job.Name)
 		err = controllerutil.SetOwnerReference(r.job, secret, r.scheme)
 		if err != nil {
-			return err
+			return fmt.Errorf("setting owner reference: %w", err)
 		}
-		klog.V(3).Infof("Creating secret %q", r.job.Namespace+"/"+secret.Name)
-		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		klog.V(3).Infof("Updating secret %q", r.job.Namespace+"/"+secret.Name)
+		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if err != nil {
-			return fmt.Errorf("creating secret: %w", err)
+			return fmt.Errorf("updating secret: %w", err)
 		}
 	}
 
