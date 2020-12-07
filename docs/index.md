@@ -1,19 +1,23 @@
 # Welcome to Starboard
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Starboard integrates security tools into the Kubernetes environment, so that
+users can find and view the risks that relate to different resources in
+a Kubernetes-native way. Starboard provides custom security resources
+definitions and a Go module to work with a range of existing security tools,
+as well as a [kubectl]-compatible executable command, and an Octant plug-in that
+make security reports available through familiar Kubernetes tools.
 
-## Commands
+Starboard can be run in two different modes:
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+- As a command-line tool, so you can trigger scans and view the risks in
+  a kubectl-compatible way or as part of your CI/CD pipeline.
+- As an operator to automatically update security report resources in response
+  to workload and other changes on a Kubernetes cluster - for example,
+  initiating a vulnerability scan when a new pod is started.
 
-## Project layout
+You can read more about the motivations and [use cases]
+here and join our [discussions] here.
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
-
-
+[kubectl]: https://kubernetes.io/docs/reference/kubectl/
+[use cases]: https://blog.aquasec.com/starboard-kubernetes-tools
+[discussions]: https://github.com/aquasecurity/starboard/discussions

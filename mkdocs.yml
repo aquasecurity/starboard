@@ -13,5 +13,6 @@ edit_uri: ""
 theme: readthedocs
 
 nav:
-  - Home: index.md
-
+  - Overview: index.md
+  - Frequently Asked Questions: faq.md
+  - Troubleshooting: troubleshooting.md
