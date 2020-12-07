@@ -165,7 +165,12 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	return nil
 }
 
-func getEnabledScanner(buildInfo starboard.BuildInfo, idGenerator ext.IDGenerator, config etc.Config, starboardConfig starboard.ConfigData) (vulnerabilityreport.Scanner, error) {
+func getEnabledScanner(
+	buildInfo starboard.BuildInfo,
+	idGenerator ext.IDGenerator,
+	config etc.Config,
+	starboardConfig starboard.ConfigData,
+) (vulnerabilityreport.Plugin, error) {
 	if config.ScannerTrivy.Enabled && config.ScannerAquaCSP.Enabled {
 		return nil, fmt.Errorf("invalid configuration: multiple vulnerability scanners enabled")
 	}

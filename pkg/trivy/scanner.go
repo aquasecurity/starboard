@@ -36,15 +36,15 @@ type scanner struct {
 	converter   Converter
 }
 
-// NewScanner constructs a new vulnerabilityreport.Scanner, which is using an official
+// NewScanner constructs a new Plugin, which is using an official
 // Trivy container image to scan Kubernetes workloads.
 //
-// This vulnerabilityreport.Scanner supports both trivy.Standalone and trivy.ClientServer
+// This Plugin supports both trivy.Standalone and trivy.ClientServer
 // client modes depending on the current starboard.TrivyConfig.
 //
-// The trivy.ClientServer more is usually more performant, however it requires a Trivy server
-// to be hosted and accessible at the configurable URL.
-func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Scanner {
+// The trivy.ClientServer more is usually more performant, however it requires
+// a Trivy server to be hosted and accessible at the configurable URL.
+func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Plugin {
 	return &scanner{
 		idGenerator: idGenerator,
 		config:      config,
@@ -52,7 +52,7 @@ func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulne
 	}
 }
 
-func (s *scanner) GetPodSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	switch s.config.GetTrivyMode() {
 	case starboard.Standalone:
 		return s.getPodSpecForStandaloneMode(spec, credentials)
