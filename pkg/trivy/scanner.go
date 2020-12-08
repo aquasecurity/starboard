@@ -44,7 +44,7 @@ type scanner struct {
 //
 // The trivy.ClientServer more is usually more performant, however it requires
 // a Trivy server to be hosted and accessible at the configurable URL.
-func NewScanner(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Plugin {
+func NewScannerPlugin(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Plugin {
 	return &scanner{
 		idGenerator: idGenerator,
 		config:      config,
@@ -315,10 +315,11 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 		}
 
 		containers = append(containers, corev1.Container{
-			Name:            container.Name,
-			Image:           s.config.GetTrivyImageRef(),
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Env:             env,
+			Name:                     container.Name,
+			Image:                    s.config.GetTrivyImageRef(),
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+			Env:                      env,
 			Command: []string{
 				"trivy",
 			},

@@ -14,7 +14,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/aquasecurity/starboard/pkg/trivy"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,39 +24,45 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+// Scanner is a template for running static vulnerability scanners that implement
+// the vulnerabilityreport.Plugin interface.
 type Scanner struct {
-	scheme      *runtime.Scheme
-	config      starboard.TrivyConfig
-	opts        kube.ScannerOpts
-	clientset   kubernetes.Interface
-	pods        *pod.Manager
-	converter   trivy.Converter
-	idGenerator ext.IDGenerator
-	delegate    vulnerabilityreport.Plugin
+	scheme    *runtime.Scheme
+	clientset kubernetes.Interface
+	opts      kube.ScannerOpts
+	pods      *pod.Manager
+	ext.IDGenerator
+	vulnerabilityreport.Plugin
 	kube.SecretsReader
 }
 
-// NewScanner constructs a new vulnerability Scanner with the specified options and Kubernetes client Interface.
+// NewScanner constructs a new static vulnerability Scanner with the specified
+// vulnerabilityreport.Plugin that knows how to perform the actual scanning,
+// which is performed by running a Kubernetes job, and knows how to convert logs
+// to instances of v1alpha1.VulnerabilityReport.
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	config starboard.TrivyConfig,
 	opts kube.ScannerOpts,
+	plugin vulnerabilityreport.Plugin,
 ) *Scanner {
-	idGenerator := ext.NewGoogleUUIDGenerator()
 	return &Scanner{
 		scheme:        scheme,
-		config:        config,
-		opts:          opts,
 		clientset:     clientset,
+		opts:          opts,
+		Plugin:        plugin,
 		pods:          pod.NewPodManager(clientset),
-		converter:     trivy.NewConverter(config),
-		idGenerator:   idGenerator,
-		delegate:      trivy.NewScanner(idGenerator, config),
+		IDGenerator:   ext.NewGoogleUUIDGenerator(),
 		SecretsReader: kube.NewSecretsReader(clientset),
 	}
 }
 
+// Scan creates a Kubernetes job to scan the specified workload. The pod created
+// by the scan job has template contributed by the vulnerabilityreport.Plugin.
+// It is a blocking method that watches the status of the job until it succeeds
+// or fails. When succeeded it parses container logs and coverts the output
+// to instances of v1alpha1.VulnerabilityReport by delegating such transformation
+// logic also to the vulnerabilityreport.Plugin.
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.VulnerabilityReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 	spec, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
@@ -72,7 +77,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.Vu
 		return nil, err
 	}
 
-	job, secrets, err := s.PrepareScanJob(workload, spec, credentials)
+	job, secrets, err := s.prepareScanJob(workload, spec, credentials)
 	if err != nil {
 		return nil, fmt.Errorf("preparing scan job: %w", err)
 	}
@@ -102,7 +107,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) ([]v1alpha1.Vu
 		return nil, fmt.Errorf("getting scan job: %w", err)
 	}
 
-	return s.GetVulnerabilityReportsByScanJob(ctx, job, owner)
+	return s.getVulnerabilityReportsByScanJob(ctx, job, owner)
 }
 
 func (s *Scanner) getCredentials(ctx context.Context, spec corev1.PodSpec, ns string) (map[string]docker.Auth, error) {
@@ -113,8 +118,8 @@ func (s *Scanner) getCredentials(ctx context.Context, spec corev1.PodSpec, ns st
 	return kube.MapContainerNamesToDockerAuths(resources.GetContainerImagesFromPodSpec(spec), imagePullSecrets)
 }
 
-func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec, credentials map[string]docker.Auth) (*batchv1.Job, []*corev1.Secret, error) {
-	templateSpec, secrets, err := s.delegate.GetScanJobSpec(spec, credentials)
+func (s *Scanner) prepareScanJob(workload kube.Object, spec corev1.PodSpec, credentials map[string]docker.Auth) (*batchv1.Job, []*corev1.Secret, error) {
+	templateSpec, secrets, err := s.GetScanJobSpec(spec, credentials)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -128,7 +133,7 @@ func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec, cred
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.idGenerator.GenerateID(),
+			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
@@ -157,19 +162,13 @@ func (s *Scanner) PrepareScanJob(workload kube.Object, spec corev1.PodSpec, cred
 	}, secrets, nil
 }
 
-func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job, owner metav1.Object) ([]v1alpha1.VulnerabilityReport, error) {
+func (s *Scanner) getVulnerabilityReportsByScanJob(ctx context.Context, job *batchv1.Job, owner metav1.Object) ([]v1alpha1.VulnerabilityReport, error) {
 	var reports []v1alpha1.VulnerabilityReport
 
-	var containerImagesAsJSON string
-	var ok bool
+	containerImages, err := resources.GetContainerImagesFromJob(job)
 
-	if containerImagesAsJSON, ok = job.Annotations[kube.AnnotationContainerImages]; !ok {
-		return nil, fmt.Errorf("scan job does not have required annotation: %s", kube.AnnotationContainerImages)
-	}
-	containerImages := kube.ContainerImages{}
-	err := containerImages.FromJSON(containerImagesAsJSON)
 	if err != nil {
-		return nil, fmt.Errorf("reading scan job annotation: %s: %w", kube.AnnotationContainerImages, err)
+		return nil, fmt.Errorf("getting container images: %w", err)
 	}
 
 	for _, c := range job.Spec.Template.Spec.Containers {
@@ -179,7 +178,7 @@ func (s *Scanner) GetVulnerabilityReportsByScanJob(ctx context.Context, job *bat
 		if err != nil {
 			return nil, err
 		}
-		result, err := s.converter.Convert(containerImages[c.Name], logReader)
+		result, err := s.ParseVulnerabilityScanResult(containerImages[c.Name], logReader)
 
 		report, err := vulnerabilityreport.NewBuilder(s.scheme).
 			Owner(owner).
