@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
-
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
 	apis "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-
+	"github.com/aquasecurity/starboard/pkg/trivy"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -96,10 +95,21 @@ func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra
 		if err != nil {
 			return err
 		}
-		reports, err := vulnerabilities.NewScanner(starboard.NewScheme(), kubernetesClientset, config, opts).Scan(ctx, workload)
+
+		// StarboardCLI only supports Trivy scanner in Standalone and ClientServer
+		// mode, but you can add your own scanner by implementing the
+		// vulnerabilityreport.Plugin interface.
+		scannerPlugin := trivy.NewScannerPlugin(ext.NewGoogleUUIDGenerator(), config)
+
+		reports, err := vulnerabilities.NewScanner(
+			starboard.NewScheme(),
+			kubernetesClientset,
+			opts,
+			scannerPlugin).Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
+
 		starboardClientset, err := apis.NewForConfig(kubernetesConfig)
 		if err != nil {
 			return err

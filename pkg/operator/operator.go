@@ -182,7 +182,7 @@ func getEnabledScanner(
 			"trivyImageRef", starboardConfig.GetTrivyImageRef(),
 			"trivyMode", starboardConfig.GetTrivyMode(),
 			"trivyServerURL", starboardConfig.GetTrivyServerURL())
-		return trivy.NewScanner(idGenerator, starboardConfig), nil
+		return trivy.NewScannerPlugin(idGenerator, starboardConfig), nil
 	}
 	if config.ScannerAquaCSP.Enabled {
 		setupLog.Info("Using Aqua CSP as vulnerability scanner", "image", config.ScannerAquaCSP.ImageRef)
