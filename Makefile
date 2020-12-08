@@ -65,13 +65,11 @@ itests-starboard: check-env get-ginkgo
 	-coverpkg=github.com/aquasecurity/starboard/pkg/cmd,\
 	github.com/aquasecurity/starboard/pkg/kube,\
 	github.com/aquasecurity/starboard/pkg/kube/pod,\
-	github.com/aquasecurity/starboard/pkg/kube/secrets,\
 	github.com/aquasecurity/starboard/pkg/kubebench,\
 	github.com/aquasecurity/starboard/pkg/kubehunter,\
 	github.com/aquasecurity/starboard/pkg/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/trivy,\
-	github.com/aquasecurity/starboard/pkg/find/vulnerabilities,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
 	./itest/starboard
 

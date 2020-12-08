@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/find/vulnerabilities"
 	apis "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/trivy"
@@ -101,7 +100,7 @@ func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra
 		// vulnerabilityreport.Plugin interface.
 		scannerPlugin := trivy.NewScannerPlugin(ext.NewGoogleUUIDGenerator(), config)
 
-		reports, err := vulnerabilities.NewScanner(
+		reports, err := vulnerabilityreport.NewScanner(
 			starboard.NewScheme(),
 			kubernetesClientset,
 			opts,
