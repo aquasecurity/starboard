@@ -255,6 +255,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#helm" class="md-nav__link">
+    Helm
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -359,6 +366,13 @@
           <li class="md-nav__item">
   <a href="#kubectl" class="md-nav__link">
     kubectl
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#helm" class="md-nav__link">
+    Helm
   </a>
   
 </li>
@@ -471,6 +485,67 @@ errors:</p>
 <pre><code>kubectl logs -n starboard-operator deployment/starboard-operator
 </code></pre>
 <p>In case of any error consult our <a href="../troubleshooting/">Troubleshooting</a> guidelines.</p>
+<h3 id="helm">Helm</h3>
+<p><a href="https://helm.sh/">Helm</a>, which is de facto standard package manager for Kubernetes, allows
+installing applications from parameterized YAML manifests called Helm <a href="https://helm.sh/docs/topics/charts/">charts</a>.</p>
+<p>To address shortcomings of static YAML manifests we provide the Helm chart to
+deploy the Starboard operator. The Helm chart supports all <a href="#install-modes">install modes</a>.</p>
+<p>As an example, let's install the operator in the <code>starboard-operator</code> namespace and
+configure it to watch the <code>default</code> namespaces:</p>
+<ol>
+<li>
+<p>Clone the chart repository:</p>
+<pre><code>git clone https://github.com/aquasecurity/starboard.git
+cd starboard
+</code></pre>
+</li>
+<li>
+<p>(Optional) Configure the operator by creating the <code>starboard</code> ConfigMap in
+   the <code>starboard-operator</code> namespace. If you skip this step, the operator will
+   ensure the ConfigMap on startup with the default configuration values.</p>
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml
+</code></pre>
+<p>Review the default values and makes sure the operator is configured properly:</p>
+<pre><code>kubectl describe cm starboard -n starboard-operator
+</code></pre>
+</li>
+<li>
+<p>Install the chart:</p>
+<pre><code>helm install starboard-operator ./deploy/helm \
+  -n starboard-operator \
+  --create-namespace \
+  --set="targetNamespaces=default"
+</code></pre>
+</li>
+</ol>
+<p>Check that the <code>starboard-operator</code> Helm release is created in the <code>starboard-operator</code>
+namespace:</p>
+<pre><code>helm list -n starboard-operator
+</code></pre>
+<pre><code class="language-text">NAME                NAMESPACE           REVISION    UPDATED                                 STATUS      CHART                       APP VERSION
+starboard-operator  starboard-operator  1           2020-12-09 16:15:51.070673 +0100 CET    deployed    starboard-operator-0.2.1    0.7.1
+</code></pre>
+<p>To confirm that the operator is running, check the number of replicas created by
+the <code>starboard-operator</code> Deployment in the <code>starboard-operator</code> namespace:</p>
+<pre><code>kubectl get deployment -n starboard-operator
+</code></pre>
+<p>You should see the output similar to the following:</p>
+<pre><code>NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+starboard-operator   1/1     1            1           11m
+</code></pre>
+<p>If for some reason it's not ready yet, check the logs of the Deployment for
+errors:</p>
+<pre><code>kubectl logs -n starboard-operator deployment/starboard-operator
+</code></pre>
+<p>In case of any error consult our <a href="../troubleshooting/">Troubleshooting</a> guidelines.</p>
+<p>You can uninstall the operator with the following command:</p>
+<pre><code>helm uninstall starboard-operator -n starboard-operator
+</code></pre>
+<blockquote>
+<p><strong>NOTE</strong> You have to manually delete CRDs created by the <code>helm install</code> command:</p>
+<pre><code>kubectl delete crd vulnerabilityreports.aquasecurity.github.io
+</code></pre>
+</blockquote>
 <h2 id="getting-started">Getting Started</h2>
 <p>Assuming that you installed the operator in the <code>starboard-operator</code> namespace,
 and it's configured to discover Kubernetes workloads in the <code>default</code> namespace,
