@@ -11,9 +11,10 @@ Starboard can be run in two different modes:
 
 - As a command-line tool, so you can trigger scans and view the risks in
   a kubectl-compatible way or as part of your CI/CD pipeline.
-- As an operator to automatically update security report resources in response
-  to workload and other changes on a Kubernetes cluster - for example,
-  initiating a vulnerability scan when a new pod is started.
+- As an [operator](starboard-operator.md) to automatically update security
+  report resources in response to workload and other changes on a Kubernetes
+  cluster - for example, initiating a vulnerability scan when a new pod is
+  started.
 
 You can read more about the motivations and [use cases]
 here and join our [discussions] here.

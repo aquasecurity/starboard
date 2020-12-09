@@ -10,9 +10,11 @@ repo_url: https://github.com/aquasecurity/starboard
 edit_uri: ""
 
 # Theme
-theme: readthedocs
+theme:
+  name: material
 
 nav:
-  - Overview: index.md
+  - Introduction: index.md
+  - Starboard Operator: starboard-operator.md
   - Frequently Asked Questions: faq.md
   - Troubleshooting: troubleshooting.md

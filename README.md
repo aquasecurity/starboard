@@ -328,7 +328,7 @@ namespace:
 3. Create the `starboard-operator` deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl apply -f deploy/static/05-starboard-operator.deployment.yaml
+   $ kubectl apply -f deploy/static/06-starboard-operator.deployment.yaml
    ```
 
 #### With Helm

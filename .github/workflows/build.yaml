@@ -7,6 +7,7 @@ on:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'mkdocs.yml'
       - 'LICENSE'
       - 'NOTICE'
   pull_request:
@@ -14,6 +15,7 @@ on:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'mkdocs.yml'
       - 'LICENSE'
       - 'NOTICE'
 jobs:
