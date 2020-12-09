@@ -15,7 +15,7 @@ as depicted below. However, we plan to support all custom security resources.
 
 ## Installation
 
-### With Static YAML Manifests
+### kubectl
 
 You can install the operator with provided static YAML manifests with fixed
 values. However, this approach has its shortcomings. For example, if you want to
@@ -28,20 +28,20 @@ watch the `default` namespace:
 1. Send the definition of the `vulnerabilityreports` custom resource to the
    Kubernetes API:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/crd/vulnerabilityreports.crd.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/vulnerabilityreports.crd.yaml
 
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/01-starboard-operator.ns.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/02-starboard-operator.sa.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/03-starboard-operator.clusterrole.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/04-starboard-operator.clusterrolebinding.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml
 
 3. (Optional) Configure the operator by creating the `starboard` ConfigMap in
    the `starboard-operator` namespace. If you skip this step, the operator will
    ensure the ConfigMap on startup with the default configuration values.
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/05-starboard-operator.cm.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml
    Review the default values and makes sure the operator is configured properly:
 
         kubectl describe cm starboard -n starboard-operator
@@ -49,7 +49,62 @@ watch the `default` namespace:
 4. Finally, create the `starboard-operator` Deployment in the `starboard-operator`
    namespace to start the operator's pod:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/06-starboard-operator.deployment.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml
+
+To confirm that the operator is running, check the number of replicas created by
+the `starboard-operator` Deployment in the `starboard-operator` namespace:
+
+    kubectl get deployment -n starboard-operator
+
+You should see the output similar to the following:
+
+    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+    starboard-operator   1/1     1            1           11m
+
+If for some reason it's not ready yet, check the logs of the Deployment for
+errors:
+
+    kubectl logs -n starboard-operator deployment/starboard-operator
+
+In case of any error consult our [Troubleshooting](troubleshooting.md) guidelines.
+
+## Getting Started
+
+Assuming that you installed the operator in the `starboard-operator` namespace,
+and it's configured to discover Kubernetes workloads in the `default` namespace,
+let's create the `nginx` Deployment that we know is vulnerable:
+
+    kubectl create deployment nginx --image nginx:1.16
+
+When the first pod controlled by the `nginx` Deployment is created, the operator
+immediately detects that and creates the Kubernetes job in the
+`starboard-operator` namespace to scan the `nignx` container's image (`nginx:1.16`)
+for vulnerabilities.
+
+    kubectl get job -n starboard-operator
+
+In our case you should see only one job with a random name scheduled to scan
+the `nginx` Deployment:
+
+    NAME                                   COMPLETIONS   DURATION   AGE
+    69516243-c782-4445-88b4-689ffbb3cdb7   0/1           68s        68s
+
+If everything goes fine, the scan job is deleted, and the operator creates the
+`vulnerabilityreports` resource in the `default` namespace that corresponds to
+the `nginx` container:
+
+    kubectl get vulnerabilityreports -o wide
+
+Notice that the `vulnerabilityreports` instance is associated with the active
+ReplicaSet of the `nginx` Deployment by name, and the set of labels.
+
+    NAME                                REPOSITORY      TAG    SCANNER   AGE   CRITICAL   HIGH   MEDIUM   LOW   UNKNOWN
+    replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy     14m   1          35     16       85    2
+
+You can get and describe `vulnerabilityreports` as any other built-in Kubernetes
+object. For example, you can display the report as JSON object:
+
+    kubectl get vulnerabilityreports replicaset-nginx-6d4cf56db6-nginx -o json
 
 ## Configuration
 
@@ -67,7 +122,7 @@ Configuration of the operator is done via environment variables at startup.
 | `OPERATOR_METRICS_BIND_ADDRESS`      | `:8080`                | The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to `0` to disable the metrics serving. |
 | `OPERATOR_HEALTH_PROBE_BIND_ADDRESS` | `:9090`                | The TCP address to bind to for serving health probes, i.e. `/healthz/` and `/readyz/` endpoints. |
 
-## Install Modes
+### Install Modes
 
 The values of the `OPERATOR_NAMESPACE` and `OPERATOR_TARGET_NAMESPACES` determine
 the install mode, which in turn determines the multitenancy support of the operator.

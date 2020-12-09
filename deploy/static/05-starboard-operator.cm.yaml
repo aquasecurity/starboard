@@ -1,1 +1,10 @@
-../init/03-starboard.cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard
+  namespace: starboard-operator
+data:
+  trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+  trivy.imageRef: docker.io/aquasec/trivy:0.14.0
+  trivy.mode: Standalone
+  trivy.serverURL: http://trivy-server.trivy-server:4954
