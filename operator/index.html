@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://aquasecurity.github.io/starboard/starboard-operator/">
+        <link rel="canonical" href="https://aquasecurity.github.io/starboard/operator/">
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
@@ -260,6 +260,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-modes" class="md-nav__link">
+    Install Modes
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -341,6 +355,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-modes" class="md-nav__link">
+    Install Modes
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -404,6 +432,103 @@ watch the <code>default</code> namespace:</p>
 </code></pre>
 </li>
 </ol>
+<h2 id="configuration">Configuration</h2>
+<p>Configuration of the operator is done via environment variables at startup.</p>
+<table>
+<thead>
+<tr>
+<th>NAME</th>
+<th>DEFAULT</th>
+<th>DESCRIPTION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPERATOR_NAMESPACE</code></td>
+<td>N/A</td>
+<td>See <a href="#install-modes">Install modes</a></td>
+</tr>
+<tr>
+<td><code>OPERATOR_TARGET_NAMESPACES</code></td>
+<td>N/A</td>
+<td>See <a href="#install-modes">Install modes</a></td>
+</tr>
+<tr>
+<td><code>OPERATOR_SCANNER_TRIVY_ENABLED</code></td>
+<td><code>true</code></td>
+<td>The flag to enable Trivy vulnerability scanner</td>
+</tr>
+<tr>
+<td><code>OPERATOR_SCANNER_AQUA_CSP_ENABLED</code></td>
+<td><code>false</code></td>
+<td>The flag to enable Aqua vulnerability scanner</td>
+</tr>
+<tr>
+<td><code>OPERATOR_SCANNER_AQUA_CSP_IMAGE</code></td>
+<td><code>aquasec/scanner:5.0</code></td>
+<td>The Docker image of Aqua scanner to be used</td>
+</tr>
+<tr>
+<td><code>OPERATOR_LOG_DEV_MODE</code></td>
+<td><code>false</code></td>
+<td>The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc).</td>
+</tr>
+<tr>
+<td><code>OPERATOR_SCAN_JOB_TIMEOUT</code></td>
+<td><code>5m</code></td>
+<td>The length of time to wait before giving up on a scan job</td>
+</tr>
+<tr>
+<td><code>OPERATOR_METRICS_BIND_ADDRESS</code></td>
+<td><code>:8080</code></td>
+<td>The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to <code>0</code> to disable the metrics serving.</td>
+</tr>
+<tr>
+<td><code>OPERATOR_HEALTH_PROBE_BIND_ADDRESS</code></td>
+<td><code>:9090</code></td>
+<td>The TCP address to bind to for serving health probes, i.e. <code>/healthz/</code> and <code>/readyz/</code> endpoints.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="install-modes">Install Modes</h2>
+<p>The values of the <code>OPERATOR_NAMESPACE</code> and <code>OPERATOR_TARGET_NAMESPACES</code> determine
+the install mode, which in turn determines the multitenancy support of the operator.</p>
+<table>
+<thead>
+<tr>
+<th>MODE</th>
+<th>OPERATOR_NAMESPACE</th>
+<th>OPERATOR_TARGET_NAMESPACES</th>
+<th>DESCRIPTION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OwnNamespace</td>
+<td><code>operators</code></td>
+<td><code>operators</code></td>
+<td>The operator can be configured to watch events in the namespace it is deployed in.</td>
+</tr>
+<tr>
+<td>SingleNamespace</td>
+<td><code>operators</code></td>
+<td><code>foo</code></td>
+<td>The operator can be configured to watch for events in a single namespace that the operator is not deployed in.</td>
+</tr>
+<tr>
+<td>MultiNamespace</td>
+<td><code>operators</code></td>
+<td><code>foo,bar,baz</code></td>
+<td>The operator can be configured to watch for events in more than one namespace.</td>
+</tr>
+<tr>
+<td>AllNamespaces</td>
+<td><code>operators</code></td>
+<td></td>
+<td>The operator can be configured to watch for events in all namespaces.</td>
+</tr>
+</tbody>
+</table>
                 
               
               
