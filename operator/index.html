@@ -249,8 +249,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#with-static-yaml-manifests" class="md-nav__link">
-    With Static YAML Manifests
+  <a href="#kubectl" class="md-nav__link">
+    kubectl
   </a>
   
 </li>
@@ -261,16 +261,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    Configuration
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
   </a>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#install-modes" class="md-nav__link">
     Install Modes
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -344,8 +357,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#with-static-yaml-manifests" class="md-nav__link">
-    With Static YAML Manifests
+  <a href="#kubectl" class="md-nav__link">
+    kubectl
   </a>
   
 </li>
@@ -356,16 +369,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    Configuration
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
   </a>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#install-modes" class="md-nav__link">
     Install Modes
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -393,7 +419,7 @@ stored in the cluster as custom resources.</p>
 as depicted below. However, we plan to support all custom security resources.</p>
 <p><img alt="" src="../images/operator/starboard-operator.png" /></p>
 <h2 id="installation">Installation</h2>
-<h3 id="with-static-yaml-manifests">With Static YAML Manifests</h3>
+<h3 id="kubectl">kubectl</h3>
 <p>You can install the operator with provided static YAML manifests with fixed
 values. However, this approach has its shortcomings. For example, if you want to
 change the container image or modify default configuration parameters, you have
@@ -404,22 +430,22 @@ watch the <code>default</code> namespace:</p>
 <li>
 <p>Send the definition of the <code>vulnerabilityreports</code> custom resource to the
    Kubernetes API:</p>
-<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/crd/vulnerabilityreports.crd.yaml
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/vulnerabilityreports.crd.yaml
 </code></pre>
 </li>
 <li>
 <p>Send the following Kubernetes objects definitions to the Kubernetes API:</p>
-<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/01-starboard-operator.ns.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/02-starboard-operator.sa.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/03-starboard-operator.clusterrole.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/04-starboard-operator.clusterrolebinding.yaml
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml
 </code></pre>
 </li>
 <li>
 <p>(Optional) Configure the operator by creating the <code>starboard</code> ConfigMap in
    the <code>starboard-operator</code> namespace. If you skip this step, the operator will
    ensure the ConfigMap on startup with the default configuration values.</p>
-<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/05-starboard-operator.cm.yaml
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml
 </code></pre>
 <p>Review the default values and makes sure the operator is configured properly:</p>
 <pre><code>kubectl describe cm starboard -n starboard-operator
@@ -428,10 +454,54 @@ watch the <code>default</code> namespace:</p>
 <li>
 <p>Finally, create the <code>starboard-operator</code> Deployment in the <code>starboard-operator</code>
    namespace to start the operator's pod:</p>
-<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.7.1/deploy/static/06-starboard-operator.deployment.yaml
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml
 </code></pre>
 </li>
 </ol>
+<p>To confirm that the operator is running, check the number of replicas created by
+the <code>starboard-operator</code> Deployment in the <code>starboard-operator</code> namespace:</p>
+<pre><code>kubectl get deployment -n starboard-operator
+</code></pre>
+<p>You should see the output similar to the following:</p>
+<pre><code>NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+starboard-operator   1/1     1            1           11m
+</code></pre>
+<p>If for some reason it's not ready yet, check the logs of the Deployment for
+errors:</p>
+<pre><code>kubectl logs -n starboard-operator deployment/starboard-operator
+</code></pre>
+<p>In case of any error consult our <a href="../troubleshooting/">Troubleshooting</a> guidelines.</p>
+<h2 id="getting-started">Getting Started</h2>
+<p>Assuming that you installed the operator in the <code>starboard-operator</code> namespace,
+and it's configured to discover Kubernetes workloads in the <code>default</code> namespace,
+let's create the <code>nginx</code> Deployment that we know is vulnerable:</p>
+<pre><code>kubectl create deployment nginx --image nginx:1.16
+</code></pre>
+<p>When the first pod controlled by the <code>nginx</code> Deployment is created, the operator
+immediately detects that and creates the Kubernetes job in the
+<code>starboard-operator</code> namespace to scan the <code>nignx</code> container's image (<code>nginx:1.16</code>)
+for vulnerabilities.</p>
+<pre><code>kubectl get job -n starboard-operator
+</code></pre>
+<p>In our case you should see only one job with a random name scheduled to scan
+the <code>nginx</code> Deployment:</p>
+<pre><code>NAME                                   COMPLETIONS   DURATION   AGE
+69516243-c782-4445-88b4-689ffbb3cdb7   0/1           68s        68s
+</code></pre>
+<p>If everything goes fine, the scan job is deleted, and the operator creates the
+<code>vulnerabilityreports</code> resource in the <code>default</code> namespace that corresponds to
+the <code>nginx</code> container:</p>
+<pre><code>kubectl get vulnerabilityreports -o wide
+</code></pre>
+<p>Notice that the <code>vulnerabilityreports</code> instance is associated with the active
+ReplicaSet of the <code>nginx</code> Deployment by name, and the set of labels.</p>
+<pre><code>NAME                                REPOSITORY      TAG    SCANNER   AGE   CRITICAL   HIGH   MEDIUM   LOW   UNKNOWN
+replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy     14m   1          35     16       85    2
+</code></pre>
+<p>You can get and describe <code>vulnerabilityreports</code> as any other built-in Kubernetes
+object. For example, you can display the report as JSON object:</p>
+<pre><code>kubectl get vulnerabilityreports replicaset-nginx-6d4cf56db6-nginx -o json
+</code></pre>
 <h2 id="configuration">Configuration</h2>
 <p>Configuration of the operator is done via environment variables at startup.</p>
 <table>
@@ -490,7 +560,7 @@ watch the <code>default</code> namespace:</p>
 </tr>
 </tbody>
 </table>
-<h2 id="install-modes">Install Modes</h2>
+<h3 id="install-modes">Install Modes</h3>
 <p>The values of the <code>OPERATOR_NAMESPACE</code> and <code>OPERATOR_TARGET_NAMESPACES</code> determine
 the install mode, which in turn determines the multitenancy support of the operator.</p>
 <table>
