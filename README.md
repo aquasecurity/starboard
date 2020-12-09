@@ -436,12 +436,6 @@ which in turn determines the multitenancy support of the operator.
 | MultiNamespace  | `operators`        | `foo,bar,baz`              | The operator can be configured to watch for events in more than one namespace. |
 | AllNamespaces   | `operators`        |                            | The operator can be configured to watch for events in all namespaces. |
 
-> **CAUTION:** Although we do support the *AllNamespaces* install mode, please use it with caution when your cluster
-> runs a moderate or high number of workloads. If the desired state of the cluster is much different from the actual
-> state, the operator might spin up too many scan jobs and negatively impact the performance of your cluster.
-> We're planning improvements to limit the number of parallel scan jobs and implement a back pressure logic.
-> See [#202](https://github.com/aquasecurity/starboard/issues/202) to check the progress on that.
-
 ### Supported Vulnerability Scanners
 
 To enable Aqua as vulnerability scanner set the value of the `OPERATOR_SCANNER_AQUA_CSP_ENABLED` to `true` and
