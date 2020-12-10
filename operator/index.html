@@ -307,6 +307,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../compatibility/" class="md-nav__link">
+      Compatibility
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../faq/" class="md-nav__link">
       Frequently Asked Questions
     </a>
@@ -485,6 +497,14 @@ errors:</p>
 <pre><code>kubectl logs -n starboard-operator deployment/starboard-operator
 </code></pre>
 <p>In case of any error consult our <a href="../troubleshooting/">Troubleshooting</a> guidelines.</p>
+<p>You can uninstall the operator with the following command:</p>
+<pre><code>kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml
+</code></pre>
 <h3 id="helm">Helm</h3>
 <p><a href="https://helm.sh/">Helm</a>, which is de facto standard package manager for Kubernetes, allows
 installing applications from parameterized YAML manifests called Helm <a href="https://helm.sh/docs/topics/charts/">charts</a>.</p>
@@ -707,13 +727,13 @@ the install mode, which in turn determines the multitenancy support of the opera
           </a>
         
         
-          <a href="../faq/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../compatibility/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Frequently Asked Questions
+                Compatibility
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
