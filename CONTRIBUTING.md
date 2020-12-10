@@ -193,7 +193,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl apply -f deploy/static/05-starboard-operator.deployment.yaml
+   $ kubectl apply -f deploy/static/06-starboard-operator.deployment.yaml
    ```
 
 ### Out of cluster

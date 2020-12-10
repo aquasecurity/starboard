@@ -68,6 +68,15 @@ errors:
 
 In case of any error consult our [Troubleshooting](troubleshooting.md) guidelines.
 
+You can uninstall the operator with the following command:
+
+    kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml
+
 ### Helm
 
 [Helm][helm], which is de facto standard package manager for Kubernetes, allows
