@@ -30,6 +30,8 @@ rules:
       - apps
     resources:
       - replicasets
+      - statefulsets
+      - daemonsets
     verbs:
       - get
       - list
