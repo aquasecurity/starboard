@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -22,27 +21,27 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 	var localFlags LocalFlags
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "View the configuration parameters used by starboard scanners",
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		Short: "View the configuration parameters used by Starboard scanners",
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			kubernetesConfig, err := cf.ToRESTConfig()
 			if err != nil {
-				return
+				return err
 			}
 			clientset, err := kubernetes.NewForConfig(kubernetesConfig)
 			if err != nil {
-				return
+				return err
 			}
 			config, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Read(ctx)
 			if err != nil {
-				return
+				return err
 			}
 			filteredValues, err := getFilteredValues(config, &localFlags)
 			if err != nil {
-				return
+				return err
 			}
 			_, _ = fmt.Fprintf(outWriter, "%s\n", filteredValues)
-			return
+			return nil
 		},
 	}
 	setLocalFlags(cmd, &localFlags)

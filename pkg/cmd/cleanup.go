@@ -3,9 +3,8 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -15,9 +14,8 @@ import (
 func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup",
-		Short: "Delete custom resource definitions created by starboard",
+		Short: "Delete Kubernetes resources created by Starboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
@@ -30,8 +28,9 @@ func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return kube.NewCRManager(starboard.NewConfigManager(clientset, starboard.NamespaceName), clientset, clientsetext).
-				Cleanup(ctx)
+			configManager := starboard.NewConfigManager(clientset, starboard.NamespaceName)
+			return kube.NewCRManager(clientset, clientsetext, configManager).
+				Cleanup(context.TODO())
 		},
 	}
 	return cmd

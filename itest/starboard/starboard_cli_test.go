@@ -8,6 +8,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -143,10 +144,22 @@ var _ = Describe("Starboard CLI", func() {
 				}),
 			}))
 
-			_, err = namespaces.Get(context.TODO(), "starboard", metav1.GetOptions{})
+			_, err = namespaces.Get(context.TODO(), starboard.NamespaceName, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			// TODO Assert other Kubernetes resources that we create in the init command
+			cm, err := kubernetesClientset.CoreV1().ConfigMaps(starboard.NamespaceName).
+				Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(cm.Data).To(BeEquivalentTo(starboard.GetDefaultConfig()))
+
+			secret, err := kubernetesClientset.CoreV1().Secrets(starboard.NamespaceName).
+				Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(secret.Data).To(Equal(map[string][]byte(nil)))
+
+			_, err = kubernetesClientset.CoreV1().ServiceAccounts(starboard.NamespaceName).
+				Get(context.TODO(), starboard.ServiceAccountName, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 

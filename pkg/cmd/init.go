@@ -3,9 +3,8 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	extensionsapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -15,22 +14,30 @@ import (
 func NewInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Create custom resource definitions used by starboard",
-		Long: `Create all the resources used by starboard. It will create the following
-in the cluster:
+		Short: "Create Kubernetes resources used by Starboard",
+		Long: `Create all the resources used by Starboard. It will create the following in your
+Kubernetes cluster:
 
- - custom resource definitions
- - starboard namespace
- - starboard service account
- - starboard cluster role and cluster role binding
- - config map
+ - CustomResourceDefinition objects:
+   - "vulnerabilityreports.aquasecurity.github.io"
+   - "configauditreports.aquasecurity.github.io"
+   - "ciskubebenchreports.aquasecurity.github.io"
+   - "kubehunterreports.aquasecurity.github.io"
+ - RBAC objects:
+   - The "starboard" ClusterRole
+   - The "starboard" ClusterRoleBinding
+ - The "starboard" namespace with the following objects:
+   - The "starboard" service account
+   - The "starboard" ConfigMap
+   - The "starboard" secret
 
-The config map contains the default configuration parameters. However this
-can be modified to change the behaviour of the scanner.
+The "starboard" ConfigMap and the "starboard" secret contain the default
+config parameters. However this can be modified to change the behaviour
+of the scanners.
 
-These resources can be removed from the cluster using the "cleanup" command.`,
+All resources created by this command can be removed from the cluster using
+the "cleanup" command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
 			config, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
@@ -43,8 +50,9 @@ These resources can be removed from the cluster using the "cleanup" command.`,
 			if err != nil {
 				return err
 			}
-			return kube.NewCRManager(starboard.NewConfigManager(clientset, starboard.NamespaceName), clientset, clientsetext).
-				Init(ctx)
+			configManager := starboard.NewConfigManager(clientset, starboard.NamespaceName)
+			return kube.NewCRManager(clientset, clientsetext, configManager).
+				Init(context.TODO())
 		},
 	}
 	return cmd
