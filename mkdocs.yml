@@ -16,6 +16,7 @@ theme:
 nav:
   - Introduction: index.md
   - Starboard Operator: operator.md
+  - Configuration: configuration.md
   - Compatibility: compatibility.md
   - Frequently Asked Questions: faq.md
   - Troubleshooting: troubleshooting.md
