@@ -13,6 +13,10 @@
 
 ## Table of Contents
 
+> **NOTE** We are in the process of creating the website that will contain
+> all the information related to installation, configuration, and troubleshooting
+> of Starboard. You can access an early preview at https://aquasecurity.github.io/starboard/
+
 - [Introduction](#introduction)
 - [Getting Started](#getting-started)
 - [Next Steps](#next-steps)
@@ -22,18 +26,18 @@
       - [As a kubectl plugin](#kubectl-plugin)
     - [From Source (Linux, macOS)](#from-source-linux-macos)
     - [Docker](#docker)
-  - [Configuration](#configuration)
 - [Starboard Operator](#starboard-operator)
   - [Deployment](#deployment)
-    - [With Static YAML Manifests](#with-static-yaml-manifests)
-    - [With Helm](#with-helm)
+    - [With Static YAML Manifests](https://aquasecurity.github.io/operator/#kubectl)
+    - [With Helm](https://aquasecurity.github.io/operator/#helm)
     - [From OperatorHub.io or ArtifactHUB](#from-operatorhubio-or-artifacthub)
-  - [Environment Variables](#environment-variables)
-  - [Install Modes](#install-modes)
+  - [Environment Variables](https://aquasecurity.github.io/operator/#configuration)
+    - [Install Modes](https://aquasecurity.github.io/operator/#install-modes)
   - [Supported Vulnerability Scanners](#supported-vulnerability-scanners)
+- [Configuration](https://aquasecurity.github.io/starboard/configuration/)
 - [Custom Security Resources Definitions](#custom-security-resources-definitions)
 - [Contributing](#contributing)
-- [Troubleshooting](#troubleshooting)
+- [Troubleshooting](https://aquasecurity.github.io/starboard/troubleshooting/)
 
 ## Introduction
 
@@ -249,42 +253,6 @@ $ docker container run --rm aquasec/starboard:0.4.0 version
 Starboard Version: {Version:0.4.0 Commit:dd8e49701c1817ea174061c8731fe5bdbfb73d93 Date:2020-09-21T09:36:59Z}
 ```
 
-### Configuration
-
-The `starboard init` command creates the `starboard` ConfigMap in the `starboard` namespace, which contains the default
-configuration parameters. You can change the default config values with `kubectl patch` or `kubectl edit` commands.
-
-For example, by default Trivy displays vulnerabilities with all severity levels (`UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`).
-However, you can opt in to display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value
-in the `starboard` ConfigMap:
-
-```
-$ kubectl patch configmap starboard -n starboard \
-  --type merge \
-  -p '{"data": {"trivy.severity":"HIGH,CRITICAL"}}'
-```
-
-The following table lists available configuration parameters.
-
-| CONFIGMAP KEY         | DEFAULT                                                | DESCRIPTION |
-| --------------------- | ------------------------------------------------------ | ----------- |
-| `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
-| `trivy.githubToken`   | N/A                                                    | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
-| `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.14.0`                       | Trivy image reference |
-| `trivy.mode`          | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. |
-| `trivy.serverURL`     | `http://trivy-server.trivy-server:4954`                | The endpoint URL of the Trivy server. This parameter is required when Trivy runs in the `ClientServer` mode. |
-| `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
-
-> **Note:** You can find it handy to delete a configuration key, which was not created by default by the
-> `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
->
-> ```
-> $ kubectl patch configmap starboard -n starboard \
->   --type json \
->   -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
-> ```
-
 ## Starboard Operator
 
 This operator automatically updates security report resources in response to workload and other changes on a Kubernetes
@@ -302,50 +270,6 @@ security resources as depicted below. However, we plan to support all [custom se
 ![](docs/images/operator/starboard-operator.png)
 
 ### Deployment
-
-#### With Static YAML Manifests
-
-You can install the operator with provided static YAML manifests with fixed values. However, this approach has its
-shortcomings. For example, if you want to change the container image or modify default configuration parameters, you
-have to create new manifests or edit existing ones.
-
-To deploy the operator in the `starboard-operator` namespace and configure it to watch the `default`
-namespace:
-
-1. Send the definition of the [vulnerabilityreports][vulnerabilityreports-crd] custom resource to the Kubernetes API:
-
-   ```
-   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml
-   ```
-2. Send the following Kubernetes objects definitions to the Kubernetes API:
-
-   ```
-   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-       -f deploy/static/02-starboard-operator.sa.yaml \
-       -f deploy/static/03-starboard-operator.clusterrole.yaml \
-       -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
-   ```
-3. Create the `starboard-operator` deployment in the `starboard-operator` namespace to run the operator's container:
-
-   ```
-   $ kubectl apply -f deploy/static/06-starboard-operator.deployment.yaml
-   ```
-
-#### With Helm
-
-[Helm][helm], which is de facto standard package manager for Kubernetes, allows installing applications from
-parameterized YAML manifests called Helm [charts][helm-charts].
-
-To address shortcomings of static YAML manifests we provide the Helm chart to deploy the Starboard operator. The
-[starboard-operator](./deploy/helm) Helm chart supports all [install modes](#install-modes). For example, to install
-the operator in the `starboard-operator` namespace and configure it to watch `foo` and `bar` namespaces, run:
-
-```
-$ helm install starboard-operator ./deploy/helm \
-    -n starboard-operator \
-    --create-namespace \
-    --set="targetNamespaces=foo\,bar"
-```
 
 #### From OperatorHub.io or ArtifactHUB
 
@@ -408,34 +332,6 @@ multitenancy, and Subscription that links everything together to run the operato
    starboard-operator.v0.6.0   Starboard Operator   0.6.0                Succeeded
    ```
 
-### Environment Variables
-
-Configuration of the operator is done via environment variables at startup.
-
-| NAME                                 | DEFAULT                | DESCRIPTION |
-| ------------------------------------ | ---------------------- | ----------- |
-| `OPERATOR_NAMESPACE`                 | N/A                    | See [Install modes](#install-modes) |
-| `OPERATOR_TARGET_NAMESPACES`         | N/A                    | See [Install modes](#install-modes) |
-| `OPERATOR_SCANNER_TRIVY_ENABLED`     | `true`                 | The flag to enable Trivy vulnerability scanner |
-| `OPERATOR_SCANNER_AQUA_CSP_ENABLED`  | `false`                | The flag to enable Aqua vulnerability scanner |
-| `OPERATOR_SCANNER_AQUA_CSP_IMAGE`    | `aquasec/scanner:5.0`  | The Docker image of Aqua scanner to be used |
-| `OPERATOR_LOG_DEV_MODE`              | `false`                | The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc). |
-| `OPERATOR_SCAN_JOB_TIMEOUT`          | `5m`                   | The length of time to wait before giving up on a scan job |
-| `OPERATOR_METRICS_BIND_ADDRESS`      | `:8080`                | The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to `0` to disable the metrics serving. |
-| `OPERATOR_HEALTH_PROBE_BIND_ADDRESS` | `:9090`                | The TCP address to bind to for serving health probes, i.e. `/healthz/` and `/readyz/` endpoints. |
-
-### Install Modes
-
-The values of the `OPERATOR_NAMESPACE` and `OPERATOR_TARGET_NAMESPACES` determine the install mode,
-which in turn determines the multitenancy support of the operator.
-
-| MODE            | OPERATOR_NAMESPACE | OPERATOR_TARGET_NAMESPACES | DESCRIPTION |
-| --------------- | ------------------ | -------------------------- | ----------- |
-| OwnNamespace    | `operators`        | `operators`                | The operator can be configured to watch events in the namespace it is deployed in. |
-| SingleNamespace | `operators`        | `foo`                      | The operator can be configured to watch for events in a single namespace that the operator is not deployed in. |
-| MultiNamespace  | `operators`        | `foo,bar,baz`              | The operator can be configured to watch for events in more than one namespace. |
-| AllNamespaces   | `operators`        |                            | The operator can be configured to watch for events in all namespaces. |
-
 ### Supported Vulnerability Scanners
 
 To enable Aqua as vulnerability scanner set the value of the `OPERATOR_SCANNER_AQUA_CSP_ENABLED` to `true` and
@@ -478,42 +374,6 @@ Kubernetes-native ways.
 * See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
 * Join our [discussions][discussions].
 
-## Troubleshooting
-
-### "starboard" cannot be opened because the developer cannot be verified. (macOS)
-
-Since Starboard CLI is not registered with Apple by an identified developer, if you try to run it for the first time
-you might get a warning dialog. This doesn't mean that something is wrong with the release binary, rather macOS can't
-check whether the binary has been modified or broken since it was released.
-
-<p align="center">
-  <img src="docs/images/troubleshooting/developer-not-verified.png">
-</p>
-
-To override your security settings and use the Starboard CLI anyway, follow these steps:
-
-1. In the Finder on your Mac, locate the `starboard` binary.
-2. Control-click the binary icon, then choose Open from the shortcut menu.
-3. Click Open.
-
-   <p align="center">
-     <img src="docs/images/troubleshooting/control-click-open.png">
-   </p>
-
-   The `starboard` is saved as an exception to your security settings, and you can use it just as you can any registered
-   app.
-
-You can also grant an exception for a blocked Starboard release binary by clicking the Allow Anyway button in the
-General pane of Security & Privacy preferences. This button is available for about an hour after you try to run the
-Starboard CLI command.
-
-To open this pane on your Mac, choose Apple menu > System Preferences, click Security & Privacy, then click General.
-
-<p align="center">
-  <img src="docs/images/troubleshooting/developer-not-verified-remediation.png">
-</p>
-
-
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
 [build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
@@ -545,7 +405,6 @@ To open this pane on your Mac, choose Apple menu > System Preferences, click Sec
 [octant]: https://github.com/vmware-tanzu/octant
 [polaris]: https://github.com/FairwindsOps/polaris
 [trivy]: https://github.com/aquasecurity/trivy
-[prometheus]: https://github.com/prometheus
 
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [kubectl]: https://kubernetes.io/docs/reference/kubectl

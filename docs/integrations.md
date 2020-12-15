@@ -1,4 +1,4 @@
-# Compatibility
+# Integrations
 
 ## Private Registries
 
