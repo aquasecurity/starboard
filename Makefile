@@ -13,6 +13,9 @@ STARBOARD_CLI_IMAGE := aquasec/starboard:$(IMAGE_TAG)
 STARBOARD_OPERATOR_IMAGE := aquasec/starboard-operator:$(IMAGE_TAG)
 STARBOARD_SCANNER_AQUA_IMAGE := aquasec/starboard-scanner-aqua:$(IMAGE_TAG)
 
+MKDOCS_IMAGE := squidfunk/mkdocs-material:6.1.7
+MKDOCS_PORT := 8000
+
 .PHONY: all
 all: build
 
@@ -115,3 +118,8 @@ docker-build-starboard-operator: build-starboard-operator
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
 	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f build/scanner-aqua/Dockerfile bin
+
+.PHONY: mkdocs-serve
+## Runs MkDocs development server to preview the documentation page
+mkdocs-serve:
+	docker run --name mkdocs-serve --rm -v $(PWD):/docs -p $(MKDOCS_PORT):8000 $(MKDOCS_IMAGE)
