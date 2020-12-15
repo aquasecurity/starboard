@@ -3,6 +3,7 @@ package starboard
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 
 	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -332,7 +332,21 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		Data: GetDefaultConfig(),
 	}
 	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, cm, metav1.CreateOptions{})
-	if !apierrors.IsAlreadyExists(err) {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.namespace,
+			Name:      SecretName,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+	}
+	_, err = c.client.CoreV1().Secrets(c.namespace).Create(ctx, secret, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 	return nil
@@ -343,13 +357,32 @@ func (c *configManager) Read(ctx context.Context) (ConfigData, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cm.Data, nil
+	secret, err := c.client.CoreV1().Secrets(c.namespace).Get(ctx, SecretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var data = make(map[string]string)
+
+	for k, v := range cm.Data {
+		data[k] = v
+	}
+
+	for k, v := range secret.Data {
+		data[k] = string(v)
+	}
+
+	return data, nil
 }
 
 func (c *configManager) Delete(ctx context.Context) error {
 	err := c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, ConfigMapName, metav1.DeleteOptions{})
-	if apierrors.IsNotFound(err) {
-		return nil
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
 	}
-	return err
+	err = c.client.CoreV1().Secrets(c.namespace).Delete(ctx, SecretName, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
