@@ -1,6 +1,6 @@
 # This is a manually triggered workflow to build and publish the MkDocs from the
 # master branch to GitHub pages at https://aquasecurity.github.io/starboard.
-name: Deploy MkDocs
+name: Manually deploy MkDocs
 on:
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-      - name: Deploy docs
+      - name: Deploy MkDocs
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
