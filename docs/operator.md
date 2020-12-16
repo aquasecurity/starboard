@@ -37,14 +37,16 @@ watch the `default` namespace:
           -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
           -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml
 
-3. (Optional) Configure the operator by creating the `starboard` ConfigMap in
-   the `starboard-operator` namespace. If you skip this step, the operator will
-   ensure the ConfigMap on startup with the default configuration values.
+3. (Optional) Configure the operator by creating the `starboard` ConfigMap and
+   the `starboard` secret in the `starboard-operator` namespace. If you skip
+   this step, the operator will ensure [configuration objects](./configuration.md)
+   on startup with the default settings.
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.config.yaml
    Review the default values and makes sure the operator is configured properly:
 
         kubectl describe cm starboard -n starboard-operator
+        kubectl describe secret starboard -n starboard-operator
 
 4. Finally, create the `starboard-operator` Deployment in the `starboard-operator`
    namespace to start the operator's pod:
@@ -210,7 +212,8 @@ the install mode, which in turn determines the multitenancy support of the opera
 | OwnNamespace    | `operators`        | `operators`                | The operator can be configured to watch events in the namespace it is deployed in. |
 | SingleNamespace | `operators`        | `foo`                      | The operator can be configured to watch for events in a single namespace that the operator is not deployed in. |
 | MultiNamespace  | `operators`        | `foo,bar,baz`              | The operator can be configured to watch for events in more than one namespace. |
-| AllNamespaces   | `operators`        |                            | The operator can be configured to watch for events in all namespaces. |
+| AllNamespaces   | `operators`        | (blank string)             | The operator can be configured to watch for events in all namespaces. |
 
 [helm]: https://helm.sh/
 [helm-charts]: https://helm.sh/docs/topics/charts/
+[prometheus]: https://github.com/prometheus
