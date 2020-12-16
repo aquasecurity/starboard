@@ -50,6 +50,7 @@ func NewPodSpec(podName string, containers map[string]string, args ...string) (*
 				Namespace: namespaceItest,
 			},
 			Spec: corev1.PodSpec{
+				Affinity:         starboard.DefaultAffinity(),
 				Containers:       specContainer,
 				ImagePullSecrets: secretSpec,
 			},

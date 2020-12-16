@@ -71,6 +71,7 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	klog.V(3).Infof("Creating job %q", r.job.Namespace+"/"+r.job.Name)
 	r.job, err = r.clientset.BatchV1().Jobs(r.job.Namespace).Create(ctx, r.job, metav1.CreateOptions{})
+
 	if err != nil {
 		return fmt.Errorf("creating job: %w", err)
 	}

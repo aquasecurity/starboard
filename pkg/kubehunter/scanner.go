@@ -114,6 +114,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 					ServiceAccountName: starboard.ServiceAccountName,
 					RestartPolicy:      corev1.RestartPolicyNever,
 					HostPID:            true,
+					Affinity:           starboard.DefaultAffinity(),
 					Containers: []corev1.Container{
 						{
 							Name:                     kubeHunterContainerName,

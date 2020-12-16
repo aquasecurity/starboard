@@ -149,6 +149,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 					RestartPolicy:                corev1.RestartPolicyNever,
 					HostPID:                      true,
 					NodeName:                     node.Name,
+					Affinity:                     starboard.DefaultAffinity(),
 					Volumes: []corev1.Volume{
 						{
 							Name: "var-lib-etcd",

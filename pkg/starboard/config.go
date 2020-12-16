@@ -440,3 +440,23 @@ func (c *configManager) Delete(ctx context.Context) error {
 	}
 	return nil
 }
+
+// DefaultAffinity constructs a new Affinaty resource with default values: linux supported nodes
+func DefaultAffinity() *corev1.Affinity {
+	affinity := &corev1.Affinity{
+		NodeAffinity: &corev1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+				NodeSelectorTerms: []corev1.NodeSelectorTerm{
+					{
+						MatchExpressions: []corev1.NodeSelectorRequirement{
+							{
+								Key:      "kubernetes.io/os",
+								Operator: corev1.NodeSelectorOpIn,
+								Values:   []string{"linux"},
+							},
+						},
+					},
+				}}}}
+
+	return affinity
+}
