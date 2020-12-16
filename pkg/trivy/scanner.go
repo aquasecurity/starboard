@@ -32,19 +32,26 @@ var (
 
 type scanner struct {
 	idGenerator ext.IDGenerator
-	config      starboard.TrivyConfig
+	config      Config
 	converter   Converter
 }
 
-// NewScanner constructs a new Plugin, which is using an official
-// Trivy container image to scan Kubernetes workloads.
+// Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
+type Config interface {
+	GetTrivyImageRef() string
+	GetTrivyMode() starboard.TrivyMode
+	GetTrivyServerURL() string
+}
+
+// NewScanner constructs a new vulnerabilityreport.Plugin, which is using an
+// official Trivy container image to scan Kubernetes workloads.
 //
 // This Plugin supports both starboard.Standalone and starboard.ClientServer
-// client modes depending on the current starboard.TrivyConfig.
+// client modes depending on the active mode returned by Config.GetTrivyMode.
 //
-// The starboard.ClientServer more is usually more performant, however it
-// requires a Trivy server to be hosted and accessible at the configurable URL.
-func NewScannerPlugin(idGenerator ext.IDGenerator, config starboard.TrivyConfig) vulnerabilityreport.Plugin {
+// The starboard.ClientServer mode is usually more performant, however it
+// requires a Trivy server accessible at the configurable URL.
+func NewScannerPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
 	return &scanner{
 		idGenerator: idGenerator,
 		config:      config,
@@ -79,18 +86,19 @@ const (
 	sharedVolumeName = "data"
 )
 
-// In the Standalone mode there is the init container responsible for downloading
-// the latest Trivy DB file from GitHub and storing it to the empty volume shared
-// with main containers. In other words, the init container runs the following
-// Trivy command:
+// In the starboard.Standalone mode there is the init container responsible for
+// downloading the latest Trivy DB file from GitHub and storing it to the empty
+// volume shared with main containers. In other words, the init container runs
+// the following Trivy command:
 //
-// trivy --download-db-only --cache-dir /var/lib/trivy
+//     trivy --download-db-only --cache-dir /var/lib/trivy
 //
 // The number of main containers correspond to the number of containers
-// defined for the scanned workload. What's more, each container runs the Trivy
-// scan command and skips the database update:
+// defined for the scanned workload. Each container runs the Trivy image scan
+// command and skips the database download:
 //
-// trivy --skip-update --cache-dir /var/lib/trivy --format json <container image>
+//     trivy --skip-update --cache-dir /var/lib/trivy \
+//       --format json <container image>
 func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -254,11 +262,13 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 	}, secrets, nil
 }
 
-// In the ClientServer mode the number of containers of the pod created by the scan job
-// equals the number of containers defined for the scanned workload.
-// Each container runs Trivy scan command pointing to a remote Trivy server:
+// In the starboard.ClientServer mode the number of containers of the pod
+// created by the scan job equals the number of containers defined for the
+// scanned workload. Each container runs Trivy image scan command and refers
+// to Trivy server URL returned by Config.GetTrivyServerURL:
 //
-// trivy client --remote http://trivy-server.trivy-server:4954 --format json <container image>
+//     trivy client --remote <server URL> \
+//       --format json <container image ref>
 func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -281,6 +291,42 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 							Name: starboard.ConfigMapName,
 						},
 						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_TOKEN_HEADER",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.SecretName,
+						},
+						Key:      "trivy.serverTokenHeader",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_TOKEN",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.SecretName,
+						},
+						Key:      "trivy.serverToken",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_CUSTOM_HEADERS",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.SecretName,
+						},
+						Key:      "trivy.serverCustomHeaders",
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -335,6 +381,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 			Resources: defaultResourceRequirements,
 		})
 	}
+
 	return corev1.PodSpec{
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),

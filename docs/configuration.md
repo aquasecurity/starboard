@@ -34,18 +34,21 @@ kubectl patch secret starboard -n starboard \
 The following tables list available configuration parameters with their default
 values.
 
-| CONFIGMAP KEY         | DEFAULT                                                | DESCRIPTION |
-| --------------------- | ------------------------------------------------------ | ----------- |
-| `trivy.httpProxy`     | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
-| `trivy.severity`      | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`      | `docker.io/aquasec/trivy:0.14.0`                       | Trivy image reference |
-| `trivy.mode`          | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. |
-| `trivy.serverURL`     | `http://trivy-server.trivy-server:4954`                | The endpoint URL of the Trivy server. This parameter is required when Trivy runs in the `ClientServer` mode. |
-| `polaris.config.yaml` | [Check the default value here][default-polaris-config] | Polaris configuration file |
+| CONFIGMAP KEY             | DEFAULT                                                | DESCRIPTION |
+| ------------------------- | ------------------------------------------------------ | ----------- |
+| `trivy.httpProxy`         | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable in `Standalone` mode. |
+| `trivy.severity`          | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
+| `trivy.imageRef`          | `docker.io/aquasec/trivy:0.14.0`                       | Trivy image reference |
+| `trivy.mode`              | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
+| `trivy.serverURL`         | `http://trivy-server.trivy-server:4954`                | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
+| `trivy.serverTokenHeader` | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
+| `polaris.config.yaml`     | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
-| SECRET KEY          | DESCRIPTION |
-| ------------------- | ----------- |
-| `trivy.githubToken` | The GitHub personal access token used by Trivy to download the vulnerabilities database from GitHub. Only applicable if Trivy runs in the `Standalone` mode. |
+| SECRET KEY                  | DESCRIPTION |
+| --------------------------- | ----------- |
+| `trivy.githubToken`         | The GitHub access token used by Trivy to download the vulnerabilities database from GitHub. Only applicable in `Standalone` mode. |
+| `trivy.serverToken`         | The token to authenticate Trivy client with Trivy server. Only applicable in `ClientServer` mode. |
+| `trivy.serverCustomHeaders` | A comma-separated list of custom HTTP headers sent by Trivy client to Trivy server. Only applicable in `ClientServer` mode. |
 
 > **NOTE** You can find it handy to delete a configuration key, which was not created by default by the
 > `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:

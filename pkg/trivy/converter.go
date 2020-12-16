@@ -20,10 +20,10 @@ type Converter interface {
 }
 
 type converter struct {
-	config starboard.TrivyConfig
+	config Config
 }
 
-func NewConverter(config starboard.TrivyConfig) Converter {
+func NewConverter(config Config) Converter {
 	return &converter{
 		config: config,
 	}
@@ -98,6 +98,7 @@ func (c *converter) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1al
 	return
 }
 
+// TODO check if it works if both tag and digest are specified
 func (c *converter) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
