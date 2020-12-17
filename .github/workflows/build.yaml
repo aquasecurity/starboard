@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
