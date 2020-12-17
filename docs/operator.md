@@ -28,21 +28,21 @@ watch the `default` namespace:
 1. Send the definition of the `vulnerabilityreports` custom resource to the
    Kubernetes API:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/vulnerabilityreports.crd.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/crd/vulnerabilityreports.crd.yaml
 
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
-          -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/01-starboard-operator.ns.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/02-starboard-operator.sa.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/03-starboard-operator.clusterrole.yaml \
+          -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/04-starboard-operator.clusterrolebinding.yaml
 
 3. (Optional) Configure the operator by creating the `starboard` ConfigMap and
    the `starboard` secret in the `starboard-operator` namespace. If you skip
    this step, the operator will ensure [configuration objects](./configuration.md)
    on startup with the default settings.
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.config.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml
    Review the default values and makes sure the operator is configured properly:
 
         kubectl describe cm starboard -n starboard-operator
@@ -51,7 +51,7 @@ watch the `default` namespace:
 4. Finally, create the `starboard-operator` Deployment in the `starboard-operator`
    namespace to start the operator's pod:
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/06-starboard-operator.deployment.yaml
 
 To confirm that the operator is running, check the number of replicas created by
 the `starboard-operator` Deployment in the `starboard-operator` namespace:
@@ -72,12 +72,12 @@ In case of any error consult our [Troubleshooting](troubleshooting.md) guideline
 
 You can uninstall the operator with the following command:
 
-    kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/06-starboard-operator.deployment.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/03-starboard-operator.clusterrole.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/02-starboard-operator.sa.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/01-starboard-operator.ns.yaml
+    kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/06-starboard-operator.deployment.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.cm.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/03-starboard-operator.clusterrole.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/02-starboard-operator.sa.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/01-starboard-operator.ns.yaml
 
 ### Helm
 
@@ -95,14 +95,16 @@ configure it to watch the `default` namespaces:
         git clone https://github.com/aquasecurity/starboard.git
         cd starboard
 
-2. (Optional) Configure the operator by creating the `starboard` ConfigMap in
-   the `starboard-operator` namespace. If you skip this step, the operator will
-   ensure the ConfigMap on startup with the default configuration values.
+2. (Optional) Configure the operator by creating the `starboard` ConfigMap and
+   the `starboard` secret in the `starboard-operator` namespace. If you skip
+   this step, the operator will ensure [configuration objects](./configuration.md)
+   on startup with the default settings.
 
-        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/static/05-starboard-operator.cm.yaml
+        kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml
    Review the default values and makes sure the operator is configured properly:
 
         kubectl describe cm starboard -n starboard-operator
+        kubectl describe secret starboard -n starboard-operator
 
 3. Install the chart:
 

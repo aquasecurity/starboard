@@ -18,5 +18,6 @@ nav:
   - Starboard Operator: operator.md
   - Configuration: configuration.md
   - Integrations: integrations.md
+  - Custom Resource Definitions: crds.md
   - Frequently Asked Questions: faq.md
   - Troubleshooting: troubleshooting.md
