@@ -57,4 +57,4 @@ values.
 >       --type json \
 >       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
 
-[default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/init/03-starboard.cm.yaml
+[default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/init/03-starboard.cm.yaml
