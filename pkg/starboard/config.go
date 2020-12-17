@@ -3,19 +3,17 @@ package starboard
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/labels"
 
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/google/go-containerregistry/pkg/name"
 )
 
 const (
@@ -210,7 +208,7 @@ func NewScheme() *runtime.Scheme {
 	_ = corev1.AddToScheme(scheme)
 	_ = batchv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = starboardv1alpha1.AddToScheme(scheme)
+	_ = v1alpha1.AddToScheme(scheme)
 	return scheme
 }
 
@@ -230,12 +228,6 @@ const (
 	ClientServer TrivyMode = "ClientServer"
 )
 
-type TrivyConfig interface {
-	GetTrivyImageRef() string
-	GetTrivyMode() TrivyMode
-	GetTrivyServerURL() string
-}
-
 // ConfigData holds Starboard configuration settings as a set
 // of key-value pairs.
 type ConfigData map[string]string
@@ -247,7 +239,7 @@ type ConfigManager interface {
 	Delete(ctx context.Context) error
 }
 
-// GetDefaultConfig returns the default configuration data.
+// GetDefaultConfig returns the default configuration settings.
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
 		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
