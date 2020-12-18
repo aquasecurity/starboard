@@ -3,13 +3,15 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
+
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // Deprecated
 // Use NewScanVulnerabilityReportsCmd instead.
-func NewFindVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewFindVulnerabilitiesCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Aliases:    []string{"vulns", "vuln"},
 		Use:        "vulnerabilities (NAME | TYPE/NAME)",
@@ -41,8 +43,8 @@ func NewFindVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFl
   %[1]s find vulns job/my-job
 
   # Scan a cronjob with the specified name and the specified scan job timeout
-  %[1]s find vulns cj/my-cronjob --scan-job-timeout 2m`, executable),
-		RunE: ScanVulnerabilityReports(cf),
+  %[1]s find vulns cj/my-cronjob --scan-job-timeout 2m`, buildInfo.Executable),
+		RunE: ScanVulnerabilityReports(buildInfo, cf),
 	}
 
 	registerScannerOpts(cmd)

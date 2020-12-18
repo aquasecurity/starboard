@@ -2,6 +2,9 @@ package api
 
 import (
 	"strings"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua/client"
@@ -84,6 +87,7 @@ func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesRes
 	}
 
 	return v1alpha1.VulnerabilityScanResult{
+		UpdateTimestamp: metav1.NewTime(time.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",
 			Vendor:  "Aqua Security",

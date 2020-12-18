@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewScanCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	scanCmd := &cobra.Command{
 		Use:     "scan",
 		Aliases: []string{"generate"},
@@ -14,7 +15,7 @@ func NewScanCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Com
 	scanCmd.AddCommand(NewScanConfigAuditReportsCmd(cf))
 	scanCmd.AddCommand(NewScanKubeBenchReportsCmd(cf))
 	scanCmd.AddCommand(NewScanKubeHunterReportsCmd(cf))
-	scanCmd.AddCommand(NewScanVulnerabilityReportsCmd(executable, cf))
+	scanCmd.AddCommand(NewScanVulnerabilityReportsCmd(buildInfo, cf))
 
 	return scanCmd
 }

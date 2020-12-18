@@ -25,6 +25,7 @@ type options struct {
 	credentials client.UsernameAndPassword
 }
 
+// main is the entrypoint of the executable command used by Aqua vulnerabilityreport.Plugin.
 func main() {
 	if err := run(); err != nil {
 		log.Fatalf("error: %s", err.Error())

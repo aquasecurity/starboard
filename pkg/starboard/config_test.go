@@ -52,12 +52,13 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 	testCases := []struct {
 		name             string
 		configData       starboard.ConfigData
+		expectedError    string
 		expectedImageRef string
 	}{
 		{
-			name:             "Should return default image reference",
-			configData:       starboard.ConfigData{},
-			expectedImageRef: "docker.io/aquasec/trivy:0.14.0",
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property trivy.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
@@ -70,8 +71,13 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetTrivyImageRef()
-			assert.Equal(t, tc.expectedImageRef, imageRef)
+			imageRef, err := tc.configData.GetTrivyImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
 		})
 	}
 }
@@ -100,6 +106,100 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			imageRef := tc.configData.GetKubeBenchImageRef()
 			assert.Equal(t, tc.expectedImageRef, imageRef)
+		})
+	}
+}
+
+func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
+	testCases := []struct {
+		name            string
+		configData      starboard.ConfigData
+		expectedError   string
+		expectedScanner starboard.Scanner
+	}{
+		{
+			name: "Should return Trivy",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Trivy",
+			},
+			expectedScanner: starboard.Trivy,
+		},
+		{
+			name: "Should return Aqua",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Aqua",
+			},
+			expectedScanner: starboard.Aqua,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property vulnerabilityReports.scanner not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Clair",
+			},
+			expectedError: "invalid value (Clair) of vulnerabilityReports.scanner; allowed values (Trivy, Aqua)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanner, err := tc.configData.GetVulnerabilityReportsScanner()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedScanner, scanner)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetTrivyMode(t *testing.T) {
+	testCases := []struct {
+		name          string
+		configData    starboard.ConfigData
+		expectedError string
+		expectedMode  starboard.TrivyMode
+	}{
+		{
+			name: "Should return Standalone",
+			configData: starboard.ConfigData{
+				"trivy.mode": "Standalone",
+			},
+			expectedMode: starboard.Standalone,
+		},
+		{
+			name: "Should return ClientServer",
+			configData: starboard.ConfigData{
+				"trivy.mode": "ClientServer",
+			},
+			expectedMode: starboard.ClientServer,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property trivy.mode not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"trivy.mode": "P2P",
+			},
+			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mode, err := tc.configData.GetTrivyMode()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedMode, mode)
+			}
 		})
 	}
 }

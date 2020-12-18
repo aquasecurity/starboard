@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/aqua/client"
@@ -97,6 +100,7 @@ func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alph
 	}
 
 	report = v1alpha1.VulnerabilityScanResult{
+		UpdateTimestamp: metav1.NewTime(time.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",
 			Vendor:  "Aqua Security",

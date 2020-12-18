@@ -9,9 +9,7 @@ import (
 )
 
 type Config struct {
-	Operator       Operator
-	ScannerAquaCSP ScannerAquaCSP
-	ScannerTrivy   ScannerTrivy
+	Operator Operator
 }
 
 type Operator struct {
@@ -24,18 +22,6 @@ type Operator struct {
 	MetricsBindAddress      string        `env:"OPERATOR_METRICS_BIND_ADDRESS" envDefault:":8080"`
 	HealthProbeBindAddress  string        `env:"OPERATOR_HEALTH_PROBE_BIND_ADDRESS" envDefault:":9090"`
 	LogDevMode              bool          `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
-}
-
-type ScannerTrivy struct {
-	Enabled bool `env:"OPERATOR_SCANNER_TRIVY_ENABLED" envDefault:"true"`
-}
-
-type ScannerAquaCSP struct {
-	Enabled  bool   `env:"OPERATOR_SCANNER_AQUA_CSP_ENABLED" envDefault:"false"`
-	ImageRef string `env:"OPERATOR_SCANNER_AQUA_CSP_IMAGE" envDefault:"aquasec/scanner:5.0"`
-	Host     string `env:"OPERATOR_SCANNER_AQUA_CSP_HOST"`
-	Username string `env:"OPERATOR_SCANNER_AQUA_CSP_USERNAME"`
-	Password string `env:"OPERATOR_SCANNER_AQUA_CSP_PASSWORD"`
 }
 
 func GetOperatorConfig() (Config, error) {

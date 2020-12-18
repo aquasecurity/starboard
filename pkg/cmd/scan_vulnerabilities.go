@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/config"
 	apis "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/aquasecurity/starboard/pkg/trivy"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -23,7 +22,7 @@ NAME is the name of a particular Kubernetes workload.
 `
 )
 
-func NewScanVulnerabilityReportsCmd(executable string, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanVulnerabilityReportsCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Aliases: []string{"vulns", "vuln"},
 		Use:     "vulnerabilityreports (NAME | TYPE/NAME)",
@@ -54,8 +53,8 @@ func NewScanVulnerabilityReportsCmd(executable string, cf *genericclioptions.Con
   %[1]s scan vulnerabilityreports job/my-job
 
   # Scan a cronjob with the specified name and the specified scan job timeout
-  %[1]s scan vulnerabilityreports cj/my-cronjob --scan-job-timeout 2m`, executable),
-		RunE: ScanVulnerabilityReports(cf),
+  %[1]s scan vulnerabilityreports cj/my-cronjob --scan-job-timeout 2m`, buildInfo.Executable),
+		RunE: ScanVulnerabilityReports(buildInfo, cf),
 	}
 
 	registerScannerOpts(cmd)
@@ -63,7 +62,7 @@ func NewScanVulnerabilityReportsCmd(executable string, cf *genericclioptions.Con
 	return cmd
 }
 
-func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
+func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
@@ -86,7 +85,7 @@ func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra
 		if err != nil {
 			return err
 		}
-		config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
+		starboardConfig, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
@@ -94,17 +93,15 @@ func ScanVulnerabilityReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra
 		if err != nil {
 			return err
 		}
-
-		// StarboardCLI only supports Trivy scanner in Standalone and ClientServer
-		// mode, but you can add your own scanner by implementing the
-		// vulnerabilityreport.Plugin interface.
-		scannerPlugin := trivy.NewScannerPlugin(ext.NewGoogleUUIDGenerator(), config)
-
+		plugin, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
+		if err != nil {
+			return err
+		}
 		reports, err := vulnerabilityreport.NewScanner(
 			starboard.NewScheme(),
 			kubernetesClientset,
 			opts,
-			scannerPlugin).Scan(ctx, workload)
+			plugin).Scan(ctx, workload)
 		if err != nil {
 			return err
 		}

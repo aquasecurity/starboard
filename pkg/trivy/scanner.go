@@ -38,9 +38,9 @@ type scanner struct {
 
 // Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
 type Config interface {
-	GetTrivyImageRef() string
-	GetTrivyMode() starboard.TrivyMode
-	GetTrivyServerURL() string
+	GetTrivyImageRef() (string, error)
+	GetTrivyMode() (starboard.TrivyMode, error)
+	GetTrivyServerURL() (string, error)
 }
 
 // NewScanner constructs a new vulnerabilityreport.Plugin, which is using an
@@ -60,13 +60,17 @@ func NewScannerPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityr
 }
 
 func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
-	switch s.config.GetTrivyMode() {
+	mode, err := s.config.GetTrivyMode()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+	switch mode {
 	case starboard.Standalone:
 		return s.getPodSpecForStandaloneMode(spec, credentials)
 	case starboard.ClientServer:
 		return s.getPodSpecForClientServerMode(spec, credentials)
 	default:
-		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", s.config.GetTrivyMode())
+		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
 }
 
@@ -108,9 +112,14 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 		secrets = append(secrets, secret)
 	}
 
+	trivyImageRef, err := s.config.GetTrivyImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
 	initContainer := corev1.Container{
 		Name:                     s.idGenerator.GenerateID(),
-		Image:                    s.config.GetTrivyImageRef(),
+		Image:                    trivyImageRef,
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Env: []corev1.EnvVar{
@@ -217,7 +226,7 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    trivyImageRef,
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env:                      env,
@@ -272,6 +281,16 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
+
+	trivyImageRef, err := s.config.GetTrivyImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	trivyServerURL, err := s.config.GetTrivyServerURL()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
 
 	if len(credentials) > 0 {
 		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
@@ -362,7 +381,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
-			Image:                    s.config.GetTrivyImageRef(),
+			Image:                    trivyImageRef,
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env:                      env,
@@ -375,7 +394,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 				"--format",
 				"json",
 				"--remote",
-				s.config.GetTrivyServerURL(),
+				trivyServerURL,
 				container.Image,
 			},
 			Resources: defaultResourceRequirements,

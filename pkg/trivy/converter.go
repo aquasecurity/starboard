@@ -61,7 +61,12 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (v1alpha1.Vul
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
 
-	version, err := starboard.GetVersionFromImageRef(c.config.GetTrivyImageRef())
+	trivyImageRef, err := c.config.GetTrivyImageRef()
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+
+	version, err := starboard.GetVersionFromImageRef(trivyImageRef)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
