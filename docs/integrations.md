@@ -17,7 +17,7 @@ containers that perform the actual scanning. Finally, the pod is deleted along w
 The number of containers defined by a scan job equals the number of containers defined by the scanned Kubernetes
 workload, so the cache in this mode is useful only if the workload defines multiple containers.
 
-Beyond that, frequent downloads from GitHub might lead to [rate limiting][gh-rate-limiting] problem. The limits are
+Beyond that, frequent downloads from GitHub might lead to a [rate limiting][gh-rate-limiting] problem. The limits are
 imposed by GitHub on all anonymous requests originating from a given IP. To mitigate such problems you can add the
 `trivy.githubToken` key to the `starboard` secret.
 
