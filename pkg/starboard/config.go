@@ -320,11 +320,8 @@ func (c ConfigData) GetAquaImageRef() (string, error) {
 }
 
 // GetKubeBenchImageRef returns Docker image of kube-bench scanner.
-func (c ConfigData) GetKubeBenchImageRef() string {
-	if imageRef, ok := c["kube-bench.imageRef"]; ok {
-		return imageRef
-	}
-	return "docker.io/aquasec/kube-bench:0.4.0"
+func (c ConfigData) GetKubeBenchImageRef() (string, error) {
+	return c.getRequiredProperty("kube-bench.imageRef")
 }
 
 func (c ConfigData) getRequiredProperty(key string) (string, error) {

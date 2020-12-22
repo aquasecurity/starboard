@@ -28,7 +28,7 @@ const (
 )
 
 type Config interface {
-	GetKubeBenchImageRef() string
+	GetKubeBenchImageRef() (string, error)
 }
 
 type Scanner struct {
@@ -58,7 +58,10 @@ func NewScanner(
 
 func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.CISKubeBenchOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob(node)
+	job, err := s.prepareKubeBenchJob(node)
+	if err != nil {
+		return report, nil
+	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
@@ -109,7 +112,11 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.C
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob(node corev1.Node) *batchv1.Job {
+func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
+	imageRef, err := s.config.GetKubeBenchImageRef()
+	if err != nil {
+		return nil, err
+	}
 	target := "node"
 	if _, ok := node.Labels[masterNodeLabel]; ok {
 		target = "master"
@@ -187,7 +194,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) *batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:                     kubeBenchContainerName,
-							Image:                    s.config.GetKubeBenchImageRef(),
+							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"kube-bench", target},
@@ -234,5 +241,5 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) *batchv1.Job {
 				},
 			},
 		},
-	}
+	}, nil
 }

@@ -86,12 +86,13 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	testCases := []struct {
 		name             string
 		configData       starboard.ConfigData
+		expectedError    string
 		expectedImageRef string
 	}{
 		{
-			name:             "Should return default image reference",
-			configData:       starboard.ConfigData{},
-			expectedImageRef: "docker.io/aquasec/kube-bench:0.4.0",
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property kube-bench.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
@@ -104,8 +105,13 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetKubeBenchImageRef()
-			assert.Equal(t, tc.expectedImageRef, imageRef)
+			imageRef, err := tc.configData.GetKubeBenchImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
 		})
 	}
 }
