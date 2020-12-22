@@ -42,7 +42,7 @@ EOF
 
 ### Trivy ClientServer
 
-You can connect Starboard to an external [Trivy server][trivy-clientserver] by changing the default `trivy.mode` from
+You can connect Starboard to an external Trivy server by changing the default `trivy.mode` from
 [`Standalone`][trivy-standalone] to [`ClientServer`][trivy-clientserver] and specifying `trivy.serverURL`.
 
 ```
@@ -60,6 +60,9 @@ kubectl patch cm starboard -n <starboard_namespace> \
 EOF
 )"
 ```
+
+The Trivy server could be your own deployment, or it could be an external service. See [Trivy documentation][trivy-clientserver]
+for more information on deploying Trivy in `ClientServer` mode.
 
 If the server requires access token and / or custom HTTP authentication headers, you may add `trivy.serverToken`
 and `trivy.serverCustomHeaders` properties to the `starboard` secret.

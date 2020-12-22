@@ -49,6 +49,10 @@ EOF
 The following tables list available configuration parameters with their default
 values.
 
+> **NOTE** You only need to configure the settings for the scanner you are using (i.e. `trivy.*` parameters are
+> used if `vulnerabilityReports.scanner` is set to `Trivy`). Check [integrations](./integrations.md) page to see
+> example configuration settings for common use cases.
+
 | CONFIGMAP KEY                  | DEFAULT                                                | DESCRIPTION |
 | ------------------------------ | ------------------------------------------------------ | ----------- |
 | `vulnerabilityReports.scanner` | `Trivy`                                                | The name of the scanner that generates vulnerability reports. Either `Trivy` or `Aqua`. |
