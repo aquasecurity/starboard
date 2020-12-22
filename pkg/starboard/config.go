@@ -213,12 +213,21 @@ func NewScheme() *runtime.Scheme {
 }
 
 // BuildInfo holds build info such as Git revision, Git SHA-1,
-// and build datetime.
+// build datetime, and the name of the executable binary.
 type BuildInfo struct {
-	Version string
-	Commit  string
-	Date    string
+	Version    string
+	Commit     string
+	Date       string
+	Executable string
 }
+
+// Scanner represents unique, human readable identifier of a security scanner.
+type Scanner string
+
+const (
+	Trivy Scanner = "Trivy"
+	Aqua  Scanner = "Aqua"
+)
 
 // TrivyMode describes mode in which Trivy client operates.
 type TrivyMode string
@@ -226,6 +235,13 @@ type TrivyMode string
 const (
 	Standalone   TrivyMode = "Standalone"
 	ClientServer TrivyMode = "ClientServer"
+)
+
+const (
+	keyVulnerabilityReportsScanner = "vulnerabilityReports.scanner"
+
+	keyTrivyMode      = "trivy.mode"
+	keyTrivyServerURL = "trivy.serverURL"
 )
 
 // ConfigData holds Starboard configuration settings as a set
@@ -242,42 +258,79 @@ type ConfigManager interface {
 // GetDefaultConfig returns the default configuration settings.
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
-		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef":      "docker.io/aquasec/trivy:0.14.0",
-		"trivy.mode":          string(Standalone),
-		"trivy.serverURL":     "http://trivy-server.trivy-server:4954",
+		keyVulnerabilityReportsScanner: string(Trivy),
+
+		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+		"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
+		keyTrivyMode:     string(Standalone),
+
+		"aqua.imageRef": "docker.io/aquasec/scanner:5.3",
+
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
-func (c ConfigData) GetTrivyImageRef() string {
-	if imageRef, ok := c["trivy.imageRef"]; ok {
-		return imageRef
+func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
+	var ok bool
+	var value string
+	if value, ok = c[keyVulnerabilityReportsScanner]; !ok {
+		return "", fmt.Errorf("property %s not set", keyVulnerabilityReportsScanner)
 	}
-	return "docker.io/aquasec/trivy:0.14.0"
+
+	switch Scanner(value) {
+	case Trivy:
+		return Trivy, nil
+	case Aqua:
+		return Aqua, nil
+	}
+
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyVulnerabilityReportsScanner, Trivy, Aqua)
 }
 
-func (c ConfigData) GetTrivyMode() TrivyMode {
-	if mode, ok := c["trivy.mode"]; ok {
-		return TrivyMode(mode)
-	}
-	return Standalone
+func (c ConfigData) GetTrivyImageRef() (string, error) {
+	return c.getRequiredProperty("trivy.imageRef")
 }
 
-func (c ConfigData) GetTrivyServerURL() string {
-	if url, ok := c["trivy.serverURL"]; ok {
-		return url
+func (c ConfigData) GetTrivyMode() (TrivyMode, error) {
+	var ok bool
+	var value string
+	if value, ok = c[keyTrivyMode]; !ok {
+		return "", fmt.Errorf("property %s not set", keyTrivyMode)
 	}
-	return "http://trivy-server.trivy-server:4954"
+
+	switch TrivyMode(value) {
+	case Standalone:
+		return Standalone, nil
+	case ClientServer:
+		return ClientServer, nil
+	}
+
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyTrivyMode, Standalone, ClientServer)
+}
+
+func (c ConfigData) GetTrivyServerURL() (string, error) {
+	return c.getRequiredProperty(keyTrivyServerURL)
+}
+
+func (c ConfigData) GetAquaImageRef() (string, error) {
+	return c.getRequiredProperty("aqua.imageRef")
 }
 
 // GetKubeBenchImageRef returns Docker image of kube-bench scanner.
-func (c ConfigData) GetKubeBenchImageRef() string {
-	if imageRef, ok := c["kube-bench.imageRef"]; ok {
-		return imageRef
+func (c ConfigData) GetKubeBenchImageRef() (string, error) {
+	return c.getRequiredProperty("kube-bench.imageRef")
+}
+
+func (c ConfigData) getRequiredProperty(key string) (string, error) {
+	var ok bool
+	var value string
+	if value, ok = c[key]; !ok {
+		return "", fmt.Errorf("property %s not set", key)
 	}
-	return "docker.io/aquasec/kube-bench:0.4.0"
+	return value, nil
 }
 
 // GetVersionFromImageRef returns the image identifier for the specified image reference.

@@ -2,13 +2,10 @@ package operator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/trivy"
-
+	"github.com/aquasecurity/starboard/pkg/config"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/controller/job"
 	"github.com/aquasecurity/starboard/pkg/operator/controller/pod"
@@ -122,7 +119,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	store := vulnerabilityreport.NewStore(mgr.GetClient(), mgr.GetScheme())
 	idGenerator := ext.NewGoogleUUIDGenerator()
 
-	scanner, err := getEnabledScanner(buildInfo, idGenerator, operatorConfig, starboardConfig)
+	scanner, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
 	if err != nil {
 		return err
 	}
@@ -163,30 +160,4 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	return nil
-}
-
-func getEnabledScanner(
-	buildInfo starboard.BuildInfo,
-	idGenerator ext.IDGenerator,
-	config etc.Config,
-	starboardConfig starboard.ConfigData,
-) (vulnerabilityreport.Plugin, error) {
-	if config.ScannerTrivy.Enabled && config.ScannerAquaCSP.Enabled {
-		return nil, fmt.Errorf("invalid configuration: multiple vulnerability scanners enabled")
-	}
-	if !config.ScannerTrivy.Enabled && !config.ScannerAquaCSP.Enabled {
-		return nil, fmt.Errorf("invalid configuration: none vulnerability scanner enabled")
-	}
-	if config.ScannerTrivy.Enabled {
-		setupLog.Info("Using Trivy as vulnerability scanner",
-			"trivyImageRef", starboardConfig.GetTrivyImageRef(),
-			"trivyMode", starboardConfig.GetTrivyMode(),
-			"trivyServerURL", starboardConfig.GetTrivyServerURL())
-		return trivy.NewScannerPlugin(idGenerator, starboardConfig), nil
-	}
-	if config.ScannerAquaCSP.Enabled {
-		setupLog.Info("Using Aqua CSP as vulnerability scanner", "image", config.ScannerAquaCSP.ImageRef)
-		return aqua.NewScanner(idGenerator, buildInfo, config.ScannerAquaCSP), nil
-	}
-	return nil, errors.New("invalid configuration: unhandled vulnerability scanners config")
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -17,12 +19,6 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
-
-	buildInfo = starboard.BuildInfo{
-		Version: version,
-		Commit:  commit,
-		Date:    date,
-	}
 )
 
 // main is the entrypoint of the Starboard CLI executable command.
@@ -30,8 +26,20 @@ func main() {
 	defer klog.Flush()
 	klog.InitFlags(nil)
 
-	if err := cmd.Run(buildInfo, os.Args, os.Stdout, os.Stderr); err != nil {
+	if err := cmd.Run(starboard.BuildInfo{
+		Version:    version,
+		Commit:     commit,
+		Date:       date,
+		Executable: executable(os.Args),
+	}, os.Args, os.Stdout, os.Stderr); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func executable(args []string) string {
+	if strings.HasPrefix(filepath.Base(args[0]), "kubectl-") {
+		return "kubectl starboard"
+	}
+	return "starboard"
 }

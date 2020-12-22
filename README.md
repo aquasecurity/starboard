@@ -33,7 +33,6 @@
     - [From OperatorHub.io or ArtifactHUB](#from-operatorhubio-or-artifacthub)
   - [Environment Variables](https://aquasecurity.github.io/starboard/operator/#configuration)
     - [Install Modes](https://aquasecurity.github.io/starboard/operator/#install-modes)
-  - [Supported Vulnerability Scanners](#supported-vulnerability-scanners)
 - [Configuration](https://aquasecurity.github.io/starboard/configuration/)
 - [Custom Resource Definitions][starboard-crds]
 - [Contributing](#contributing)
@@ -331,22 +330,6 @@ multitenancy, and Subscription that links everything together to run the operato
    NAME                        DISPLAY              VERSION   REPLACES   PHASE
    starboard-operator.v0.6.0   Starboard Operator   0.6.0                Succeeded
    ```
-
-### Supported Vulnerability Scanners
-
-To enable Aqua as vulnerability scanner set the value of the `OPERATOR_SCANNER_AQUA_CSP_ENABLED` to `true` and
-disable the default Trivy scanner by setting `OPERATOR_SCANNER_TRIVY_ENABLED` to `false`.
-
-To configure the Aqua scanner create the `starboard-operator` secret in the `operators` namespace:
-
-```
-$ kubectl create secret generic starboard-operator \
- --namespace $OPERATOR_NAMESPACE \
- --from-literal OPERATOR_SCANNER_AQUA_CSP_USERNAME=$AQUA_CONSOLE_USERNAME \
- --from-literal OPERATOR_SCANNER_AQUA_CSP_PASSWORD=$AQUA_CONSOLE_PASSWORD \
- --from-literal OPERATOR_SCANNER_AQUA_CSP_VERSION=$AQUA_VERSION \
- --from-literal OPERATOR_SCANNER_AQUA_CSP_HOST=http://csp-console-svc.aqua:8080
-```
 
 ## Contributing
 

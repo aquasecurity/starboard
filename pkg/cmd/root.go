@@ -3,8 +3,6 @@ package cmd
 import (
 	"flag"
 	"io"
-	"path/filepath"
-	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -12,7 +10,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
+func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
 	var cf *genericclioptions.ConfigFlags
 
 	rootCmd := &cobra.Command{
@@ -24,16 +22,14 @@ func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer,
 
 	cf = genericclioptions.NewConfigFlags(true)
 
-	executable := executable(args)
-
-	rootCmd.AddCommand(NewVersionCmd(version, outWriter))
+	rootCmd.AddCommand(NewVersionCmd(buildInfo, outWriter))
 	rootCmd.AddCommand(NewInitCmd(cf))
-	rootCmd.AddCommand(NewFindCmd(executable, cf))
-	rootCmd.AddCommand(NewScanCmd(executable, cf))
+	rootCmd.AddCommand(NewFindCmd(buildInfo, cf))
+	rootCmd.AddCommand(NewScanCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewKubeBenchCmd(cf))
 	rootCmd.AddCommand(NewKubeHunterCmd(cf))
 	rootCmd.AddCommand(NewPolarisCmd(cf))
-	rootCmd.AddCommand(NewGetCmd(executable, cf, outWriter))
+	rootCmd.AddCommand(NewGetCmd(buildInfo, cf, outWriter))
 	rootCmd.AddCommand(NewCleanupCmd(cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 
@@ -44,13 +40,6 @@ func NewRootCmd(version starboard.BuildInfo, args []string, outWriter io.Writer,
 	rootCmd.SetErr(errWriter)
 
 	return rootCmd
-}
-
-func executable(args []string) string {
-	if strings.HasPrefix(filepath.Base(args[0]), "kubectl-") {
-		return "kubectl starboard"
-	}
-	return "starboard"
 }
 
 // Run is the entry point of the Starboard CLI. It runs the specified

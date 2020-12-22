@@ -190,15 +190,12 @@ object. For example, you can display the report as JSON object:
 
 ## Configuration
 
-Configuration of the operator is done via environment variables at startup.
+Configuration of the operator's pod is done via environment variables at startup.
 
 | NAME                                 | DEFAULT                | DESCRIPTION |
 | ------------------------------------ | ---------------------- | ----------- |
 | `OPERATOR_NAMESPACE`                 | N/A                    | See [Install modes](#install-modes) |
 | `OPERATOR_TARGET_NAMESPACES`         | N/A                    | See [Install modes](#install-modes) |
-| `OPERATOR_SCANNER_TRIVY_ENABLED`     | `true`                 | The flag to enable Trivy vulnerability scanner |
-| `OPERATOR_SCANNER_AQUA_CSP_ENABLED`  | `false`                | The flag to enable Aqua vulnerability scanner |
-| `OPERATOR_SCANNER_AQUA_CSP_IMAGE`    | `aquasec/scanner:5.0`  | The Docker image of Aqua scanner to be used |
 | `OPERATOR_LOG_DEV_MODE`              | `false`                | The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc). |
 | `OPERATOR_SCAN_JOB_TIMEOUT`          | `5m`                   | The length of time to wait before giving up on a scan job |
 | `OPERATOR_METRICS_BIND_ADDRESS`      | `:8080`                | The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to `0` to disable the metrics serving. |

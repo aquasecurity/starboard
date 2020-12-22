@@ -8,7 +8,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
@@ -16,22 +15,23 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-const (
-	secretName = "starboard-operator"
-)
+// Config defines configuration settings for the Aqua vulnerabilityreport.Plugin.
+type Config interface {
+	GetAquaImageRef() (string, error)
+}
 
 type scanner struct {
 	idGenerator ext.IDGenerator
 	buildInfo   starboard.BuildInfo
-	config      etc.ScannerAquaCSP
+	config      Config
 }
 
 // NewScanner constructs a new vulnerability scanner Plugin, which is using
-// the Aqua CSP to scan container images of Kubernetes workloads.
-func NewScanner(
+// the Aqua to scan container images of Kubernetes workloads.
+func NewScannerPlugin(
 	idGenerator ext.IDGenerator,
 	buildInfo starboard.BuildInfo,
-	config etc.ScannerAquaCSP,
+	config Config,
 ) vulnerabilityreport.Plugin {
 	return &scanner{
 		idGenerator: idGenerator,
@@ -42,6 +42,11 @@ func NewScanner(
 
 func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
+
+	aquaImageRef, err := s.config.GetAquaImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
 	for i, container := range spec.Containers {
@@ -75,7 +80,7 @@ func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) 
 		InitContainers: []corev1.Container{
 			{
 				Name:  initContainerName,
-				Image: s.config.ImageRef,
+				Image: aquaImageRef,
 				Command: []string{
 					"cp",
 					"/opt/aquasec/scannercli",
@@ -94,15 +99,20 @@ func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) 
 }
 
 func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
-	version, err := starboard.GetVersionFromImageRef(s.config.ImageRef)
+	aquaImageRef, err := s.config.GetAquaImageRef()
+	if err != nil {
+		return corev1.Container{}, err
+	}
+	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
 	if err != nil {
 		return corev1.Container{}, err
 	}
 
 	return corev1.Container{
-		Name:            podContainer.Name,
-		Image:           fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
-		ImagePullPolicy: corev1.PullIfNotPresent,
+		Name:                     podContainer.Name,
+		Image:                    fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Command: []string{
 			"/bin/sh",
 			"-c",
@@ -118,11 +128,11 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 			{
 				Name: "AQUA_CSP_HOST",
 				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_HOST",
+						Key: "aqua.serverURL",
 					},
 				},
 			},
@@ -131,9 +141,9 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_USERNAME",
+						Key: "aqua.username",
 					},
 				},
 			},
@@ -142,9 +152,9 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_PASSWORD",
+						Key: "aqua.password",
 					},
 				},
 			},
