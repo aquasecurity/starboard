@@ -9,7 +9,7 @@
 The default configuration settings enable Trivy `vulnerabilityReports.scanner` in [`Standalone`][trivy-standalone]
 `trivy.mode`. Even though it doesn't require any additional setup, it's the least efficient method. Each pod created
 by a scan job has the init container that downloads the Trivy vulnerabilities database from the GitHub releases page
-and stores it in the local file system of an [emptyDir][emptyDir-volume] volume. Such volume is then shared with main
+and stores it in the local file system of an [emptyDir][emptyDir-volume] volume. This volume is then shared with the main
 containers that perform the actual scanning. Finally, the pod is deleted along with the emptyDir volume.
 
 ![](images/design/trivy-standalone.png)
