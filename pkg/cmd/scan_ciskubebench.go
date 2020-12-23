@@ -74,16 +74,19 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			go func(node corev1.Node) {
 				defer wg.Done()
 
-				report, err := scanner.Scan(ctx, node)
+				nodeValueLabel, exist := node.GetObjectMeta().GetLabels()["kubernetes.io/os"]
+				if exist && nodeValueLabel == "linux" {
+					report, err := scanner.Scan(ctx, node)
 
-				if err != nil {
-					klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
-					return
-				}
-				err = writer.Write(ctx, report, &node)
-				if err != nil {
-					klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
-					return
+					if err != nil {
+						klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
+						return
+					}
+					err = writer.Write(ctx, report, &node)
+					if err != nil {
+						klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
+						return
+					}
 				}
 			}(node)
 		}
