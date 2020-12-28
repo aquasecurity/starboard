@@ -55,6 +55,7 @@ dockers:
   - dockerfile: build/starboard/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}"
     binaries:
       - starboard
     build_flag_templates:
