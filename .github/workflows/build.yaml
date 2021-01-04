@@ -29,6 +29,8 @@ jobs:
           go-version: 1.15
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
       - name: Vendor Go modules
         run: go mod vendor
       - name: Verify generated code
