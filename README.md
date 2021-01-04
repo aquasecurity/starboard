@@ -149,7 +149,7 @@ also know that in Kubernetes the defaults are usually the least secure.
 Run the scanner to audit the configuration using [Polaris][polaris]:
 
 ```
-$ starboard polaris deployment/nginx --namespace dev
+$ starboard scan configauditreports deployment/nginx --namespace dev
 ```
 
 Retrieve the configuration audit report:
