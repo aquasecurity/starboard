@@ -70,6 +70,7 @@ dockers:
   - dockerfile: build/starboard-operator/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}"
     binaries:
       - starboard-operator
     build_flag_templates:
@@ -84,6 +85,7 @@ dockers:
   - dockerfile: build/scanner-aqua/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}"
     binaries:
       - starboard-scanner-aqua
     build_flag_templates:
