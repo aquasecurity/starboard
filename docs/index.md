@@ -3,8 +3,8 @@
 Starboard integrates security tools into the Kubernetes environment, so that
 users can find and view the risks that relate to different resources in
 a Kubernetes-native way. Starboard provides [custom resources definitions][crds]
-and a [Go module][go-module] to work with a range of existing security tools,
-as well as a [kubectl]-compatible executable command, the [Octant plugin][octant-plugin],
+and a [Go module][go-module] to work with a range of existing security scanners,
+as well as a [kubectl]-compatible command, the [Octant plugin][octant-plugin],
 and the [Lens extension][lens-extension] that make security reports available
 through familiar Kubernetes tools.
 
@@ -31,8 +31,8 @@ at [KubeCon + CloudNativeCon NA 2020][kubecon-video].
 [cli]: cli/index.md
 [operator]: operator/index.md
 [go-module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
-[octant-plugin]: https://github.com/aquasecurity/starboard-octant-plugin
-[lens-extension]: https://github.com/aquasecurity/starboard-lens-extension
+[octant-plugin]: integrations/octant.md
+[lens-extension]: integrations/lens.md
 [kubectl]: https://kubernetes.io/docs/reference/kubectl/
 [use-cases]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions

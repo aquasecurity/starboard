@@ -11,10 +11,10 @@ nav:
   - Starboard CLI:
       - Overview: cli/index.md
       - Installation:
-          - Binary Release: cli/installation/binary-release.md
+          - From the Binary Releases: cli/installation/binary-releases.md
           - Krew: cli/installation/krew.md
           - Docker: cli/installation/docker.md
-          - From Source Code: cli/installation/source-code.md
+          - From Source (Linux, macOS): cli/installation/source-code.md
       - Getting Started: cli/getting-started.md
   - Starboard Operator:
     - Overview: operator/index.md
@@ -25,7 +25,12 @@ nav:
     - Getting Started: operator/getting-started.md
     - Configuration: operator/configuration.md
   - Configuration: configuration.md
-  - Integrations: integrations.md
+  - Integrations:
+      - Vulnerability Scanners: integrations/vulnerability-scanners.md
+      - Private Registries: integrations/private-registries.md
+      - Managed Registries: integrations/managed-registries.md
+      - Octant Plugin: integrations/octant.md
+      - Lens Extension: integrations/lens.md
   - Custom Resource Definitions: crds.md
   - Frequently Asked Questions: faq.md
   - Troubleshooting: troubleshooting.md
