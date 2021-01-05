@@ -17,13 +17,13 @@ nav:
           - From Source Code: cli/installation/source-code.md
       - Getting Started: cli/getting-started.md
   - Starboard Operator:
-    - Overview: operator/index.md
-    - Installation:
-        - kubectl: operator/installation/kubectl.md
-        - Helm: operator/installation/helm.md
-        - Operator Lifecycle Manager: operator/installation/olm.md
-    - Getting Started: operator/getting-started.md
-    - Configuration: operator/configuration.md
+      - Overview: operator/index.md
+      - Installation:
+          - kubectl: operator/installation/kubectl.md
+          - Helm: operator/installation/helm.md
+          - Operator Lifecycle Manager: operator/installation/olm.md
+      - Getting Started: operator/getting-started.md
+      - Configuration: operator/configuration.md
   - Configuration: configuration.md
   - Integrations: integrations.md
   - Custom Resource Definitions: crds.md
