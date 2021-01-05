@@ -60,7 +60,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.C
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	job, err := s.prepareKubeBenchJob(node)
 	if err != nil {
-		return report, nil
+		return report, err
 	}
 
 	// 2. Run the prepared Job and wait for its completion or failure

@@ -266,8 +266,9 @@ func GetDefaultConfig() ConfigData {
 
 		"aqua.imageRef": "docker.io/aquasec/scanner:5.3",
 
-		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
-		"polaris.config.yaml": polarisConfigYAML,
+		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.4.0",
+		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.0",
+		"polaris.config.yaml":  polarisConfigYAML,
 	}
 }
 
@@ -319,9 +320,12 @@ func (c ConfigData) GetAquaImageRef() (string, error) {
 	return c.getRequiredProperty("aqua.imageRef")
 }
 
-// GetKubeBenchImageRef returns Docker image of kube-bench scanner.
 func (c ConfigData) GetKubeBenchImageRef() (string, error) {
 	return c.getRequiredProperty("kube-bench.imageRef")
+}
+
+func (c ConfigData) GetKubeHunterImageRef() (string, error) {
+	return c.getRequiredProperty("kube-hunter.imageRef")
 }
 
 func (c ConfigData) getRequiredProperty(key string) (string, error) {

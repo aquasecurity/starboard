@@ -116,6 +116,40 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	}
 }
 
+func TestConfigData_GetKubeHunterImageRef(t *testing.T) {
+	testCases := []struct {
+		name             string
+		configData       starboard.ConfigData
+		expectedError    string
+		expectedImageRef string
+	}{
+		{
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property kube-hunter.imageRef not set",
+		},
+		{
+			name: "Should return image reference from config data",
+			configData: starboard.ConfigData{
+				"kube-hunter.imageRef": "gcr.io/aquasecurity/kube-hunter:0.4.0",
+			},
+			expectedImageRef: "gcr.io/aquasecurity/kube-hunter:0.4.0",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			imageRef, err := tc.configData.GetKubeHunterImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
+		})
+	}
+}
+
 func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 	testCases := []struct {
 		name            string

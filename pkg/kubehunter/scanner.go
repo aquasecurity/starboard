@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,44 +22,49 @@ import (
 )
 
 const (
-	kubeHunterVersion       = "0.3.1"
 	kubeHunterContainerName = "kube-hunter"
 )
 
-var (
-	kubeHunterContainerImage = fmt.Sprintf("aquasec/kube-hunter:%s", kubeHunterVersion)
-)
+type Config interface {
+	GetKubeHunterImageRef() (string, error)
+}
 
 type Scanner struct {
 	scheme    *runtime.Scheme
+	config    Config
 	clientset kubernetes.Interface
-
+	ext.IDGenerator
 	opts kube.ScannerOpts
 	pods *pod.Manager
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
+	config Config,
 	clientset kubernetes.Interface,
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
-		scheme:    scheme,
-		opts:      opts,
-		clientset: clientset,
-		pods:      pod.NewPodManager(clientset),
+		scheme:      scheme,
+		config:      config,
+		clientset:   clientset,
+		IDGenerator: ext.NewGoogleUUIDGenerator(),
+		opts:        opts,
+		pods:        pod.NewPodManager(clientset),
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (report v1alpha1.KubeHunterOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
-	job := s.prepareKubeHunterJob()
+	job, err := s.prepareKubeHunterJob()
+	if err != nil {
+		return v1alpha1.KubeHunterOutput{}, err
+	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
-		err = fmt.Errorf("running kube-hunter job: %w", err)
-		return
+		return v1alpha1.KubeHunterOutput{}, fmt.Errorf("running kube-hunter job: %w", err)
 	}
 
 	defer func() {
@@ -80,42 +85,31 @@ func (s *Scanner) Scan(ctx context.Context) (report v1alpha1.KubeHunterOutput, e
 		job.Namespace, job.Name)
 	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, kubeHunterContainerName)
 	if err != nil {
-		err = fmt.Errorf("getting logs: %w", err)
-		return
+		return v1alpha1.KubeHunterOutput{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
 		_ = logsReader.Close()
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	report, err = OutputFrom(logsReader)
-	if err != nil {
-		err = fmt.Errorf("parsing kube hunter report: %w", err)
-		return
-	}
-
-	return
+	return OutputFrom(s.config, logsReader)
 }
 
-func (s *Scanner) prepareKubeHunterJob() *batchv1.Job {
+func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
+	imageRef, err := s.config.GetKubeHunterImageRef()
+	if err != nil {
+		return nil, err
+	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      uuid.New().String(),
+			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
-			Labels: map[string]string{
-				"app": "kube-hunter",
-			},
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": "kube-hunter",
-					},
-				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: starboard.ServiceAccountName,
 					RestartPolicy:      corev1.RestartPolicyNever,
@@ -123,10 +117,9 @@ func (s *Scanner) prepareKubeHunterJob() *batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:                     kubeHunterContainerName,
-							Image:                    kubeHunterContainerImage,
+							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Command:                  []string{"python", "kube-hunter.py"},
 							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
@@ -143,5 +136,5 @@ func (s *Scanner) prepareKubeHunterJob() *batchv1.Job {
 				},
 			},
 		},
-	}
+	}, nil
 }

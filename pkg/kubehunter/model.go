@@ -5,9 +5,9 @@ import (
 	"io"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func toSummary(vulnerabilities []sec.KubeHunterVulnerability) (summary sec.KubeHunterSummary) {
@@ -26,11 +26,20 @@ func toSummary(vulnerabilities []sec.KubeHunterVulnerability) (summary sec.KubeH
 	return
 }
 
-func OutputFrom(reader io.Reader) (report sec.KubeHunterOutput, err error) {
+func OutputFrom(config Config, reader io.Reader) (report sec.KubeHunterOutput, err error) {
+	imageRef, err := config.GetKubeHunterImageRef()
+	if err != nil {
+		return report, err
+	}
+	version, err := starboard.GetVersionFromImageRef(imageRef)
+	if err != nil {
+		return sec.KubeHunterOutput{}, err
+	}
+
 	report.Scanner = sec.Scanner{
 		Name:    "kube-hunter",
 		Vendor:  "Aqua Security",
-		Version: kubeHunterVersion,
+		Version: version,
 	}
 	report.UpdateTimestamp = metav1.NewTime(time.Now())
 	err = json.NewDecoder(reader).Decode(&report)

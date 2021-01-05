@@ -17,13 +17,13 @@ nav:
           - From Source (Linux, macOS): cli/installation/source.md
       - Getting Started: cli/getting-started.md
   - Starboard Operator:
-    - Overview: operator/index.md
-    - Installation:
-        - kubectl: operator/installation/kubectl.md
-        - Helm: operator/installation/helm.md
-        - Operator Lifecycle Manager: operator/installation/olm.md
-    - Getting Started: operator/getting-started.md
-    - Configuration: operator/configuration.md
+      - Overview: operator/index.md
+      - Installation:
+          - kubectl: operator/installation/kubectl.md
+          - Helm: operator/installation/helm.md
+          - Operator Lifecycle Manager: operator/installation/olm.md
+      - Getting Started: operator/getting-started.md
+      - Configuration: operator/configuration.md
   - Configuration: configuration.md
   - Integrations:
       - Vulnerability Scanners: integrations/vulnerability-scanners.md
