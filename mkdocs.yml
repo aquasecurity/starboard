@@ -14,7 +14,7 @@ nav:
           - From the Binary Releases: cli/installation/binary-releases.md
           - Krew: cli/installation/krew.md
           - Docker: cli/installation/docker.md
-          - From Source (Linux, macOS): cli/installation/source-code.md
+          - From Source (Linux, macOS): cli/installation/source.md
       - Getting Started: cli/getting-started.md
   - Starboard Operator:
     - Overview: operator/index.md

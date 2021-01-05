@@ -43,7 +43,8 @@ This project is incubating and the APIs are not considered stable.
 The official documentation, which provides detailed installation, configuration, and quick start guides, is available
 at https://aquasecurity.github.io/starboard/.
 
-Try the [getting started guide][cli-getting-started] to install Starboard command and generate your first vulnerability report.
+Try the [getting started guide][cli-getting-started] to install the Starboard command and generate your first
+vulnerability report.
 
 # Contributing
 
