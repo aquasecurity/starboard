@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"k8s.io/klog"
-
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/tools/cache"
-
 	"github.com/aquasecurity/starboard/pkg/runner"
-	batch "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -24,54 +23,91 @@ var (
 )
 
 type runnableJob struct {
-	spec      *batch.Job
+	scheme    *runtime.Scheme
 	clientset kubernetes.Interface
+
+	job     *batchv1.Job     // job to be run
+	secrets []*corev1.Secret // secrets that the job references
 }
 
-// NewRunnableJob constructs a new Runnable task which runs a Kubernetes Job with the given spec and waits for the
-// completion or failure.
-func NewRunnableJob(clientset kubernetes.Interface, spec *batch.Job) runner.Runnable {
+// NewRunnableJob constructs a new Runnable task defined as Kubernetes
+// job configuration and secrets that it references.
+func NewRunnableJob(
+	scheme *runtime.Scheme,
+	clientset kubernetes.Interface,
+	job *batchv1.Job,
+	secrets ...*corev1.Secret,
+) runner.Runnable {
 	return &runnableJob{
-		spec:      spec,
+		scheme:    scheme,
+		job:       job,
+		secrets:   secrets,
 		clientset: clientset,
 	}
 }
 
-func (j *runnableJob) Run(ctx context.Context) (err error) {
+// Run runs synchronously the task as Kubernetes job.
+// It creates Kubernetes job and secrets provided as constructor parameters.
+// This method blocks and waits for the job completion or failure.
+// For each secret it also sets the owner reference that points to the job
+// so when the job is deleted secrets are garbage collected.
+func (r *runnableJob) Run(ctx context.Context) error {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
-		j.clientset,
+		r.clientset,
 		defaultResyncDuration,
-		informers.WithNamespace(j.spec.Namespace),
+		informers.WithNamespace(r.job.Namespace),
 	)
 	jobInformer := informerFactory.Batch().V1().Jobs()
 
-	klog.V(3).Infof("Creating runnable job: %s/%s", j.spec.Namespace, j.spec.Name)
-	j.spec, err = j.clientset.BatchV1().Jobs(j.spec.Namespace).Create(ctx, j.spec, meta.CreateOptions{})
+	var err error
+
+	for i, secret := range r.secrets {
+		klog.V(3).Infof("Creating secret %q", r.job.Namespace+"/"+secret.Name)
+		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("creating secret: %w", err)
+		}
+	}
+
+	klog.V(3).Infof("Creating job %q", r.job.Namespace+"/"+r.job.Name)
+	r.job, err = r.clientset.BatchV1().Jobs(r.job.Namespace).Create(ctx, r.job, metav1.CreateOptions{})
 	if err != nil {
-		err = fmt.Errorf("creating job: %w", err)
-		return
+		return fmt.Errorf("creating job: %w", err)
+	}
+
+	for i, secret := range r.secrets {
+		klog.V(3).Infof("Setting owner reference secret %q -> job %q", r.job.Namespace+"/"+secret.Name, r.job.Namespace+"/"+r.job.Name)
+		err = controllerutil.SetOwnerReference(r.job, secret, r.scheme)
+		if err != nil {
+			return fmt.Errorf("setting owner reference: %w", err)
+		}
+		klog.V(3).Infof("Updating secret %q", r.job.Namespace+"/"+secret.Name)
+		r.secrets[i], err = r.clientset.CoreV1().Secrets(r.job.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("updating secret: %w", err)
+		}
 	}
 
 	complete := make(chan error)
 
 	jobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			newJob, ok := newObj.(*batch.Job)
+			newJob, ok := newObj.(*batchv1.Job)
 			if !ok {
 				return
 			}
-			if j.spec.UID != newJob.UID {
+			if r.job.UID != newJob.UID {
 				return
 			}
 			if len(newJob.Status.Conditions) == 0 {
 				return
 			}
 			switch condition := newJob.Status.Conditions[0]; condition.Type {
-			case batch.JobComplete:
-				klog.V(3).Infof("Stopping runnable job on task completion with status: %s", batch.JobComplete)
+			case batchv1.JobComplete:
+				klog.V(3).Infof("Stopping runnable job on task completion with status: %s", batchv1.JobComplete)
 				complete <- nil
-			case batch.JobFailed:
-				klog.V(3).Infof("Stopping runnable job on task failure with status: %s", batch.JobFailed)
+			case batchv1.JobFailed:
+				klog.V(3).Infof("Stopping runnable job on task failure with status: %s", batchv1.JobFailed)
 				complete <- fmt.Errorf("job failed: %s: %s", condition.Reason, condition.Message)
 			}
 		},
@@ -81,5 +117,5 @@ func (j *runnableJob) Run(ctx context.Context) (err error) {
 	informerFactory.WaitForCacheSync(wait.NeverStop)
 
 	err = <-complete
-	return
+	return err
 }

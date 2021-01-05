@@ -4,23 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"github.com/aquasecurity/starboard/pkg/scanners"
-
-	"k8s.io/klog"
-
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/scanners"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"k8s.io/utils/pointer"
 )
 
@@ -34,25 +31,32 @@ var (
 )
 
 type Scanner struct {
-	opts      kube.ScannerOpts
+	scheme    *runtime.Scheme
 	clientset kubernetes.Interface
-	pods      *pod.Manager
+
+	opts kube.ScannerOpts
+	pods *pod.Manager
 }
 
-func NewScanner(opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(
+	scheme *runtime.Scheme,
+	clientset kubernetes.Interface,
+	opts kube.ScannerOpts,
+) *Scanner {
 	return &Scanner{
+		scheme:    scheme,
 		opts:      opts,
 		clientset: clientset,
 		pods:      pod.NewPodManager(clientset),
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (report starboardv1alpha1.KubeHunterOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context) (report v1alpha1.KubeHunterOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
 	job := s.prepareKubeHunterJob()
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
 		err = fmt.Errorf("running kube-hunter job: %w", err)
 		return

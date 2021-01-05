@@ -1,3 +1,6 @@
+release:
+  draft: false
+  prerelease: auto
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
@@ -22,7 +25,7 @@ builds:
     goarch:
       - amd64
   - id: starboard-scanner-aqua
-    main: ./cmd/starboard-scanner-aqua/main.go
+    main: ./cmd/scanner-aqua/main.go
     binary: starboard-scanner-aqua
     goos:
       - linux
@@ -49,9 +52,10 @@ changelog:
       - '^test'
       - '^release'
 dockers:
-  - dockerfile: starboard.Dockerfile
+  - dockerfile: build/starboard/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}"
     binaries:
       - starboard
     build_flag_templates:
@@ -63,9 +67,10 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
-  - dockerfile: starboard-operator.Dockerfile
+  - dockerfile: build/starboard-operator/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}"
     binaries:
       - starboard-operator
     build_flag_templates:
@@ -77,9 +82,10 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
-  - dockerfile: starboard-scanner-aqua.Dockerfile
+  - dockerfile: build/scanner-aqua/Dockerfile
     image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
+      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}"
     binaries:
       - starboard-scanner-aqua
     build_flag_templates:

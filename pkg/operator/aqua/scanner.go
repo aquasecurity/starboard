@@ -5,49 +5,55 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
-
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"k8s.io/apimachinery/pkg/api/resource"
-
-	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 )
 
-const (
-	secretName = "starboard-operator"
-)
-
-type aquaScanner struct {
-	idGenerator ext.IDGenerator
-	buildInfo   starboard.BuildInfo
-	config      etc.ScannerAquaCSP
+// Config defines configuration settings for the Aqua vulnerabilityreport.Plugin.
+type Config interface {
+	GetAquaImageRef() (string, error)
 }
 
-// NewScanner constructs a new VulnerabilityScanner, which is using the Aqua scanner
-// to scan pod containers.
-func NewScanner(idGenerator ext.IDGenerator, buildInfo starboard.BuildInfo, config etc.ScannerAquaCSP) vulnerabilityreport.Scanner {
-	return &aquaScanner{
+type scanner struct {
+	idGenerator ext.IDGenerator
+	buildInfo   starboard.BuildInfo
+	config      Config
+}
+
+// NewScanner constructs a new vulnerability scanner Plugin, which is using
+// the Aqua to scan container images of Kubernetes workloads.
+func NewScannerPlugin(
+	idGenerator ext.IDGenerator,
+	buildInfo starboard.BuildInfo,
+	config Config,
+) vulnerabilityreport.Plugin {
+	return &scanner{
 		idGenerator: idGenerator,
 		buildInfo:   buildInfo,
 		config:      config,
 	}
 }
 
-func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
+func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
+
+	aquaImageRef, err := s.config.GetAquaImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
 
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
 	for i, container := range spec.Containers {
 		var err error
 		scanJobContainers[i], err = s.newScanJobContainer(container)
 		if err != nil {
-			return corev1.PodSpec{}, err
+			return corev1.PodSpec{}, nil, err
 		}
 	}
 
@@ -74,7 +80,7 @@ func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 		InitContainers: []corev1.Container{
 			{
 				Name:  initContainerName,
-				Image: s.config.ImageRef,
+				Image: aquaImageRef,
 				Command: []string{
 					"cp",
 					"/opt/aquasec/scannercli",
@@ -89,19 +95,24 @@ func (s *aquaScanner) GetPodSpec(spec corev1.PodSpec) (corev1.PodSpec, error) {
 			},
 		},
 		Containers: scanJobContainers,
-	}, nil
+	}, nil, nil
 }
 
-func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
-	version, err := starboard.GetVersionFromImageRef(s.config.ImageRef)
+func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
+	aquaImageRef, err := s.config.GetAquaImageRef()
+	if err != nil {
+		return corev1.Container{}, err
+	}
+	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
 	if err != nil {
 		return corev1.Container{}, err
 	}
 
 	return corev1.Container{
-		Name:            podContainer.Name,
-		Image:           fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
-		ImagePullPolicy: corev1.PullIfNotPresent,
+		Name:                     podContainer.Name,
+		Image:                    fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Command: []string{
 			"/bin/sh",
 			"-c",
@@ -117,11 +128,11 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1
 			{
 				Name: "AQUA_CSP_HOST",
 				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_HOST",
+						Key: "aqua.serverURL",
 					},
 				},
 			},
@@ -130,9 +141,9 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_USERNAME",
+						Key: "aqua.username",
 					},
 				},
 			},
@@ -141,9 +152,9 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
+							Name: starboard.SecretName,
 						},
-						Key: "OPERATOR_SCANNER_AQUA_CSP_PASSWORD",
+						Key: "aqua.password",
 					},
 				},
 			},
@@ -172,8 +183,8 @@ func (s *aquaScanner) newScanJobContainer(podContainer corev1.Container) (corev1
 	}, nil
 }
 
-func (s *aquaScanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (aquasecurityv1alpha1.VulnerabilityScanResult, error) {
-	var report aquasecurityv1alpha1.VulnerabilityScanResult
+func (s *scanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+	var report v1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
 }

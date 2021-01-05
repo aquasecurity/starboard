@@ -2,11 +2,12 @@ name: Build
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'mkdocs.yml'
       - 'LICENSE'
       - 'NOTICE'
   pull_request:
@@ -14,6 +15,7 @@ on:
       - '.github/ISSUE_TEMPLATE/*.md'
       - '*.md'
       - 'docs/**'
+      - 'mkdocs.yml'
       - 'LICENSE'
       - 'NOTICE'
 jobs:
@@ -27,6 +29,8 @@ jobs:
           go-version: 1.15
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
       - name: Vendor Go modules
         run: go mod vendor
       - name: Verify generated code
@@ -53,7 +57,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Setup Kubernetes cluster (KIND)
-        uses: engineerd/setup-kind@v0.4.0
+        uses: engineerd/setup-kind@v0.5.0
         with:
           version: v0.9.0
           image: kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb
@@ -82,7 +86,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Setup Kubernetes cluster (KIND)
-        uses: engineerd/setup-kind@v0.4.0
+        uses: engineerd/setup-kind@v0.5.0
         with:
           version: v0.9.0
           image: kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb

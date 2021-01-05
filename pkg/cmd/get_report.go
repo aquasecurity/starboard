@@ -2,30 +2,26 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"io"
 
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris/crd"
 	"github.com/aquasecurity/starboard/pkg/report"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewGetReportCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
-	cmd := &cobra.Command{
+func NewGetReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+	return &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
 		Short: "Get a full html security report for a specified workload",
 		Long: `Generates a report that contains vulnerabilities and config audits found for the specified workload
 
 TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
-NAME is the name of a particular Kubernetes workload.			
+NAME is the name of a particular Kubernetes workload.
 `,
 		Example: fmt.Sprintf(`  # Save report to a file
-  %[1]s get report deploy/nginx > report.html`, "starboard"),
+  %[1]s get report deploy/nginx > report.html`, info.Executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config, err := cf.ToRESTConfig()
 			if err != nil {
@@ -48,14 +44,8 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			scheme := starboard.NewScheme()
-			caReader := configAuditCrd.NewReadWriter(scheme, starboardClientset)
-			vulnsReader := vulnerabilityreport.NewReadWriter(scheme, starboardClientset)
-
-			return report.NewHTMLReporter(caReader, vulnsReader).
-				GenerateReport(workload, os.Stdout)
+			return report.NewHTMLReporter(starboardClientset).
+				GenerateReport(workload, outWriter)
 		},
 	}
-
-	return cmd
 }

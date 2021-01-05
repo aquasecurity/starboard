@@ -2,19 +2,18 @@
 {% import "github.com/aquasecurity/starboard/pkg/kube" %}
 {% import "github.com/aquasecurity/starboard/pkg/vulnerabilityreport" %}
 
-
 {% code
 type ReportPage struct {
-	VulnsReports vulnerabilityreport.WorkloadVulnerabilities
+	VulnsReports      vulnerabilityreport.WorkloadVulnerabilities
 	ConfigAuditReport *v1alpha1.ConfigAuditReport
-  Workload kube.Object
+	Workload          kube.Object
 }
 
 type ConfigAuditSummary struct {
-	PodPass int
-	PodFail int
-  ContainerPass int
-  ContainerFail int
+	PodPass       int
+	PodFail       int
+	ContainerPass int
+	ContainerFail int
 }
 %}
 
@@ -103,7 +102,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                             </ul>
                         </li>
                         {% endif %}
-                        {% if len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
+                        {% if p.ConfigAuditReport != nil && len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
                         <li>
                             <a href="#ca_header">Configuration Audit</a>
                             <ul>
@@ -141,8 +140,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                                     scanner_name = report.Scanner.Name
                                     scanner_vendor = report.Scanner.Vendor
                                     scanner_version = report.Scanner.Version
-                                    // TODO: get the timestamp when it is intergrated
-                                    creation_timestamp = ""
+                                    creation_timestamp = report.UpdateTimestamp.String()
                                     break
                                   }
                                 %}
@@ -254,7 +252,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                 
 
                 <!-- Config Audits -->
-                {% if len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
+                {% if p.ConfigAuditReport != nil && len(p.ConfigAuditReport.Report.PodChecks) > 0 %}
                   <div class="row pt-3 text-center border-bottom my-4">
                       <h3 class="mx-auto" id="ca_header" style="color: rgb(0, 160, 170);">Configuration Audit</h3>
                   </div>
@@ -316,7 +314,7 @@ func (p *ReportPage) GetConfigAuditSummary() ConfigAuditSummary {
                              </div>
                              <div class="row">
                                 <div class="col">
-                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReport.CreationTimestamp.String() %}</p>
+                                    <p class="my-0">Generated at:  {%s p.ConfigAuditReport.Report.UpdateTimestamp.String() %}</p>
                                 </div>
                              </div>
                         </div>

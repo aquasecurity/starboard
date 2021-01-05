@@ -10,13 +10,10 @@ import (
 )
 
 // KubeHunterReportLister helps list KubeHunterReports.
-// All objects returned here must be treated as read-only.
 type KubeHunterReportLister interface {
 	// List lists all KubeHunterReports in the indexer.
-	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.KubeHunterReport, err error)
 	// Get retrieves the KubeHunterReport from the index for a given name.
-	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.KubeHunterReport, error)
 	KubeHunterReportListerExpansion
 }

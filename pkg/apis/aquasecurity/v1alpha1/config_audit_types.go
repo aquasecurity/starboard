@@ -3,7 +3,7 @@ package v1alpha1
 import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -16,7 +16,7 @@ const (
 
 var (
 	ConfigAuditReportCRD = extv1beta1.CustomResourceDefinition{
-		ObjectMeta: meta.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: ConfigAuditReportCRName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
@@ -83,26 +83,24 @@ type ConfigAuditSummary struct {
 
 // ConfigAuditReport is a specification for the ConfigAuditReport resource.
 type ConfigAuditReport struct {
-	meta.TypeMeta   `json:",inline"`
-	meta.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report ConfigAudit `json:"report"`
+	Report ConfigAuditResult `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ConfigAuditReportList is a list of AuditConfig resources.
 type ConfigAuditReportList struct {
-	meta.TypeMeta `json:",inline"`
-	meta.ListMeta `json:"metadata"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []ConfigAuditReport `json:"items"`
 }
 
-// TODO We can make this type even more generic and applicable not only to Pods or Controllers
-// TODO by defining scope type (e.g. Pod, Container, Node) and the name of the scope (e.g. my-pod, my-container,
-// TODO my-node)
-type ConfigAudit struct {
+type ConfigAuditResult struct {
+	UpdateTimestamp metav1.Time        `json:"updateTimestamp"`
 	Scanner         Scanner            `json:"scanner"`
 	Summary         ConfigAuditSummary `json:"summary"`
 	PodChecks       []Check            `json:"podChecks"`

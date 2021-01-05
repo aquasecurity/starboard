@@ -18,13 +18,20 @@ rules:
       - ""
     resources:
       - configmaps
+      - secrets
+      - serviceaccounts
     verbs:
+      - list
+      - watch
       - get
       - create
+      - update
   - apiGroups:
       - apps
     resources:
       - replicasets
+      - statefulsets
+      - daemonsets
     verbs:
       - get
       - list

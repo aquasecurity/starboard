@@ -4,14 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -54,12 +52,13 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 	testCases := []struct {
 		name             string
 		configData       starboard.ConfigData
+		expectedError    string
 		expectedImageRef string
 	}{
 		{
-			name:             "Should return default image reference",
-			configData:       starboard.ConfigData{},
-			expectedImageRef: "docker.io/aquasec/trivy:0.9.1",
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property trivy.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
@@ -72,8 +71,13 @@ func TestConfigData_GetTrivyImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetTrivyImageRef()
-			assert.Equal(t, tc.expectedImageRef, imageRef)
+			imageRef, err := tc.configData.GetTrivyImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
 		})
 	}
 }
@@ -82,12 +86,13 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	testCases := []struct {
 		name             string
 		configData       starboard.ConfigData
+		expectedError    string
 		expectedImageRef string
 	}{
 		{
-			name:             "Should return default image reference",
-			configData:       starboard.ConfigData{},
-			expectedImageRef: "docker.io/aquasec/kube-bench:0.4.0",
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property kube-bench.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
@@ -100,32 +105,146 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageRef := tc.configData.GetKubeBenchImageRef()
-			assert.Equal(t, tc.expectedImageRef, imageRef)
+			imageRef, err := tc.configData.GetKubeBenchImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
+	testCases := []struct {
+		name            string
+		configData      starboard.ConfigData
+		expectedError   string
+		expectedScanner starboard.Scanner
+	}{
+		{
+			name: "Should return Trivy",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Trivy",
+			},
+			expectedScanner: starboard.Trivy,
+		},
+		{
+			name: "Should return Aqua",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Aqua",
+			},
+			expectedScanner: starboard.Aqua,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property vulnerabilityReports.scanner not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Clair",
+			},
+			expectedError: "invalid value (Clair) of vulnerabilityReports.scanner; allowed values (Trivy, Aqua)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanner, err := tc.configData.GetVulnerabilityReportsScanner()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedScanner, scanner)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetTrivyMode(t *testing.T) {
+	testCases := []struct {
+		name          string
+		configData    starboard.ConfigData
+		expectedError string
+		expectedMode  starboard.TrivyMode
+	}{
+		{
+			name: "Should return Standalone",
+			configData: starboard.ConfigData{
+				"trivy.mode": "Standalone",
+			},
+			expectedMode: starboard.Standalone,
+		},
+		{
+			name: "Should return ClientServer",
+			configData: starboard.ConfigData{
+				"trivy.mode": "ClientServer",
+			},
+			expectedMode: starboard.ClientServer,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property trivy.mode not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"trivy.mode": "P2P",
+			},
+			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mode, err := tc.configData.GetTrivyMode()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedMode, mode)
+			}
 		})
 	}
 }
 
 func TestConfigManager_Read(t *testing.T) {
-	clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: starboard.NamespaceName,
-			Name:      starboard.ConfigMapName,
+	clientset := fake.NewSimpleClientset(
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: starboard.NamespaceName,
+				Name:      starboard.ConfigMapName,
+			},
+			Data: map[string]string{
+				"foo": "bar",
+			},
 		},
-		Data: map[string]string{
-			"foo": "bar",
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: starboard.NamespaceName,
+				Name:      starboard.SecretName,
+			},
+			Data: map[string][]byte{
+				"baz": []byte("s3cret"),
+			},
 		},
-	})
-	configData, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Read(context.TODO())
+	)
+
+	data, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).
+		Read(context.TODO())
+
 	require.NoError(t, err)
 	assert.Equal(t, starboard.ConfigData{
 		"foo": "bar",
-	}, configData)
+		"baz": "s3cret",
+	}, data)
 }
 
 func TestConfigManager_EnsureDefault(t *testing.T) {
 
-	t.Run("Should create the ConfigMap with the default configuration settings", func(t *testing.T) {
+	t.Run("Should create ConfigMap with default values, and empty secret", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
 
 		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).EnsureDefault(context.TODO())
@@ -136,18 +255,35 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, starboard.GetDefaultConfig(), starboard.ConfigData(cm.Data))
+
+		secret, err := clientset.CoreV1().
+			Secrets(starboard.NamespaceName).
+			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string][]byte(nil), secret.Data)
 	})
 
-	t.Run("Should not modify the ConfigMap if it already exists", func(t *testing.T) {
-		clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: starboard.NamespaceName,
-				Name:      starboard.ConfigMapName,
+	t.Run("Should not modify ConfigMap nor secret if they already exist", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: starboard.NamespaceName,
+					Name:      starboard.ConfigMapName,
+				},
+				Data: map[string]string{
+					"foo": "bar",
+				},
 			},
-			Data: map[string]string{
-				"foo": "bar",
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: starboard.NamespaceName,
+					Name:      starboard.SecretName,
+				},
+				Data: map[string][]byte{
+					"baz": []byte("s3cret"),
+				},
 			},
-		})
+		)
 
 		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).EnsureDefault(context.TODO())
 		require.NoError(t, err)
@@ -156,37 +292,60 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			ConfigMaps(starboard.NamespaceName).
 			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
 		require.NoError(t, err)
-
 		assert.Equal(t, map[string]string{
 			"foo": "bar",
 		}, cm.Data)
+
+		secret, err := clientset.CoreV1().
+			Secrets(starboard.NamespaceName).
+			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string][]byte{
+			"baz": []byte("s3cret"),
+		}, secret.Data)
 	})
 
 }
 
 func TestConfigManager_Delete(t *testing.T) {
 
-	t.Run("Should not return error when ConfigMap does not exist", func(t *testing.T) {
+	t.Run("Should not return error when ConfigMap and secret do not exist", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
 		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
 		require.NoError(t, err)
 	})
 
-	t.Run("Should delete the ConfigMap", func(t *testing.T) {
-		clientset := fake.NewSimpleClientset(&corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: starboard.NamespaceName,
-				Name:      starboard.ConfigMapName,
+	t.Run("Should delete ConfigMap and secret", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: starboard.NamespaceName,
+					Name:      starboard.ConfigMapName,
+				},
+				Data: map[string]string{
+					"foo": "bar",
+				},
 			},
-			Data: map[string]string{
-				"foo": "bar",
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: starboard.NamespaceName,
+					Name:      starboard.SecretName,
+				},
+				Data: map[string][]byte{
+					"baz": []byte("s3cret"),
+				},
 			},
-		})
+		)
 
 		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
 		require.NoError(t, err)
 
-		_, err = clientset.CoreV1().ConfigMaps(starboard.NamespaceName).Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		_, err = clientset.CoreV1().ConfigMaps(starboard.NamespaceName).
+			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		assert.True(t, errors.IsNotFound(err))
+
+		_, err = clientset.CoreV1().Secrets(starboard.NamespaceName).
+			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
 		assert.True(t, errors.IsNotFound(err))
 	})
 }

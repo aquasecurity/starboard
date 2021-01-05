@@ -1,5 +1,5 @@
-You have installed starboard-operator in the namespace "{{ .Release.Namespace }}"
-and it is configured to operate in the namespaces: '{{ tpl .Values.targetNamespaces . | default "(all namespaces)" }}'.
+You have installed Starboard Operator in the "{{ .Release.Namespace }}" namespace.
+It is configured to discover Kubernetes workloads in the namespaces: '{{ tpl .Values.targetNamespaces . | default "(all namespaces)" }}'.
 
 Inspect created VulnerabilityReports by:
 
@@ -7,4 +7,4 @@ Inspect created VulnerabilityReports by:
 
 Inspect the work log of starboard-operator by:
 
-    kubectl logs -n {{ .Release.Namespace }} deploy/{{ include "starboard-operator.fullname" . }}
+    kubectl logs -n {{ .Release.Namespace }} deployment/{{ include "starboard-operator.fullname" . }}

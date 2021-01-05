@@ -4,27 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/aquasecurity/starboard/pkg/scanners"
-
-	"k8s.io/klog"
-
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/scanners"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
-	batch "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -33,10 +28,11 @@ const (
 )
 
 type Config interface {
-	GetKubeBenchImageRef() string
+	GetKubeBenchImageRef() (string, error)
 }
 
 type Scanner struct {
+	scheme    *runtime.Scheme
 	config    Config
 	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
@@ -44,8 +40,14 @@ type Scanner struct {
 	converter Converter
 }
 
-func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Interface) *Scanner {
+func NewScanner(
+	scheme *runtime.Scheme,
+	clientset kubernetes.Interface,
+	config Config,
+	opts kube.ScannerOpts,
+) *Scanner {
 	return &Scanner{
+		scheme:    scheme,
 		config:    config,
 		opts:      opts,
 		clientset: clientset,
@@ -54,12 +56,15 @@ func NewScanner(config Config, opts kube.ScannerOpts, clientset kubernetes.Inter
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboardv1alpha1.CISKubeBenchOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.CISKubeBenchOutput, err error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job := s.prepareKubeBenchJob(node)
+	job, err := s.prepareKubeBenchJob(node)
+	if err != nil {
+		return report, nil
+	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
 		err = fmt.Errorf("running kube-bench job: %w", err)
 		return
@@ -72,8 +77,8 @@ func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboardv1a
 		}
 		// 6. Delete the kube-bench Job
 		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
-		background := meta.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, meta.DeleteOptions{
+		background := metav1.DeletePropagationBackground
+		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
@@ -107,13 +112,17 @@ func (s *Scanner) Scan(ctx context.Context, node core.Node) (report starboardv1a
 	return
 }
 
-func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
+func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
+	imageRef, err := s.config.GetKubeBenchImageRef()
+	if err != nil {
+		return nil, err
+	}
 	target := "node"
 	if _, ok := node.Labels[masterNodeLabel]; ok {
 		target = "master"
 	}
-	return &batch.Job{
-		ObjectMeta: meta.ObjectMeta{
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: starboard.NamespaceName,
 			Labels: labels.Set{
@@ -122,85 +131,85 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 				kube.LabelResourceName:   node.Name,
 			},
 		},
-		Spec: batch.JobSpec{
+		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
-			Template: core.PodTemplateSpec{
-				ObjectMeta: meta.ObjectMeta{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
 						"app.kubernetes.io/name": "starboard-cli",
 						kube.LabelResourceKind:   string(kube.KindNode),
 						kube.LabelResourceName:   node.Name,
 					},
 				},
-				Spec: core.PodSpec{
+				Spec: corev1.PodSpec{
 					ServiceAccountName:           starboard.ServiceAccountName,
 					AutomountServiceAccountToken: pointer.BoolPtr(true),
-					RestartPolicy:                core.RestartPolicyNever,
+					RestartPolicy:                corev1.RestartPolicyNever,
 					HostPID:                      true,
 					NodeName:                     node.Name,
-					Volumes: []core.Volume{
+					Volumes: []corev1.Volume{
 						{
 							Name: "var-lib-etcd",
-							VolumeSource: core.VolumeSource{
-								HostPath: &core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/var/lib/etcd",
 								},
 							},
 						},
 						{
 							Name: "var-lib-kubelet",
-							VolumeSource: core.VolumeSource{
-								HostPath: &core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/var/lib/kubelet",
 								},
 							},
 						},
 						{
 							Name: "etc-systemd",
-							VolumeSource: core.VolumeSource{
-								HostPath: &core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/etc/systemd",
 								},
 							},
 						},
 						{
 							Name: "etc-kubernetes",
-							VolumeSource: core.VolumeSource{
-								HostPath: &core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/etc/kubernetes",
 								},
 							},
 						},
 						{
 							Name: "usr-bin",
-							VolumeSource: core.VolumeSource{
-								HostPath: &core.HostPathVolumeSource{
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/usr/bin",
 								},
 							},
 						},
 					},
-					Containers: []core.Container{
+					Containers: []corev1.Container{
 						{
 							Name:                     kubeBenchContainerName,
-							Image:                    s.config.GetKubeBenchImageRef(),
-							ImagePullPolicy:          core.PullIfNotPresent,
-							TerminationMessagePolicy: core.TerminationMessageFallbackToLogsOnError,
+							Image:                    imageRef,
+							ImagePullPolicy:          corev1.PullIfNotPresent,
+							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"kube-bench", target},
 							Args:                     []string{"--json"},
-							Resources: core.ResourceRequirements{
-								Limits: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("300m"),
-									core.ResourceMemory: resource.MustParse("300M"),
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("300m"),
+									corev1.ResourceMemory: resource.MustParse("300M"),
 								},
-								Requests: core.ResourceList{
-									core.ResourceCPU:    resource.MustParse("50m"),
-									core.ResourceMemory: resource.MustParse("50M"),
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("50m"),
+									corev1.ResourceMemory: resource.MustParse("50M"),
 								},
 							},
-							VolumeMounts: []core.VolumeMount{
+							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "var-lib-etcd",
 									MountPath: "/var/lib/etcd",
@@ -232,5 +241,5 @@ func (s *Scanner) prepareKubeBenchJob(node core.Node) *batch.Job {
 				},
 			},
 		},
-	}
+	}, nil
 }

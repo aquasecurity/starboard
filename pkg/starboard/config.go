@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/google/go-containerregistry/pkg/name"
 )
 
 const (
@@ -210,17 +208,41 @@ func NewScheme() *runtime.Scheme {
 	_ = corev1.AddToScheme(scheme)
 	_ = batchv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
-	_ = starboardv1alpha1.AddToScheme(scheme)
+	_ = v1alpha1.AddToScheme(scheme)
 	return scheme
 }
 
 // BuildInfo holds build info such as Git revision, Git SHA-1,
-// and build datetime.
+// build datetime, and the name of the executable binary.
 type BuildInfo struct {
-	Version string
-	Commit  string
-	Date    string
+	Version    string
+	Commit     string
+	Date       string
+	Executable string
 }
+
+// Scanner represents unique, human readable identifier of a security scanner.
+type Scanner string
+
+const (
+	Trivy Scanner = "Trivy"
+	Aqua  Scanner = "Aqua"
+)
+
+// TrivyMode describes mode in which Trivy client operates.
+type TrivyMode string
+
+const (
+	Standalone   TrivyMode = "Standalone"
+	ClientServer TrivyMode = "ClientServer"
+)
+
+const (
+	keyVulnerabilityReportsScanner = "vulnerabilityReports.scanner"
+
+	keyTrivyMode      = "trivy.mode"
+	keyTrivyServerURL = "trivy.serverURL"
+)
 
 // ConfigData holds Starboard configuration settings as a set
 // of key-value pairs.
@@ -233,29 +255,82 @@ type ConfigManager interface {
 	Delete(ctx context.Context) error
 }
 
-// GetDefaultConfig returns the default configuration data.
+// GetDefaultConfig returns the default configuration settings.
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
-		"trivy.severity":      "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef":      "docker.io/aquasec/trivy:0.9.1",
+		keyVulnerabilityReportsScanner: string(Trivy),
+
+		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+		"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
+		keyTrivyMode:     string(Standalone),
+
+		"aqua.imageRef": "docker.io/aquasec/scanner:5.3",
+
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:0.4.0",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
-func (c ConfigData) GetTrivyImageRef() string {
-	if imageRef, ok := c["trivy.imageRef"]; ok {
-		return imageRef
+func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
+	var ok bool
+	var value string
+	if value, ok = c[keyVulnerabilityReportsScanner]; !ok {
+		return "", fmt.Errorf("property %s not set", keyVulnerabilityReportsScanner)
 	}
-	return "docker.io/aquasec/trivy:0.9.1"
+
+	switch Scanner(value) {
+	case Trivy:
+		return Trivy, nil
+	case Aqua:
+		return Aqua, nil
+	}
+
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyVulnerabilityReportsScanner, Trivy, Aqua)
+}
+
+func (c ConfigData) GetTrivyImageRef() (string, error) {
+	return c.getRequiredProperty("trivy.imageRef")
+}
+
+func (c ConfigData) GetTrivyMode() (TrivyMode, error) {
+	var ok bool
+	var value string
+	if value, ok = c[keyTrivyMode]; !ok {
+		return "", fmt.Errorf("property %s not set", keyTrivyMode)
+	}
+
+	switch TrivyMode(value) {
+	case Standalone:
+		return Standalone, nil
+	case ClientServer:
+		return ClientServer, nil
+	}
+
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyTrivyMode, Standalone, ClientServer)
+}
+
+func (c ConfigData) GetTrivyServerURL() (string, error) {
+	return c.getRequiredProperty(keyTrivyServerURL)
+}
+
+func (c ConfigData) GetAquaImageRef() (string, error) {
+	return c.getRequiredProperty("aqua.imageRef")
 }
 
 // GetKubeBenchImageRef returns Docker image of kube-bench scanner.
-func (c ConfigData) GetKubeBenchImageRef() string {
-	if imageRef, ok := c["kube-bench.imageRef"]; ok {
-		return imageRef
+func (c ConfigData) GetKubeBenchImageRef() (string, error) {
+	return c.getRequiredProperty("kube-bench.imageRef")
+}
+
+func (c ConfigData) getRequiredProperty(key string) (string, error) {
+	var ok bool
+	var value string
+	if value, ok = c[key]; !ok {
+		return "", fmt.Errorf("property %s not set", key)
 	}
-	return "docker.io/aquasec/kube-bench:0.4.0"
+	return value, nil
 }
 
 // GetVersionFromImageRef returns the image identifier for the specified image reference.
@@ -302,7 +377,21 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		Data: GetDefaultConfig(),
 	}
 	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, cm, metav1.CreateOptions{})
-	if !apierrors.IsAlreadyExists(err) {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.namespace,
+			Name:      SecretName,
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+	}
+	_, err = c.client.CoreV1().Secrets(c.namespace).Create(ctx, secret, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 	return nil
@@ -313,13 +402,32 @@ func (c *configManager) Read(ctx context.Context) (ConfigData, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cm.Data, nil
+	secret, err := c.client.CoreV1().Secrets(c.namespace).Get(ctx, SecretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var data = make(map[string]string)
+
+	for k, v := range cm.Data {
+		data[k] = v
+	}
+
+	for k, v := range secret.Data {
+		data[k] = string(v)
+	}
+
+	return data, nil
 }
 
 func (c *configManager) Delete(ctx context.Context) error {
 	err := c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, ConfigMapName, metav1.DeleteOptions{})
-	if apierrors.IsNotFound(err) {
-		return nil
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
 	}
-	return err
+	err = c.client.CoreV1().Secrets(c.namespace).Delete(ctx, SecretName, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
 }

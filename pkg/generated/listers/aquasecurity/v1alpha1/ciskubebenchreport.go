@@ -10,13 +10,10 @@ import (
 )
 
 // CISKubeBenchReportLister helps list CISKubeBenchReports.
-// All objects returned here must be treated as read-only.
 type CISKubeBenchReportLister interface {
 	// List lists all CISKubeBenchReports in the indexer.
-	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.CISKubeBenchReport, err error)
 	// Get retrieves the CISKubeBenchReport from the index for a given name.
-	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.CISKubeBenchReport, error)
 	CISKubeBenchReportListerExpansion
 }

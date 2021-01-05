@@ -5,21 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"k8s.io/utils/pointer"
-
-	"k8s.io/apimachinery/pkg/labels"
-
 	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -120,32 +117,26 @@ var (
 	}
 )
 
-// TODO This is no longer CRManager as we're creating other resources, such as ClusterRoles and ConfigMaps
-// CRManager defined methods for managing Kubernetes custom resources.
-type CRManager interface {
-	Init(ctx context.Context) error
-	Cleanup(ctx context.Context) error
-}
-
-type crManager struct {
-	configManager starboard.ConfigManager
+type CRManager struct {
 	clientset     kubernetes.Interface
 	clientsetext  extapi.ApiextensionsV1beta1Interface
+	configManager starboard.ConfigManager
 }
 
 // NewCRManager constructs a CRManager with the given starboard.ConfigManager and kubernetes.Interface.
 func NewCRManager(
-	configManager starboard.ConfigManager,
 	clientset kubernetes.Interface,
-	clientsetext extapi.ApiextensionsV1beta1Interface) CRManager {
-	return &crManager{
+	clientsetext extapi.ApiextensionsV1beta1Interface,
+	configManager starboard.ConfigManager,
+) *CRManager {
+	return &CRManager{
 		configManager: configManager,
 		clientset:     clientset,
 		clientsetext:  clientsetext,
 	}
 }
 
-func (m *crManager) Init(ctx context.Context) (err error) {
+func (m *CRManager) Init(ctx context.Context) (err error) {
 	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.VulnerabilityReportsCRD)
 	if err != nil {
 		return
@@ -181,7 +172,7 @@ func (m *crManager) Init(ctx context.Context) (err error) {
 	return
 }
 
-func (m *crManager) initRBAC(ctx context.Context) (err error) {
+func (m *CRManager) initRBAC(ctx context.Context) (err error) {
 	err = m.createServiceAccountIfNotFound(ctx, serviceAccount)
 	if err != nil {
 		return
@@ -197,7 +188,7 @@ func (m *crManager) initRBAC(ctx context.Context) (err error) {
 	return
 }
 
-func (m *crManager) cleanupRBAC(ctx context.Context) (err error) {
+func (m *CRManager) cleanupRBAC(ctx context.Context) (err error) {
 	klog.V(3).Infof("Deleting ClusterRoleBinding %q", clusterRoleBindingStarboard)
 	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingStarboard, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -221,7 +212,7 @@ var (
 	cleanupTimeout         = 30 * time.Second
 )
 
-func (m *crManager) cleanupNamespace(ctx context.Context) error {
+func (m *CRManager) cleanupNamespace(ctx context.Context) error {
 	klog.V(3).Infof("Deleting Namespace %q", starboard.NamespaceName)
 	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, meta.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -243,7 +234,7 @@ func (m *crManager) cleanupNamespace(ctx context.Context) error {
 	}
 }
 
-func (m *crManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Namespace) (err error) {
+func (m *CRManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Namespace) (err error) {
 	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, ns.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
@@ -257,7 +248,7 @@ func (m *crManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Name
 	return
 }
 
-func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
+func (m *CRManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
 	name := sa.Name
 	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
 	switch {
@@ -272,7 +263,7 @@ func (m *crManager) createServiceAccountIfNotFound(ctx context.Context, sa *core
 	return
 }
 
-func (m *crManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.ClusterRole) (err error) {
+func (m *CRManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.ClusterRole) (err error) {
 	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), meta.GetOptions{})
 	switch {
 	case err == nil:
@@ -289,7 +280,7 @@ func (m *crManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.Clus
 	return
 }
 
-func (m *crManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbac.ClusterRoleBinding) (err error) {
+func (m *CRManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbac.ClusterRoleBinding) (err error) {
 	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, meta.GetOptions{})
 	switch {
 	case err == nil:
@@ -307,7 +298,7 @@ func (m *crManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *r
 	return
 }
 
-func (m *crManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResourceDefinition) (err error) {
+func (m *CRManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResourceDefinition) (err error) {
 	existingCRD, err := m.clientsetext.CustomResourceDefinitions().Get(ctx, crd.Name, meta.GetOptions{})
 
 	switch {
@@ -325,7 +316,7 @@ func (m *crManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 	return
 }
 
-func (m *crManager) deleteCRD(ctx context.Context, name string) (err error) {
+func (m *CRManager) deleteCRD(ctx context.Context, name string) (err error) {
 	klog.V(3).Infof("Deleting CRD %q", name)
 	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, meta.DeleteOptions{})
 	if err != nil && errors.IsNotFound(err) {
@@ -334,7 +325,7 @@ func (m *crManager) deleteCRD(ctx context.Context, name string) (err error) {
 	return
 }
 
-func (m *crManager) Cleanup(ctx context.Context) (err error) {
+func (m *CRManager) Cleanup(ctx context.Context) (err error) {
 	err = m.deleteCRD(ctx, aquasecurityv1alpha1.VulnerabilityReportsCRName)
 	if err != nil {
 		return

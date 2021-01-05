@@ -2,28 +2,26 @@ package report
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	configAuditCrd "github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 )
 
 type htmlReporter struct {
 	vulnerabilityReportsReader vulnerabilityreport.ReadWriter
-	configAuditReportsReader   configAuditCrd.ReadWriter
+	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewHTMLReporter(configAuditReportsReader configAuditCrd.ReadWriter, vulnerabilityReportsReader vulnerabilityreport.ReadWriter) Reporter {
+func NewHTMLReporter(starboardClientset clientset.Interface) Reporter {
 	return &htmlReporter{
-		vulnerabilityReportsReader: vulnerabilityReportsReader,
-		configAuditReportsReader:   configAuditReportsReader,
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset),
+		configAuditReportsReader:   configauditreport.NewReadWriter(starboardClientset),
 	}
 }
 
@@ -47,18 +45,15 @@ func (h *htmlReporter) GenerateReport(workload kube.Object, writer io.Writer) er
 		vulnsReports[containerName] = vulnerabilityReport.Report
 	}
 
-	// if no reports whatsoever
 	if configAuditReport == nil && len(vulnsReports) == 0 {
-		return errors.New(fmt.Sprintf("No configaudits or vulnerabilities found for workload %s/%s/%s",
-			workload.Namespace, workload.Kind, workload.Name))
+		return fmt.Errorf("no configaudits or vulnerabilities found for workload %s/%s/%s",
+			workload.Namespace, workload.Kind, workload.Name)
 	}
 
-	p := &templates.ReportPage{
+	templates.WritePageTemplate(writer, &templates.ReportPage{
 		VulnsReports:      vulnsReports,
 		ConfigAuditReport: configAuditReport,
 		Workload:          workload,
-	}
-
-	templates.WritePageTemplate(writer, p)
+	})
 	return nil
 }
