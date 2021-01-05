@@ -15,8 +15,8 @@
 
 Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that
 relate to different resources in a Kubernetes-native way. Starboard provides [custom resources definitions][crds]
-and a [Go module][go-module] to work with a range of existing security tools, as well as a [kubectl]-compatible
-executable command, the [Octant plugin][octant-plugin], and the [Lens extension][lens-extension] that make security
+and a [Go module][go-module] to work with a range of existing security scanners, as well as a [kubectl]-compatible
+command, the [Octant plugin][octant-plugin], and the [Lens extension][lens-extension] that make security
 reports available through familiar Kubernetes tools.
 
 Starboard can be run in two different modes:
@@ -31,10 +31,19 @@ Starboard can be run in two different modes:
 > scanners against the underlying deployment descriptors.
 
 You can read more about the motivations and use cases in this [blog][aqua-starboard-blog] and join our [discussions][discussions].
-The official [documentation](https://aquasecurity.github.io/starboard/) provides detailed installation, configuration, and
-quick start guides.
 
 ![](docs/images/starboard-cli-with-octant-demo.gif)
+
+# Status
+
+This project is incubating and the APIs are not considered stable.
+
+# Documentation
+
+The official documentation, which provides detailed installation, configuration, and quick start guides, is available
+at https://aquasecurity.github.io/starboard/.
+
+Try the [getting started guide][cli-getting-started] to install Starboard command and generate your first vulnerability report.
 
 # Contributing
 
@@ -66,8 +75,9 @@ Kubernetes-native ways.
 [crds]: https://aquasecurity.github.io/starboard/crds/
 [go-module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
 [cli]: https://aquasecurity.github.io/starboard/cli
+[cli-getting-started]: https://aquasecurity.github.io/starboard/cli/getting-started/
 [operator]: https://aquasecurity.github.io/starboard/operator
 
-[octant-plugin]: https://github.com/aquasecurity/starboard-octant-plugin
-[lens-extension]: https://github.com/aquasecurity/starboard-lens-extension
+[octant-plugin]: https://aquasecurity.github.io/starboard/integrations/octant
+[lens-extension]: https://aquasecurity.github.io/starboard/integrations/lens
 [kubectl]: https://kubernetes.io/docs/reference/kubectl
