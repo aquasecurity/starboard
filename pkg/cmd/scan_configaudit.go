@@ -44,11 +44,11 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		config, err := cf.ToRESTConfig()
+		kubeConfig, err := cf.ToRESTConfig()
 		if err != nil {
 			return err
 		}
-		clientset, err := kubernetes.NewForConfig(config)
+		kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 		if err != nil {
 			return err
 		}
@@ -56,11 +56,15 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		report, err := polaris.NewScanner(starboard.NewScheme(), clientset, opts).Scan(ctx, workload, gvk)
+		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := starboardapi.NewForConfig(config)
+		report, err := polaris.NewScanner(starboard.NewScheme(), kubeClientset, config, opts).Scan(ctx, workload, gvk)
+		if err != nil {
+			return err
+		}
+		starboardClientset, err := starboardapi.NewForConfig(kubeConfig)
 		if err != nil {
 			return nil
 		}

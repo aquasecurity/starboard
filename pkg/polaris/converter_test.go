@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/polaris"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/polaris"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestConverter_Convert(t *testing.T) {
 		_ = file.Close()
 	}()
 
-	reports, err := polaris.NewConverter().Convert(file)
+	reports, err := polaris.NewConverter(starboard.ConfigData{}).Convert(file)
 	require.NoError(t, err)
 	assert.Equal(t, []v1alpha1.ConfigAuditResult{
 		{

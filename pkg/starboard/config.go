@@ -263,12 +263,13 @@ func GetDefaultConfig() ConfigData {
 		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 		"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
 		keyTrivyMode:     string(Standalone),
-
-		"aqua.imageRef": "docker.io/aquasec/scanner:5.3",
+		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.4.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.0",
-		"polaris.config.yaml":  polarisConfigYAML,
+
+		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.0",
+		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
@@ -326,6 +327,10 @@ func (c ConfigData) GetKubeBenchImageRef() (string, error) {
 
 func (c ConfigData) GetKubeHunterImageRef() (string, error) {
 	return c.getRequiredProperty("kube-hunter.imageRef")
+}
+
+func (c ConfigData) GetPolarisImageRef() (string, error) {
+	return c.getRequiredProperty("polaris.imageRef")
 }
 
 func (c ConfigData) getRequiredProperty(key string) (string, error) {

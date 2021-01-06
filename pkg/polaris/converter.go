@@ -5,43 +5,45 @@ import (
 	"io"
 	"time"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
 type Converter interface {
-	Convert(reader io.Reader) (sec.ConfigAuditResult, error)
+	Convert(reader io.Reader) (v1alpha1.ConfigAuditResult, error)
 }
 
 type converter struct {
+	config Config
 }
 
-var DefaultConverter = NewConverter()
-
-func NewConverter() Converter {
-	return &converter{}
-}
-
-func (c *converter) Convert(reader io.Reader) (reports sec.ConfigAuditResult, err error) {
-	var report Report
-	err = json.NewDecoder(reader).Decode(&report)
-	if err != nil {
-		return
+func NewConverter(config Config) Converter {
+	return &converter{
+		config: config,
 	}
-	reports = c.toConfigAudit(report.Results[0])
-	return
 }
 
-func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string][]sec.Check) (summary sec.ConfigAuditSummary) {
+func (c *converter) Convert(reader io.Reader) (v1alpha1.ConfigAuditResult, error) {
+	var report Report
+	err := json.NewDecoder(reader).Decode(&report)
+	if err != nil {
+		return v1alpha1.ConfigAuditResult{}, err
+	}
+	return c.toConfigAudit(report.Results[0])
+}
+
+// TODO Add success checks to the summary
+func (c *converter) toSummary(podChecks []v1alpha1.Check, containerChecks map[string][]v1alpha1.Check) v1alpha1.ConfigAuditSummary {
+	var summary v1alpha1.ConfigAuditSummary
 	for _, c := range podChecks {
 		if c.Success {
 			continue
 		}
 		switch c.Severity {
-		case sec.ConfigAuditDangerSeverity:
+		case v1alpha1.ConfigAuditDangerSeverity:
 			summary.DangerCount++
-		case sec.ConfigAuditWarningSeverity:
+		case v1alpha1.ConfigAuditWarningSeverity:
 			summary.WarningCount++
 		}
 	}
@@ -51,22 +53,22 @@ func (c *converter) toSummary(podChecks []sec.Check, containerChecks map[string]
 				continue
 			}
 			switch c.Severity {
-			case sec.ConfigAuditDangerSeverity:
+			case v1alpha1.ConfigAuditDangerSeverity:
 				summary.DangerCount++
-			case sec.ConfigAuditWarningSeverity:
+			case v1alpha1.ConfigAuditWarningSeverity:
 				summary.WarningCount++
 			}
 		}
 	}
-	return
+	return summary
 }
 
-func (c *converter) toConfigAudit(result Result) (report sec.ConfigAuditResult) {
-	var podChecks []sec.Check
-	containerChecks := make(map[string][]sec.Check)
+func (c *converter) toConfigAudit(result Result) (v1alpha1.ConfigAuditResult, error) {
+	var podChecks []v1alpha1.Check
+	containerChecks := make(map[string][]v1alpha1.Check)
 
 	for _, pr := range result.PodResult.Results {
-		podChecks = append(podChecks, sec.Check{
+		podChecks = append(podChecks, v1alpha1.Check{
 			ID:       pr.ID,
 			Message:  pr.Message,
 			Success:  pr.Success,
@@ -76,9 +78,9 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAuditResult) 
 	}
 
 	for _, cr := range result.PodResult.ContainerResults {
-		var checks []sec.Check
+		var checks []v1alpha1.Check
 		for _, crr := range cr.Results {
-			checks = append(checks, sec.Check{
+			checks = append(checks, v1alpha1.Check{
 				ID:       crr.ID,
 				Message:  crr.Message,
 				Success:  crr.Success,
@@ -90,16 +92,25 @@ func (c *converter) toConfigAudit(result Result) (report sec.ConfigAuditResult) 
 		containerChecks[cr.Name] = checks
 	}
 
-	report = sec.ConfigAuditResult{
-		Scanner: sec.Scanner{
+	imageRef, err := c.config.GetPolarisImageRef()
+	if err != nil {
+		return v1alpha1.ConfigAuditResult{}, err
+	}
+
+	version, err := starboard.GetVersionFromImageRef(imageRef)
+	if err != nil {
+		return v1alpha1.ConfigAuditResult{}, err
+	}
+
+	return v1alpha1.ConfigAuditResult{
+		Scanner: v1alpha1.Scanner{
 			Name:    "Polaris",
 			Vendor:  "Fairwinds Ops",
-			Version: polarisVersion,
+			Version: version,
 		},
 		Summary:         c.toSummary(podChecks, containerChecks),
 		UpdateTimestamp: metav1.NewTime(time.Now()),
 		PodChecks:       podChecks,
 		ContainerChecks: containerChecks,
-	}
-	return
+	}, nil
 }
