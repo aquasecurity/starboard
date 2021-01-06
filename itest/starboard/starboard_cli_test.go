@@ -859,7 +859,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Polaris",
 								Vendor:  "Fairwinds Ops",
-								Version: "1.2",
+								Version: "3.0",
 							}),
 						}),
 					}),
@@ -924,7 +924,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "Polaris",
 								Vendor:  "Fairwinds Ops",
-								Version: "1.2",
+								Version: "3.0",
 							}),
 						}),
 					}),

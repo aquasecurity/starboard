@@ -26,17 +26,17 @@ import (
 const (
 	polarisContainerName = "polaris"
 	configVolume         = "config"
-	polarisVersion       = "1.2"
 )
 
-var (
-	polarisContainerImage = fmt.Sprintf("quay.io/fairwinds/polaris:%s", polarisVersion)
-)
+type Config interface {
+	GetPolarisImageRef() (string, error)
+}
 
 type Scanner struct {
 	scheme    *runtime.Scheme
-	opts      kube.ScannerOpts
 	clientset kubernetes.Interface
+	config    Config
+	opts      kube.ScannerOpts
 	pods      *pod.Manager
 	converter Converter
 }
@@ -44,14 +44,16 @@ type Scanner struct {
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
+	config Config,
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
 		scheme:    scheme,
+		config:    config,
 		clientset: clientset,
 		opts:      opts,
 		pods:      pod.NewPodManager(clientset),
-		converter: DefaultConverter,
+		converter: NewConverter(config),
 	}
 }
 
@@ -64,7 +66,10 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job := s.preparePolarisJob(workload, gvk)
+	job, err := s.preparePolarisJob(workload, gvk)
+	if err != nil {
+		return v1alpha1.ConfigAuditReport{}, err
+	}
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
@@ -116,7 +121,11 @@ func (s *Scanner) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKi
 	)
 }
 
-func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) *batchv1.Job {
+func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) (*batchv1.Job, error) {
+	imageRef, err := s.config.GetPolarisImageRef()
+	if err != nil {
+		return nil, err
+	}
 	sourceName := s.sourceNameFrom(workload, gvk)
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -159,7 +168,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 					Containers: []corev1.Container{
 						{
 							Name:                     polarisContainerName,
-							Image:                    polarisContainerImage,
+							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Resources: corev1.ResourceRequirements{
@@ -188,5 +197,5 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 				},
 			},
 		},
-	}
+	}, nil
 }
