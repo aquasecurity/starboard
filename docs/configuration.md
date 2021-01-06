@@ -64,6 +64,8 @@ values.
 | `trivy.serverTokenHeader`      | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
 | `aqua.imageRef`                | `docker.io/aquasec/scanner:5.3`                        | Aqua scanner image reference. The tag determines the version of the `scanner` binary executable and it must be compatible with version of Aqua console. |
 | `aqua.serverURL`               | N/A                                                    | The endpoint URL of Aqua management console |
+| `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.4.0`                   | kube-bench image reference |
+| `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.4.0`                  | kube-hunter image reference |
 | `polaris.config.yaml`          | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
 | SECRET KEY                  | DESCRIPTION |

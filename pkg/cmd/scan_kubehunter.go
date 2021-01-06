@@ -36,11 +36,11 @@ const (
 func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) (err error) {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		config, err := cf.ToRESTConfig()
+		kubernetesConfig, err := cf.ToRESTConfig()
 		if err != nil {
 			return err
 		}
-		kubernetesClientset, err := kubernetes.NewForConfig(config)
+		kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
 		if err != nil {
 			return err
 		}
@@ -48,11 +48,16 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
-		report, err := kubehunter.NewScanner(starboard.NewScheme(), kubernetesClientset, opts).Scan(ctx)
+		config, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := starboardapi.NewForConfig(config)
+
+		report, err := kubehunter.NewScanner(starboard.NewScheme(), config, kubernetesClientset, opts).Scan(ctx)
+		if err != nil {
+			return err
+		}
+		starboardClientset, err := starboardapi.NewForConfig(kubernetesConfig)
 		if err != nil {
 			return err
 		}
