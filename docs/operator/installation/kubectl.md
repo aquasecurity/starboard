@@ -54,7 +54,7 @@ In case of any error consult our [Troubleshooting](./../../troubleshooting.md) g
 You can uninstall the operator with the following command:
 
     kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/06-starboard-operator.deployment.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.cm.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/03-starboard-operator.clusterrole.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/02-starboard-operator.sa.yaml \
