@@ -58,4 +58,5 @@ You can uninstall the operator with the following command:
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/03-starboard-operator.clusterrole.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/02-starboard-operator.sa.yaml \
-      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/01-starboard-operator.ns.yaml
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/01-starboard-operator.ns.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/crd/vulnerabilityreports.crd.yaml

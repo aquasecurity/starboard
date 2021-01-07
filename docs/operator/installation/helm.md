@@ -12,7 +12,11 @@ configure it to watch the `default` namespaces:
         git clone https://github.com/aquasecurity/starboard.git
         cd starboard
 
-2. (Optional) Configure the operator by creating the `starboard` ConfigMap and
+2. Create the `starboard-operator` namespace:
+
+        kubectl create namespace starboard-operator
+
+3. (Optional) Configure the operator by creating the `starboard` ConfigMap and
    the `starboard` secret in the `starboard-operator` namespace. If you skip
    this step, the operator will ensure [configuration objects](./../../configuration.md)
    on startup with the default settings.
@@ -23,11 +27,10 @@ configure it to watch the `default` namespaces:
         kubectl describe cm starboard -n starboard-operator
         kubectl describe secret starboard -n starboard-operator
 
-3. Install the chart:
+4. Install the chart:
 
         helm install starboard-operator ./deploy/helm \
           -n starboard-operator \
-          --create-namespace \
           --set="targetNamespaces=default"
 
 Check that the `starboard-operator` Helm release is created in the `starboard-operator`
