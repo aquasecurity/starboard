@@ -26,7 +26,10 @@ nav:
       - Configuration: operator/configuration.md
   - Configuration: configuration.md
   - Integrations:
-      - Vulnerability Scanners: integrations/vulnerability-scanners.md
+      - Vulnerability Scanners:
+          - Overview: integrations/vulnerability-scanners/index.md
+          - Trivy: integrations/vulnerability-scanners/trivy.md
+          - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
       - Private Registries: integrations/private-registries.md
       - Managed Registries: integrations/managed-registries.md
       - Octant Plugin: integrations/octant.md
