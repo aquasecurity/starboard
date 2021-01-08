@@ -51,12 +51,16 @@ compile-templates: get-qtc
 
 .PHONY: test
 ## Runs both unit and integration tests
-test: unit-tests itests-starboard itests-starboard-operator
+test: unit-tests integration-tests
 
 .PHONY: unit-tests
 ## Runs unit tests with code coverage enabled
 unit-tests: $(SOURCES)
 	go test -v -short -race -timeout 30s -coverprofile=coverage.txt ./...
+
+.PHONY: integration-tests
+## Runs all integration tests
+integration-tests: itests-starboard itests-starboard-operator
 
 .PHONY: itests-starboard
 ## Runs integration tests for Starboard CLI with code coverage enabled
