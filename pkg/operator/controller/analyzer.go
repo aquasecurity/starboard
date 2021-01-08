@@ -18,7 +18,7 @@ type Analyzer interface {
 	IsConcurrentScanJobsLimitExceeded(ctx context.Context) (bool, int, error)
 }
 
-func NewAnalyzer(config etc.Operator, store vulnerabilityreport.StoreInterface, client client.Client) Analyzer {
+func NewAnalyzer(config etc.Operator, store vulnerabilityreport.ReadWriter, client client.Client) Analyzer {
 	return &analyzer{
 		config: config,
 		store:  store,
@@ -29,7 +29,7 @@ func NewAnalyzer(config etc.Operator, store vulnerabilityreport.StoreInterface, 
 type analyzer struct {
 	config etc.Operator
 	client client.Client
-	store  vulnerabilityreport.StoreInterface
+	store  vulnerabilityreport.ReadWriter
 }
 
 func (a *analyzer) HasVulnerabilityReports(ctx context.Context, owner kube.Object, images kube.ContainerImages, hash string) (bool, error) {

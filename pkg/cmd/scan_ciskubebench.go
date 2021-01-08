@@ -70,6 +70,13 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		var wg sync.WaitGroup
 
 		for _, node := range nodeList.Items {
+
+			nodeValueLabel, exist := node.GetObjectMeta().GetLabels()["kubernetes.io/os"]
+			if exist && nodeValueLabel != "linux" {
+				klog.V(3).Infof("Skipping non linux node: %v %v", node.Name, node.Labels)
+				continue
+			}
+
 			wg.Add(1)
 			go func(node corev1.Node) {
 				defer wg.Done()

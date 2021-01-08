@@ -39,6 +39,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
+				Affinity:                     starboard.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{

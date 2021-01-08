@@ -116,7 +116,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	store := vulnerabilityreport.NewStore(mgr.GetClient(), mgr.GetScheme())
+	store := vulnerabilityreport.NewControllerRuntimeReadWriter(mgr.GetClient(), mgr.GetScheme())
 	idGenerator := ext.NewGoogleUUIDGenerator()
 
 	scanner, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)

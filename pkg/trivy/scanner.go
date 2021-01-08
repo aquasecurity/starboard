@@ -254,6 +254,7 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 	}
 
 	return corev1.PodSpec{
+		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Volumes: []corev1.Volume{
