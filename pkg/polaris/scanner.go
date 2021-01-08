@@ -153,7 +153,7 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 					ServiceAccountName:           starboard.ServiceAccountName,
 					AutomountServiceAccountToken: pointer.BoolPtr(true),
 					RestartPolicy:                corev1.RestartPolicyNever,
-					Affinity:                     starboard.DefaultAffinity(),
+					Affinity:                     starboard.LinuxNodeAffinity(),
 					Volumes: []corev1.Volume{
 						{
 							Name: configVolume,

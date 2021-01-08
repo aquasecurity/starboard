@@ -70,23 +70,27 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		var wg sync.WaitGroup
 
 		for _, node := range nodeList.Items {
+
+			nodeValueLabel, exist := node.GetObjectMeta().GetLabels()["kubernetes.io/os"]
+			if exist && nodeValueLabel != "linux" {
+				klog.V(3).Infof("Skipping non linux node: %v %v", node.Name, node.Labels)
+				continue
+			}
+
 			wg.Add(1)
 			go func(node corev1.Node) {
 				defer wg.Done()
 
-				nodeValueLabel, exist := node.GetObjectMeta().GetLabels()["kubernetes.io/os"]
-				if exist && nodeValueLabel == "linux" {
-					report, err := scanner.Scan(ctx, node)
+				report, err := scanner.Scan(ctx, node)
 
-					if err != nil {
-						klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
-						return
-					}
-					err = writer.Write(ctx, report, &node)
-					if err != nil {
-						klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
-						return
-					}
+				if err != nil {
+					klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
+					return
+				}
+				err = writer.Write(ctx, report, &node)
+				if err != nil {
+					klog.Errorf("Error while writing kube-bench report for node: %s: %v", node.Name, err)
+					return
 				}
 			}(node)
 		}

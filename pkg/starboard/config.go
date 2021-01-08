@@ -441,8 +441,8 @@ func (c *configManager) Delete(ctx context.Context) error {
 	return nil
 }
 
-// DefaultAffinity constructs a new Affinaty resource with default values: linux supported nodes
-func DefaultAffinity() *corev1.Affinity {
+// LinuxNodeAffinity constructs a new Affinaty resource with linux supported nodes
+func LinuxNodeAffinity() *corev1.Affinity {
 	affinity := &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
