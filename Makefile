@@ -51,7 +51,7 @@ compile-templates: get-qtc
 
 .PHONY: test
 ## Runs both unit and integration tests
-test: unit-tests integration-tests
+test: unit-tests itests-starboard itests-starboard-operator
 
 .PHONY: unit-tests
 ## Runs unit tests with code coverage enabled
