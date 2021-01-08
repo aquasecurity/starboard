@@ -16,9 +16,11 @@ configure it to watch the `default` namespaces:
 
         kubectl create namespace starboard-operator
 
-3. (Optional) Configure the operator by creating the `starboard` ConfigMap and
-   the `starboard` secret in the `starboard-operator` namespace. If you skip
-   this step, the operator will ensure [configuration objects](./../../configuration.md)
+3. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
+   the `starboard-operator` namespace. For example, you can use Trivy
+   in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
+   [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
+   If you skip this step, the operator will ensure [configuration objects](./../../configuration.md)
    on startup with the default settings.
 
         kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml
@@ -33,34 +35,25 @@ configure it to watch the `default` namespaces:
           -n starboard-operator \
           --set="targetNamespaces=default"
 
-Check that the `starboard-operator` Helm release is created in the `starboard-operator`
-namespace:
+5. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
+   namespace:
 
-```
-helm list -n starboard-operator
-```
+        helm list -n starboard-operator
+        NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
+        starboard-operator	starboard-operator	1       	2020-12-09 16:15:51.070673 +0100 CET	deployed	starboard-operator-0.2.1	0.7.1
+   To confirm that the operator is running, check the number of replicas created by
+   the `starboard-operator` Deployment in the `starboard-operator` namespace:
 
-```text
-NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
-starboard-operator	starboard-operator	1       	2020-12-09 16:15:51.070673 +0100 CET	deployed	starboard-operator-0.2.1	0.7.1
-```
+        kubectl get deployment -n starboard-operator
+        NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+        starboard-operator   1/1     1            1           11m
+   If for some reason it's not ready yet, check the logs of the Deployment for
+   errors:
 
-To confirm that the operator is running, check the number of replicas created by
-the `starboard-operator` Deployment in the `starboard-operator` namespace:
+        kubectl logs deployment/starboard-operator -n starboard-operator
+   In case of any error consult our [Troubleshooting](./../../troubleshooting.md) guidelines.
 
-    kubectl get deployment -n starboard-operator
-
-You should see the output similar to the following:
-
-    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
-    starboard-operator   1/1     1            1           11m
-
-If for some reason it's not ready yet, check the logs of the Deployment for
-errors:
-
-    kubectl logs -n starboard-operator deployment/starboard-operator
-
-In case of any error consult our [Troubleshooting](./../../troubleshooting.md) guidelines.
+## Uninstall
 
 You can uninstall the operator with the following command:
 
