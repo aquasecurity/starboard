@@ -34,7 +34,7 @@ type Reconciler interface {
 func NewReconciler(scheme *runtime.Scheme,
 	config etc.Operator,
 	client client.Client,
-	store vulnerabilityreport.StoreInterface,
+	store vulnerabilityreport.ReadWriter,
 	idGenerator ext.IDGenerator,
 	scanner vulnerabilityreport.Plugin,
 	logsReader *logs.Reader,
@@ -55,7 +55,7 @@ type reconciler struct {
 	scheme      *runtime.Scheme
 	config      etc.Operator
 	client      client.Client
-	store       vulnerabilityreport.StoreInterface
+	store       vulnerabilityreport.ReadWriter
 	idGenerator ext.IDGenerator
 	scanner     vulnerabilityreport.Plugin
 	logsReader  *logs.Reader
@@ -188,7 +188,7 @@ func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, s
 		vulnerabilityReports = append(vulnerabilityReports, report)
 	}
 
-	return r.store.Save(ctx, vulnerabilityReports)
+	return r.store.Write(ctx, vulnerabilityReports)
 }
 
 // TODO Add to utilities used both by CLI and Operator
