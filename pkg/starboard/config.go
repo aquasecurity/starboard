@@ -361,7 +361,7 @@ func GetVersionFromImageRef(imageRef string) (string, error) {
 }
 
 // NewConfigManager constructs a new ConfigManager that is using kubernetes.Interface
-// to manage ConfigData backed by the the ConfigMap stored in the specified namespace.
+// to manage ConfigData backed by the ConfigMap stored in the specified namespace.
 func NewConfigManager(client kubernetes.Interface, namespace string) ConfigManager {
 	return &configManager{
 		client:    client,
@@ -441,9 +441,9 @@ func (c *configManager) Delete(ctx context.Context) error {
 	return nil
 }
 
-// LinuxNodeAffinity constructs a new Affinaty resource with linux supported nodes
+// LinuxNodeAffinity constructs a new Affinity resource with linux supported nodes.
 func LinuxNodeAffinity() *corev1.Affinity {
-	affinity := &corev1.Affinity{
+	return &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 				NodeSelectorTerms: []corev1.NodeSelectorTerm{
@@ -457,6 +457,4 @@ func LinuxNodeAffinity() *corev1.Affinity {
 						},
 					},
 				}}}}
-
-	return affinity
 }
