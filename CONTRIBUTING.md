@@ -124,16 +124,26 @@ variable is pointing to that cluster configuration file. For example:
 $ export KUBECONFIG=~/.kube/config
 ```
 
-To run all integration tests with code coverage enabled, run:
+There are separate integration tests for Starboard CLI and for Starboard Operator. The tests may leave the cluster in a
+dirty state, so running one test after the other may cause spurious failures.
+
+To run the integration tests for Starboard CLI with code coverage enabled, run:
 
 ```
-$ make integration-tests
+$ make itests-starboard
 ```
 
 To open the test coverage report in your web browser, run:
 
 ```
-$ go tool cover -html=itest/coverage.txt
+$ go tool cover -html=itest/starboard/coverage.txt
+```
+
+Similarly, to run the integration tests for Starboard Operator and view the coverage report, run:
+
+```
+$ make itests-starboard-operator
+$ go tool cover -html=itest/starboard-operator/coverage.txt
 ```
 
 ### Code Coverage

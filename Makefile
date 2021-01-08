@@ -58,10 +58,6 @@ test: unit-tests integration-tests
 unit-tests: $(SOURCES)
 	go test -v -short -race -timeout 30s -coverprofile=coverage.txt ./...
 
-.PHONY: integration-tests
-## Runs all integration tests
-integration-tests: itests-starboard itests-starboard-operator
-
 .PHONY: itests-starboard
 ## Runs integration tests for Starboard CLI with code coverage enabled
 itests-starboard: check-env get-ginkgo
