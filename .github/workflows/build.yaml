@@ -54,7 +54,9 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_CLI_LOG_LEVEL: "0"
       - name: Post run checks
+        if: ${{ always() }}
         run: |
           kubectl get jobs -n starboard -o yaml
       - name: Setup tmate session
+        if: ${{ always() }}
         uses: mxschmitt/action-tmate@v3
