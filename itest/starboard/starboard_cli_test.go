@@ -994,6 +994,8 @@ var _ = Describe("Starboard CLI", func() {
 				"scan",
 				"kubehunterreports",
 				"-v", starboardCLILogLevel,
+				"--delete-scan-job=false",
+				"--scan-job-timeout=0m",
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
