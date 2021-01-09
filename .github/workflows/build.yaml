@@ -47,11 +47,9 @@ jobs:
         run: |
           kubectl cluster-info
           kubectl describe node
-      - name: Setup
+      - name: Run integration tests
         run: |
-          make
-          ./bin/starboard init
-          ./bin/starboard scan kubehunterreports --delete-scan-job=false --scan-job-timeout=1s
-      - name: Setup tmate session
-        if: ${{ always() }}
-        uses: mxschmitt/action-tmate@v3
+          make itests-starboard
+        env:
+          KUBECONFIG: /home/runner/.kube/config
+          STARBOARD_CLI_LOG_LEVEL: "0"
