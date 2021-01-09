@@ -102,7 +102,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.GenerateID(),
+			Name:      "kube-hunter",
 			Namespace: starboard.NamespaceName,
 		},
 		Spec: batchv1.JobSpec{

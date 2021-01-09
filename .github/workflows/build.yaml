@@ -53,6 +53,6 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_CLI_LOG_LEVEL: "0"
-      - name: Setup tmate session
-        if: ${{ always() }}
-        uses: mxschmitt/action-tmate@v3
+      - name: Get job logs
+        run: |
+          kubectl logs job/kube-hunter -c kube-hunter -n starboard
