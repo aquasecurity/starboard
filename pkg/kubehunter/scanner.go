@@ -121,7 +121,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
+							Args:                     []string{"--pod", "--quick", "--report", "json", "--log", "warn"},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),

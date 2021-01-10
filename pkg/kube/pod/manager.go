@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"io"
 
-	"k8s.io/klog"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
-
 	apps "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 )
 
 type Manager struct {
@@ -113,7 +111,7 @@ func (pw *Manager) GetPodByName(ctx context.Context, namespace, name string) (*c
 }
 
 func (pw *Manager) GetTerminatedContainersStatusesByJob(ctx context.Context, job *batch.Job) (statuses map[string]*core.ContainerStateTerminated, err error) {
-	pod, err := pw.GetPodByJob(ctx, job)
+	pod, err := pw.getPodByJob(ctx, job)
 	if err != nil {
 		return
 	}
@@ -139,16 +137,16 @@ func GetTerminatedContainersStatusesByPod(pod *core.Pod) map[string]*core.Contai
 }
 
 func (pw *Manager) GetContainerLogsByJob(ctx context.Context, job *batch.Job, container string) (io.ReadCloser, error) {
-	pod, err := pw.GetPodByJob(ctx, job)
+	pod, err := pw.getPodByJob(ctx, job)
 	if err != nil {
 		return nil, err
 	}
 
-	return pw.GetPodLogs(ctx, pod, container)
+	return pw.getPodLogs(ctx, pod, container)
 }
 
 // GetPodByJob gets the Pod controller by the specified Job.
-func (pw *Manager) GetPodByJob(ctx context.Context, job *batch.Job) (*core.Pod, error) {
+func (pw *Manager) getPodByJob(ctx context.Context, job *batch.Job) (*core.Pod, error) {
 	refreshedJob, err := pw.clientset.BatchV1().Jobs(job.Namespace).Get(ctx, job.Name, meta.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -162,7 +160,7 @@ func (pw *Manager) GetPodByJob(ctx context.Context, job *batch.Job) (*core.Pod, 
 	return &podList.Items[0], nil
 }
 
-func (pw *Manager) GetPodLogs(ctx context.Context, pod *core.Pod, container string) (io.ReadCloser, error) {
+func (pw *Manager) getPodLogs(ctx context.Context, pod *core.Pod, container string) (io.ReadCloser, error) {
 	req := pw.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &core.PodLogOptions{
 		Follow: true, Container: container})
 	return req.Stream(ctx)
@@ -185,17 +183,4 @@ func (pw *Manager) logTerminatedContainersErrors(statuses map[string]*core.Conta
 		}
 		klog.Errorf("Container %s terminated with %s: %s", container, status.Reason, status.Message)
 	}
-}
-
-// GetImages gets a slice of images for the specified PodSpec.
-func GetImages(spec core.PodSpec) (images []string) {
-	for _, c := range spec.InitContainers {
-		images = append(images, c.Image)
-	}
-
-	for _, c := range spec.Containers {
-		images = append(images, c.Image)
-	}
-
-	return
 }

@@ -1,25 +1,22 @@
-package crd_test
+package kubebench_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	starboardClientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	starboardClientsetFake "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/fake"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/fake"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kubebench/crd"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
+	"github.com/aquasecurity/starboard/pkg/starboard"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 func TestReadWriter(t *testing.T) {
@@ -45,14 +42,14 @@ var _ = Describe("ReadWriter", func() {
 
 	var (
 		objects   []runtime.Object
-		clientset starboardClientset.Interface
-		rw        *crd.ReadWriter
+		clientset versioned.Interface
+		rw        kubebench.ReadWriter
 	)
 
 	BeforeEach(func() {
 		objects = []runtime.Object{}
-		clientset = starboardClientsetFake.NewSimpleClientset(objects...)
-		rw = crd.NewReadWriter(starboard.NewScheme(), clientset)
+		clientset = fake.NewSimpleClientset(objects...)
+		rw = kubebench.NewReadWriter(starboard.NewScheme(), clientset)
 	})
 
 	Describe("Writing report", func() {
