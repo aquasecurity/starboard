@@ -102,7 +102,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kube-hunter",
+			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
 		},
 		Spec: batchv1.JobSpec{
@@ -121,7 +121,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Args:                     []string{"--pod", "--report", "json", "--log", "debug", "--cidr", "0.0.0.0/32"},
+							Args:                     []string{"--pod", "--report", "json", "--log", "warn", "--cidr", "127.0.0.1/32"},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),
