@@ -946,7 +946,8 @@ var _ = Describe("Starboard CLI", func() {
 		It("should run kube-bench", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
-				"kube-bench",
+				"generate",
+				"ciskubebenchreports",
 				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())

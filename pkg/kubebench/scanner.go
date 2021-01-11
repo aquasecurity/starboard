@@ -56,18 +56,17 @@ func NewScanner(
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.CISKubeBenchOutput, err error) {
+func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeBenchOutput, error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	job, err := s.prepareKubeBenchJob(node)
 	if err != nil {
-		return report, err
+		return v1alpha1.CISKubeBenchOutput{}, err
 	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
-		err = fmt.Errorf("running kube-bench job: %w", err)
-		return
+		return v1alpha1.CISKubeBenchOutput{}, fmt.Errorf("running kube-bench job: %w", err)
 	}
 
 	defer func() {
@@ -75,7 +74,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.C
 			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
 			return
 		}
-		// 6. Delete the kube-bench Job
+		// 5. Delete the kube-bench Job
 		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
 		background := metav1.DeletePropagationBackground
 		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
@@ -83,33 +82,19 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (report v1alpha1.C
 		})
 	}()
 
-	// 3. Get the Pod controlled by the kube-bench Job
-	kubeBenchPod, err := s.pods.GetPodByJob(ctx, job)
-	if err != nil {
-		err = fmt.Errorf("getting kube-bench pod: %w", err)
-		return
-	}
-
-	// 4. Get kube-bench JSON output from the kube-bench Pod
+	// 3. Get kube-bench JSON output from the kube-bench Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
 		job.Namespace, job.Name)
-	logsReader, err := s.pods.GetPodLogs(ctx, kubeBenchPod, kubeBenchContainerName)
+	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, kubeBenchContainerName)
 	if err != nil {
-		err = fmt.Errorf("getting logs: %w", err)
-		return
+		return v1alpha1.CISKubeBenchOutput{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
 		_ = logsReader.Close()
 	}()
 
-	// 5. Parse the CISBenchmarkReport from the logs Reader
-	report, err = s.converter.Convert(s.config, logsReader)
-	if err != nil {
-		err = fmt.Errorf("parsing CIS benchmark report: %w", err)
-		return
-	}
-
-	return
+	// 4. Parse the CISBenchmarkReport from the logs Reader
+	return s.converter.Convert(s.config, logsReader)
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
