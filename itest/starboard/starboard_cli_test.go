@@ -986,7 +986,7 @@ var _ = Describe("Starboard CLI", func() {
 		})
 	})
 
-	FDescribe("Command scan kubehunterreports", func() {
+	Describe("Command scan kubehunterreports", func() {
 		// FIXME Figure out why kube-hunter is failing on GitHub actions runner, whereas it's fine with local KIND cluster
 		It("should run kube-hunter", func() {
 			err := cmd.Run(versionInfo, []string{
@@ -994,7 +994,6 @@ var _ = Describe("Starboard CLI", func() {
 				"scan",
 				"kubehunterreports",
 				"-v", starboardCLILogLevel,
-				"--delete-scan-job=false",
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 
