@@ -3,11 +3,9 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
-	"github.com/aquasecurity/starboard/pkg/kubehunter/crd"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -56,10 +54,10 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := starboardapi.NewForConfig(kubeConfig)
+		starboardClientset, err := versioned.NewForConfig(kubeConfig)
 		if err != nil {
 			return err
 		}
-		return crd.NewWriter(starboardClientset).Write(ctx, report, kubeHunterReportName)
+		return kubehunter.NewWriter(starboardClientset).Write(ctx, report, kubeHunterReportName)
 	}
 }
