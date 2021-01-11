@@ -19,11 +19,10 @@ These guidelines will help you get started with the Starboard project.
   - [Prerequisites](#prerequisites)
   - [In Cluster](#in-cluster)
   - [Out of Cluster](#out-of-cluster)
-  - [Enable Aqua Scanner](#enable-aqua-scanner)
 - [Operator Lifecycle Manager (OLM)](#operator-lifecycle-manager-olm)
-  - [Install OLM and Operator Marketplace](#install-olm-and-operator-marketplace)
-  - [Publish the OLM Bundle to Quay.io](#publish-the-olm-bundle-to-quayio)
-  - [Install the OLM Bundle from Quay.io](#install-the-olm-bundle-from-quayio)
+  - [Install OLM](#install-olm)
+  - [Build the Catalog Image](#build-the-catalog-image)
+  - [Register the Catalog Image](#register-the-catalog-image)
 
 ## Contribution Workflow
 
@@ -217,165 +216,103 @@ started with a basic development workflow. For other install modes see [Operator
      go run cmd/starboard-operator/main.go
    ```
 
-### Enable Aqua Scanner
-
-1. Create the `starboard-operator` secret in the `starboard-operator` namespace that holds the scanner's configuration:
-
-   ```
-   $ kubectl create secret generic starboard-operator \
-     --namespace starboard-operator \
-     --from-literal OPERATOR_SCANNER_AQUA_CSP_USERNAME=$AQUA_CONSOLE_USERNAME \
-     --from-literal OPERATOR_SCANNER_AQUA_CSP_PASSWORD=$AQUA_CONSOLE_PASSWORD \
-     --from-literal OPERATOR_SCANNER_AQUA_CSP_VERSION=$AQUA_VERSION \
-     --from-literal OPERATOR_SCANNER_AQUA_CSP_HOST=http://csp-console-svc.aqua:8080
-   ```
-2. Patch or edit the `starboard-operator` deployment and set the value of the `OPERATOR_SCANNER_AQUA_CSP_ENABLED` to
-   `true` and disable the default Trivy scanner by setting `OPERATOR_SCANNER_TRIVY_ENABLED` to `false`.
-
 ## Operator Lifecycle Manager (OLM)
 
-### Install OLM and Operator Marketplace
+### Install OLM
 
-To install [Operator Lifecycle Manager][olm] (OLM) and [Operator Marketplace][operator-marketplace], run:
+To install [Operator Lifecycle Manager][olm] (OLM) run:
 
 ```
-$ ./deploy/olm/install.sh
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/crds.yaml
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/olm.yaml
 ```
 
-### Publish the OLM Bundle to Quay.io
+or
 
-1. [Sign up][quay] for a free Quay.io account if you're a new user.
-2. Install [Operator Courier][operator-courier]:
+```
+$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/install.sh -o install.sh
+$ chmod +x install.sh
+$ ./install.sh 0.15.1
+```
 
-   ```
-   $ pip3 install operator-courier
-   ```
-3. Lint the OLM bundle:
+### Build the Catalog Image
 
-   ```
-   $ BUNDLE_SRC_DIR=deploy/olm/bundle
-   $ operator-courier verify $BUNDLE_SRC_DIR
-   ```
-4. Retrieve a Quay.io token:
-   ```
-   $ QUAY_USERNAME=<your quay.io username>
-   $ QUAY_PASSWORD=<your quay.io password>
-   $ QUAY_URL=https://quay.io/cnr/api/v1/users/login
+The Starboard Operator metadata is formatted in *packagemanifest* layout so you need to place it in the directory
+structure of the [community-operators][community-operators] repository.
 
-   $ QUAY_TOKEN=$(curl -s -H "Content-Type: application/json" -XPOST $QUAY_URL -d \
-     '{"user":{"username":"'"${QUAY_USERNAME}"'","password": "'"${QUAY_PASSWORD}"'"}}' |
-     jq -r .token)
-   ```
-5. Push the OLM bundle to Quay.io:
-   ```
-   $ QUAY_NAMESPACE=<quay.io namespace>
-   $ PACKAGE_NAME=starboard-operator
-   $ PACKAGE_VERSION=<next package version>
+```
+$ git clone git@github.com:operator-framework/community-operators.git
+$ cd community-operators
+```
 
-   $ operator-courier push "$BUNDLE_SRC_DIR" "$QUAY_NAMESPACE" \
-     "$PACKAGE_NAME" "$PACKAGE_VERSION" "$QUAY_TOKEN"
-   ```
-6. Navigate to https://quay.io/application/$QUAY_USERNAME/starboard-operator?tab=settings and make the published
-   bundle public by clicking the **Make Public** button.
+Build the catalog image for OLM containing just Starboard Operator with a Dockerfile like this:
 
+```
+$ cat << EOF > starboard-catalog.Dockerfile
+FROM quay.io/operator-framework/upstream-registry-builder as builder
 
-### Install the OLM Bundle from Quay.io
+COPY upstream-community-operators/starboard-operator manifests
+RUN /bin/initializer -o ./bundles.db
 
-1. Create the OperatorSource resource:
+FROM scratch
+COPY --from=builder /etc/nsswitch.conf /etc/nsswitch.conf
+COPY --from=builder /bundles.db /bundles.db
+COPY --from=builder /bin/registry-server /registry-server
+COPY --from=builder /bin/grpc_health_probe /bin/grpc_health_probe
+EXPOSE 50051
+ENTRYPOINT ["/registry-server"]
+CMD ["--database", "bundles.db"]
+EOF
+```
 
-   ```
-   QUAY_FULL_NAME=<your quay.io full name>
-   $ cat << EOF | kubectl apply -f -
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorSource
-   metadata:
-     name: $QUAY_USERNAME-operators
-     namespace: marketplace
-   spec:
-     type: appregistry
-     endpoint: https://quay.io/cnr
-     displayName: "$QUAY_FULL_NAME Quay.io Applications"
-     publisher: "$QUAY_FULL_NAME"
-     registryNamespace: "$QUAY_USERNAME"
-   EOF
-   ```
+Place the `starboard-catalog.Dockerfile` in the top-level directory of your cloned copy of the
+[community-operators][community-operators] repository, build it and push to a registry from where you can download
+it to your Kubernetes cluster:
 
-   An OperatorSource resource defines the external data store used to host operator bundles. In this case, you will be
-   defining an OperatorSource to point to your Quay.io account, which will provide access to its hosted OLM bundles.
+```
+$ docker build -f starboard-catalog.Dockerfile -t starboard-catalog:dev .
+$ kind load docker-image starboard-catalog:dev
+```
 
-2. Create the OperatorGroup resource:
+### Register the Catalog Image
 
-   ```
-   $ cat << EOF | kubectl apply -f -
-   apiVersion: operators.coreos.com/v1alpha2
-   kind: OperatorGroup
-   metadata:
-     name: starboard-operator
-     namespace: marketplace
-   spec:
-     targetNamespaces:
-     - default
-   EOF
-   ```
+Create a CatalogSource instance in the `olm` namespace to reference in the Operator catalog image that contains the
+Starboard Operator:
 
-   You'll need an OperatorGroup to denote which namespaces the operator should watch. It must exist in the namespace
-   where you want to deploy the operator.
+```
+cat << EOF | kubectl apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: starboard-catalog
+  namespace: olm
+spec:
+  publisher: Starboard Maintainers
+  displayName: Starboard Catalog
+  sourceType: grpc
+  image: starboard-catalog:dev
+EOF
+```
 
-3. Create the Subscription resource
-   1. with Trivy scanner, which is enabled by default:
+You can delete the default catalog that OLM ships with to avoid duplicate entries:
 
-      ```
-      $ cat << EOF | kubectl apply -f -
-      apiVersion: operators.coreos.com/v1alpha1
-      kind: Subscription
-      metadata:
-        name: starboard-operator
-        namespace: marketplace
-      spec:
-        channel: alpha
-        name: starboard-operator
-        source: $QUAY_NAMESPACE-operators
-        sourceNamespace: marketplace
-      EOF
-      ```
-   2. with Aqua CSP scanner:
+```
+$ kubectl delete catalogsource operatorhubio-catalog -n olm
+```
 
-      ```
-      $ kubectl create secret generic starboard-operator \
-          --namespace marketplace \
-          --from-literal OPERATOR_SCANNER_AQUA_CSP_USERNAME=$AQUA_CONSOLE_USERNAME \
-          --from-literal OPERATOR_SCANNER_AQUA_CSP_PASSWORD=$AQUA_CONSOLE_PASSWORD \
-          --from-literal OPERATOR_SCANNER_AQUA_CSP_VERSION=$AQUA_VERSION \
-          --from-literal OPERATOR_SCANNER_AQUA_CSP_HOST=http://csp-console-svc.aqua:8080
-      ```
+Inspect the list of loaded packagemanifests on the system with the following command to filter for the Starboard Operator:
 
-      ```
-      $ cat << EOF | kubectl apply -f -
-      apiVersion: operators.coreos.com/v1alpha1
-      kind: Subscription
-      metadata:
-        name: starboard-operator
-        namespace: marketplace
-      spec:
-        channel: alpha
-        name: starboard-operator
-        source: $QUAY_NAMESPACE-operators
-        sourceNamespace: marketplace
-        config:
-          env:
-          - name: OPERATOR_SCANNER_TRIVY_ENABLED
-            value: "false"
-          - name: OPERATOR_SCANNER_AQUA_CSP_ENABLED
-            value: "true"
-          envFrom:
-          - secretRef:
-              name: starboard-operator
-      EOF
-      ```
+```console
+$ kubectl get packagemanifests
+NAME                 CATALOG             AGE
+starboard-operator   Starboard Catalog   97s
+```
 
-   A Subscription links the previous steps together by selecting an operator and one of its channels. OLM uses this
-   information to start the corresponding operator Pod. The example above creates a new Subscription to the `alpha`
-   channel for the Starboard Operator.
+If the Starboard Operator appears in this list, the catalog was successfully parsed and it is now available to install.
+Follow the installation instructions for [OLM](https://aquasecurity.github.io/starboard/operator/installation/olm/).
+Make sure that the Subscription's `spec.source` property refers to the `starboard-catalog` source instead of `operatorhubio-catalog`.
+
+You can find more details about testing Operators with Operator Framework [here][olm-testing-operators].
 
 [go-download]: https://golang.org/dl/
 [go-code]: https://golang.org/doc/code.html
@@ -383,8 +320,7 @@ $ ./deploy/olm/install.sh
 [codecov]: https://codecov.io/
 [codecov-merging-reports]: https://docs.codecov.io/docs/merging-reports/
 [olm]: https://github.com/operator-framework/operator-lifecycle-manager
-[operator-marketplace]: https://github.com/operator-framework/operator-marketplace
-[operator-courier]: https://github.com/operator-framework/operator-courier
+[community-operators]: https://github.com/operator-framework/community-operators
 [olm-operator-groups]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
-[quay]: https://quay.io
 [k8s-sample-controller]: https://github.com/kubernetes/sample-controller
+[olm-testing-operators]: https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md
