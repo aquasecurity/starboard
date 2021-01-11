@@ -22,7 +22,7 @@ watch the `default` namespace:
    the `starboard-operator` namespace. For example, you can use Trivy
    in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
    [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
-   If you skip this step, the operator will ensure [configuration objects](./../../configuration.md)
+   If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
    on startup with the default settings.
 
         kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml

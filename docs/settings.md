@@ -1,8 +1,9 @@
-# Configuration
+The Starboard CLI and Starboard Operator both read their configuration settings
+from a ConfigMap, as well as a secret that holds confidential settings (such as
+a GitHub token).
 
 The `starboard init` command creates the `starboard` ConfigMap and the
-`starboard` secret in the `starboard` namespace with default configuration
-settings.
+`starboard` secret in the `starboard` namespace with default settings.
 
 Similarly, the operator ensures the `starboard` ConfigMap and the `starboard`
 secret in the `OPERATOR_NAMESPACE`.
@@ -46,12 +47,11 @@ EOF
 )"
 ```
 
-The following tables list available configuration parameters with their default
-values.
+The following tables list available configuration settings with their default values.
 
 > **NOTE** You only need to configure the settings for the scanner you are using (i.e. `trivy.*` parameters are
-> used if `vulnerabilityReports.scanner` is set to `Trivy`). Check [integrations](./integrations.md) page to see
-> example configuration settings for common use cases.
+> used if `vulnerabilityReports.scanner` is set to `Trivy`). Check
+> [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
 
 | CONFIGMAP KEY                  | DEFAULT                                                | DESCRIPTION |
 | ------------------------------ | ------------------------------------------------------ | ----------- |
