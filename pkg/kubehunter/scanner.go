@@ -27,6 +27,7 @@ const (
 
 type Config interface {
 	GetKubeHunterImageRef() (string, error)
+	GetKubeHunterQuick() (bool, error)
 }
 
 type Scanner struct {
@@ -100,6 +101,14 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	if err != nil {
 		return nil, err
 	}
+	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "warn"}
+	quick, err := s.config.GetKubeHunterQuick()
+	if err != nil {
+		return nil, err
+	}
+	if quick {
+		kubeHunterArgs = append(kubeHunterArgs, "--quick")
+	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.GenerateID(),
@@ -121,7 +130,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Args:                     []string{"--pod", "--report", "json", "--log", "warn"},
+							Args:                     kubeHunterArgs,
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),
