@@ -150,6 +150,52 @@ func TestConfigData_GetKubeHunterImageRef(t *testing.T) {
 	}
 }
 
+func TestConfigData_GetKubeHunterQuick(t *testing.T) {
+	testCases := []struct {
+		name          string
+		configData    starboard.ConfigData
+		expectedError string
+		expectedQuick bool
+	}{
+		{
+			name:          "Should return error",
+			configData:    starboard.ConfigData{},
+			expectedError: "property kube-hunter.quick not set",
+		}, {
+			name: "Should return error when when quick is set to something other than \"false\" or \"true\" in config data",
+			configData: starboard.ConfigData{
+				"kube-hunter.quick": "not-a-boolean",
+			},
+			expectedError: "property kube-hunter.quick must be either \"false\" or \"true\", got \"not-a-boolean\"",
+		}, {
+			name: "Should return false when quick is set to \"false\" in config data",
+			configData: starboard.ConfigData{
+				"kube-hunter.quick": "false",
+			},
+			expectedQuick: false,
+		},
+		{
+			name: "Should return true when quick is set to \"true\" in config data",
+			configData: starboard.ConfigData{
+				"kube-hunter.quick": "true",
+			},
+			expectedQuick: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			quick, err := tc.configData.GetKubeHunterQuick()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedQuick, quick)
+			}
+		})
+	}
+}
+
 func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 	testCases := []struct {
 		name            string

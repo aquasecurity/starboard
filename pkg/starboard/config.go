@@ -267,6 +267,7 @@ func GetDefaultConfig() ConfigData {
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.4.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.0",
+		"kube-hunter.quick":    "false",
 
 		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.0",
 		"polaris.config.yaml": polarisConfigYAML,
@@ -327,6 +328,17 @@ func (c ConfigData) GetKubeBenchImageRef() (string, error) {
 
 func (c ConfigData) GetKubeHunterImageRef() (string, error) {
 	return c.getRequiredProperty("kube-hunter.imageRef")
+}
+
+func (c ConfigData) GetKubeHunterQuick() (bool, error) {
+	val, err := c.getRequiredProperty("kube-hunter.quick")
+	if err != nil {
+		return false, err
+	}
+	if val != "false" && val != "true" {
+		return false, fmt.Errorf("property kube-hunter.quick must be either \"false\" or \"true\", got %q", val)
+	}
+	return val == "true", nil
 }
 
 func (c ConfigData) GetPolarisImageRef() (string, error) {

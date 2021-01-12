@@ -66,6 +66,7 @@ values.
 | `aqua.serverURL`               | N/A                                                    | The endpoint URL of Aqua management console |
 | `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.4.0`                   | kube-bench image reference |
 | `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.4.0`                  | kube-hunter image reference |
+| `kube-hunter.quick`            | `"false"`                                              | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
 | `polaris.imageRef`             | `quay.io/fairwinds/polaris:3.0`                        | Polaris image reference |
 | `polaris.config.yaml`          | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
