@@ -66,7 +66,6 @@ var _ = Describe("Starboard CLI", func() {
 			"-v",
 			starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
-
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -151,16 +150,6 @@ var _ = Describe("Starboard CLI", func() {
 				Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(cm.Data).To(BeEquivalentTo(starboard.GetDefaultConfig()))
-
-			// Need to use kube-hunter quick scanning mode (subnet 24), otherwise
-			// when running the test in Azure (e.g., in a GitHub actions runner)
-			// kube-hunter may attempt to scan a large CIDR (subnet 16), which takes a long
-			// time and isn't necessary for the purposes of the test.
-			cm.Data["kube-hunter.quick"] = "true"
-			updatedCm, err := kubernetesClientset.CoreV1().ConfigMaps(starboard.NamespaceName).
-				Update(context.TODO(), cm, metav1.UpdateOptions{})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(updatedCm.Data).To(BeEquivalentTo(cm.Data))
 
 			secret, err := kubernetesClientset.CoreV1().Secrets(starboard.NamespaceName).
 				Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
@@ -998,6 +987,21 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command scan kubehunterreports", func() {
+		BeforeEach(func() {
+			cm, err := kubernetesClientset.CoreV1().ConfigMaps(starboard.NamespaceName).
+				Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
+
+			// Need to use kube-hunter quick scanning mode (subnet 24), otherwise
+			// when running the test in Azure (e.g., in a GitHub actions runner)
+			// kube-hunter may attempt to scan a large CIDR (subnet 16), which takes a long
+			// time and isn't necessary for the purposes of the test.
+			cm.Data["kube-hunter.quick"] = "true"
+			_, err = kubernetesClientset.CoreV1().ConfigMaps(starboard.NamespaceName).
+				Update(context.TODO(), cm, metav1.UpdateOptions{})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
 		It("should run kube-hunter", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
