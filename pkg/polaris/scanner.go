@@ -3,15 +3,16 @@ package polaris
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -28,32 +29,29 @@ const (
 	configVolume         = "config"
 )
 
-type Config interface {
-	GetPolarisImageRef() (string, error)
-}
-
+// TODO Move the Scanner struct to configauditreport package. It's generic and can be used with similar tools to Polaris.
 type Scanner struct {
 	scheme    *runtime.Scheme
 	clientset kubernetes.Interface
-	config    Config
 	opts      kube.ScannerOpts
 	pods      *pod.Manager
-	converter Converter
+	plugin    configauditreport.Plugin
+	ext.IDGenerator
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	config Config,
 	opts kube.ScannerOpts,
+	plugin configauditreport.Plugin,
 ) *Scanner {
 	return &Scanner{
-		scheme:    scheme,
-		config:    config,
-		clientset: clientset,
-		opts:      opts,
-		pods:      pod.NewPodManager(clientset),
-		converter: NewConverter(config),
+		scheme:      scheme,
+		clientset:   clientset,
+		opts:        opts,
+		pods:        pod.NewPodManager(clientset),
+		plugin:      plugin,
+		IDGenerator: ext.NewGoogleUUIDGenerator(),
 	}
 }
 
@@ -96,7 +94,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := s.converter.Convert(logsReader)
+	result, err := s.plugin.ParseConfigAuditResult(logsReader)
 	defer func() {
 		_ = logsReader.Close()
 	}()
@@ -107,29 +105,14 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		Get()
 }
 
-func (s *Scanner) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKind) string {
-	group := gvk.Group
-	if len(group) > 0 {
-		group = "." + group
-	}
-	return fmt.Sprintf("%s/%s%s/%s/%s",
-		workload.Namespace,
-		gvk.Kind,
-		group,
-		gvk.Version,
-		workload.Name,
-	)
-}
-
 func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersionKind) (*batchv1.Job, error) {
-	imageRef, err := s.config.GetPolarisImageRef()
+	jobSpec, err := s.plugin.GetScanJobSpec(workload, gvk)
 	if err != nil {
 		return nil, err
 	}
-	sourceName := s.sourceNameFrom(workload, gvk)
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      uuid.New().String(),
+			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
 				kube.LabelResourceKind:      string(workload.Kind),
@@ -149,54 +132,104 @@ func (s *Scanner) preparePolarisJob(workload kube.Object, gvk schema.GroupVersio
 						kube.LabelResourceNamespace: workload.Namespace,
 					},
 				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName:           starboard.ServiceAccountName,
-					AutomountServiceAccountToken: pointer.BoolPtr(true),
-					RestartPolicy:                corev1.RestartPolicyNever,
-					Affinity:                     starboard.LinuxNodeAffinity(),
-					Volumes: []corev1.Volume{
-						{
-							Name: configVolume,
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: starboard.ConfigMapName,
-									},
-								},
-							},
-						},
-					},
-					Containers: []corev1.Container{
-						{
-							Name:                     polarisContainerName,
-							Image:                    imageRef,
-							ImagePullPolicy:          corev1.PullIfNotPresent,
-							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("300m"),
-									corev1.ResourceMemory: resource.MustParse("300M"),
-								},
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("50m"),
-									corev1.ResourceMemory: resource.MustParse("50M"),
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      configVolume,
-									MountPath: "/etc/starboard",
-								},
-							},
-							Command: []string{"polaris"},
-							Args: []string{"audit",
-								"--log-level", "error",
-								"--config", "/etc/starboard/polaris.config.yaml",
-								"--resource", sourceName},
+				Spec: jobSpec,
+			},
+		},
+	}, nil
+}
+
+///// Polaris specific code that should stay in this package /////
+
+type Config interface {
+	GetPolarisImageRef() (string, error)
+}
+
+type plugin struct {
+	config    Config
+	converter Converter
+}
+
+// NewPlugin constructs a new configauditreport.Plugin, which is using an
+// official Polaris container image to audit Kubernetes workloads.
+func NewPlugin(config Config) configauditreport.Plugin {
+	return &plugin{
+		config:    config,
+		converter: NewConverter(config),
+	}
+}
+
+func (s *plugin) GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, error) {
+	imageRef, err := s.config.GetPolarisImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, err
+	}
+	sourceName := s.sourceNameFrom(workload, gvk)
+
+	return corev1.PodSpec{
+		ServiceAccountName:           starboard.ServiceAccountName,
+		AutomountServiceAccountToken: pointer.BoolPtr(true),
+		RestartPolicy:                corev1.RestartPolicyNever,
+		Affinity:                     starboard.LinuxNodeAffinity(),
+		Volumes: []corev1.Volume{
+			{
+				Name: configVolume,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
 						},
 					},
 				},
 			},
 		},
+		Containers: []corev1.Container{
+			{
+				Name:                     polarisContainerName,
+				Image:                    imageRef,
+				ImagePullPolicy:          corev1.PullIfNotPresent,
+				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("300m"),
+						corev1.ResourceMemory: resource.MustParse("300M"),
+					},
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("50m"),
+						corev1.ResourceMemory: resource.MustParse("50M"),
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      configVolume,
+						MountPath: "/etc/starboard",
+					},
+				},
+				Command: []string{"polaris"},
+				Args: []string{
+					"audit",
+					"--log-level", "error",
+					"--config", "/etc/starboard/polaris.config.yaml",
+					"--resource", sourceName,
+				},
+			},
+		},
 	}, nil
+}
+
+func (s *plugin) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKind) string {
+	group := gvk.Group
+	if len(group) > 0 {
+		group = "." + group
+	}
+	return fmt.Sprintf("%s/%s%s/%s/%s",
+		workload.Namespace,
+		gvk.Kind,
+		group,
+		gvk.Version,
+		workload.Name,
+	)
+}
+
+func (s *plugin) ParseConfigAuditResult(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+	return s.converter.Convert(logsReader)
 }

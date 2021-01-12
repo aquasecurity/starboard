@@ -60,7 +60,8 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		report, err := polaris.NewScanner(starboard.NewScheme(), kubeClientset, config, opts).Scan(ctx, workload, gvk)
+		plugin := polaris.NewPlugin(config)
+		report, err := polaris.NewScanner(starboard.NewScheme(), kubeClientset, opts, plugin).Scan(ctx, workload, gvk)
 		if err != nil {
 			return err
 		}
