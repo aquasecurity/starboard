@@ -1,5 +1,0 @@
-packageName: starboard-operator
-channels:
-  - name: alpha
-    currentCSV: starboard-operator.v0.7.0
-defaultChannel: alpha

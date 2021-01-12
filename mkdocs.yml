@@ -24,7 +24,7 @@ nav:
           - Operator Lifecycle Manager: operator/installation/olm.md
       - Getting Started: operator/getting-started.md
       - Configuration: operator/configuration.md
-  - Configuration: configuration.md
+  - Starboard Settings: settings.md
   - Integrations:
       - Vulnerability Scanners:
           - Overview: integrations/vulnerability-scanners/index.md

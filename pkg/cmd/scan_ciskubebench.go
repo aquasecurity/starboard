@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	corev1 "k8s.io/api/core/v1"
-
-	apis "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
-	"github.com/aquasecurity/starboard/pkg/kubebench/crd"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -50,7 +47,7 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := apis.NewForConfig(kubernetesConfig)
+		starboardClientset, err := versioned.NewForConfig(kubernetesConfig)
 		if err != nil {
 			return err
 		}
@@ -65,7 +62,7 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 
 		scheme := starboard.NewScheme()
 		scanner := kubebench.NewScanner(scheme, kubernetesClientset, config, opts)
-		writer := crd.NewReadWriter(scheme, starboardClientset)
+		writer := kubebench.NewReadWriter(scheme, starboardClientset)
 
 		var wg sync.WaitGroup
 
