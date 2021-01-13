@@ -95,8 +95,8 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			plugin := polaris.NewPlugin(tc.config)
 			jobSpec, err := plugin.GetScanJobSpec(tc.workload, tc.gvk)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedJobSpec, jobSpec)
+			require.NoError(t, err, tc.name)
+			assert.Equal(t, tc.expectedJobSpec, jobSpec, tc.name)
 		})
 	}
 

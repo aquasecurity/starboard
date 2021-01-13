@@ -16,6 +16,5 @@ import (
 type Plugin interface {
 	GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, error)
 
-	ParseConfigAuditResult(logsReader io.ReadCloser) (
-		v1alpha1.ConfigAuditResult, error)
+	ParseConfigAuditResult(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error)
 }
