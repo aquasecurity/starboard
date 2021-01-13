@@ -9,10 +9,10 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.5.1
-	github.com/valyala/quicktemplate v1.6.2
+	github.com/stretchr/testify v1.7.0
+	github.com/valyala/quicktemplate v1.6.3
 	k8s.io/api v0.18.6
 	k8s.io/apiextensions-apiserver v0.18.6
 	k8s.io/apimachinery v0.18.6

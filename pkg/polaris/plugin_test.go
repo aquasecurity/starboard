@@ -118,59 +118,60 @@ func TestPlugin_GetContainerName(t *testing.T) {
 }
 
 func TestPlugin_ParseConfigAuditResult(t *testing.T) {
-	file, err := os.Open("testdata/polaris-report.json")
+	testReport, err := os.Open("testdata/polaris-report.json")
 	require.NoError(t, err)
 	defer func() {
-		_ = file.Close()
+		_ = testReport.Close()
 	}()
 
 	config := starboard.ConfigData{
 		"polaris.imageRef": "quay.io/fairwinds/polaris:3.0",
 	}
 	plugin := polaris.NewPlugin(fixedClock, config)
-	result, err := plugin.ParseConfigAuditResult(file)
+	result, err := plugin.ParseConfigAuditResult(testReport)
 	require.NoError(t, err)
-	assert.Equal(t, v1alpha1.ConfigAuditResult{
-
-		UpdateTimestamp: metav1.NewTime(fixedTime),
-		Scanner: v1alpha1.Scanner{
-			Name:    "Polaris",
-			Vendor:  "Fairwinds Ops",
-			Version: "3.0",
+	assert.Equal(t, metav1.NewTime(fixedTime), result.UpdateTimestamp)
+	assert.Equal(t, v1alpha1.Scanner{
+		Name:    "Polaris",
+		Vendor:  "Fairwinds Ops",
+		Version: "3.0",
+	}, result.Scanner)
+	assert.Equal(t, v1alpha1.ConfigAuditSummary{
+		DangerCount:  1,
+		WarningCount: 1,
+	}, result.Summary)
+	assert.ElementsMatch(t, []v1alpha1.Check{
+		{
+			ID:       "hostIPCSet",
+			Message:  "Host IPC is not configured",
+			Success:  false,
+			Severity: "danger",
+			Category: "Security",
 		},
-		PodChecks: []v1alpha1.Check{
+		{
+			ID:       "hostNetworkSet",
+			Message:  "Host network is not configured",
+			Success:  true,
+			Severity: "warning",
+			Category: "Networking",
+		},
+	}, result.PodChecks)
+	assert.Equal(t, map[string][]v1alpha1.Check{
+		"db": {
 			{
-				ID:       "hostIPCSet",
-				Message:  "Host IPC is not configured",
-				Success:  true,
-				Severity: "error",
-				Category: "Security",
+				ID:       "cpuLimitsMissing",
+				Message:  "CPU limits are set",
+				Success:  false,
+				Severity: "warning",
+				Category: "Resources",
 			},
 			{
-				ID:       "hostNetworkSet",
-				Message:  "Host network is not configured",
+				ID:       "cpuRequestsMissing",
+				Message:  "CPU requests are set",
 				Success:  true,
 				Severity: "warning",
-				Category: "Networking",
+				Category: "Resources",
 			},
 		},
-		ContainerChecks: map[string][]v1alpha1.Check{
-			"db": {
-				{
-					ID:       "cpuLimitsMissing",
-					Message:  "CPU limits are set",
-					Success:  true,
-					Severity: "warning",
-					Category: "Resources",
-				},
-				{
-					ID:       "cpuRequestsMissing",
-					Message:  "CPU requests are set",
-					Success:  true,
-					Severity: "warning",
-					Category: "Resources",
-				},
-			},
-		},
-	}, result)
+	}, result.ContainerChecks)
 }
