@@ -11,7 +11,7 @@ import (
 
 // Plugin defines the interface between Starboard and Kubernetes workload
 // configuration checkers / linters / sanitizers. Not a final version, rather
-// first step to separate generic workloads discovery code and Polars
+// first step to separate generic workloads discovery code and Polaris
 // implementation details.
 type Plugin interface {
 	GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, error)
