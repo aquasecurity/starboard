@@ -160,7 +160,7 @@ func (pw *Manager) GetPodByJob(ctx context.Context, job *batch.Job) (*core.Pod, 
 	if err != nil {
 		return nil, err
 	}
-	if len(podList.Items) > 0 {
+	if podList != nil && len(podList.Items) > 0 {
 		return &podList.Items[0], nil
 	}
 	return nil, nil
