@@ -23,8 +23,8 @@
           "hostIPCSet": {
             "ID": "hostIPCSet",
             "Message": "Host IPC is not configured",
-            "Success": true,
-            "Severity": "error",
+            "Success": false,
+            "Severity": "danger",
             "Category": "Security"
           },
           "hostNetworkSet": {
@@ -42,7 +42,7 @@
               "cpuLimitsMissing": {
                 "ID": "cpuLimitsMissing",
                 "Message": "CPU limits are set",
-                "Success": true,
+                "Success": false,
                 "Severity": "warning",
                 "Category": "Resources"
               },
