@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -60,15 +61,17 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		plugin := polaris.NewPlugin(config)
-		report, err := polaris.NewScanner(starboard.NewScheme(), kubeClientset, opts, plugin).Scan(ctx, workload, gvk)
+		plugin := polaris.NewPlugin(ext.NewSystemClock(), config)
+		scanner := configauditreport.NewScanner(starboard.NewScheme(), kubeClientset, opts, plugin)
+		report, err := scanner.Scan(ctx, workload, gvk)
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := starboardapi.NewForConfig(kubeConfig)
+		starboardClientset, err := versioned.NewForConfig(kubeConfig)
 		if err != nil {
 			return nil
 		}
-		return configauditreport.NewReadWriter(starboardClientset).Write(ctx, report)
+		writer := configauditreport.NewReadWriter(starboardClientset)
+		return writer.Write(ctx, report)
 	}
 }
