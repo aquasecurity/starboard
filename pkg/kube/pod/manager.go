@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"io"
 
-	"k8s.io/klog"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
-
 	apps "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 )
 
 type Manager struct {
@@ -123,6 +121,9 @@ func (pw *Manager) GetTerminatedContainersStatusesByJob(ctx context.Context, job
 
 func GetTerminatedContainersStatusesByPod(pod *core.Pod) map[string]*core.ContainerStateTerminated {
 	states := make(map[string]*core.ContainerStateTerminated)
+	if pod == nil {
+		return states
+	}
 	for _, status := range pod.Status.InitContainerStatuses {
 		if status.State.Terminated == nil {
 			continue
@@ -159,7 +160,10 @@ func (pw *Manager) GetPodByJob(ctx context.Context, job *batch.Job) (*core.Pod, 
 	if err != nil {
 		return nil, err
 	}
-	return &podList.Items[0], nil
+	if podList != nil && len(podList.Items) > 0 {
+		return &podList.Items[0], nil
+	}
+	return nil, nil
 }
 
 func (pw *Manager) GetPodLogs(ctx context.Context, pod *core.Pod, container string) (io.ReadCloser, error) {
@@ -185,17 +189,4 @@ func (pw *Manager) logTerminatedContainersErrors(statuses map[string]*core.Conta
 		}
 		klog.Errorf("Container %s terminated with %s: %s", container, status.Reason, status.Message)
 	}
-}
-
-// GetImages gets a slice of images for the specified PodSpec.
-func GetImages(spec core.PodSpec) (images []string) {
-	for _, c := range spec.InitContainers {
-		images = append(images, c.Image)
-	}
-
-	for _, c := range spec.Containers {
-		images = append(images, c.Image)
-	}
-
-	return
 }

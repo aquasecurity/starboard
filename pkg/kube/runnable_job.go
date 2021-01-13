@@ -57,7 +57,8 @@ func (r *runnableJob) Run(ctx context.Context) error {
 		defaultResyncDuration,
 		informers.WithNamespace(r.job.Namespace),
 	)
-	jobInformer := informerFactory.Batch().V1().Jobs()
+	jobsInformer := informerFactory.Batch().V1().Jobs()
+	eventsInformer := informerFactory.Core().V1().Events()
 
 	var err error
 
@@ -90,8 +91,8 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	complete := make(chan error)
 
-	jobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: func(oldObj, newObj interface{}) {
+	jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(_, newObj interface{}) {
 			newJob, ok := newObj.(*batchv1.Job)
 			if !ok {
 				return
@@ -109,6 +110,28 @@ func (r *runnableJob) Run(ctx context.Context) error {
 			case batchv1.JobFailed:
 				klog.V(3).Infof("Stopping runnable job on task failure with status: %s", batchv1.JobFailed)
 				complete <- fmt.Errorf("job failed: %s: %s", condition.Reason, condition.Message)
+			}
+		},
+	})
+
+	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			event := obj.(*corev1.Event)
+
+			// TODO We might want to look into events associate with the pod controlled by the current scan job.
+			// For example, when a pod cannot be scheduled due to insufficient resource requests,
+			// the event will be attached to the pod, not the job.
+			if event.InvolvedObject.UID != r.job.UID {
+				return
+			}
+
+			if event.Type == corev1.EventTypeNormal {
+				klog.V(3).Infof("Event: %s (%s)", event.Message, event.Reason)
+			}
+
+			if event.Type == corev1.EventTypeWarning {
+				complete <- fmt.Errorf("warning event received: %s (%s)", event.Message, event.Reason)
+				return
 			}
 		},
 	})
