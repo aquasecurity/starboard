@@ -40,5 +40,8 @@ nav:
 
 theme:
   name: material
-  highlightjs: true
   language: 'en'
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
