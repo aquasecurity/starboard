@@ -31,8 +31,7 @@ type JobController struct {
 	controller.Reconciler
 }
 
-func (r *JobController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.WithValues("job", req.NamespacedName)
 
 	if req.Namespace != r.Namespace {

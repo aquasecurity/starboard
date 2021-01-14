@@ -193,7 +193,7 @@ func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, s
 
 // TODO Add to utilities used both by CLI and Operator
 func (r *reconciler) getRuntimeObjectFor(ctx context.Context, workload kube.Object) (metav1.Object, error) {
-	var obj runtime.Object
+	var obj client.Object
 	switch workload.Kind {
 	case kube.KindPod:
 		obj = &corev1.Pod{}

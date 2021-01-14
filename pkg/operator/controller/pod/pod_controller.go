@@ -28,8 +28,7 @@ type PodController struct {
 	controller.Reconciler
 }
 
-func (r *PodController) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	pod := &corev1.Pod{}
 
 	log := log.WithValues("pod", req.NamespacedName)
