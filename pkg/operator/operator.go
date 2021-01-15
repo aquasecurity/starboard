@@ -29,14 +29,14 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	setupLog.Info("Starting operator", "buildInfo", buildInfo)
 
 	// Validate configured namespaces to resolve install mode.
-	operatorNamespace, err := operatorConfig.Operator.GetOperatorNamespace()
+	operatorNamespace, err := operatorConfig.GetOperatorNamespace()
 	if err != nil {
 		return fmt.Errorf("getting operator namespace: %w", err)
 	}
 
-	targetNamespaces := operatorConfig.Operator.GetTargetNamespaces()
+	targetNamespaces := operatorConfig.GetTargetNamespaces()
 
-	installMode, err := operatorConfig.Operator.GetInstallMode()
+	installMode, err := operatorConfig.GetInstallMode()
 	if err != nil {
 		return fmt.Errorf("getting install mode: %w", err)
 	}
@@ -47,8 +47,8 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	// Set the default manager options.
 	options := manager.Options{
 		Scheme:                 starboard.NewScheme(),
-		MetricsBindAddress:     operatorConfig.Operator.MetricsBindAddress,
-		HealthProbeBindAddress: operatorConfig.Operator.HealthProbeBindAddress,
+		MetricsBindAddress:     operatorConfig.MetricsBindAddress,
+		HealthProbeBindAddress: operatorConfig.HealthProbeBindAddress,
 	}
 
 	switch installMode {
@@ -124,12 +124,12 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	analyzer := controller.NewAnalyzer(operatorConfig.Operator,
+	analyzer := controller.NewAnalyzer(operatorConfig,
 		store,
 		mgr.GetClient())
 
 	reconciler := controller.NewReconciler(mgr.GetScheme(),
-		operatorConfig.Operator,
+		operatorConfig,
 		mgr.GetClient(),
 		store,
 		idGenerator,
@@ -137,7 +137,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		logs.NewReader(kubernetesClientset))
 
 	if err = (&pod.PodController{
-		Operator:   operatorConfig.Operator,
+		Config:     operatorConfig,
 		Client:     mgr.GetClient(),
 		Analyzer:   analyzer,
 		Reconciler: reconciler,
@@ -146,7 +146,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	if err = (&job.JobController{
-		Operator:   operatorConfig.Operator,
+		Config:     operatorConfig,
 		Client:     mgr.GetClient(),
 		Analyzer:   analyzer,
 		Reconciler: reconciler,

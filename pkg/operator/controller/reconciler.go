@@ -32,7 +32,7 @@ type Reconciler interface {
 }
 
 func NewReconciler(scheme *runtime.Scheme,
-	config etc.Operator,
+	config etc.Config,
 	client client.Client,
 	store vulnerabilityreport.ReadWriter,
 	idGenerator ext.IDGenerator,
@@ -53,7 +53,7 @@ func NewReconciler(scheme *runtime.Scheme,
 
 type reconciler struct {
 	scheme      *runtime.Scheme
-	config      etc.Operator
+	config      etc.Config
 	client      client.Client
 	store       vulnerabilityreport.ReadWriter
 	idGenerator ext.IDGenerator

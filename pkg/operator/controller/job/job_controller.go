@@ -25,7 +25,7 @@ var (
 )
 
 type JobController struct {
-	etc.Operator
+	etc.Config
 	client.Client
 	controller.Analyzer
 	controller.Reconciler

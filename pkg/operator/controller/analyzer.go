@@ -18,7 +18,7 @@ type Analyzer interface {
 	IsConcurrentScanJobsLimitExceeded(ctx context.Context) (bool, int, error)
 }
 
-func NewAnalyzer(config etc.Operator, store vulnerabilityreport.ReadWriter, client client.Client) Analyzer {
+func NewAnalyzer(config etc.Config, store vulnerabilityreport.ReadWriter, client client.Client) Analyzer {
 	return &analyzer{
 		config: config,
 		store:  store,
@@ -27,7 +27,7 @@ func NewAnalyzer(config etc.Operator, store vulnerabilityreport.ReadWriter, clie
 }
 
 type analyzer struct {
-	config etc.Operator
+	config etc.Config
 	client client.Client
 	store  vulnerabilityreport.ReadWriter
 }

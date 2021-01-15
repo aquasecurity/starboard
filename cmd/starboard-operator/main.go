@@ -40,7 +40,7 @@ func run() error {
 		return fmt.Errorf("getting operator config: %w", err)
 	}
 
-	log.SetLogger(zap.New(zap.UseDevMode(operatorConfig.Operator.LogDevMode)))
+	log.SetLogger(zap.New(zap.UseDevMode(operatorConfig.LogDevMode)))
 
 	setupLog.Info("Starting operator", "buildInfo", buildInfo)
 
