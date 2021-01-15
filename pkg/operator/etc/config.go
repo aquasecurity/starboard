@@ -9,10 +9,6 @@ import (
 )
 
 type Config struct {
-	Operator Operator
-}
-
-type Operator struct {
 	Namespace               string        `env:"OPERATOR_NAMESPACE"`
 	TargetNamespaces        string        `env:"OPERATOR_TARGET_NAMESPACES"`
 	ServiceAccount          string        `env:"OPERATOR_SERVICE_ACCOUNT" envDefault:"starboard-operator"`
@@ -31,7 +27,7 @@ func GetOperatorConfig() (Config, error) {
 }
 
 // GetOperatorNamespace returns the namespace the operator should be running in.
-func (c Operator) GetOperatorNamespace() (string, error) {
+func (c Config) GetOperatorNamespace() (string, error) {
 	namespace := c.Namespace
 	if namespace != "" {
 		return namespace, nil
@@ -40,7 +36,7 @@ func (c Operator) GetOperatorNamespace() (string, error) {
 }
 
 // GetTargetNamespaces returns namespaces the operator should be watching for changes.
-func (c Operator) GetTargetNamespaces() []string {
+func (c Config) GetTargetNamespaces() []string {
 	namespaces := c.TargetNamespaces
 	if namespaces != "" {
 		return strings.Split(namespaces, ",")
@@ -59,7 +55,7 @@ const (
 )
 
 // GetInstallMode resolves InstallMode based on configured operator and target namespaces.
-func (c Operator) GetInstallMode() (InstallMode, error) {
+func (c Config) GetInstallMode() (InstallMode, error) {
 	operatorNamespace, err := c.GetOperatorNamespace()
 	if err != nil {
 		return "", nil

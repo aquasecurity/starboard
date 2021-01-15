@@ -11,26 +11,26 @@ import (
 func TestOperator_GetTargetNamespaces(t *testing.T) {
 	testCases := []struct {
 		name                     string
-		operator                 etc.Operator
+		operator                 etc.Config
 		expectedTargetNamespaces []string
 	}{
 		{
 			name: "Should return all namespaces",
-			operator: etc.Operator{
+			operator: etc.Config{
 				TargetNamespaces: "",
 			},
 			expectedTargetNamespaces: []string{},
 		},
 		{
 			name: "Should return single namespace",
-			operator: etc.Operator{
+			operator: etc.Config{
 				TargetNamespaces: "operators",
 			},
 			expectedTargetNamespaces: []string{"operators"},
 		},
 		{
 			name: "Should return multiple namespaces",
-			operator: etc.Operator{
+			operator: etc.Config{
 				TargetNamespaces: "foo,bar,baz",
 			},
 			expectedTargetNamespaces: []string{"foo", "bar", "baz"},
@@ -48,13 +48,13 @@ func TestOperator_GetInstallMode(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		operator            etc.Operator
+		operator            etc.Config
 		expectedInstallMode etc.InstallMode
 		expectedError       string
 	}{
 		{
 			name: "Should resolve OwnNamespace",
-			operator: etc.Operator{
+			operator: etc.Config{
 				Namespace:        "operators",
 				TargetNamespaces: "operators",
 			},
@@ -63,7 +63,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 		},
 		{
 			name: "Should resolve SingleNamespace",
-			operator: etc.Operator{
+			operator: etc.Config{
 				Namespace:        "operators",
 				TargetNamespaces: "foo",
 			},
@@ -72,7 +72,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 		},
 		{
 			name: "Should resolve MultiNamespace",
-			operator: etc.Operator{
+			operator: etc.Config{
 				Namespace:        "operators",
 				TargetNamespaces: "foo,bar,baz",
 			},
@@ -81,7 +81,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 		},
 		{
 			name: "Should resolve AllNamespaces",
-			operator: etc.Operator{
+			operator: etc.Config{
 				Namespace:        "operators",
 				TargetNamespaces: "",
 			},
