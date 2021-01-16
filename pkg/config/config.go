@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/aqua"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/trivy"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -25,9 +25,9 @@ func GetVulnerabilityReportPlugin(buildInfo starboard.BuildInfo, config starboar
 	}
 	switch scanner {
 	case starboard.Trivy:
-		return trivy.NewScannerPlugin(ext.NewGoogleUUIDGenerator(), config), nil
+		return trivy.NewPlugin(ext.NewGoogleUUIDGenerator(), config), nil
 	case starboard.Aqua:
-		return aqua.NewScannerPlugin(ext.NewGoogleUUIDGenerator(), buildInfo, config), nil
+		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), buildInfo, config), nil
 	}
 	return nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
 }

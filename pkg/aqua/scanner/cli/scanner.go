@@ -8,11 +8,10 @@ import (
 	"os/exec"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua/client"
+	"github.com/aquasecurity/starboard/pkg/aqua/client"
 	"github.com/google/go-containerregistry/pkg/name"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Scanner struct {
