@@ -26,9 +26,9 @@ type scanner struct {
 	config      Config
 }
 
-// NewScanner constructs a new vulnerability scanner Plugin, which is using
-// the Aqua to scan container images of Kubernetes workloads.
-func NewScannerPlugin(
+// NewPlugin constructs a new vulnerabilityreport.Plugin, which is using
+// the Aqua Enterprise to scan container images of Kubernetes workloads.
+func NewPlugin(
 	idGenerator ext.IDGenerator,
 	buildInfo starboard.BuildInfo,
 	config Config,

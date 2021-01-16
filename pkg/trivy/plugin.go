@@ -43,7 +43,7 @@ type Config interface {
 	GetTrivyServerURL() (string, error)
 }
 
-// NewScanner constructs a new vulnerabilityreport.Plugin, which is using an
+// NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
 // official Trivy container image to scan Kubernetes workloads.
 //
 // This Plugin supports both starboard.Standalone and starboard.ClientServer
@@ -51,7 +51,7 @@ type Config interface {
 //
 // The starboard.ClientServer mode is usually more performant, however it
 // requires a Trivy server accessible at the configurable URL.
-func NewScannerPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
+func NewPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
 	return &scanner{
 		idGenerator: idGenerator,
 		config:      config,

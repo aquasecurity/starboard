@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua/client"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua/scanner/api"
-	"github.com/aquasecurity/starboard/pkg/operator/aqua/scanner/cli"
+	"github.com/aquasecurity/starboard/pkg/aqua/client"
+	"github.com/aquasecurity/starboard/pkg/aqua/scanner/api"
+	"github.com/aquasecurity/starboard/pkg/aqua/scanner/cli"
 	"github.com/spf13/cobra"
 )
 

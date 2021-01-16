@@ -276,7 +276,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			jobSpec, secrets, err := trivy.NewScannerPlugin(ext.NewSimpleIDGenerator(), tc.config).
+			jobSpec, secrets, err := trivy.NewPlugin(ext.NewSimpleIDGenerator(), tc.config).
 				GetScanJobSpec(tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
