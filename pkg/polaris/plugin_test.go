@@ -156,22 +156,21 @@ func TestPlugin_ParseConfigAuditResult(t *testing.T) {
 			Category: "Networking",
 		},
 	}, result.PodChecks)
-	assert.Equal(t, map[string][]v1alpha1.Check{
-		"db": {
-			{
-				ID:       "cpuLimitsMissing",
-				Message:  "CPU limits are set",
-				Success:  false,
-				Severity: "warning",
-				Category: "Resources",
-			},
-			{
-				ID:       "cpuRequestsMissing",
-				Message:  "CPU requests are set",
-				Success:  true,
-				Severity: "warning",
-				Category: "Resources",
-			},
+	assert.Len(t, result.ContainerChecks, 1)
+	assert.ElementsMatch(t, []v1alpha1.Check{
+		{
+			ID:       "cpuLimitsMissing",
+			Message:  "CPU limits are set",
+			Success:  false,
+			Severity: "warning",
+			Category: "Resources",
 		},
-	}, result.ContainerChecks)
+		{
+			ID:       "cpuRequestsMissing",
+			Message:  "CPU requests are set",
+			Success:  true,
+			Severity: "warning",
+			Category: "Resources",
+		},
+	}, result.ContainerChecks["db"])
 }
