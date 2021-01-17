@@ -137,6 +137,7 @@ func TestPlugin_ParseConfigAuditResult(t *testing.T) {
 		Version: "3.0",
 	}, result.Scanner)
 	assert.Equal(t, v1alpha1.ConfigAuditSummary{
+		PassCount:    2,
 		DangerCount:  1,
 		WarningCount: 1,
 	}, result.Summary)

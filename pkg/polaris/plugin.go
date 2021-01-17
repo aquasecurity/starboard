@@ -177,11 +177,11 @@ func (p *plugin) configAuditResultFrom(result Result) (v1alpha1.ConfigAuditResul
 	}, nil
 }
 
-// TODO Add success checks count to the ConfigAuditSummary
 func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChecks map[string][]v1alpha1.Check) v1alpha1.ConfigAuditSummary {
 	var summary v1alpha1.ConfigAuditSummary
 	for _, c := range podChecks {
 		if c.Success {
+			summary.PassCount++
 			continue
 		}
 		switch c.Severity {
@@ -194,6 +194,7 @@ func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChe
 	for _, checks := range containerChecks {
 		for _, c := range checks {
 			if c.Success {
+				summary.PassCount++
 				continue
 			}
 			switch c.Severity {
