@@ -52,6 +52,12 @@ var (
 					Name:     "Age",
 				},
 				{
+					JSONPath: ".report.summary.passCount",
+					Type:     "integer",
+					Name:     "Pass",
+					Priority: 1,
+				},
+				{
 					JSONPath: ".report.summary.dangerCount",
 					Type:     "integer",
 					Name:     "Danger",
@@ -74,6 +80,7 @@ const (
 )
 
 type ConfigAuditSummary struct {
+	PassCount    int `json:"passCount"`
 	DangerCount  int `json:"dangerCount"`
 	WarningCount int `json:"warningCount"`
 }
