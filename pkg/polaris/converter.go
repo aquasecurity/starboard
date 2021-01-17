@@ -33,11 +33,11 @@ func (c *converter) Convert(reader io.Reader) (v1alpha1.ConfigAuditResult, error
 	return c.toConfigAudit(report.Results[0])
 }
 
-// TODO Add success checks to the summary
 func (c *converter) toSummary(podChecks []v1alpha1.Check, containerChecks map[string][]v1alpha1.Check) v1alpha1.ConfigAuditSummary {
 	var summary v1alpha1.ConfigAuditSummary
 	for _, c := range podChecks {
 		if c.Success {
+			summary.PassCount++
 			continue
 		}
 		switch c.Severity {
@@ -50,6 +50,7 @@ func (c *converter) toSummary(podChecks []v1alpha1.Check, containerChecks map[st
 	for _, checks := range containerChecks {
 		for _, c := range checks {
 			if c.Success {
+				summary.PassCount++
 				continue
 			}
 			switch c.Severity {
@@ -87,7 +88,6 @@ func (c *converter) toConfigAudit(result Result) (v1alpha1.ConfigAuditResult, er
 				Severity: crr.Severity,
 				Category: crr.Category,
 			})
-
 		}
 		containerChecks[cr.Name] = checks
 	}
