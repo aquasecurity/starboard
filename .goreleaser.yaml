@@ -56,7 +56,7 @@ dockers:
     image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}"
       - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}"
-    binaries:
+    ids:
       - starboard
     build_flag_templates:
       - "--label=org.label-schema.schema-version=1.0"
@@ -71,7 +71,7 @@ dockers:
     image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}"
       - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}"
-    binaries:
+    ids:
       - starboard-operator
     build_flag_templates:
       - "--label=org.label-schema.schema-version=1.0"
@@ -86,7 +86,7 @@ dockers:
     image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
       - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}"
-    binaries:
+    ids:
       - starboard-scanner-aqua
     build_flag_templates:
       - "--label=org.label-schema.schema-version=1.0"

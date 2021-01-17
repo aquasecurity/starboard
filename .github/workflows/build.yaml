@@ -28,8 +28,8 @@ env:
   KIND_VERSION: "v0.9.0"
   KIND_IMAGE: "kindest/node:v1.18.8@sha256:f4bcc97a0ad6e7abaf3f643d890add7efe6ee4ab90baeb374b4f41a4c95567eb"
 jobs:
-  build:
-    name: Build
+  release-snapshot:
+    name: Release unversioned snapshot
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -38,16 +38,10 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: yaml-lint
-        uses: ibiqlik/action-yamllint@v3
-      - name: Vendor Go modules
-        run: go mod vendor
-      - name: Verify generated code
-        run: GOPATH="$(go env GOPATH)" ./hack/verify-codegen.sh
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.145.0
+          version: v0.155.0
           args: release --snapshot --skip-publish --rm-dist
   unit-tests:
     name: Run unit tests
@@ -125,3 +119,19 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           files: ./itest/starboard-operator/coverage.txt
+  verify-code:
+    name: Verify code
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Verify YAML code
+        uses: ibiqlik/action-yamllint@v3
+      - name: Vendor Go modules
+        run: go mod vendor
+      - name: Verify generated Go code
+        run: GOPATH="$(go env GOPATH)" ./hack/verify-codegen.sh
