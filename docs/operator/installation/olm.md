@@ -63,8 +63,8 @@ multitenancy, and Subscription that links everything together to run the operato
               value: "true"
         EOF
    The operator will be installed in the `starboard-operator` namespace and will be usable from the `default` namespace.
-   > **NOTE** The `spec.config` property allows you to override the default [configuration](./../configuration.md) of
-   > the operator's Deployment.
+   Note that the `spec.config` property allows you to override the default [configuration](./../configuration.md) of
+   the operator's Deployment.
 
 6. After install, watch the operator come up using the following command:
 
@@ -80,7 +80,6 @@ multitenancy, and Subscription that links everything together to run the operato
    If for some reason it's not ready yet, check the logs of the Deployment for errors:
 
         kubectl logs deployment/starboard-operator -n starboard-operator
-   In case of any error consult our [Troubleshooting](./../../troubleshooting.md) guidelines.
 
 ## Uninstall
 

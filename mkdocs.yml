@@ -16,6 +16,7 @@ nav:
           - Docker: cli/installation/docker.md
           - From Source (Linux, macOS): cli/installation/source.md
       - Getting Started: cli/getting-started.md
+      - Troubleshooting: cli/troubleshooting.md
   - Starboard Operator:
       - Overview: operator/index.md
       - Installation:
@@ -36,7 +37,6 @@ nav:
       - Lens Extension: integrations/lens.md
   - Custom Resource Definitions: crds.md
   - Frequently Asked Questions: faq.md
-  - Troubleshooting: troubleshooting.md
 
 theme:
   name: material
@@ -45,3 +45,4 @@ theme:
 markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
+  - admonition

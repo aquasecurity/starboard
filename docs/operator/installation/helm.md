@@ -51,7 +51,6 @@ configure it to watch the `default` namespaces:
    errors:
 
         kubectl logs deployment/starboard-operator -n starboard-operator
-   In case of any error consult our [Troubleshooting](./../../troubleshooting.md) guidelines.
 
 ## Uninstall
 

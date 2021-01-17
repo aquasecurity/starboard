@@ -14,9 +14,10 @@ as custom resources.
   instructions on other operating systems and package managers, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 
-> **NOTE** In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
-> location respected by Octant. Note that the default location might be changed by setting the `OCTANT_PLUGIN_PATH`
-> environment variable when running Octant.
+!!! tip
+    In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
+    location respected by Octant. Note that the default location might be changed by setting the `OCTANT_PLUGIN_PATH`
+    environment variable when running Octant.
 
 ### From the Binary Releases
 
