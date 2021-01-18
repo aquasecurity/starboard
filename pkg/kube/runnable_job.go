@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -141,4 +142,11 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	err = <-complete
 	return err
+}
+
+func GetActiveDeadlineSeconds(d time.Duration) *int64 {
+	if d > 0 {
+		return pointer.Int64Ptr(int64(d.Seconds()))
+	}
+	return nil
 }

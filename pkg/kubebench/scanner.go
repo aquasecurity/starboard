@@ -8,7 +8,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
-	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
@@ -119,7 +118,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
+			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
