@@ -11,7 +11,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/logs"
 	"github.com/aquasecurity/starboard/pkg/resources"
-	"github.com/aquasecurity/starboard/pkg/scanners"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -106,7 +105,7 @@ func (r *reconciler) SubmitScanJob(ctx context.Context, spec corev1.PodSpec, own
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
 			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: scanners.GetActiveDeadlineSeconds(r.config.ScanJobTimeout),
+			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(r.config.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
