@@ -5,15 +5,14 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
-
-	"k8s.io/apimachinery/pkg/types"
-
-	"github.com/aquasecurity/starboard/pkg/resources"
-
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+	"github.com/aquasecurity/starboard/pkg/resources"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -38,6 +37,7 @@ func (r *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, fmt.Errorf("getting install mode: %w", err)
 	}
 
+	// TODO Consider using a predicate
 	if r.IgnorePodInOperatorNamespace(installMode, req.NamespacedName) {
 		log.V(1).Info("Ignoring Pod run in the operator namespace")
 		return ctrl.Result{}, nil
@@ -51,24 +51,6 @@ func (r *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("getting pod from cache: %w", err)
-	}
-
-	// Check if the Pod is managed by the operator, i.e. is controlled by a scan Job created by the PodController.
-	if IsPodManagedByStarboardOperator(pod) {
-		log.V(1).Info("Ignoring Pod managed by this operator")
-		return ctrl.Result{}, nil
-	}
-
-	// Check if the Pod is being terminated.
-	if pod.DeletionTimestamp != nil {
-		log.V(1).Info("Ignoring Pod that is being terminated")
-		return ctrl.Result{}, nil
-	}
-
-	// Check if the Pod containers are ready.
-	if !resources.HasContainersReadyCondition(pod) {
-		log.V(1).Info("Ignoring Pod that is being scheduled")
-		return ctrl.Result{}, nil
 	}
 
 	owner := resources.GetImmediateOwnerReference(pod)
@@ -143,19 +125,13 @@ func (r *PodController) IgnorePodInOperatorNamespace(installMode etc.InstallMode
 	return false
 }
 
-// IsPodManagedByStarboardOperator returns true if the specified Pod
-// is managed by the Starboard Operator, false otherwise.
-//
-// We define managed Pods as ones controlled by Jobs created by the Starboard Operator.
-// They're labeled with `app.kubernetes.io/managed-by=starboard-operator`.
-func IsPodManagedByStarboardOperator(pod *corev1.Pod) bool {
-	managedBy, exists := pod.Labels["app.kubernetes.io/managed-by"]
-	return exists && managedBy == "starboard-operator"
-}
-
 func (r *PodController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Pod{}).
+		For(&corev1.Pod{}, builder.WithPredicates(
+			Not(ManagedByStarboardOperator),
+			Not(PodBeingTerminated),
+			PodHasContainersReadyCondition,
+		)).
 		Complete(r)
 }
 

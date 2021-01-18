@@ -84,6 +84,7 @@ itests-starboard-operator: check-env get-ginkgo
 	--v \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
 	github.com/aquasecurity/starboard/pkg/operator/controller,\
 	github.com/aquasecurity/starboard/pkg/operator/controller/job,\
 	github.com/aquasecurity/starboard/pkg/operator/controller/pod,\

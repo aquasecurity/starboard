@@ -5,14 +5,12 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/davecgh/go-spew/spew"
-	"k8s.io/apimachinery/pkg/util/rand"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/davecgh/go-spew/spew"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 func GetContainerImagesFromPodSpec(spec corev1.PodSpec) kube.ContainerImages {
@@ -36,17 +34,6 @@ func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
 		return nil, fmt.Errorf("parsing job annotation: %s: %w", kube.AnnotationContainerImages, err)
 	}
 	return containerImages, nil
-}
-
-// HasContainersReadyCondition iterates conditions of the specified Pod to check
-// whether all containers in the Pod are ready.
-func HasContainersReadyCondition(pod *corev1.Pod) bool {
-	for _, condition := range pod.Status.Conditions {
-		if condition.Type == corev1.ContainersReady {
-			return true
-		}
-	}
-	return false
 }
 
 // GetImmediateOwnerReference returns the immediate owner of the specified Pod.

@@ -4,19 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/aquasecurity/starboard/pkg/operator/controller"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
 	pods "github.com/aquasecurity/starboard/pkg/kube/pod"
+	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/resources"
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	batchv1 "k8s.io/api/batch/v1"
-
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -34,11 +32,6 @@ type JobController struct {
 func (r *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.WithValues("job", req.NamespacedName)
 
-	if req.Namespace != r.Namespace {
-		log.V(1).Info("Ignoring Job not managed by this operator")
-		return ctrl.Result{}, nil
-	}
-
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, req.NamespacedName, job)
 	if err != nil {
@@ -47,11 +40,6 @@ func (r *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
-	}
-
-	if len(job.Status.Conditions) == 0 {
-		log.V(1).Info("Ignoring Job without status conditions")
-		return ctrl.Result{}, nil
 	}
 
 	switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
@@ -125,6 +113,10 @@ func (r *JobController) processFailedScanJob(ctx context.Context, scanJob *batch
 
 func (r *JobController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&batchv1.Job{}).
+		For(&batchv1.Job{}, builder.WithPredicates(
+			predicate.InNamespace(r.Config.Namespace),
+			predicate.ManagedByStarboardOperator,
+			predicate.JobHasAnyCondition,
+		)).
 		Complete(r)
 }
