@@ -21,11 +21,12 @@ import (
 )
 
 type Scanner struct {
-	scheme    *runtime.Scheme
-	clientset kubernetes.Interface
-	opts      kube.ScannerOpts
-	pods      *pod.Manager
-	plugin    Plugin
+	scheme     *runtime.Scheme
+	clientset  kubernetes.Interface
+	opts       kube.ScannerOpts
+	pods       *pod.Manager
+	logsReader kube.LogsReader
+	plugin     Plugin
 	ext.IDGenerator
 }
 
@@ -41,6 +42,7 @@ func NewScanner(
 		opts:        opts,
 		plugin:      plugin,
 		pods:        pod.NewPodManager(clientset),
+		logsReader:  kube.NewLogsReader(clientset),
 		IDGenerator: ext.NewGoogleUUIDGenerator(),
 	}
 }
@@ -61,7 +63,6 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
-		s.pods.LogRunnerErrors(ctx, job)
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("running scan job: %w", err)
 	}
 
@@ -81,14 +82,14 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", containerName,
 		job.Namespace, job.Name)
-	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, containerName)
+	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, containerName)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := s.plugin.ParseConfigAuditResult(logsReader)
+	result, err := s.plugin.ParseConfigAuditResult(logsStream)
 	defer func() {
-		_ = logsReader.Close()
+		_ = logsStream.Close()
 	}()
 
 	return NewBuilder(s.scheme).

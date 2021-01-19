@@ -34,8 +34,9 @@ type Scanner struct {
 	config    Config
 	clientset kubernetes.Interface
 	ext.IDGenerator
-	opts kube.ScannerOpts
-	pods *pod.Manager
+	opts       kube.ScannerOpts
+	pods       *pod.Manager
+	logsReader kube.LogsReader
 }
 
 func NewScanner(
@@ -51,6 +52,7 @@ func NewScanner(
 		IDGenerator: ext.NewGoogleUUIDGenerator(),
 		opts:        opts,
 		pods:        pod.NewPodManager(clientset),
+		logsReader:  kube.NewLogsReader(clientset),
 	}
 }
 
@@ -83,16 +85,16 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	// 3. Get kube-hunter JSON output from the kube-hunter Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeHunterContainerName,
 		job.Namespace, job.Name)
-	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, kubeHunterContainerName)
+	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, kubeHunterContainerName)
 	if err != nil {
 		return v1alpha1.KubeHunterOutput{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
-		_ = logsReader.Close()
+		_ = logsStream.Close()
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	return OutputFrom(s.config, logsReader)
+	return OutputFrom(s.config, logsStream)
 }
 
 func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {

@@ -24,8 +24,9 @@ var (
 )
 
 type runnableJob struct {
-	scheme    *runtime.Scheme
-	clientset kubernetes.Interface
+	scheme     *runtime.Scheme
+	clientset  kubernetes.Interface
+	logsReader LogsReader
 
 	job     *batchv1.Job     // job to be run
 	secrets []*corev1.Secret // secrets that the job references
@@ -40,10 +41,11 @@ func NewRunnableJob(
 	secrets ...*corev1.Secret,
 ) runner.Runnable {
 	return &runnableJob{
-		scheme:    scheme,
-		job:       job,
-		secrets:   secrets,
-		clientset: clientset,
+		scheme:     scheme,
+		clientset:  clientset,
+		logsReader: NewLogsReader(clientset),
+		job:        job,
+		secrets:    secrets,
 	}
 }
 
@@ -141,7 +143,26 @@ func (r *runnableJob) Run(ctx context.Context) error {
 	informerFactory.WaitForCacheSync(wait.NeverStop)
 
 	err = <-complete
+
+	if err != nil {
+		r.logTerminatedContainersErrors(ctx)
+	}
+
 	return err
+}
+
+func (r *runnableJob) logTerminatedContainersErrors(ctx context.Context) {
+	statuses, err := r.logsReader.GetTerminatedContainersStatusesByJob(ctx, r.job)
+	if err != nil {
+		klog.Errorf("Error while getting terminated containers statuses for job %q", r.job.Namespace+"/"+r.job.Name)
+	}
+
+	for container, status := range statuses {
+		if status.ExitCode == 0 {
+			continue
+		}
+		klog.Errorf("Container %s terminated with %s: %s", container, status.Reason, status.Message)
+	}
 }
 
 func GetActiveDeadlineSeconds(d time.Duration) *int64 {

@@ -88,7 +88,6 @@ itests-starboard-operator: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/operator/controller,\
 	github.com/aquasecurity/starboard/pkg/operator/controller/job,\
 	github.com/aquasecurity/starboard/pkg/operator/controller/pod,\
-	github.com/aquasecurity/starboard/pkg/operator/logs,\
 	github.com/aquasecurity/starboard/pkg/trivy,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
 	./itest/starboard-operator

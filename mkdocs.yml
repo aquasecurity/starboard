@@ -41,6 +41,7 @@ nav:
 theme:
   name: material
   language: 'en'
+  logo: images/starboard-icon-white.svg
 
 markdown_extensions:
   - pymdownx.highlight

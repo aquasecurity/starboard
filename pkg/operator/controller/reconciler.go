@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	"github.com/aquasecurity/starboard/pkg/operator/logs"
 	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,7 +26,6 @@ import (
 type Reconciler interface {
 	SubmitScanJob(ctx context.Context, podSpec corev1.PodSpec, owner kube.Object, images kube.ContainerImages, hash string) error
 	ParseLogsAndSaveVulnerabilityReports(ctx context.Context, scanJob *batchv1.Job, workload kube.Object, containerImages kube.ContainerImages, hash string) error
-	GetPodControlledBy(ctx context.Context, job *batchv1.Job) (*corev1.Pod, error)
 }
 
 func NewReconciler(scheme *runtime.Scheme,
@@ -36,7 +34,7 @@ func NewReconciler(scheme *runtime.Scheme,
 	store vulnerabilityreport.ReadWriter,
 	idGenerator ext.IDGenerator,
 	scanner vulnerabilityreport.Plugin,
-	logsReader *logs.Reader,
+	logsReader kube.LogsReader,
 ) Reconciler {
 	return &reconciler{
 		scheme:        scheme,
@@ -57,7 +55,7 @@ type reconciler struct {
 	store       vulnerabilityreport.ReadWriter
 	idGenerator ext.IDGenerator
 	scanner     vulnerabilityreport.Plugin
-	logsReader  *logs.Reader
+	logsReader  kube.LogsReader
 	kube.SecretsReader
 }
 
@@ -154,30 +152,22 @@ func (r *reconciler) ParseLogsAndSaveVulnerabilityReports(ctx context.Context, s
 		return err
 	}
 
-	pod, err := r.GetPodControlledBy(ctx, scanJob)
-	if err != nil {
-		return fmt.Errorf("getting pod controlled by %s/%s: %w", scanJob.Namespace, scanJob.Name, err)
-	}
-
 	var vulnerabilityReports []v1alpha1.VulnerabilityReport
 
-	for _, container := range pod.Spec.Containers {
-		logsReader, err := r.logsReader.GetLogsForPod(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: pod.Name}, &corev1.PodLogOptions{
-			Container: container.Name,
-			Follow:    true,
-		})
+	for containerName, containerImage := range containerImages {
+		logsStream, err := r.logsReader.GetLogsByJobAndContainerName(ctx, scanJob, containerName)
 		if err != nil {
-			return fmt.Errorf("getting logs for pod %s/%s: %w", pod.Namespace, pod.Name, err)
+			return fmt.Errorf("getting logs for pod %q: %w", scanJob.Namespace+"/"+scanJob.Name, err)
 		}
-		scanResult, err := r.scanner.ParseVulnerabilityScanResult(containerImages[container.Name], logsReader)
+		scanResult, err := r.scanner.ParseVulnerabilityScanResult(containerImage, logsStream)
 		if err != nil {
 			return err
 		}
-		_ = logsReader.Close()
+		_ = logsStream.Close()
 
 		report, err := vulnerabilityreport.NewBuilder(r.scheme).
 			Owner(owner).
-			Container(container.Name).
+			Container(containerName).
 			Result(scanResult).
 			PodSpecHash(hash).Get()
 		if err != nil {
@@ -218,21 +208,4 @@ func (r *reconciler) getRuntimeObjectFor(ctx context.Context, workload kube.Obje
 		return nil, err
 	}
 	return obj.(metav1.Object), nil
-}
-
-// TODO Add to utilities used both by CLI and Operator
-func (r *reconciler) GetPodControlledBy(ctx context.Context, job *batchv1.Job) (*corev1.Pod, error) {
-	controllerUID, ok := job.Spec.Selector.MatchLabels["controller-uid"]
-	if !ok {
-		return nil, fmt.Errorf("controller-uid not found for job %s/%s", job.Namespace, job.Name)
-	}
-	podList := &corev1.PodList{}
-	err := r.client.List(ctx, podList, client.MatchingLabels{"controller-uid": controllerUID})
-	if err != nil {
-		return nil, fmt.Errorf("listing pods controlled by job %s/%s: %w", job.Namespace, job.Name, err)
-	}
-	if len(podList.Items) != 1 {
-		return nil, fmt.Errorf("expected 1 Pod, but got %d", len(podList.Items))
-	}
-	return podList.Items[0].DeepCopy(), nil
 }

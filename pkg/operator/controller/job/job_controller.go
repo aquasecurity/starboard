@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-	pods "github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
@@ -27,6 +26,7 @@ type JobController struct {
 	client.Client
 	controller.Analyzer
 	controller.Reconciler
+	kube.LogsReader
 }
 
 func (r *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -96,11 +96,10 @@ func (r *JobController) processCompleteScanJob(ctx context.Context, scanJob *bat
 func (r *JobController) processFailedScanJob(ctx context.Context, scanJob *batchv1.Job) error {
 	log := log.WithValues("job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
 
-	pod, err := r.Reconciler.GetPodControlledBy(ctx, scanJob)
+	statuses, err := r.GetTerminatedContainersStatusesByJob(ctx, scanJob)
 	if err != nil {
 		return err
 	}
-	statuses := pods.GetTerminatedContainersStatusesByPod(pod)
 	for container, status := range statuses {
 		if status.ExitCode == 0 {
 			continue
