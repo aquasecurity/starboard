@@ -7,7 +7,7 @@ To begin with, execute the following one-time setup command:
 starboard init
 ```
 
-The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes Jobs to perform
+The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes jobs to perform
 scans. It also sends custom security resources definitions to the Kubernetes API:
 
 ```
@@ -19,7 +19,8 @@ kubehunterreports      kubehunter    aquasecurity.github.io   false        KubeH
 vulnerabilityreports   vulns,vuln    aquasecurity.github.io   true         VulnerabilityReport
 ```
 
-> **NOTE** There's also a `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
+!!! tip
+    There's also a `starboard cleanup` subcommand, which can be used to remove all resources created by Starboard.
 
 As an example let's run in the current namespace an old version of `nginx` that we know has vulnerabilities:
 

@@ -49,9 +49,10 @@ EOF
 
 The following tables list available configuration settings with their default values.
 
-> **NOTE** You only need to configure the settings for the scanner you are using (i.e. `trivy.*` parameters are
-> used if `vulnerabilityReports.scanner` is set to `Trivy`). Check
-> [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
+!!! tip
+    You only need to configure the settings for the scanner you are using (i.e. `trivy.*` parameters are
+    used if `vulnerabilityReports.scanner` is set to `Trivy`). Check
+    [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
 
 | CONFIGMAP KEY                  | DEFAULT                                                | DESCRIPTION |
 | ------------------------------ | ------------------------------------------------------ | ----------- |
@@ -78,11 +79,13 @@ The following tables list available configuration settings with their default va
 | `aqua.username`             | Aqua management console username |
 | `aqua.password`             | Aqua management console password |
 
-> **NOTE** You can find it handy to delete a configuration key, which was not created by default by the
-> `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
->
->     kubectl patch cm starboard -n <starboard_operator> \
->       --type json \
->       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
+!!! tip
+    You can find it handy to delete a configuration key, which was not created by default by the
+    `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
+    ```
+    kubectl patch cm starboard -n <starboard_operator> \
+      --type json \
+      -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
+    ```
 
 [default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/init/03-starboard.cm.yaml
