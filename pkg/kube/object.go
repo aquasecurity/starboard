@@ -6,12 +6,11 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 // Object is a simplified representation of a Kubernetes object.
@@ -88,33 +87,12 @@ func (ci ContainerImages) FromJSON(value string) error {
 	return json.Unmarshal([]byte(value), &ci)
 }
 
-func GVKForObject(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
-	gvks, isUnversioned, err := scheme.ObjectKinds(obj)
-	if err != nil {
-		return schema.GroupVersionKind{}, err
-	}
-	if isUnversioned {
-		return schema.GroupVersionKind{}, fmt.Errorf("cannot create group-version-kind for unversioned type %T", obj)
-	}
-
-	if len(gvks) < 1 {
-		return schema.GroupVersionKind{}, fmt.Errorf("no group-version-kinds associated with type %T", obj)
-	}
-	if len(gvks) > 1 {
-		// this should only trigger for things like metav1.XYZ --
-		// normal versioned types should be fine
-		return schema.GroupVersionKind{}, fmt.Errorf(
-			"multiple group-version-kinds associated with type %T, refusing to guess at one", obj)
-	}
-	return gvks[0], nil
-}
-
 func KindForObject(object metav1.Object, scheme *runtime.Scheme) (string, error) {
 	ro, ok := object.(runtime.Object)
 	if !ok {
 		return "", fmt.Errorf("%T is not a runtime.Object", object)
 	}
-	gvk, err := GVKForObject(ro, scheme)
+	gvk, err := apiutil.GVKForObject(ro, scheme)
 	if err != nil {
 		return "", err
 	}

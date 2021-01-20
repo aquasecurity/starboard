@@ -31,12 +31,13 @@ type Config interface {
 }
 
 type Scanner struct {
-	scheme    *runtime.Scheme
-	config    Config
-	opts      kube.ScannerOpts
-	clientset kubernetes.Interface
-	pods      *pod.Manager
-	converter Converter
+	scheme     *runtime.Scheme
+	config     Config
+	opts       kube.ScannerOpts
+	clientset  kubernetes.Interface
+	pods       *pod.Manager
+	logsReader kube.LogsReader
+	converter  Converter
 }
 
 func NewScanner(
@@ -46,12 +47,13 @@ func NewScanner(
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
-		scheme:    scheme,
-		config:    config,
-		opts:      opts,
-		clientset: clientset,
-		pods:      pod.NewPodManager(clientset),
-		converter: DefaultConverter,
+		scheme:     scheme,
+		config:     config,
+		opts:       opts,
+		clientset:  clientset,
+		pods:       pod.NewPodManager(clientset),
+		logsReader: kube.NewLogsReader(clientset),
+		converter:  DefaultConverter,
 	}
 }
 
@@ -84,16 +86,16 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	// 3. Get kube-bench JSON output from the kube-bench Pod
 	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
 		job.Namespace, job.Name)
-	logsReader, err := s.pods.GetContainerLogsByJob(ctx, job, kubeBenchContainerName)
+	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, kubeBenchContainerName)
 	if err != nil {
 		return v1alpha1.CISKubeBenchOutput{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
-		_ = logsReader.Close()
+		_ = logsStream.Close()
 	}()
 
 	// 4. Parse the CISBenchmarkReport from the logs Reader
-	return s.converter.Convert(s.config, logsReader)
+	return s.converter.Convert(s.config, logsStream)
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {

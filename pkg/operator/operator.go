@@ -6,11 +6,11 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/config"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/controller/job"
 	"github.com/aquasecurity/starboard/pkg/operator/controller/pod"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	"github.com/aquasecurity/starboard/pkg/operator/logs"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"
@@ -128,13 +128,14 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		store,
 		mgr.GetClient())
 
+	logsReader := kube.NewLogsReader(kubernetesClientset)
 	reconciler := controller.NewReconciler(mgr.GetScheme(),
 		operatorConfig,
 		mgr.GetClient(),
 		store,
 		idGenerator,
 		scanner,
-		logs.NewReader(kubernetesClientset))
+		logsReader)
 
 	if err = (&pod.PodController{
 		Config:     operatorConfig,
@@ -150,6 +151,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		Client:     mgr.GetClient(),
 		Analyzer:   analyzer,
 		Reconciler: reconciler,
+		LogsReader: logsReader,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create job controller: %w", err)
 	}
