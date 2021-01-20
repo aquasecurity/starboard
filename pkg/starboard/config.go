@@ -266,7 +266,7 @@ func GetDefaultConfig() ConfigData {
 		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
-		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.0",
+		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
 
 		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.0",

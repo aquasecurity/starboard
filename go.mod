@@ -8,6 +8,7 @@ require (
 	github.com/go-logr/logr v0.3.0
 	github.com/google/go-containerregistry v0.1.1
 	github.com/google/uuid v1.1.1
+	github.com/hashicorp/go-version v1.2.0
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.5
 	github.com/spf13/cobra v1.1.1
