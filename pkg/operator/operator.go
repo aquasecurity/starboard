@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/config"
-	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
-	"github.com/aquasecurity/starboard/pkg/operator/controller/job"
-	"github.com/aquasecurity/starboard/pkg/operator/controller/pod"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -78,19 +76,19 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return fmt.Errorf("unrecognized install mode: %v", installMode)
 	}
 
-	kubernetesConfig, err := ctrl.GetConfig()
+	kubeConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return fmt.Errorf("getting kube client config: %w", err)
 	}
 
 	// The only reason we're using kubernetes.Clientset is that we need it to read Pod logs,
 	// which is not supported by the client returned by the ctrl.Manager.
-	kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
+	kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return fmt.Errorf("constructing kube client: %w", err)
 	}
 
-	mgr, err := ctrl.NewManager(kubernetesConfig, options)
+	mgr, err := ctrl.NewManager(kubeConfig, options)
 	if err != nil {
 		return fmt.Errorf("constructing controllers manager: %w", err)
 	}
@@ -105,7 +103,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	configManager := starboard.NewConfigManager(kubernetesClientset, operatorNamespace)
+	configManager := starboard.NewConfigManager(kubeClientset, operatorNamespace)
 	err = configManager.EnsureDefault(context.Background())
 	if err != nil {
 		return err
@@ -116,44 +114,46 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	store := vulnerabilityreport.NewControllerRuntimeReadWriter(mgr.GetClient())
-	idGenerator := ext.NewGoogleUUIDGenerator()
+	ownerResolver := controller.OwnerResolver{Client: mgr.GetClient()}
+	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient())
+	logsReader := kube.NewLogsReader(kubeClientset)
+	secretsReader := kube.NewControllerRuntimeSecretsReader(mgr.GetClient())
 
-	scanner, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
+	vulnerabilityReportPlugin, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
 	if err != nil {
 		return err
 	}
 
-	analyzer := controller.NewAnalyzer(operatorConfig,
-		store,
-		mgr.GetClient())
-
-	logsReader := kube.NewLogsReader(kubernetesClientset)
-	reconciler := controller.NewReconciler(mgr.GetScheme(),
-		operatorConfig,
-		mgr.GetClient(),
-		store,
-		idGenerator,
-		scanner,
-		logsReader)
-
-	if err = (&pod.PodController{
-		Config:     operatorConfig,
-		Client:     mgr.GetClient(),
-		Analyzer:   analyzer,
-		Reconciler: reconciler,
+	if err = (&controller.VulnerabilityReportReconciler{
+		Logger:        ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
+		Config:        operatorConfig,
+		Client:        mgr.GetClient(),
+		OwnerResolver: ownerResolver,
+		LimitChecker:  limitChecker,
+		LogsReader:    logsReader,
+		SecretsReader: secretsReader,
+		Plugin:        vulnerabilityReportPlugin,
+		ReadWriter:    vulnerabilityreport.NewControllerRuntimeReadWriter(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create pod controller: %w", err)
+		return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 	}
 
-	if err = (&job.JobController{
-		Config:     operatorConfig,
-		Client:     mgr.GetClient(),
-		Analyzer:   analyzer,
-		Reconciler: reconciler,
-		LogsReader: logsReader,
+	configAuditReportPlugin, err := config.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+	if err != nil {
+		return err
+	}
+
+	if err = (&controller.ConfigAuditReportReconciler{
+		Logger:        ctrl.Log.WithName("reconciler").WithName("configauditreport"),
+		Config:        operatorConfig,
+		Client:        mgr.GetClient(),
+		OwnerResolver: ownerResolver,
+		LimitChecker:  limitChecker,
+		LogsReader:    logsReader,
+		Plugin:        configAuditReportPlugin,
+		ReadWriter:    configauditreport.NewControllerRuntimeReadWriter(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create job controller: %w", err)
+		return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 	}
 
 	setupLog.Info("Starting controllers manager")
