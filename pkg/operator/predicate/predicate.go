@@ -1,6 +1,7 @@
 package predicate
 
 import (
+	"github.com/aquasecurity/starboard/pkg/kube"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,6 +57,20 @@ var PodBeingTerminated = predicate.NewPredicateFuncs(func(obj client.Object) boo
 var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if job, ok := obj.(*batchv1.Job); ok {
 		return len(job.Status.Conditions) > 0
+	}
+	return false
+})
+
+var IsVulnerabilityReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if _, ok := obj.GetLabels()[kube.LabelVulnerabilityReportScan]; ok {
+		return true
+	}
+	return false
+})
+
+var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if _, ok := obj.GetLabels()[kube.LabelConfigAuditReportScan]; ok {
+		return true
 	}
 	return false
 })

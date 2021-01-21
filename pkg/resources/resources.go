@@ -57,9 +57,9 @@ func GetImmediateOwnerReference(pod *corev1.Pod) kube.Object {
 
 // ComputeHash returns a hash value calculated from pod spec.
 // The hash will be safe encoded to avoid bad words.
-func ComputeHash(spec corev1.PodSpec) string {
+func ComputeHash(obj interface{}) string {
 	podSpecHasher := fnv.New32a()
-	DeepHashObject(podSpecHasher, spec)
+	DeepHashObject(podSpecHasher, obj)
 	return rand.SafeEncodeString(fmt.Sprint(podSpecHasher.Sum32()))
 }
 

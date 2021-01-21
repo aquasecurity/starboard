@@ -15,8 +15,8 @@ const (
 	LabelContainerName = "starboard.container.name"
 	LabelPodSpecHash   = "pod-spec-hash"
 
-	LabelScannerName   = "starboard.scanner.name"
-	LabelScannerVendor = "starboard.scanner.vendor"
+	LabelConfigAuditReportScan   = "configAuditReport.scanner"
+	LabelVulnerabilityReportScan = "vulnerabilityReport.scanner"
 
 	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
 	AppStarboardOperator = "starboard-operator"

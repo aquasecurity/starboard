@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/aqua"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/trivy"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -30,4 +32,15 @@ func GetVulnerabilityReportPlugin(buildInfo starboard.BuildInfo, config starboar
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), buildInfo, config), nil
 	}
 	return nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
+}
+
+// GetConfigAuditReportPlugin is a factory method that instantiates the
+// configauditreport.Plugin for the specified starboard.ConfigData.
+//
+// Starboard supports Polaris as the only configuration auditing tool.
+//
+// You could add your own scanner by implementing the configauditreport.Plugin
+// interface.
+func GetConfigAuditReportPlugin(_ starboard.BuildInfo, config starboard.ConfigData) (configauditreport.Plugin, error) {
+	return polaris.NewPlugin(ext.NewSystemClock(), config), nil
 }
