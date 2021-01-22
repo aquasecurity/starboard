@@ -122,6 +122,9 @@ func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
 			return ctrl.Result{}, err
 		}
 		job, err = r.getScanJob(owner, gvk, hash)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		err = r.Client.Create(ctx, job)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)

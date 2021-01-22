@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: starboard
-  namespace: starboard
-  labels:
-    app.kubernetes.io/managed-by: starboard
-automountServiceAccountToken: false
-imagePullSecrets: [ ]
