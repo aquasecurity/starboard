@@ -250,6 +250,14 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 					MountPath: "/var/lib/trivy",
 				},
 			},
+			SecurityContext: &corev1.SecurityContext{
+				Privileged:               pointer.BoolPtr(false),
+				AllowPrivilegeEscalation: pointer.BoolPtr(false),
+				Capabilities: &corev1.Capabilities{
+					Drop: []corev1.Capability{"all"},
+				},
+				ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+			},
 		})
 	}
 
@@ -269,6 +277,13 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 		},
 		InitContainers: []corev1.Container{initContainer},
 		Containers:     containers,
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsUser:  pointer.Int64Ptr(1000),
+			RunAsGroup: pointer.Int64Ptr(1000),
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		},
 	}, secrets, nil
 }
 
