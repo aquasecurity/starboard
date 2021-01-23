@@ -95,6 +95,21 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"--config", "/etc/starboard/polaris.config.yaml",
 							"--resource", "default/Deployment.apps/v1/nginx",
 						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged:               pointer.BoolPtr(false),
+							AllowPrivilegeEscalation: pointer.BoolPtr(false),
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{"all"},
+							},
+							ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+						},
+					},
+				},
+				SecurityContext: &corev1.PodSecurityContext{
+					RunAsUser:  pointer.Int64Ptr(1000),
+					RunAsGroup: pointer.Int64Ptr(1000),
+					SeccompProfile: &corev1.SeccompProfile{
+						Type: corev1.SeccompProfileTypeRuntimeDefault,
 					},
 				},
 			},
