@@ -15,6 +15,10 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+const (
+	assertionTimeout = 3 * time.Minute
+)
+
 var _ = Describe("Starboard Operator", func() {
 
 	const (
@@ -22,47 +26,68 @@ var _ = Describe("Starboard Operator", func() {
 		deploymentName = "wordpress"
 	)
 
-	It("Should create VulnerabilityReport when Deployment is created", func() {
-		_, err := kubernetesClientset.AppsV1().Deployments(namespaceName).
-			Create(context.TODO(), &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      deploymentName,
-					Namespace: namespaceName,
-				},
-				Spec: appsv1.DeploymentSpec{
-					Replicas: pointer.Int32Ptr(1),
-					Selector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{"app": "wordpress"},
+	Describe("When a new Deployment is created", func() {
+
+		BeforeEach(func() {
+			_, err := kubeClientset.AppsV1().Deployments(namespaceName).
+				Create(context.TODO(), &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      deploymentName,
+						Namespace: namespaceName,
 					},
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Labels: labels.Set{
+					Spec: appsv1.DeploymentSpec{
+						Replicas: pointer.Int32Ptr(1),
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
 								"app": "wordpress",
 							},
 						},
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "wordpress",
-									Image: "wordpress:4.9",
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: labels.Set{
+									"app": "wordpress",
+								},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "wordpress",
+										Image: "wordpress:4.9",
+									},
 								},
 							},
 						},
 					},
-				},
-			}, metav1.CreateOptions{})
-		Expect(err).ToNot(HaveOccurred())
+				}, metav1.CreateOptions{})
+			Expect(err).ToNot(HaveOccurred())
 
-		Eventually(HasActiveReplicaSet(namespaceName, deploymentName),
-			3*time.Minute, 15*time.Second).Should(BeTrue())
+			Eventually(HasActiveReplicaSet(namespaceName, deploymentName), assertionTimeout).Should(BeTrue())
+		})
 
-		rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploymentName)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(rs).ToNot(BeNil())
+		It("Should create VulnerabilityReport", func() {
+			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploymentName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rs).ToNot(BeNil())
 
-		Eventually(HasVulnerabilityReportOwnedBy(rs),
-			3*time.Minute, 15*time.Second).Should(BeTrue())
+			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+		})
+
+		It("Should create ConfigAuditReport", func() {
+			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploymentName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rs).ToNot(BeNil())
+
+			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+		})
+
+		AfterEach(func() {
+			err := kubeClientset.AppsV1().Deployments(namespaceName).
+				Delete(context.TODO(), deploymentName, metav1.DeleteOptions{})
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
+
+	// TODO Add a scenario for rolling update, i.e. create Deployment and then update its container image.
 
 })
 
@@ -93,9 +118,25 @@ func HasVulnerabilityReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
 	}
 }
 
-// GetActiveReplicaSetForDeployment returns the active ReplicaSet for the specified Deployment.
+func HasConfigAuditReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
+	return func() bool {
+		list, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(rs.Namespace).
+			List(context.TODO(), metav1.ListOptions{
+				LabelSelector: labels.Set{
+					kube.LabelResourceKind:      "ReplicaSet",
+					kube.LabelResourceName:      rs.Name,
+					kube.LabelResourceNamespace: rs.Namespace,
+				}.String(),
+			})
+		if err != nil {
+			return false
+		}
+		return len(list.Items) == 1
+	}
+}
+
 func GetActiveReplicaSetForDeployment(namespace, name string) (*appsv1.ReplicaSet, error) {
-	deployment, err := kubernetesClientset.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	deployment, err := kubeClientset.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +147,7 @@ func GetActiveReplicaSetForDeployment(namespace, name string) (*appsv1.ReplicaSe
 	}
 	selector := labels.Set(deploymentSelector)
 
-	replicaSetList, err := kubernetesClientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{
+	replicaSetList, err := kubeClientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: selector.String(),
 	})
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	starboardapi "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -27,8 +27,8 @@ var (
 )
 
 var (
-	kubernetesClientset kubernetes.Interface
-	starboardClientset  starboardapi.Interface
+	kubeClientset      kubernetes.Interface
+	starboardClientset versioned.Interface
 )
 
 func TestStarboardOperator(t *testing.T) {
@@ -45,18 +45,18 @@ var _ = BeforeSuite(func(done Done) {
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
-	kubernetesConfig, err := ctrl.GetConfig()
+	kubeConfig, err := ctrl.GetConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	kubernetesClientset, err = kubernetes.NewForConfig(kubernetesConfig)
+	kubeClientset, err = kubernetes.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
 
-	starboardClientset, err = starboardapi.NewForConfig(kubernetesConfig)
+	starboardClientset, err = versioned.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
 
 	testEnv = &envtest.Environment{
 		UseExistingCluster: pointer.BoolPtr(true),
-		Config:             kubernetesConfig,
+		Config:             kubeConfig,
 		CRDDirectoryPaths:  []string{filepath.Join("..", "..", "deploy", "crd")},
 	}
 
