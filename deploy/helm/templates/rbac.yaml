@@ -72,6 +72,7 @@ rules:
       - aquasecurity.github.io
     resources:
       - vulnerabilityreports
+      - configauditreports
     verbs:
       - get
       - list

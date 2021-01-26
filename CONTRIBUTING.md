@@ -179,10 +179,11 @@ started with a basic development workflow. For other install modes see [Operator
 
 ### Prerequisites
 
-1. Send the definition of the VulnerabilityReport custom resource to the Kubernetes API:
+1. Send custom resource definitions to the Kubernetes API:
 
    ```
    $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml
+   $ kubectl apply -f deploy/crd/configauditreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 

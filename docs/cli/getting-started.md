@@ -10,8 +10,8 @@ starboard init
 The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes jobs to perform
 scans. It also sends custom security resources definitions to the Kubernetes API:
 
-```
-kubectl api-resources --api-group aquasecurity.github.io
+```console
+$ kubectl api-resources --api-group aquasecurity.github.io
 NAME                   SHORTNAMES    APIGROUP                 NAMESPACED   KIND
 ciskubebenchreports    kubebench     aquasecurity.github.io   false        CISKubeBenchReport
 configauditreports     configaudit   aquasecurity.github.io   true         ConfigAuditReport

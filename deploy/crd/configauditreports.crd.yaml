@@ -20,3 +20,27 @@ spec:
       - all
     shortNames:
       - configaudit
+  additionalPrinterColumns:
+    - JSONPath: .report.scanner.name
+      type: string
+      name: Scanner
+      description: The name of the config audit scanner
+    - JSONPath: .metadata.creationTimestamp
+      type: date
+      name: Age
+      description: The age of the report
+    - JSONPath: .report.summary.passCount
+      type: integer
+      name: Pass
+      priority: 1
+      description: The number of checks that passed
+    - JSONPath: .report.summary.dangerCount
+      type: integer
+      name: Danger
+      priority: 1
+      description: The number of checks that failed with Danger status
+    - JSONPath: .report.summary.warningCount
+      type: integer
+      name: Warning
+      priority: 1
+      description: The number of checks that failed with Warning status

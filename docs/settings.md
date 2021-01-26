@@ -88,4 +88,4 @@ The following tables list available configuration settings with their default va
       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
     ```
 
-[default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/init/03-starboard.cm.yaml
+[default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/static/05-starboard-operator.config.yaml
