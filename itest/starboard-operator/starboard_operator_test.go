@@ -28,9 +28,11 @@ var _ = Describe("Starboard Operator", func() {
 
 	Describe("When a new Deployment is created", func() {
 
+		ctx := context.Background()
+
 		BeforeEach(func() {
 			_, err := kubeClientset.AppsV1().Deployments(namespaceName).
-				Create(context.TODO(), &appsv1.Deployment{
+				Create(ctx, &appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      deploymentName,
 						Namespace: namespaceName,
@@ -82,7 +84,7 @@ var _ = Describe("Starboard Operator", func() {
 
 		AfterEach(func() {
 			err := kubeClientset.AppsV1().Deployments(namespaceName).
-				Delete(context.TODO(), deploymentName, metav1.DeleteOptions{})
+				Delete(ctx, deploymentName, metav1.DeleteOptions{})
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
@@ -104,7 +106,7 @@ func HasActiveReplicaSet(namespace, name string) func() bool {
 func HasVulnerabilityReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
 	return func() bool {
 		list, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(rs.Namespace).
-			List(context.TODO(), metav1.ListOptions{
+			List(context.Background(), metav1.ListOptions{
 				LabelSelector: labels.Set{
 					kube.LabelResourceKind:      "ReplicaSet",
 					kube.LabelResourceName:      rs.Name,
@@ -121,7 +123,7 @@ func HasVulnerabilityReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
 func HasConfigAuditReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
 	return func() bool {
 		list, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(rs.Namespace).
-			List(context.TODO(), metav1.ListOptions{
+			List(context.Background(), metav1.ListOptions{
 				LabelSelector: labels.Set{
 					kube.LabelResourceKind:      "ReplicaSet",
 					kube.LabelResourceName:      rs.Name,
