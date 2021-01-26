@@ -44,7 +44,7 @@ func TestOperator_GetTargetNamespaces(t *testing.T) {
 	}
 }
 
-func TestOperator_GetInstallMode(t *testing.T) {
+func TestOperator_ResolveInstallMode(t *testing.T) {
 	testCases := []struct {
 		name string
 
@@ -58,7 +58,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 				Namespace:        "operators",
 				TargetNamespaces: "operators",
 			},
-			expectedInstallMode: etc.InstallModeOwnNamespace,
+			expectedInstallMode: etc.OwnNamespace,
 			expectedError:       "",
 		},
 		{
@@ -67,7 +67,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 				Namespace:        "operators",
 				TargetNamespaces: "foo",
 			},
-			expectedInstallMode: etc.InstallModeSingleNamespace,
+			expectedInstallMode: etc.SingleNamespace,
 			expectedError:       "",
 		},
 		{
@@ -76,7 +76,7 @@ func TestOperator_GetInstallMode(t *testing.T) {
 				Namespace:        "operators",
 				TargetNamespaces: "foo,bar,baz",
 			},
-			expectedInstallMode: etc.InstallModeMultiNamespace,
+			expectedInstallMode: etc.MultiNamespace,
 			expectedError:       "",
 		},
 		{
@@ -85,14 +85,14 @@ func TestOperator_GetInstallMode(t *testing.T) {
 				Namespace:        "operators",
 				TargetNamespaces: "",
 			},
-			expectedInstallMode: etc.InstallModeAllNamespaces,
+			expectedInstallMode: etc.AllNamespaces,
 			expectedError:       "",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			installMode, err := tc.operator.GetInstallMode()
+			installMode, _, _, err := tc.operator.ResolveInstallMode()
 			switch tc.expectedError {
 			case "":
 				require.NoError(t, err)

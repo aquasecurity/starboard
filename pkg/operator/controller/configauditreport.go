@@ -35,11 +35,16 @@ type ConfigAuditReportReconciler struct {
 }
 
 func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+	installModePredicate, err := InstallModePredicate(r.Config)
+	if err != nil {
+		return err
+	}
+	err = ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}, builder.WithPredicates(
 			Not(ManagedByStarboardOperator),
 			Not(PodBeingTerminated),
 			PodHasContainersReadyCondition,
+			installModePredicate,
 		)).
 		Complete(r.reconcilePods())
 	if err != nil {

@@ -3,6 +3,7 @@ package predicate_test
 import (
 	"time"
 
+	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,6 +16,110 @@ import (
 )
 
 var _ = Describe("Predicate", func() {
+
+	Describe("When checking a InstallMode predicate", func() {
+
+		Context("When install mode is SingleNamespace", func() {
+
+			When("and object is in operator namespace", func() {
+
+				It("Should return false", func() {
+					config := etc.Config{
+						Namespace:        "starboard-operator",
+						TargetNamespaces: "default",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "starboard-operator",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
+
+				})
+
+			})
+
+			When("and object is in target namespace", func() {
+
+				It("Should return true", func() {
+					config := etc.Config{
+						Namespace:        "starboard-operator",
+						TargetNamespaces: "foo",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "foo",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeTrue())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
+				})
+
+			})
+
+		})
+
+		Context("When install mode is MultiNamespaces", func() {
+
+			When("and object is in target namespace", func() {
+
+				It("Should return true", func() {
+					config := etc.Config{
+						Namespace:        "starboard-operator",
+						TargetNamespaces: "foo,starboard-operator",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "starboard-operator",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeTrue())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
+				})
+
+			})
+
+			When("and object is not in target namespace", func() {
+
+				It("Should return false", func() {
+					config := etc.Config{
+						Namespace:        "starboard-operator",
+						TargetNamespaces: "foo,bar",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "starboard-operator",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
+				})
+
+			})
+
+		})
+	})
 
 	Describe("When checking a InNamespace predicate", func() {
 
