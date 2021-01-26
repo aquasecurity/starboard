@@ -68,12 +68,16 @@ jobs:
           kubectl describe node
       - name: Run integration tests
         run: |
+          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+            -f deploy/static/02-starboard-operator.sa.yaml \
+            -f deploy/static/03-starboard-operator.clusterrole.yaml \
+            -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
           make itests-starboard-operator
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: default
+          OPERATOR_NAMESPACE: starboard-operator
+          OPERATOR_SERVICE_ACCOUNT: starboard-operator
           OPERATOR_TARGET_NAMESPACES: default
-          OPERATOR_SERVICE_ACCOUNT: ""
   release:
     name: Release
     needs:
