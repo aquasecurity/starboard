@@ -48,28 +48,28 @@ func (c Config) GetTargetNamespaces() []string {
 type InstallMode string
 
 const (
-	InstallModeOwnNamespace    InstallMode = "OwnNamespace"
-	InstallModeSingleNamespace InstallMode = "SingleNamespace"
-	InstallModeMultiNamespace  InstallMode = "MultiNamespace"
-	InstallModeAllNamespaces   InstallMode = "AllNamespaces"
+	OwnNamespace    InstallMode = "OwnNamespace"
+	SingleNamespace InstallMode = "SingleNamespace"
+	MultiNamespace  InstallMode = "MultiNamespace"
+	AllNamespaces   InstallMode = "AllNamespaces"
 )
 
-// GetInstallMode resolves InstallMode based on configured operator and target namespaces.
-func (c Config) GetInstallMode() (InstallMode, error) {
+// ResolveInstallMode resolves InstallMode based on configured Config.Namespace and Config.TargetNamespaces.
+func (c Config) ResolveInstallMode() (InstallMode, string, []string, error) {
 	operatorNamespace, err := c.GetOperatorNamespace()
 	if err != nil {
-		return "", nil
+		return "", "", nil, err
 	}
 	targetNamespaces := c.GetTargetNamespaces()
 
 	if len(targetNamespaces) == 1 && operatorNamespace == targetNamespaces[0] {
-		return InstallModeOwnNamespace, nil
+		return OwnNamespace, operatorNamespace, targetNamespaces, nil
 	}
 	if len(targetNamespaces) == 1 && operatorNamespace != targetNamespaces[0] {
-		return InstallModeSingleNamespace, nil
+		return SingleNamespace, operatorNamespace, targetNamespaces, nil
 	}
 	if len(targetNamespaces) > 1 {
-		return InstallModeMultiNamespace, nil
+		return MultiNamespace, operatorNamespace, targetNamespaces, nil
 	}
-	return InstallModeAllNamespaces, nil
+	return AllNamespaces, operatorNamespace, targetNamespaces, nil
 }

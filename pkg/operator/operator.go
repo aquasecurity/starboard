@@ -26,19 +26,11 @@ var (
 func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	setupLog.Info("Starting operator", "buildInfo", buildInfo)
 
-	// Validate configured namespaces to resolve install mode.
-	operatorNamespace, err := operatorConfig.GetOperatorNamespace()
+	installMode, operatorNamespace, targetNamespaces, err := operatorConfig.ResolveInstallMode()
 	if err != nil {
-		return fmt.Errorf("getting operator namespace: %w", err)
+		return fmt.Errorf("resolving install mode: %w", err)
 	}
-
-	targetNamespaces := operatorConfig.GetTargetNamespaces()
-
-	installMode, err := operatorConfig.GetInstallMode()
-	if err != nil {
-		return fmt.Errorf("getting install mode: %w", err)
-	}
-	setupLog.Info("Resolving install mode", "install mode", installMode,
+	setupLog.Info("Resolved install mode", "install mode", installMode,
 		"operator namespace", operatorNamespace,
 		"target namespaces", targetNamespaces)
 
@@ -50,26 +42,30 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	switch installMode {
-	case etc.InstallModeOwnNamespace:
-		// Add support for OwnNamespace set in STARBOARD_NAMESPACE (e.g. marketplace) and STARBOARD_TARGET_NAMESPACES (e.g. marketplace)
-		setupLog.Info("Constructing single-namespaced cache", "namespace", targetNamespaces[0])
+	case etc.OwnNamespace:
+		// Add support for OwnNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
+		// and OPERATOR_TARGET_NAMESPACES (e.g. `starboard-operator`).
+		setupLog.Info("Constructing client cache", "namespace", targetNamespaces[0])
 		options.Namespace = targetNamespaces[0]
-	case etc.InstallModeSingleNamespace:
-		// Add support for SingleNamespace set in STARBOARD_NAMESPACE (e.g. marketplace) and STARBOARD_TARGET_NAMESPACES (e.g. foo)
+	case etc.SingleNamespace:
+		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
+		// and OPERATOR_TARGET_NAMESPACES (e.g. `default`).
 		cachedNamespaces := append(targetNamespaces, operatorNamespace)
-		setupLog.Info("Constructing multi-namespaced cache", "namespaces", cachedNamespaces)
+		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
 		options.Namespace = targetNamespaces[0]
 		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
-	case etc.InstallModeMultiNamespace:
-		// Add support for MultiNamespace set in STARBOARD_NAMESPACE (e.g. marketplace) and STARBOARD_TARGET_NAMESPACES (e.g. foo,bar).
-		// Note that we may face performance issues when using this with a high number of namespaces.
+	case etc.MultiNamespace:
+		// Add support for MultiNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
+		// and OPERATOR_TARGET_NAMESPACES (e.g. `default,kube-system`).
+		// Note that you may face performance issues when using this mode with a high number of namespaces.
 		// More: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 		cachedNamespaces := append(targetNamespaces, operatorNamespace)
-		setupLog.Info("Constructing multi-namespaced cache", "namespaces", cachedNamespaces)
+		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
 		options.Namespace = ""
 		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
-	case etc.InstallModeAllNamespaces:
-		// Add support for AllNamespaces set in STARBOARD_NAMESPACE (e.g. marketplace) and STARBOARD_TARGET_NAMESPACES left blank.
+	case etc.AllNamespaces:
+		// Add support for AllNamespaces set in OPERATOR_NAMESPACE (e.g. `operators`)
+		// and OPERATOR_TARGET_NAMESPACES left blank.
 		setupLog.Info("Watching all namespaces")
 		options.Namespace = ""
 	default:

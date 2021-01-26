@@ -1,13 +1,47 @@
 package predicate
 
 import (
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
+
+// InstallModePredicate is a predicate.Predicate that determines whether to
+// reconcile the specified client.Object based on the give etc.InstallMode.
+//
+// In the etc.SingleNamespace install mode we're configuring client.Client cache
+// to watch the operator namespace, in which the operator runs scan jobs.
+// However, we do not want to scan the workloads that might run in the
+// operator namespace.
+//
+// Similarly, in the etc.MultiNamespace install mode we're configuring
+// client.Client cache to watch the operator namespace, in which the operator
+// runs scan jobs. However, we do not want to scan the workloads that might run
+// in the operator namespace unless the operator namespace is added to the list
+// of target namespaces.
+var InstallModePredicate = func(config etc.Config) (predicate.Predicate, error) {
+	mode, operatorNamespace, targetNamespaces, err := config.ResolveInstallMode()
+	if err != nil {
+		return nil, err
+	}
+	return predicate.NewPredicateFuncs(func(obj client.Object) bool {
+		if mode == etc.SingleNamespace {
+			return targetNamespaces[0] == obj.GetNamespace() &&
+				operatorNamespace != obj.GetNamespace()
+		}
+
+		if mode == etc.MultiNamespace {
+			return ext.SliceContainsString(targetNamespaces, obj.GetNamespace())
+		}
+
+		return true
+	}), nil
+}
 
 // InNamespace is a predicate.Predicate that returns true if the
 // specified client.Object is in the desired namespace.
