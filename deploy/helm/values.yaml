@@ -14,7 +14,7 @@ image:
   repository: "aquasec/starboard-operator"
   # tag is an override of the image tag, which is by default set by the
   # appVersion field in Chart.yaml.
-  tag: ""
+  tag: TEST
   pullPolicy: ""
   pullSecrets: []
 
