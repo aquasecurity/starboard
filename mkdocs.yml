@@ -47,3 +47,7 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - admonition
+
+extra:
+  version:
+    method: mike

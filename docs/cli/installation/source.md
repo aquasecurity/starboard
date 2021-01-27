@@ -4,7 +4,7 @@ version of Starboard.
 You must have a working Go environment.
 
 ```
-git clone git@github.com:aquasecurity/starboard.git
+git clone --depth 1 --branch v0.9.0 git@github.com:aquasecurity/starboard.git
 cd starboard
 make
 ```
