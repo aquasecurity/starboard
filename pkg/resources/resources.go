@@ -36,12 +36,32 @@ func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
 	return containerImages, nil
 }
 
-// GetImmediateOwnerReference returns the immediate owner of the specified Pod.
-// For example, for a Pod controlled by a Deployment it will return the active ReplicaSet object,
-// whereas for an unmanaged Pod the immediate owner is the Pod itself.
+// GetImmediateOwnerReference returns the immediate owner of the specified pod.
+// For example, for a pod controlled by a Deployment it will return the active
+// ReplicaSet, whereas for an unmanaged pod the immediate owner is the pod
+// itself.
+//
+// Note that kublet can manage pods independently by reading pod definition
+// files from a configured host directory (typically /etc/kubernetes/manifests).
+// Such pods are called *static pods* and are owned by a cluster Node.
+// In this case we treat them as unmanaged pods. (Otherwise we'd require
+// cluster-scoped permissions to get Nodes in order to set the owner reference
+// when we create an instance of custom security report.)
+//
+// TODO Merge this method with OwnerResolver, which accepts kube.Object and resolves client.Object.
 func GetImmediateOwnerReference(pod *corev1.Pod) kube.Object {
 	ownerRef := metav1.GetControllerOf(pod)
+
 	if ownerRef != nil {
+		if ownerRef.Kind == "Node" {
+			// Static pod ~ unmanaged pod
+			return kube.Object{
+				Kind:      kube.KindPod,
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+			}
+		}
+
 		return kube.Object{
 			Namespace: pod.Namespace,
 			Kind:      kube.Kind(ownerRef.Kind),
@@ -49,8 +69,8 @@ func GetImmediateOwnerReference(pod *corev1.Pod) kube.Object {
 		}
 	}
 	return kube.Object{
-		Namespace: pod.Namespace,
 		Kind:      kube.KindPod,
+		Namespace: pod.Namespace,
 		Name:      pod.Name,
 	}
 }
