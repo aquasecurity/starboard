@@ -41,7 +41,7 @@ func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
 // ReplicaSet, whereas for an unmanaged pod the immediate owner is the pod
 // itself.
 //
-// Note that kublet can manage pods independently by reading pod definition
+// Note that kubelet can manage pods independently by reading pod definition
 // files from a configured host directory (typically /etc/kubernetes/manifests).
 // Such pods are called *static pods* and are owned by a cluster Node.
 // In this case we treat them as unmanaged pods. (Otherwise we'd require
