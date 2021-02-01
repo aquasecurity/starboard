@@ -48,6 +48,16 @@ markdown_extensions:
   - pymdownx.superfences
   - admonition
 
+# All data defined under extra is automatically exposed as a variable and can
+# be used from the template. For example, {{ var.version }}.
+#
+# Requires pip install mike and pip install git+https://${GH_TOKEN}@github.com/squidfunk/mkdocs-material-insiders.git
 extra:
   version:
     method: mike
+  var:
+    version: "v0.9.0"
+
+# Requires pip install mkdocs-macros-plugin
+plugins:
+  - macros

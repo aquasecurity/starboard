@@ -9,7 +9,7 @@ configure it to watch the `default` namespaces:
 
 1. Clone the chart repository:
    ```
-   git clone --depth 1 --branch v0.9.0 https://github.com/aquasecurity/starboard.git
+   git clone --depth 1 --branch {{ var.version }} https://github.com/aquasecurity/starboard.git
    cd starboard
    ```
 2. Create the `starboard-operator` namespace:
@@ -23,7 +23,7 @@ configure it to watch the `default` namespaces:
    If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
    on startup with the default settings:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/static/05-starboard-operator.config.yaml
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.version }}/deploy/static/05-starboard-operator.config.yaml
    ```
    Review the default values and makes sure the operator is configured properly:
    ```

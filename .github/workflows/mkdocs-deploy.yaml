@@ -1,17 +1,36 @@
 # This is a manually triggered workflow to build and publish the MkDocs from the
 # main branch to GitHub pages at https://aquasecurity.github.io/starboard.
-name: Manually deploy MkDocs
+name: Deploy documentation
+
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: Version to be deployed
+        required: true
 
 jobs:
   deploy:
-    name: Deploy MkDocs
+    name: Deploy documentation
     runs-on: ubuntu-18.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
-      - name: Deploy MkDocs
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
+      - name: Checkout main
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: |
+          pip install git+https://${GH_TOKEN}@github.com/squidfunk/mkdocs-material-insiders.git
+          pip install mike
+          pip install mkdocs-macros-plugin
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Note: It is not the same as ${{ secrets.GITHUB_TOKEN }} !
+          GH_TOKEN: ${{ secrets.MKDOCS_GH_TOKEN }}
+      - run: |
+          git config user.name "Daniel Pacak"
+          git config user.email "pacak.daniel@gmail.com"
+      - run: |
+          mike deploy --push --update-aliases ${{ github.event.inputs.version }} latest
