@@ -1,4 +1,4 @@
-# Welcome to Starboard
+# Welcome to {{ config.site_name }}!
 
 Starboard integrates security tools into the Kubernetes environment, so that
 users can find and view the risks that relate to different resources in
