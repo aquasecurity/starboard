@@ -73,12 +73,12 @@ Kubernetes-native ways.
 [aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions
 
-[crds]: https://aquasecurity.github.io/starboard/crds/
+[crds]: https://aquasecurity.github.io/starboard/latest/crds/
 [go-module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
-[cli]: https://aquasecurity.github.io/starboard/cli
-[cli-getting-started]: https://aquasecurity.github.io/starboard/cli/getting-started/
-[operator]: https://aquasecurity.github.io/starboard/operator
+[cli]: https://aquasecurity.github.io/starboard/latest/cli
+[cli-getting-started]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
+[operator]: https://aquasecurity.github.io/starboard/latest/operator
 
-[octant-plugin]: https://aquasecurity.github.io/starboard/integrations/octant
-[lens-extension]: https://aquasecurity.github.io/starboard/integrations/lens
+[octant-plugin]: https://aquasecurity.github.io/starboard/latest/integrations/octant
+[lens-extension]: https://aquasecurity.github.io/starboard/latest/integrations/lens
 [kubectl]: https://kubernetes.io/docs/reference/kubectl
