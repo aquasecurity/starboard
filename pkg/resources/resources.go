@@ -48,26 +48,25 @@ func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
 // cluster-scoped permissions to get Nodes in order to set the owner reference
 // when we create an instance of custom security report.)
 //
+// Pods created and controlled by third party frameworks, such as Argo workflow
+// engine, are considered as unmanaged. Otherwise we'd need to maintain and
+// extend the list of RBAC permissions over time.
 // TODO Merge this method with OwnerResolver, which accepts kube.Object and resolves client.Object.
 func GetImmediateOwnerReference(pod *corev1.Pod) kube.Object {
 	ownerRef := metav1.GetControllerOf(pod)
 
 	if ownerRef != nil {
-		if ownerRef.Kind == "Node" {
-			// Static pod ~ unmanaged pod
+		switch ownerRef.Kind {
+		case "Pod", "ReplicaSet", "ReplicationController", "Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job":
 			return kube.Object{
-				Kind:      kube.KindPod,
 				Namespace: pod.Namespace,
-				Name:      pod.Name,
+				Kind:      kube.Kind(ownerRef.Kind),
+				Name:      ownerRef.Name,
 			}
 		}
-
-		return kube.Object{
-			Namespace: pod.Namespace,
-			Kind:      kube.Kind(ownerRef.Kind),
-			Name:      ownerRef.Name,
-		}
 	}
+
+	// Pod owned by anything else is treated the same as an unmanaged pod
 	return kube.Object{
 		Kind:      kube.KindPod,
 		Namespace: pod.Namespace,

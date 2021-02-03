@@ -77,6 +77,28 @@ func TestGetImmediateOwnerReference(t *testing.T) {
 				Name:      "etcd-kind-control-plane",
 			},
 		},
+		{
+			name: "Should return pod as owner of pod managed by third party workload",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "dev",
+					Name:      "hello-world-argo",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "argoproj.io/v1alpha1",
+							Kind:       "Workflow",
+							Name:       "hello-world-argo-r99sq",
+							Controller: pointer.BoolPtr(true),
+						},
+					},
+				},
+			},
+			expectedOwner: kube.Object{
+				Kind:      "Pod",
+				Namespace: "dev",
+				Name:      "hello-world-argo",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
