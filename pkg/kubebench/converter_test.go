@@ -81,7 +81,7 @@ func expectedOutputFrom(t *testing.T, fileName string) starboardv1alpha1.CISKube
 
 	file, err := os.Open(fileName)
 	require.NoError(t, err)
-      defer file.Close()
+	defer file.Close()
 
 	var expectedOutput starboardv1alpha1.CISKubeBenchOutput
 	err = json.NewDecoder(file).Decode(&expectedOutput)
