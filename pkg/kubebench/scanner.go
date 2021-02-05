@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
@@ -23,7 +24,6 @@ import (
 
 const (
 	kubeBenchContainerName = "kube-bench"
-	masterNodeLabel        = "node-role.kubernetes.io/master"
 )
 
 type Config interface {
@@ -37,7 +37,7 @@ type Scanner struct {
 	clientset  kubernetes.Interface
 	pods       *pod.Manager
 	logsReader kube.LogsReader
-	converter  Converter
+	converter  *Converter
 }
 
 func NewScanner(
@@ -53,7 +53,10 @@ func NewScanner(
 		clientset:  clientset,
 		pods:       pod.NewPodManager(clientset),
 		logsReader: kube.NewLogsReader(clientset),
-		converter:  DefaultConverter,
+		converter: &Converter{
+			Clock:  ext.NewSystemClock(),
+			Config: config,
+		},
 	}
 }
 
@@ -95,17 +98,13 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	}()
 
 	// 4. Parse the CISBenchmarkReport from the logs Reader
-	return s.converter.Convert(s.config, logsStream)
+	return s.converter.Convert(logsStream)
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 	imageRef, err := s.config.GetKubeBenchImageRef()
 	if err != nil {
 		return nil, err
-	}
-	target := "node"
-	if _, ok := node.Labels[masterNodeLabel]; ok {
-		target = "master"
 	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -183,8 +182,8 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 							Image:                    imageRef,
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Command:                  []string{"kube-bench", target},
-							Args:                     []string{"--json"},
+							Command:                  []string{"sh"},
+							Args:                     []string{"-c", "kube-bench --json 2> /dev/null"},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),
