@@ -265,7 +265,7 @@ func GetDefaultConfig() ConfigData {
 		keyTrivyMode:     string(Standalone),
 		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 
-		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.4.0",
+		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.0",
 		"kube-hunter.quick":    "false",
 

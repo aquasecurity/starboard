@@ -3,54 +3,51 @@ package kubebench
 import (
 	"encoding/json"
 	"io"
-	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Converter interface {
-	Convert(config Config, reader io.Reader) (v1alpha1.CISKubeBenchOutput, error)
+type Converter struct {
+	ext.Clock
+	Config
 }
 
-var DefaultConverter Converter = &converter{}
+func (c *Converter) Convert(reader io.Reader) (v1alpha1.CISKubeBenchOutput, error) {
+	output := &struct {
+		Controls []v1alpha1.CISKubeBenchSection `json:"Controls"`
+	}{}
 
-type converter struct {
-}
-
-func (c *converter) Convert(config Config, reader io.Reader) (report v1alpha1.CISKubeBenchOutput, err error) {
 	decoder := json.NewDecoder(reader)
-	var section []v1alpha1.CISKubeBenchSection
-	err = decoder.Decode(&section)
+	err := decoder.Decode(output)
 	if err != nil {
-		return
+		return v1alpha1.CISKubeBenchOutput{}, err
 	}
 
-	imageRef, err := config.GetKubeBenchImageRef()
+	imageRef, err := c.Config.GetKubeBenchImageRef()
 	if err != nil {
-		return report, err
+		return v1alpha1.CISKubeBenchOutput{}, err
 	}
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.CISKubeBenchOutput{}, err
 	}
 
-	report = v1alpha1.CISKubeBenchOutput{
+	return v1alpha1.CISKubeBenchOutput{
 		Scanner: v1alpha1.Scanner{
 			Name:    "kube-bench",
 			Vendor:  "Aqua Security",
 			Version: version,
 		},
-		Summary:         c.summary(section),
-		UpdateTimestamp: metav1.NewTime(time.Now()),
-		Sections:        section,
-	}
-
-	return
+		Summary:         c.summary(output.Controls),
+		UpdateTimestamp: metav1.NewTime(c.Clock.Now()),
+		Sections:        output.Controls,
+	}, nil
 }
 
-func (c *converter) summary(sections []v1alpha1.CISKubeBenchSection) v1alpha1.CISKubeBenchSummary {
+func (c *Converter) summary(sections []v1alpha1.CISKubeBenchSection) v1alpha1.CISKubeBenchSummary {
 	totalPass := 0
 	totalInfo := 0
 	totalWarn := 0

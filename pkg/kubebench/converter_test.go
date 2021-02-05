@@ -3,6 +3,7 @@ package kubebench_test
 import (
 	"encoding/json"
 	"errors"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"os"
 	"testing"
 	"time"
@@ -18,11 +19,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	fixedTime  = time.Now()
+	fixedClock = ext.NewFixedClock(fixedTime)
+)
+
 func TestConverter_Convert(t *testing.T) {
 	config := starboard.ConfigData{
 		"kube-bench.imageRef": "aquasec/kube-bench:0.3.1",
 	}
-	var testcases = []struct {
+	var testCases = []struct {
 		name string
 		in   string // input File
 		op   string // golden file
@@ -37,7 +43,7 @@ func TestConverter_Convert(t *testing.T) {
 		{
 			name: "invalid json object",
 			in:   "testdata/invalid.json",
-			err:  errors.New("json: cannot unmarshal object into Go value of type []v1alpha1.CISKubeBenchSection"),
+			err:  errors.New("invalid character 'I' looking for beginning of value"),
 		},
 		{
 			name: "Valid multiple json object in array",
@@ -47,7 +53,7 @@ func TestConverter_Convert(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testcases {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			inFile, err := os.Open(tc.in)
 			require.NoError(t, err)
@@ -55,29 +61,34 @@ func TestConverter_Convert(t *testing.T) {
 				_ = inFile.Close()
 			}()
 
-			var r starboardv1alpha1.CISKubeBenchOutput
-			r, err = kubebench.DefaultConverter.Convert(config, inFile)
+			converter := &kubebench.Converter{Clock: fixedClock, Config: config}
+			output, err := converter.Convert(inFile)
 
 			switch {
 			case tc.err == nil:
 				require.NoError(t, err)
-				gFile, err := os.Open(tc.op)
-				require.NoError(t, err)
-				dec := json.NewDecoder(gFile)
-				var kbop starboardv1alpha1.CISKubeBenchOutput
-				err = dec.Decode(&kbop)
-				require.NoError(t, err)
-				defer func() {
-					_ = gFile.Close()
-				}()
-
-				fakeTime := metav1.NewTime(time.Now())
-				kbop.UpdateTimestamp = fakeTime
-				r.UpdateTimestamp = fakeTime
-				assert.Equal(t, kbop, r, "Converted report does not match expected report")
+				expectedOutput := expectedOutputFrom(t, tc.op)
+				assert.Equal(t, expectedOutput, output, "Converted report does not match expected report")
 			default:
 				assert.EqualError(t, err, tc.err.Error())
 			}
 		})
 	}
+}
+
+func expectedOutputFrom(t *testing.T, fileName string) starboardv1alpha1.CISKubeBenchOutput {
+	t.Helper()
+
+	file, err := os.Open(fileName)
+	require.NoError(t, err)
+	defer file.Close()
+
+	var expectedOutput starboardv1alpha1.CISKubeBenchOutput
+	err = json.NewDecoder(file).Decode(&expectedOutput)
+	require.NoError(t, err)
+
+	// Override time read from file
+	expectedOutput.UpdateTimestamp = metav1.NewTime(fixedTime)
+
+	return expectedOutput
 }
