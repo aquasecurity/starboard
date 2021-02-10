@@ -53,6 +53,7 @@ markdown_extensions:
 #
 # Requires pip install mike and pip install git+https://${GH_TOKEN}@github.com/squidfunk/mkdocs-material-insiders.git
 extra:
+  generator: false
   version:
     method: mike
   var:
@@ -60,8 +61,8 @@ extra:
     tag_prev: "v0.9.0"
     build:
       version: "0.9.1"
-      commit: "ffae344d40ad450c007353a2294d9e244d750157"
-      date: "2021-01-26T17:49:49Z"
+      commit: "d36f69e8890e178c444bb78e174e808e992405b9"
+      date: "2021-02-10T21:13:52Z"
     chart:
       version: 0.4.1
 
