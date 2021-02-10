@@ -68,12 +68,12 @@ func MapDockerRegistryServersToAuths(imagePullSecrets []corev1.Secret) (map[stri
 		if err != nil {
 			return nil, err
 		}
-		for server, auth := range dockerConfig.Auths {
-			host, err := docker.GetHostFromServer(server)
+		for authKey, auth := range dockerConfig.Auths {
+			server, err := docker.GetServerFromDockerAuthKey(authKey)
 			if err != nil {
 				return nil, err
 			}
-			auths[host] = auth
+			auths[server] = auth
 		}
 	}
 	return auths, nil
