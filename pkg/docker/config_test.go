@@ -4,15 +4,15 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/aquasecurity/starboard/pkg/docker"
-	. "github.com/onsi/ginkgo/extensions/table"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// TODO Refactor to Ginkgo+Gomega
+func TestNewBasicAuth(t *testing.T) {
+	assert.Equal(t, docker.BasicAuth("Zm9vOmJhcg=="), docker.NewBasicAuth("foo", "bar"))
+}
+
 func TestConfig_Read(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -100,43 +100,81 @@ func TestConfig_Read(t *testing.T) {
 	}
 }
 
-func TestDocker(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Docker")
+func TestGetServerFromDockerAuthKey(t *testing.T) {
+	testCases := []struct {
+		authKey        string
+		expectedServer string
+	}{
+		{
+			authKey:        "34.86.43.13:80",
+			expectedServer: "34.86.43.13:80",
+		},
+		{
+			authKey:        "core.harbor.domain:8080",
+			expectedServer: "core.harbor.domain:8080",
+		},
+		{
+			authKey:        "rg.pl-waw.scw.cloud/starboard",
+			expectedServer: "rg.pl-waw.scw.cloud",
+		},
+		{
+			authKey:        "rg.pl-waw.scw.cloud:7777/private",
+			expectedServer: "rg.pl-waw.scw.cloud:7777",
+		},
+		{
+			authKey:        "registry.aquasec.com",
+			expectedServer: "registry.aquasec.com",
+		},
+		{
+			authKey:        "https://index.docker.io/v1/",
+			expectedServer: "index.docker.io",
+		},
+		{
+			authKey:        "https://registry:3780/",
+			expectedServer: "registry:3780",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.authKey, func(t *testing.T) {
+			server, err := docker.GetServerFromDockerAuthKey(tc.authKey)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedServer, server)
+		})
+	}
 }
 
-var _ = Describe("Docker", func() {
-
-	DescribeTable("GetHostFromServer", func(server, expectedHost string) {
-		host, err := docker.GetHostFromServer(server)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(host).To(Equal(expectedHost))
-	},
-		Entry("34.86.43.130.80",
-			"34.86.43.130.80", "34.86.43.130.80"),
-		Entry("core.harbor.domain:8080",
-			"core.harbor.domain:8080", "core.harbor.domain:8080"),
-		Entry("registry.aquasec.com",
-			"registry.aquasec.com", "registry.aquasec.com"),
-		Entry("https://index.docker.io/v1/",
-			"https://index.docker.io/v1/", "index.docker.io"),
-		Entry("https://registry:3780/",
-			"https://registry:3780/", "registry:3780"),
-	)
-
-	DescribeTable("GetServerFromImageRef", func(imageRef, expectedServer string) {
-		server, err := docker.GetServerFromImageRef(imageRef)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(server).To(Equal(expectedServer))
-	},
-		Entry("aquasec/trivy:0.10.0",
-			"aquasec/trivy:0.10.0", "index.docker.io"),
-		Entry("docker.io/aquasec/harbor-scanner-trivy:0.10.0",
-			"docker.io/aquasec/harbor-scanner-trivy:0.10.0", "index.docker.io"),
-		Entry("index.docker.io/aquasec/harbor-scanner-trivy:0.10.0",
-			"index.docker.io/aquasec/harbor-scanner-trivy:0.10.0", "index.docker.io"),
-		Entry("gcr.io/google-samples/hello-app:1.0",
-			"gcr.io/google-samples/hello-app:1.0", "gcr.io"),
-	)
-
-})
+func TestGetServerFromImageRef(t *testing.T) {
+	testCases := []struct {
+		imageRef       string
+		expectedServer string
+	}{
+		{
+			imageRef:       "nginx:1.16",
+			expectedServer: "index.docker.io",
+		},
+		{
+			imageRef:       "aquasec/trivy:0.10.0",
+			expectedServer: "index.docker.io",
+		},
+		{
+			imageRef:       "docker.io/aquasec/harbor-scanner-trivy:0.10.0",
+			expectedServer: "index.docker.io",
+		},
+		{
+			imageRef:       "index.docker.io/aquasec/harbor-scanner-trivy:0.10.0",
+			expectedServer: "index.docker.io",
+		},
+		{
+			imageRef:       "gcr.io/google-samples/hello-app:1.0",
+			expectedServer: "gcr.io",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.imageRef, func(t *testing.T) {
+			server, err := docker.GetServerFromImageRef(tc.imageRef)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedServer, server)
+		})
+	}
+}

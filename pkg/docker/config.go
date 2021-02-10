@@ -23,16 +23,13 @@ func (v *BasicAuth) Encode(username, password string) {
 		[]byte(fmt.Sprintf("%s:%s", username, password))))
 }
 
-func (v *BasicAuth) Decode() (username, password string, err error) {
+func (v *BasicAuth) Decode() (string, string, error) {
 	bytes, err := base64.StdEncoding.DecodeString(string(*v))
 	if err != nil {
-		return
+		return "", "", err
 	}
 	split := strings.Split(string(bytes), ":")
-
-	username = split[0]
-	password = split[1]
-	return
+	return split[0], split[1], nil
 }
 
 func (v BasicAuth) String() string {
@@ -55,12 +52,13 @@ type Config struct {
 	Auths map[string]Auth `json:"auths"`
 }
 
-func (c *Config) Read(contents []byte) (err error) {
+func (c *Config) Read(contents []byte) error {
 	if err := json.Unmarshal(contents, c); err != nil {
 		return err
 	}
+	var err error
 	c.Auths, err = decodeAuths(c.Auths)
-	return
+	return err
 }
 
 func decodeAuths(auths map[string]Auth) (map[string]Auth, error) {
@@ -102,20 +100,21 @@ func GetServerFromImageRef(imageRef string) (string, error) {
 	return ref.Context().RegistryStr(), nil
 }
 
-// GetHostFromServer returns the host for the specified registry server.
+// GetServerFromDockerAuthKey returns the registry server for the specified Docker auth key.
 //
 // In ~/.docker/config.json auth keys can be specified as URLs or host names.
 // For the sake of comparison we need to normalize the registry identifier.
-func GetHostFromServer(server string) (string, error) {
-	if strings.HasPrefix(server, "http://") ||
-		strings.HasPrefix(server, "https://") {
+func GetServerFromDockerAuthKey(key string) (string, error) {
+	absoluteURL := key
 
-		parsed, err := url.Parse(server)
-		if err != nil {
-			return "", err
-		}
-
-		return parsed.Host, nil
+	if !(strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://")) {
+		absoluteURL = "https://" + absoluteURL
 	}
-	return server, nil
+
+	parsed, err := url.Parse(absoluteURL)
+	if err != nil {
+		return "", err
+	}
+
+	return parsed.Host, nil
 }
