@@ -1,3 +1,5 @@
+# Getting Started
+
 Assuming that you installed the operator in the `starboard-operator` namespace,
 and it's configured to discover Kubernetes workloads in the `default` namespace,
 let's create the `nginx` Deployment that we know is vulnerable:

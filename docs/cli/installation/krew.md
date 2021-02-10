@@ -1,3 +1,5 @@
+# Krew
+
 You can also install Starboard as a kubectl plugin with the [Krew][krew] plugins manager:
 
 ```

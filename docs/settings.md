@@ -1,3 +1,5 @@
+# Starboard Settings
+
 The Starboard CLI and Starboard Operator both read their configuration settings
 from a ConfigMap, as well as a secret that holds confidential settings (such as
 a GitHub token).
