@@ -1,3 +1,5 @@
+# Lens Extension
+
 [Lens][lens] provides the full situational awareness for everything that runs in Kubernetes. It's lowering the barrier
 of entry for people just getting started and radically improving productivity for people with more experience.
 Lens Extensions API is used to add custom visualizations and functionality to accelerate development workflows for all

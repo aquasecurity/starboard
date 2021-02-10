@@ -1,10 +1,12 @@
+# From Source (Linux, macOS)
+
 Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
 version of Starboard.
 
 You must have a working Go environment.
 
 ```
-git clone --depth 1 --branch v0.9.0 git@github.com:aquasecurity/starboard.git
+git clone --depth 1 --branch {{ var.tag }} git@github.com:aquasecurity/starboard.git
 cd starboard
 make
 ```

@@ -1,3 +1,5 @@
+# Overview
+
 This operator automatically updates security report resources in response to
 workload and other changes on a Kubernetes cluster - for example, initiating
 a vulnerability scan and configuration audit when a new pod is started. In other
