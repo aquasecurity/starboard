@@ -63,10 +63,10 @@ owner reference being set as there's no built-in Kubernetes resource that repres
 
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 
-[vulnerabilityreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/crd/vulnerabilityreports.crd.yaml
-[ciskubebenchreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/crd/ciskubebenchreports.crd.yaml
-[kubehunterreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/crd/kubehunterreports.crd.yaml
-[configauditreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/crd/configauditreports.crd.yaml
+[vulnerabilityreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/vulnerabilityreports.crd.yaml
+[ciskubebenchreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/ciskubebenchreports.crd.yaml
+[kubehunterreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/kubehunterreports.crd.yaml
+[configauditreports-crd]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/configauditreports.crd.yaml
 
 [issue-288]: https://github.com/aquasecurity/starboard/issues/288
 [discussion-300]: https://github.com/aquasecurity/starboard/discussions/300
