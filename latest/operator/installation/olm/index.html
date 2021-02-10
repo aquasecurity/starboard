@@ -17,7 +17,7 @@
         
       
       <link rel="shortcut icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.7+insiders-1.17.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.8+insiders-1.17.0">
     
     
       
@@ -833,7 +833,7 @@ EOF
    <a href="../../../integrations/vulnerability-scanners/aqua-enterprise/">Aqua Enterprise</a> as an active vulnerability scanner.
    If you skip this step, the operator will ensure <a href="../../../settings/">configuration objects</a>
    on startup with the default settings:
-   <div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.0/deploy/static/05-starboard-operator.config.yaml
+   <div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/v0.9.1/deploy/static/05-starboard-operator.config.yaml
 </code></pre></div>
    Review the default values and makes sure the operator is configured properly:
    <div class="highlight"><pre><span></span><code>kubectl describe cm starboard -n starboard-operator
@@ -871,7 +871,7 @@ EOF
 <p>After install, watch the operator come up using the following command:
    <div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl get clusterserviceversions -n starboard-operator
 <span class="go">NAME                        DISPLAY              VERSION   REPLACES                    PHASE</span>
-<span class="go">starboard-operator.v0.9.0   Starboard Operator   0.9.0     starboard-operator.v0.8.0   Succeeded</span>
+<span class="go">starboard-operator.v0.9.1   Starboard Operator   0.9.1     starboard-operator.v0.9.0   Succeeded</span>
 </code></pre></div>
    If the above command succeeds and the ClusterServiceVersion has transitioned from <code>Installing</code> to <code>Succeeded</code> phase
    you will also find the operator's Deployment in the same namespace where the Subscription is:
@@ -887,7 +887,7 @@ EOF
 <h2 id="uninstall">Uninstall</h2>
 <p>To uninstall the operator delete the Subscription, the ClusterServiceVersion, and the OperatorGroup:</p>
 <div class="highlight"><pre><span></span><code>kubectl delete subscription starboard-operator -n starboard-operator
-kubectl delete clusterserviceversion starboard-operator.v0.9.0 -n starboard-operator
+kubectl delete clusterserviceversion starboard-operator.v0.9.1 -n starboard-operator
 kubectl delete operatorgroup starboard-operator -n starboard-operator
 </code></pre></div>
 <div class="admonition note">
@@ -954,11 +954,6 @@ kubectl delete crd configauditreports.aquasecurity.github.io
       <div class="md-footer-copyright">
         
         
-          Made with
-          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-            Material for MkDocs Insiders
-          </a>
-        
       </div>
       
     </div>
@@ -967,8 +962,8 @@ kubectl delete crd configauditreports.aquasecurity.github.io
       
     </div>
     
-      <script src="../../../assets/javascripts/vendor.2d9b50f1.min.js"></script>
-      <script src="../../../assets/javascripts/bundle.b7273581.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../../../assets/javascripts/vendor.191088e8.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d4cf0930.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({

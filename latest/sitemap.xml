@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://aquasecurity.github.io/starboard/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/installation/binary-releases/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/installation/krew/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/installation/docker/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/installation/source/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/getting-started/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/cli/troubleshooting/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/installation/kubectl/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/installation/helm/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/installation/olm/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/getting-started/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/operator/configuration/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/settings/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/vulnerability-scanners/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/vulnerability-scanners/trivy/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/vulnerability-scanners/aqua-enterprise/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/private-registries/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/managed-registries/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/octant/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/integrations/lens/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/crds/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://aquasecurity.github.io/starboard/faq/</loc>
-     <lastmod>2021-02-01</lastmod>
+     <lastmod>2021-02-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>

@@ -17,7 +17,7 @@
         
       
       <link rel="shortcut icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.7+insiders-1.17.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.8+insiders-1.17.0">
     
     
       
@@ -63,6 +63,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#from-source-linux-macos" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -308,6 +313,8 @@
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
@@ -732,18 +739,33 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                  <h1>From Source (Linux, macOS)</h1>
-                
-                <p>Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
+                <h1 id="from-source-linux-macos">From Source (Linux, macOS)</h1>
+<p>Building from source is slightly more work, but is the best way to go if you want to test the latest (pre-release)
 version of Starboard.</p>
 <p>You must have a working Go environment.</p>
-<div class="highlight"><pre><span></span><code>git clone --depth 1 --branch v0.9.0 git@github.com:aquasecurity/starboard.git
+<div class="highlight"><pre><span></span><code>git clone --depth 1 --branch v0.9.1 git@github.com:aquasecurity/starboard.git
 cd starboard
 make
 </code></pre></div>
@@ -802,11 +824,6 @@ make
       <div class="md-footer-copyright">
         
         
-          Made with
-          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-            Material for MkDocs Insiders
-          </a>
-        
       </div>
       
     </div>
@@ -815,8 +832,8 @@ make
       
     </div>
     
-      <script src="../../../assets/javascripts/vendor.2d9b50f1.min.js"></script>
-      <script src="../../../assets/javascripts/bundle.b7273581.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../../../assets/javascripts/vendor.191088e8.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d4cf0930.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
