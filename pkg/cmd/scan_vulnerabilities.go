@@ -110,6 +110,6 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 		if err != nil {
 			return err
 		}
-		return vulnerabilityreport.NewReadWriter(starboardClientset).Write(ctx, reports)
+		return vulnerabilityreport.NewReadWriter(starboardClientset, kubernetesClientset).Write(ctx, reports)
 	}
 }

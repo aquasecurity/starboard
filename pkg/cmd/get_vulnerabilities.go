@@ -13,6 +13,7 @@ import (
 	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func NewGetVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
@@ -43,11 +44,14 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			client, err := clientset.NewForConfig(config)
+			starboardClientset, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
-
+			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				return err
+			}
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
@@ -61,7 +65,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			items, err := vulnerabilityreport.NewReadWriter(client).FindByOwner(ctx, workload)
+			items, err := vulnerabilityreport.NewReadWriter(starboardClientset, kubernetesClientset).FindByOwner(ctx, workload)
 			if err != nil {
 				return fmt.Errorf("list vulnerability reports: %v", err)
 			}
