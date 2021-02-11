@@ -68,4 +68,5 @@ extra:
 
 # Requires pip install mkdocs-macros-plugin
 plugins:
+  - search
   - macros
