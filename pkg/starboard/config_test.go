@@ -158,11 +158,11 @@ func TestConfigData_GetKubeHunterQuick(t *testing.T) {
 		expectedQuick bool
 	}{
 		{
-			name:          "Should return error",
+			name:          "Should return false when parameter is not set",
 			configData:    starboard.ConfigData{},
-			expectedError: "property kube-hunter.quick not set",
+			expectedQuick: false,
 		}, {
-			name: "Should return error when when quick is set to something other than \"false\" or \"true\" in config data",
+			name: "Should return error when quick is set to something other than \"false\" or \"true\" in config data",
 			configData: starboard.ConfigData{
 				"kube-hunter.quick": "not-a-boolean",
 			},
