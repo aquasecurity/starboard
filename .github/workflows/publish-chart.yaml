@@ -1,8 +1,15 @@
 name: Publish Chart Helm
-
 on:
-  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/helm/**'
   workflow_dispatch:
+env:
+  HELM_REP: helm-charts
+  HELM_REP_URL: https://aquasecurity.github.io/helm-charts/
+  GH_OWNER: aquasecurity
+  CHART_DIR: deploy/helm
 jobs:
   lint-test:
     runs-on: ubuntu-20.04
@@ -11,25 +18,53 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      # Python is required because `ct lint` runs Yamale (https://github.com/23andMe/Yamale) and
-      # yamllint (https://github.com/adrienverge/yamllint) which require Python
+      # Python is required because `ct lint` runs Yamale (https://github.com/23andMe/Yamale) and yamllint (https://github.com/adrienverge/yamllint) which require Python
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
-
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.0.1
-        with:
-          version: v3.3.0
-
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.1.0
       - name: Run chart-testing lint-install
         run: ct lint-and-install --chart-dirs deploy --validate-maintainers=false
-
-      # - name: Create kind cluster
-      #   uses: helm/kind-action@v1.1.0
-
-      # - name: Run chart-testing install
-      #   run: ct install --chart-dirs deploy
-
+  release:
+    runs-on: ubuntu-20.04
+    needs:
+      - lint-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.5.0
+      - name: Install chart-releaser
+        run: |
+          wget https://github.com/helm/chart-releaser/releases/download/v1.1.1/chart-releaser_1.1.1_linux_amd64.tar.gz
+          tar xzvf chart-releaser_1.1.1_linux_amd64.tar.gz cr
+      - name: Package helm chart
+        run: |
+          ./cr package ${{ env.CHART_DIR }}
+      - name: Upload helm chart
+        # Failed with upload the same version: https://github.com/helm/chart-releaser/issues/101
+        continue-on-error: true
+        run: |
+          ./cr upload -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} -p . -p .cr-release-packages
+      - name: Index helm chart
+        run: |
+          ./cr index -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} -c ${{ env.HELM_REP_URL }} -i index.yaml
+      - name: Pushes index file
+        uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: 'index.yaml'
+          destination_repo: '${{ env.GH_OWNER }}/${{ env.HELM_REP }}'
+          destination_folder: '.'
+          user_email: 'aqua-bot@aquasec.com'
+          user_name: 'aqua-bot'
+          destination_branch: 'gh-pages'
