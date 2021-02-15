@@ -4,6 +4,7 @@ Configuration of the operator's pod is done via environment variables at startup
 | ------------------------------------- | ---------------------- | ----------- |
 | `OPERATOR_NAMESPACE`                  | N/A                    | See [Install modes](#install-modes) |
 | `OPERATOR_TARGET_NAMESPACES`          | N/A                    | See [Install modes](#install-modes) |
+| `OPERATOR_SERVICE_ACCOUNT`            | `starboard-operator`   | The name of the service account assigned to the operator's pod |
 | `OPERATOR_LOG_DEV_MODE`               | `false`                | The flag to use (or not use) development mode (more human-readable output, extra stack traces and logging information, etc). |
 | `OPERATOR_SCAN_JOB_TIMEOUT`           | `5m`                   | The length of time to wait before giving up on a scan job |
 | `OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT` | `3`                    | The maximum number of scan jobs create by the operator |
