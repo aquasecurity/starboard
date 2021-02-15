@@ -34,6 +34,8 @@ spec:
               value: {{ .Release.Namespace | quote }}
             - name: OPERATOR_TARGET_NAMESPACES
               value: {{ tpl .Values.targetNamespaces . | quote }}
+            - name: OPERATOR_SERVICE_ACCOUNT
+              value: {{ include "starboard-operator.serviceAccountName" . }}
             - name: OPERATOR_METRICS_BIND_ADDRESS
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS

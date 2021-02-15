@@ -331,9 +331,9 @@ func (c ConfigData) GetKubeHunterImageRef() (string, error) {
 }
 
 func (c ConfigData) GetKubeHunterQuick() (bool, error) {
-	val, err := c.getRequiredProperty("kube-hunter.quick")
-	if err != nil {
-		return false, err
+	val, ok := c["kube-hunter.quick"]
+	if !ok {
+		return false, nil
 	}
 	if val != "false" && val != "true" {
 		return false, fmt.Errorf("property kube-hunter.quick must be either \"false\" or \"true\", got %q", val)
