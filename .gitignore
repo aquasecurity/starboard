@@ -14,3 +14,7 @@ vendor
 *.DS_Store
 
 site/
+
+## helm chart
+output/*
+.cr-release-packages/*
