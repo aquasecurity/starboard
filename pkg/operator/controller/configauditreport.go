@@ -226,6 +226,11 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 		}
 
+		if len(job.Status.Conditions) == 0 {
+			log.V(1).Info("Job has no conditions despite using predicate")
+			return ctrl.Result{}, nil
+		}
+
 		switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
 		case batchv1.JobComplete:
 			err = r.processCompleteScanJob(ctx, job)

@@ -6,7 +6,9 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/config"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -50,9 +52,12 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	case etc.SingleNamespace:
 		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default`).
-		cachedNamespaces := append(targetNamespaces, operatorNamespace)
+		cachedNamespaces := append(targetNamespaces, operatorNamespace, "")
+		if operatorConfig.CISKubernetesBenchmarkEnabled {
+			// Cache cluster-scoped resources such as Nodes
+			cachedNamespaces = append(cachedNamespaces, "")
+		}
 		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
-		options.Namespace = targetNamespaces[0]
 		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
 	case etc.MultiNamespace:
 		// Add support for MultiNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
@@ -60,14 +65,16 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		// Note that you may face performance issues when using this mode with a high number of namespaces.
 		// More: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 		cachedNamespaces := append(targetNamespaces, operatorNamespace)
+		if operatorConfig.CISKubernetesBenchmarkEnabled {
+			// Cache cluster-scoped resources such as Nodes
+			cachedNamespaces = append(cachedNamespaces, "")
+		}
 		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
-		options.Namespace = ""
 		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
 	case etc.AllNamespaces:
 		// Add support for AllNamespaces set in OPERATOR_NAMESPACE (e.g. `operators`)
 		// and OPERATOR_TARGET_NAMESPACES left blank.
 		setupLog.Info("Watching all namespaces")
-		options.Namespace = ""
 	default:
 		return fmt.Errorf("unrecognized install mode: %v", installMode)
 	}
@@ -150,6 +157,20 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		ReadWriter:    configauditreport.NewReadWriter(mgr.GetClient(), kubeClientset),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
+	}
+
+	if operatorConfig.CISKubernetesBenchmarkEnabled {
+		if err = (&controller.CISKubeBenchReportReconciler{
+			Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
+			Config:       operatorConfig,
+			Client:       mgr.GetClient(),
+			LogsReader:   logsReader,
+			LimitChecker: limitChecker,
+			ReadWriter:   kubebench.NewReadWriter(mgr.GetClient()),
+			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
+		}).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
+		}
 	}
 
 	setupLog.Info("Starting controllers manager")
