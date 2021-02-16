@@ -134,6 +134,13 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 					RestartPolicy:                corev1.RestartPolicyNever,
 					HostPID:                      true,
 					NodeName:                     node.Name,
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser:  pointer.Int64Ptr(0),
+						RunAsGroup: pointer.Int64Ptr(0),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 					Volumes: []corev1.Volume{
 						{
 							Name: "var-lib-etcd",
@@ -184,6 +191,14 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"sh"},
 							Args:                     []string{"-c", "kube-bench --json 2> /dev/null"},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged:               pointer.BoolPtr(false),
+								AllowPrivilegeEscalation: pointer.BoolPtr(false),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{"all"},
+								},
+								ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+							},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),
