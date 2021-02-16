@@ -5,12 +5,12 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -53,6 +53,8 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
+		scheme := starboard.NewScheme()
+		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 		opts, err := getScannerOpts(cmd)
 		if err != nil {
 			return err
@@ -62,16 +64,12 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 			return err
 		}
 		plugin := polaris.NewPlugin(ext.NewSystemClock(), config)
-		scanner := configauditreport.NewScanner(starboard.NewScheme(), kubeClientset, opts, plugin)
+		scanner := configauditreport.NewScanner(scheme, kubeClientset, opts, plugin)
 		report, err := scanner.Scan(ctx, workload, gvk)
 		if err != nil {
 			return err
 		}
-		starboardClientset, err := versioned.NewForConfig(kubeConfig)
-		if err != nil {
-			return nil
-		}
-		writer := configauditreport.NewReadWriter(starboardClientset)
+		writer := configauditreport.NewReadWriter(kubeClient, kubeClientset)
 		return writer.Write(ctx, report)
 	}
 }

@@ -8,11 +8,12 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type htmlReporter struct {
@@ -20,16 +21,16 @@ type htmlReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewHTMLReporter(starboardClientset clientset.Interface, kubernetesClientset *kubernetes.Clientset) Reporter {
+func NewHTMLReporter(starboardClientset versioned.Interface, kubeClientset kubernetes.Interface, client client.Client) Reporter {
 	return &htmlReporter{
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset, kubernetesClientset),
-		configAuditReportsReader:   configauditreport.NewReadWriter(starboardClientset),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset, kubeClientset),
+		configAuditReportsReader:   configauditreport.NewReadWriter(client, kubeClientset),
 	}
 }
 
 func (h *htmlReporter) GenerateReport(workload kube.Object, writer io.Writer) error {
 	ctx := context.Background()
-	configAuditReport, err := h.configAuditReportsReader.FindByOwner(ctx, workload)
+	configAuditReport, err := h.configAuditReportsReader.FindByOwnerInHierarchy(ctx, workload)
 	if err != nil {
 		return err
 	}
