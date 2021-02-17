@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/config"
-	apis "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -77,15 +77,20 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 		if err != nil {
 			return err
 		}
-		kubernetesConfig, err := cf.ToRESTConfig()
+		kubeConfig, err := cf.ToRESTConfig()
 		if err != nil {
 			return err
 		}
-		kubernetesClientset, err := kubernetes.NewForConfig(kubernetesConfig)
+		kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 		if err != nil {
 			return err
 		}
-		starboardConfig, err := starboard.NewConfigManager(kubernetesClientset, starboard.NamespaceName).Read(ctx)
+		scheme := starboard.NewScheme()
+		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+		if err != nil {
+			return err
+		}
+		starboardConfig, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
@@ -98,18 +103,14 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 			return err
 		}
 		reports, err := vulnerabilityreport.NewScanner(
-			starboard.NewScheme(),
-			kubernetesClientset,
+			scheme,
+			kubeClientset,
 			opts,
 			plugin).Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
 
-		starboardClientset, err := apis.NewForConfig(kubernetesConfig)
-		if err != nil {
-			return err
-		}
-		return vulnerabilityreport.NewReadWriter(starboardClientset).Write(ctx, reports)
+		return vulnerabilityreport.NewReadWriter(kubeClient, kubeClientset).Write(ctx, reports)
 	}
 }

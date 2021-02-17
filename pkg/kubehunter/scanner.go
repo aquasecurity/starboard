@@ -10,6 +10,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/hashicorp/go-version"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -110,6 +111,34 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	if quick {
 		kubeHunterArgs = append(kubeHunterArgs, "--quick")
 	}
+
+	var (
+		podSecurityContext       *corev1.PodSecurityContext
+		containerSecurityContext *corev1.SecurityContext
+	)
+	ver, err := starboard.GetVersionFromImageRef(imageRef)
+	if err != nil {
+		return nil, err
+	}
+	if isAtLeast(ver, "0.4.1") || ver == "latest" {
+		podSecurityContext = &corev1.PodSecurityContext{
+			RunAsUser:  pointer.Int64Ptr(0),
+			RunAsGroup: pointer.Int64Ptr(0),
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		}
+		containerSecurityContext = &corev1.SecurityContext{
+			Privileged:               pointer.BoolPtr(false),
+			AllowPrivilegeEscalation: pointer.BoolPtr(false),
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{"all"},
+				Add:  []corev1.Capability{"NET_RAW"},
+			},
+			ReadOnlyRootFilesystem: pointer.BoolPtr(false),
+		}
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.GenerateID(),
@@ -125,6 +154,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 					RestartPolicy:      corev1.RestartPolicyNever,
 					HostPID:            true,
 					Affinity:           starboard.LinuxNodeAffinity(),
+					SecurityContext:    podSecurityContext,
 					Containers: []corev1.Container{
 						{
 							Name:                     kubeHunterContainerName,
@@ -132,6 +162,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 							ImagePullPolicy:          corev1.PullIfNotPresent,
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Args:                     kubeHunterArgs,
+							SecurityContext:          containerSecurityContext,
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),
@@ -148,4 +179,16 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 			},
 		},
 	}, nil
+}
+
+func isAtLeast(ver string, targetVer string) bool {
+	v, err := version.NewVersion(ver)
+	if err != nil {
+		return false
+	}
+	tv, err := version.NewVersion(targetVer)
+	if err != nil {
+		return false
+	}
+	return v.GreaterThanOrEqual(tv)
 }

@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewGetReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
@@ -23,14 +24,15 @@ NAME is the name of a particular Kubernetes workload.
 		Example: fmt.Sprintf(`  # Save report to a file
   %[1]s get report deploy/nginx > report.html`, info.Executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := cf.ToRESTConfig()
+			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
 			}
-			starboardClientset, err := clientset.NewForConfig(config)
+			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: starboard.NewScheme()})
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
@@ -44,8 +46,8 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			return report.NewHTMLReporter(starboardClientset).
-				GenerateReport(workload, outWriter)
+			reporter := report.NewHTMLReporter(kubeClientset, kubeClient)
+			return reporter.GenerateReport(workload, outWriter)
 		},
 	}
 }
