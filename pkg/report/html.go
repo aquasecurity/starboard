@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -42,9 +43,11 @@ func (h *htmlReporter) GenerateReport(workload kube.Object, writer io.Writer) er
 		if !ok {
 			continue
 		}
+
+		sort.Stable(vulnerabilityreport.BySeverity{Vulnerabilities: vulnerabilityReport.Report.Vulnerabilities})
+
 		vulnsReports[containerName] = vulnerabilityReport.Report
 	}
-
 	if configAuditReport == nil && len(vulnsReports) == 0 {
 		return fmt.Errorf("no configaudits or vulnerabilities found for workload %s/%s/%s",
 			workload.Namespace, workload.Kind, workload.Name)
