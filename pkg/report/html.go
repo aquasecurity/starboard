@@ -8,7 +8,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -21,9 +20,9 @@ type htmlReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewHTMLReporter(starboardClientset versioned.Interface, kubeClientset kubernetes.Interface, client client.Client) Reporter {
+func NewHTMLReporter(kubeClientset kubernetes.Interface, client client.Client) Reporter {
 	return &htmlReporter{
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset, kubeClientset),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client, kubeClientset),
 		configAuditReportsReader:   configauditreport.NewReadWriter(client, kubeClientset),
 	}
 }
@@ -34,7 +33,7 @@ func (h *htmlReporter) GenerateReport(workload kube.Object, writer io.Writer) er
 	if err != nil {
 		return err
 	}
-	vulnerabilityReports, err := h.vulnerabilityReportsReader.FindByOwner(ctx, workload)
+	vulnerabilityReports, err := h.vulnerabilityReportsReader.FindByOwnerInHierarchy(ctx, workload)
 	if err != nil {
 		return err
 	}

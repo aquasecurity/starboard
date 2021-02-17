@@ -3,20 +3,17 @@ package kubebench_test
 import (
 	"encoding/json"
 	"errors"
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"os"
 	"testing"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
-
 	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	starboardv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -76,14 +73,14 @@ func TestConverter_Convert(t *testing.T) {
 	}
 }
 
-func expectedOutputFrom(t *testing.T, fileName string) starboardv1alpha1.CISKubeBenchOutput {
+func expectedOutputFrom(t *testing.T, fileName string) v1alpha1.CISKubeBenchOutput {
 	t.Helper()
 
 	file, err := os.Open(fileName)
 	require.NoError(t, err)
 	defer file.Close()
 
-	var expectedOutput starboardv1alpha1.CISKubeBenchOutput
+	var expectedOutput v1alpha1.CISKubeBenchOutput
 	err = json.NewDecoder(file).Decode(&expectedOutput)
 	require.NoError(t, err)
 
