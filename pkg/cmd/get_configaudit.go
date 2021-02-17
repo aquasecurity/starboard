@@ -6,12 +6,11 @@ import (
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-
 	"github.com/aquasecurity/starboard/pkg/starboard"
-
-	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewGetConfigAuditCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
@@ -37,15 +36,14 @@ NAME is the name of a particular Kubernetes workload.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 
-			config, err := cf.ToRESTConfig()
+			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
 			}
-			client, err := clientset.NewForConfig(config)
+			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
-
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
@@ -58,7 +56,13 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			report, err := configauditreport.NewReadWriter(client).FindByOwner(ctx, workload)
+			scheme := starboard.NewScheme()
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+			if err != nil {
+				return err
+			}
+			reader := configauditreport.NewReadWriter(kubeClient, kubeClientset)
+			report, err := reader.FindByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return nil
 			}
@@ -70,7 +74,7 @@ NAME is the name of a particular Kubernetes workload.
 
 			format := cmd.Flag("output").Value.String()
 			printer, err := genericclioptions.NewPrintFlags("").
-				WithTypeSetter(starboard.NewScheme()).
+				WithTypeSetter(scheme).
 				WithDefaultOutput(format).
 				ToPrinter()
 			if err != nil {

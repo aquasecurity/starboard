@@ -147,7 +147,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		LimitChecker:  limitChecker,
 		LogsReader:    logsReader,
 		Plugin:        configAuditReportPlugin,
-		ReadWriter:    configauditreport.NewControllerRuntimeReadWriter(mgr.GetClient()),
+		ReadWriter:    configauditreport.NewReadWriter(mgr.GetClient(), kubeClientset),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 	}
