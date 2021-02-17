@@ -129,7 +129,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		LogsReader:    logsReader,
 		SecretsReader: secretsReader,
 		Plugin:        vulnerabilityReportPlugin,
-		ReadWriter:    vulnerabilityreport.NewControllerRuntimeReadWriter(mgr.GetClient()),
+		ReadWriter:    vulnerabilityreport.NewReadWriter(mgr.GetClient(), kubeClientset),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 	}

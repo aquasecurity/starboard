@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-
-	clientset "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewGetVulnerabilitiesCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
@@ -40,15 +38,16 @@ NAME is the name of a particular Kubernetes workload.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 
-			config, err := cf.ToRESTConfig()
+			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
 			}
-			starboardClientset, err := clientset.NewForConfig(config)
+			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
-			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			scheme := starboard.NewScheme()
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 			if err != nil {
 				return err
 			}
@@ -65,7 +64,8 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			items, err := vulnerabilityreport.NewReadWriter(starboardClientset, kubernetesClientset).FindByOwner(ctx, workload)
+			reader := vulnerabilityreport.NewReadWriter(kubeClient, kubeClientset)
+			items, err := reader.FindByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return fmt.Errorf("list vulnerability reports: %v", err)
 			}

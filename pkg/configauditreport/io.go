@@ -3,6 +3,7 @@ package configauditreport
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -26,9 +27,9 @@ type Writer interface {
 // kube.Object or nil if the report is not found.
 //
 // FindByOwnerInHierarchy is similar to FindByOwner except that it tries to lookup
-// the v1alpha1.ConfigAuditReport objects owned by related Kubernetes objects.
-// For example, if the given owner is a Deployment, but a report is owned
-// by the active ReplicaSet (current revision) this method will return the report.
+// a v1alpha1.ConfigAuditReport object owned by related Kubernetes objects.
+// For example, if the given owner is a Deployment, but a report is owned by the
+// active ReplicaSet (current revision) this method will return the report.
 type Reader interface {
 	FindByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
 	FindByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)

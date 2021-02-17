@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -29,10 +28,6 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			starboardClientset, err := versioned.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
 			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
@@ -51,7 +46,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			reporter := report.NewHTMLReporter(starboardClientset, kubeClientset, kubeClient)
+			reporter := report.NewHTMLReporter(kubeClientset, kubeClient)
 			return reporter.GenerateReport(workload, outWriter)
 		},
 	}
