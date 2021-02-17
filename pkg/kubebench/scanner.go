@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -60,17 +61,17 @@ func NewScanner(
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeBenchOutput, error) {
+func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeBenchReport, error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
 	job, err := s.prepareKubeBenchJob(node)
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, err
+		return v1alpha1.CISKubeBenchReport{}, err
 	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, fmt.Errorf("running kube-bench job: %w", err)
+		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("running kube-bench job: %w", err)
 	}
 
 	defer func() {
@@ -91,14 +92,35 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 		job.Namespace, job.Name)
 	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, kubeBenchContainerName)
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, fmt.Errorf("getting logs: %w", err)
+		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
 		_ = logsStream.Close()
 	}()
 
 	// 4. Parse the CISBenchmarkReport from the logs Reader
-	return s.converter.Convert(logsStream)
+	output, err := s.converter.Convert(logsStream)
+	if err != nil {
+		return v1alpha1.CISKubeBenchReport{}, err
+	}
+
+	report := v1alpha1.CISKubeBenchReport{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: node.Name,
+			Labels: map[string]string{
+				kube.LabelResourceKind: string(kube.KindNode),
+				kube.LabelResourceName: node.Name,
+			},
+		},
+		Report: output,
+	}
+
+	err = controllerutil.SetOwnerReference(&node, &report, s.scheme)
+	if err != nil {
+		return v1alpha1.CISKubeBenchReport{}, err
+	}
+
+	return report, nil
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
@@ -134,6 +156,13 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 					RestartPolicy:                corev1.RestartPolicyNever,
 					HostPID:                      true,
 					NodeName:                     node.Name,
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser:  pointer.Int64Ptr(0),
+						RunAsGroup: pointer.Int64Ptr(0),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 					Volumes: []corev1.Volume{
 						{
 							Name: "var-lib-etcd",
@@ -184,6 +213,14 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 							Command:                  []string{"sh"},
 							Args:                     []string{"-c", "kube-bench --json 2> /dev/null"},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged:               pointer.BoolPtr(false),
+								AllowPrivilegeEscalation: pointer.BoolPtr(false),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{"all"},
+								},
+								ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+							},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("300m"),

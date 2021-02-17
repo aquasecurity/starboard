@@ -3,6 +3,7 @@ package starboard
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -702,101 +703,192 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command get vulnerabilities", func() {
 		Context("for deployment/nginx resource", func() {
-			ctx := context.TODO()
+			When("vulnerabilities are associated with the deployment itself", func() {
+				ctx := context.TODO()
+				var deploy *appsv1.Deployment
+				var report *v1alpha1.VulnerabilityReport
+				BeforeEach(func() {
+					deploy = makeDeployment("nginx:1.16")
+					report = makeReport(kube.KindDeployment, deploy.Name)
+					_, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Create(ctx, report, metav1.CreateOptions{})
+					Expect(err).ToNot(HaveOccurred())
+				})
 
-			resourceKind := "Deployment"
-			resourceName := "nginx"
-			resourceNamespace := namespaceItest
+				When("getting vulnerabilities by deployment name", func() {
+					It("should return the vulnerabilities", func() {
+						stdout := NewBuffer()
+						stderr := NewBuffer()
 
-			reportName := "0e1e25ab-8c55-4cdc-af64-21fb8f412cb0"
-			reportNamespace := namespaceItest
+						err := cmd.Run(versionInfo, []string{
+							"starboard", "get", "vulnerabilities",
+							"deployment/" + deploy.Name,
+							"--namespace", namespaceItest,
+							"-v", starboardCLILogLevel,
+						}, stdout, stderr)
+						Expect(err).ToNot(HaveOccurred())
 
-			report := &v1alpha1.VulnerabilityReport{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      reportName,
-					Namespace: reportNamespace,
-					Labels: map[string]string{
-						"starboard.container.name":     "nginx",
-						"starboard.resource.kind":      resourceKind,
-						"starboard.resource.name":      resourceName,
-						"starboard.resource.namespace": resourceNamespace,
-					},
-				},
-				Report: v1alpha1.VulnerabilityScanResult{
-					UpdateTimestamp: metav1.NewTime(time.Now()),
-					Scanner: v1alpha1.Scanner{
-						Name:    "Trivy",
-						Vendor:  "Aqua Security",
-						Version: "0.14.0",
-					},
-					Registry: v1alpha1.Registry{
-						Server: "index.docker.io",
-					},
-					Artifact: v1alpha1.Artifact{
-						Repository: "library/nginx",
-						Tag:        "1.16",
-					},
-					Summary: v1alpha1.VulnerabilitySummary{
-						MediumCount: 1,
-					},
-					Vulnerabilities: []v1alpha1.Vulnerability{
-						{
-							VulnerabilityID:  "CVE-2020-3810",
-							Resource:         "apt",
-							InstalledVersion: "1.8.2",
-							FixedVersion:     "1.8.2.1",
-							Severity:         v1alpha1.SeverityMedium,
-							Title:            "",
-							Description:      "Missing input validation in the ar/tar implementations of APT before version 2.1.2 could result in denial of service when processing specially crafted deb files.",
-							Links: []string{
-								"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-3810",
-							},
-						},
-					},
-				},
-			}
+						var list v1alpha1.VulnerabilityReportList
+						err = yaml.Unmarshal(stdout.Contents(), &list)
+						Expect(err).ToNot(HaveOccurred())
 
-			BeforeEach(func() {
-				_, err := starboardClientset.AquasecurityV1alpha1().
-					VulnerabilityReports(reportNamespace).
-					Create(ctx, report, metav1.CreateOptions{})
-				Expect(err).ToNot(HaveOccurred())
+						if Expect(len(list.Items)).To(Equal(1)) {
+							item := list.Items[0]
+							item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
+							Expect(item.Report).To(Equal(report.Report))
+						}
+
+						Expect(stderr).Should(Say(""))
+					})
+				})
+
+				AfterEach(func() {
+					err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Delete(ctx, report.Name, metav1.DeleteOptions{})
+					Expect(err).ToNot(HaveOccurred())
+				})
 			})
 
-			It("should return a list of vulnerabilities resources", func() {
-				stdout := NewBuffer()
-				stderr := NewBuffer()
+			When("vulnerabilities are associated with the managed replicaset", func() {
+				ctx := context.TODO()
+				var deploy *appsv1.Deployment
+				var replicasetName string
+				var podName string
+				var report *v1alpha1.VulnerabilityReport
 
-				err := cmd.Run(versionInfo, []string{
-					"starboard",
-					"get",
-					"vulnerabilities",
-					"deployment/nginx",
-					"-v",
-					starboardCLILogLevel,
-					"--namespace",
-					reportNamespace,
-				}, stdout, stderr)
-				Expect(err).ToNot(HaveOccurred())
+				BeforeEach(func() {
+					deploy = makeDeployment("nginx:1.16")
+					_, err := kubernetesClientset.AppsV1().Deployments(namespaceItest).Create(ctx, deploy, metav1.CreateOptions{})
+					Expect(err).ToNot(HaveOccurred())
 
-				var list v1alpha1.VulnerabilityReportList
-				err = yaml.Unmarshal(stdout.Contents(), &list)
-				Expect(err).ToNot(HaveOccurred())
+					for i := 0; i < 10; i++ {
+						rsList, err := kubernetesClientset.AppsV1().ReplicaSets(namespaceItest).List(ctx, metav1.ListOptions{})
+						Expect(err).ToNot(HaveOccurred())
+						if len(rsList.Items) > 0 {
+							for _, rs := range rsList.Items {
+								for _, ownerRef := range rs.OwnerReferences {
+									if ownerRef.Name == deploy.Name && *ownerRef.Controller {
+										replicasetName = rs.Name
+									}
+								}
+							}
+							if replicasetName != "" {
+								break
+							}
+						}
+						time.Sleep(time.Second)
+					}
+					Expect(replicasetName).ToNot(BeEmpty())
 
-				if Expect(len(list.Items)).To(Equal(1)) {
-					item := list.Items[0]
-					item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
-					Expect(item.Report).To(Equal(report.Report))
-				}
+					for i := 0; i < 10; i++ {
+						podList, err := kubernetesClientset.CoreV1().Pods(namespaceItest).List(ctx, metav1.ListOptions{})
+						Expect(err).ToNot(HaveOccurred())
+						if len(podList.Items) > 0 {
+							for _, pod := range podList.Items {
+								for _, ownerRef := range pod.OwnerReferences {
+									if ownerRef.Name == replicasetName && *ownerRef.Controller {
+										podName = pod.Name
+									}
+								}
+							}
+							if podName != "" {
+								break
+							}
+						}
+						time.Sleep(time.Second)
+					}
+					Expect(podName).ToNot(BeEmpty())
 
-				Expect(stderr).Should(Say(""))
-			})
+					report = makeReport(kube.KindReplicaSet, replicasetName)
+					_, err = starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Create(ctx, report, metav1.CreateOptions{})
+					Expect(err).ToNot(HaveOccurred())
+				})
 
-			AfterEach(func() {
-				err := starboardClientset.AquasecurityV1alpha1().
-					VulnerabilityReports(reportNamespace).
-					Delete(ctx, reportName, metav1.DeleteOptions{})
-				Expect(err).ToNot(HaveOccurred())
+				When("getting vulnerabilities by deployment name", func() {
+					It("should return the vulnerabilities", func() {
+						stdout := NewBuffer()
+						stderr := NewBuffer()
+
+						err := cmd.Run(versionInfo, []string{
+							"starboard", "get", "vulnerabilities",
+							"deployment/" + deploy.Name,
+							"--namespace", namespaceItest,
+							"-v", starboardCLILogLevel,
+						}, stdout, stderr)
+						Expect(err).ToNot(HaveOccurred())
+
+						var list v1alpha1.VulnerabilityReportList
+						err = yaml.Unmarshal(stdout.Contents(), &list)
+						Expect(err).ToNot(HaveOccurred())
+
+						if Expect(len(list.Items)).To(Equal(1)) {
+							item := list.Items[0]
+							item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
+							Expect(item.Report).To(Equal(report.Report))
+						}
+
+						Expect(stderr).Should(Say(""))
+					})
+				})
+
+				When("getting vulnerabilities by replicaset name", func() {
+					It("should return the vulnerabilities", func() {
+						stdout := NewBuffer()
+						stderr := NewBuffer()
+
+						err := cmd.Run(versionInfo, []string{
+							"starboard", "get", "vulnerabilities",
+							"replicaset/" + replicasetName,
+							"--namespace", namespaceItest,
+							"-v", starboardCLILogLevel,
+						}, stdout, stderr)
+						Expect(err).ToNot(HaveOccurred())
+
+						var list v1alpha1.VulnerabilityReportList
+						err = yaml.Unmarshal(stdout.Contents(), &list)
+						Expect(err).ToNot(HaveOccurred())
+
+						if Expect(len(list.Items)).To(Equal(1)) {
+							item := list.Items[0]
+							item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
+							Expect(item.Report).To(Equal(report.Report))
+						}
+
+						Expect(stderr).Should(Say(""))
+					})
+				})
+
+				When("getting vulnerabilities by pod name", func() {
+					It("should return the vulnerabilities", func() {
+						stdout := NewBuffer()
+						stderr := NewBuffer()
+
+						err := cmd.Run(versionInfo, []string{
+							"starboard", "get", "vulnerabilities",
+							"pod/" + podName,
+							"--namespace", namespaceItest,
+							"-v", starboardCLILogLevel,
+						}, stdout, stderr)
+						Expect(err).ToNot(HaveOccurred())
+
+						var list v1alpha1.VulnerabilityReportList
+						err = yaml.Unmarshal(stdout.Contents(), &list)
+						Expect(err).ToNot(HaveOccurred())
+
+						if Expect(len(list.Items)).To(Equal(1)) {
+							item := list.Items[0]
+							item.Report.UpdateTimestamp = report.Report.UpdateTimestamp // TODO A Hack to skip comparing timestamp
+							Expect(item.Report).To(Equal(report.Report))
+						}
+
+						Expect(stderr).Should(Say(""))
+					})
+				})
+
+				AfterEach(func() {
+					err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Delete(ctx, report.Name, metav1.DeleteOptions{})
+					Expect(err).ToNot(HaveOccurred())
+					err = kubernetesClientset.AppsV1().Deployments(namespaceItest).Delete(ctx, deploy.Name, metav1.DeleteOptions{})
+					Expect(err).ToNot(HaveOccurred())
+				})
 			})
 		})
 	})
@@ -1033,3 +1125,81 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 })
+
+func makeDeployment(image string) *appsv1.Deployment {
+	name := strings.Split(image, ":")[0]
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespaceItest,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: pointer.Int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": name},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels.Set{
+						"app": name,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  name,
+							Image: image,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func makeReport(kind kube.Kind, name string) *v1alpha1.VulnerabilityReport {
+	return &v1alpha1.VulnerabilityReport{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "0e1e25ab-8c55-4cdc-af64-21fb8f412cb0",
+			Namespace: namespaceItest,
+			Labels: map[string]string{
+				"starboard.container.name":     "nginx",
+				"starboard.resource.kind":      string(kind),
+				"starboard.resource.name":      name,
+				"starboard.resource.namespace": namespaceItest,
+			},
+		},
+		Report: v1alpha1.VulnerabilityScanResult{
+			UpdateTimestamp: metav1.NewTime(time.Now()),
+			Scanner: v1alpha1.Scanner{
+				Name:    "Trivy",
+				Vendor:  "Aqua Security",
+				Version: "0.14.0",
+			},
+			Registry: v1alpha1.Registry{
+				Server: "index.docker.io",
+			},
+			Artifact: v1alpha1.Artifact{
+				Repository: "library/nginx",
+				Tag:        "1.16",
+			},
+			Summary: v1alpha1.VulnerabilitySummary{
+				MediumCount: 1,
+			},
+			Vulnerabilities: []v1alpha1.Vulnerability{
+				{
+					VulnerabilityID:  "CVE-2020-3810",
+					Resource:         "apt",
+					InstalledVersion: "1.8.2",
+					FixedVersion:     "1.8.2.1",
+					Severity:         v1alpha1.SeverityMedium,
+					Title:            "",
+					Description:      "Missing input validation in the ar/tar implementations of APT before version 2.1.2 could result in denial of service when processing specially crafted deb files.",
+					Links: []string{
+						"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-3810",
+					},
+				},
+			},
+		},
+	}
+}

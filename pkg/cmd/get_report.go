@@ -9,6 +9,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 func NewGetReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
@@ -31,6 +32,10 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
+			kubernetesClientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				return err
+			}
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
@@ -44,7 +49,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			return report.NewHTMLReporter(starboardClientset).
+			return report.NewHTMLReporter(starboardClientset, kubernetesClientset).
 				GenerateReport(workload, outWriter)
 		},
 	}

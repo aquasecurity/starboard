@@ -12,6 +12,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"k8s.io/client-go/kubernetes"
 )
 
 type htmlReporter struct {
@@ -19,9 +20,9 @@ type htmlReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewHTMLReporter(starboardClientset clientset.Interface) Reporter {
+func NewHTMLReporter(starboardClientset clientset.Interface, kubernetesClientset *kubernetes.Clientset) Reporter {
 	return &htmlReporter{
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(starboardClientset, kubernetesClientset),
 		configAuditReportsReader:   configauditreport.NewReadWriter(starboardClientset),
 	}
 }
