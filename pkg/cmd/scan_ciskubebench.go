@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -57,7 +58,8 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		}
 
 		scheme := starboard.NewScheme()
-		scanner := kubebench.NewScanner(scheme, kubeClientset, config, opts)
+		plugin := kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), config)
+		scanner := kubebench.NewScanner(scheme, kubeClientset, opts, plugin)
 
 		kubeClient, err := client.New(kubeConfig, client.Options{
 			Scheme: scheme,
