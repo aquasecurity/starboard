@@ -19,6 +19,10 @@ and a [Go module][go-module] to work with a range of existing security scanners,
 command, the [Octant plugin][octant-plugin], and the [Lens extension][lens-extension] that make security
 reports available through familiar Kubernetes tools.
 
+<p align="center">
+<img src="docs/images/starboard-overview.png" alt="Starboard Overview"/>
+</p>
+
 Starboard can be run in two different modes:
 
 - As a [command][cli], so you can trigger scans and view the risks in a kubectl-compatible way or as part of your CI/CD pipeline.
