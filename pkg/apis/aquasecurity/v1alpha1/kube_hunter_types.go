@@ -126,4 +126,5 @@ type KubeHunterVulnerability struct {
 	Description   string   `json:"description"`   // e.g. "Accessing the pod service account token gives an attacker the option to use the server API"
 	Evidence      string   `json:"evidence"`      // e.g. "eyJhbGciOiJSUzI1NiIMXA1..."
 	Hunter        string   `json:"hunter"`        // e.g. "Access Secrets"
+	AvdReference  string   `json:"avd_reference"` // e.g. "Aqua vulnerability database reference"
 }
