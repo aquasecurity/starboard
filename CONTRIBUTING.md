@@ -182,8 +182,9 @@ started with a basic development workflow. For other install modes see [Operator
 1. Send custom resource definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml
-   $ kubectl apply -f deploy/crd/configauditreports.crd.yaml
+   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
+       -f deploy/crd/configauditreports.crd.yaml \
+       -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
@@ -224,16 +225,16 @@ started with a basic development workflow. For other install modes see [Operator
 To install [Operator Lifecycle Manager][olm] (OLM) run:
 
 ```
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/crds.yaml
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/olm.yaml
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/crds.yaml
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/olm.yaml
 ```
 
 or
 
 ```
-$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/install.sh -o install.sh
+$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/install.sh -o install.sh
 $ chmod +x install.sh
-$ ./install.sh 0.15.1
+$ ./install.sh 0.16.1
 ```
 
 ### Build the Catalog Image

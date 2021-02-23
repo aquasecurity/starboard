@@ -17,6 +17,7 @@ const (
 
 	LabelConfigAuditReportScan   = "configAuditReport.scanner"
 	LabelVulnerabilityReportScan = "vulnerabilityReport.scanner"
+	LabelKubeBenchReportScan     = "kubeBenchReport.scanner"
 
 	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
 	AppStarboardOperator = "starboard-operator"

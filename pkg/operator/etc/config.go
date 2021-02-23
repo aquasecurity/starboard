@@ -9,15 +9,16 @@ import (
 )
 
 type Config struct {
-	Namespace               string        `env:"OPERATOR_NAMESPACE"`
-	TargetNamespaces        string        `env:"OPERATOR_TARGET_NAMESPACES"`
-	ServiceAccount          string        `env:"OPERATOR_SERVICE_ACCOUNT" envDefault:"starboard-operator"`
-	ScanJobTimeout          time.Duration `env:"OPERATOR_SCAN_JOB_TIMEOUT" envDefault:"5m"`
-	ConcurrentScanJobsLimit int           `env:"OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT" envDefault:"3"`
-	ScanJobRetryAfter       time.Duration `env:"OPERATOR_SCAN_JOB_RETRY_AFTER" envDefault:"30s"`
-	MetricsBindAddress      string        `env:"OPERATOR_METRICS_BIND_ADDRESS" envDefault:":8080"`
-	HealthProbeBindAddress  string        `env:"OPERATOR_HEALTH_PROBE_BIND_ADDRESS" envDefault:":9090"`
-	LogDevMode              bool          `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
+	Namespace                     string        `env:"OPERATOR_NAMESPACE"`
+	TargetNamespaces              string        `env:"OPERATOR_TARGET_NAMESPACES"`
+	ServiceAccount                string        `env:"OPERATOR_SERVICE_ACCOUNT" envDefault:"starboard-operator"`
+	ScanJobTimeout                time.Duration `env:"OPERATOR_SCAN_JOB_TIMEOUT" envDefault:"5m"`
+	ConcurrentScanJobsLimit       int           `env:"OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT" envDefault:"10"`
+	ScanJobRetryAfter             time.Duration `env:"OPERATOR_SCAN_JOB_RETRY_AFTER" envDefault:"30s"`
+	MetricsBindAddress            string        `env:"OPERATOR_METRICS_BIND_ADDRESS" envDefault:":8080"`
+	HealthProbeBindAddress        string        `env:"OPERATOR_HEALTH_PROBE_BIND_ADDRESS" envDefault:":9090"`
+	LogDevMode                    bool          `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
+	CISKubernetesBenchmarkEnabled bool          `env:"OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED" envDefault:"true"`
 }
 
 func GetOperatorConfig() (Config, error) {

@@ -109,6 +109,13 @@ var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object
 	return false
 })
 
+var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if _, ok := obj.GetLabels()[kube.LabelKubeBenchReportScan]; ok {
+		return true
+	}
+	return false
+})
+
 func Not(p predicate.Predicate) predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(event event.CreateEvent) bool {
