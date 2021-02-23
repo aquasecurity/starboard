@@ -52,7 +52,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	case etc.SingleNamespace:
 		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default`).
-		cachedNamespaces := append(targetNamespaces, operatorNamespace, "")
+		cachedNamespaces := append(targetNamespaces, operatorNamespace)
 		if operatorConfig.CISKubernetesBenchmarkEnabled {
 			// Cache cluster-scoped resources such as Nodes
 			cachedNamespaces = append(cachedNamespaces, "")
