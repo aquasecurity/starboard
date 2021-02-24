@@ -50,6 +50,7 @@ envSecret:
   #       properly.
   stringData:
     OPERATOR_LOG_DEV_MODE: "false"
+    OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED: "true"
 
 rbac:
   create: true

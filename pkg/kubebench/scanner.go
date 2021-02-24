@@ -2,7 +2,9 @@ package kubebench
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -23,41 +25,44 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const (
-	kubeBenchContainerName = "kube-bench"
-)
+// Plugin defines the interface between Starboard and Kubernetes configuration
+// checker with CIS Kubernetes Benchmarks.
+type Plugin interface {
 
-type Config interface {
-	GetKubeBenchImageRef() (string, error)
+	// GetScanJobSpec describes the pod that will be created by Starboard when
+	// it schedules a Kubernetes job to audit the configuration of the specified
+	// node.
+	GetScanJobSpec(node corev1.Node) (corev1.PodSpec, error)
+
+	// ParseCISKubeBenchOutput is a callback to parse and convert logs of
+	// the pod controlled by the scan job to v1alpha1.CISKubeBenchOutput.
+	ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchOutput, error)
+
+	GetContainerName() string
 }
 
 type Scanner struct {
 	scheme     *runtime.Scheme
-	config     Config
 	opts       kube.ScannerOpts
 	clientset  kubernetes.Interface
 	pods       *pod.Manager
 	logsReader kube.LogsReader
-	converter  *Converter
+	plugin     Plugin
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	config Config,
 	opts kube.ScannerOpts,
+	plugin Plugin,
 ) *Scanner {
 	return &Scanner{
 		scheme:     scheme,
-		config:     config,
 		opts:       opts,
 		clientset:  clientset,
 		pods:       pod.NewPodManager(clientset),
 		logsReader: kube.NewLogsReader(clientset),
-		converter: &Converter{
-			Clock:  ext.NewSystemClock(),
-			Config: config,
-		},
+		plugin:     plugin,
 	}
 }
 
@@ -80,17 +85,18 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 			return
 		}
 		// 5. Delete the kube-bench Job
-		klog.V(3).Infof("Deleting job: %s/%s", job.Namespace, job.Name)
+		klog.V(3).Infof("Deleting job %q", job.Namespace+"/"+job.Name)
 		background := metav1.DeletePropagationBackground
 		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
 			PropagationPolicy: &background,
 		})
 	}()
 
+	containerName := s.plugin.GetContainerName()
 	// 3. Get kube-bench JSON output from the kube-bench Pod
-	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", kubeBenchContainerName,
-		job.Namespace, job.Name)
-	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, kubeBenchContainerName)
+	klog.V(3).Infof("Getting logs for %q container in job %q", containerName,
+		job.Namespace+"/"+job.Name)
+	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, containerName)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("getting logs: %w", err)
 	}
@@ -99,7 +105,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	}()
 
 	// 4. Parse the CISBenchmarkReport from the logs Reader
-	output, err := s.converter.Convert(logsStream)
+	output, err := s.plugin.ParseCISKubeBenchOutput(logsStream)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
@@ -115,7 +121,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 		Report: output,
 	}
 
-	err = controllerutil.SetOwnerReference(&node, &report, s.scheme)
+	err = controllerutil.SetControllerReference(&node, &report, s.scheme)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
@@ -124,18 +130,18 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
-	imageRef, err := s.config.GetKubeBenchImageRef()
+	templateSpec, err := s.plugin.GetScanJobSpec(node)
 	if err != nil {
 		return nil, err
 	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      uuid.New().String(),
 			Namespace: starboard.NamespaceName,
 			Labels: labels.Set{
-				"app.kubernetes.io/name": "starboard-cli",
-				kube.LabelResourceKind:   string(kube.KindNode),
-				kube.LabelResourceName:   node.Name,
+				kube.LabelResourceKind: string(kube.KindNode),
+				kube.LabelResourceName: node.Name,
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -145,123 +151,209 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
-						"app.kubernetes.io/name": "starboard-cli",
-						kube.LabelResourceKind:   string(kube.KindNode),
-						kube.LabelResourceName:   node.Name,
+						kube.LabelResourceKind: string(kube.KindNode),
+						kube.LabelResourceName: node.Name,
 					},
 				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName:           starboard.ServiceAccountName,
-					AutomountServiceAccountToken: pointer.BoolPtr(true),
-					RestartPolicy:                corev1.RestartPolicyNever,
-					HostPID:                      true,
-					NodeName:                     node.Name,
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsUser:  pointer.Int64Ptr(0),
-						RunAsGroup: pointer.Int64Ptr(0),
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
+				Spec: templateSpec,
+			},
+		},
+	}, nil
+}
+
+const (
+	kubeBenchContainerName = "kube-bench"
+)
+
+type Config interface {
+	GetKubeBenchImageRef() (string, error)
+}
+
+type kubeBenchPlugin struct {
+	clock  ext.Clock
+	config Config
+}
+
+// NewKubeBenchPlugin constructs a new Plugin, which is using an official
+// Kube-Bench container image, with the specified Config.
+func NewKubeBenchPlugin(clock ext.Clock, config Config) Plugin {
+	return &kubeBenchPlugin{
+		clock:  clock,
+		config: config,
+	}
+}
+
+func (k *kubeBenchPlugin) GetScanJobSpec(node corev1.Node) (corev1.PodSpec, error) {
+	imageRef, err := k.config.GetKubeBenchImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, err
+	}
+	return corev1.PodSpec{
+		ServiceAccountName:           starboard.ServiceAccountName,
+		AutomountServiceAccountToken: pointer.BoolPtr(true),
+		RestartPolicy:                corev1.RestartPolicyNever,
+		HostPID:                      true,
+		NodeName:                     node.Name,
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsUser:  pointer.Int64Ptr(0),
+			RunAsGroup: pointer.Int64Ptr(0),
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "var-lib-etcd",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/var/lib/etcd",
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "var-lib-etcd",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/lib/etcd",
-								},
-							},
-						},
-						{
-							Name: "var-lib-kubelet",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet",
-								},
-							},
-						},
-						{
-							Name: "etc-systemd",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/etc/systemd",
-								},
-							},
-						},
-						{
-							Name: "etc-kubernetes",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/etc/kubernetes",
-								},
-							},
-						},
-						{
-							Name: "usr-bin",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/usr/bin",
-								},
-							},
-						},
+				},
+			},
+			{
+				Name: "var-lib-kubelet",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/var/lib/kubelet",
 					},
-					Containers: []corev1.Container{
-						{
-							Name:                     kubeBenchContainerName,
-							Image:                    imageRef,
-							ImagePullPolicy:          corev1.PullIfNotPresent,
-							TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-							Command:                  []string{"sh"},
-							Args:                     []string{"-c", "kube-bench --json 2> /dev/null"},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged:               pointer.BoolPtr(false),
-								AllowPrivilegeEscalation: pointer.BoolPtr(false),
-								Capabilities: &corev1.Capabilities{
-									Drop: []corev1.Capability{"all"},
-								},
-								ReadOnlyRootFilesystem: pointer.BoolPtr(true),
-							},
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("300m"),
-									corev1.ResourceMemory: resource.MustParse("300M"),
-								},
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("50m"),
-									corev1.ResourceMemory: resource.MustParse("50M"),
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "var-lib-etcd",
-									MountPath: "/var/lib/etcd",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "var-lib-kubelet",
-									MountPath: "/var/lib/kubelet",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "etc-systemd",
-									MountPath: "/etc/systemd",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "etc-kubernetes",
-									MountPath: "/etc/kubernetes",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "usr-bin",
-									MountPath: "/usr/local/mount-from-host/bin",
-									ReadOnly:  true,
-								},
-							},
-						},
+				},
+			},
+			{
+				Name: "etc-systemd",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/etc/systemd",
+					},
+				},
+			},
+			{
+				Name: "etc-kubernetes",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/etc/kubernetes",
+					},
+				},
+			},
+			{
+				Name: "usr-bin",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/usr/bin",
+					},
+				},
+			},
+		},
+		Containers: []corev1.Container{
+			{
+				Name:                     kubeBenchContainerName,
+				Image:                    imageRef,
+				ImagePullPolicy:          corev1.PullIfNotPresent,
+				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+				Command:                  []string{"sh"},
+				Args:                     []string{"-c", "kube-bench --json 2> /dev/null"},
+				SecurityContext: &corev1.SecurityContext{
+					Privileged:               pointer.BoolPtr(false),
+					AllowPrivilegeEscalation: pointer.BoolPtr(false),
+					Capabilities: &corev1.Capabilities{
+						Drop: []corev1.Capability{"all"},
+					},
+					ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+				},
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("300m"),
+						corev1.ResourceMemory: resource.MustParse("300M"),
+					},
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("50m"),
+						corev1.ResourceMemory: resource.MustParse("50M"),
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "var-lib-etcd",
+						MountPath: "/var/lib/etcd",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "var-lib-kubelet",
+						MountPath: "/var/lib/kubelet",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "etc-systemd",
+						MountPath: "/etc/systemd",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "etc-kubernetes",
+						MountPath: "/etc/kubernetes",
+						ReadOnly:  true,
+					},
+					{
+						Name:      "usr-bin",
+						MountPath: "/usr/local/mount-from-host/bin",
+						ReadOnly:  true,
 					},
 				},
 			},
 		},
 	}, nil
+}
+
+func (k *kubeBenchPlugin) ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchOutput, error) {
+	output := &struct {
+		Controls []v1alpha1.CISKubeBenchSection `json:"Controls"`
+	}{}
+
+	decoder := json.NewDecoder(logsStream)
+	err := decoder.Decode(output)
+	if err != nil {
+		return v1alpha1.CISKubeBenchOutput{}, err
+	}
+
+	imageRef, err := k.config.GetKubeBenchImageRef()
+	if err != nil {
+		return v1alpha1.CISKubeBenchOutput{}, err
+	}
+	version, err := starboard.GetVersionFromImageRef(imageRef)
+	if err != nil {
+		return v1alpha1.CISKubeBenchOutput{}, err
+	}
+
+	return v1alpha1.CISKubeBenchOutput{
+		Scanner: v1alpha1.Scanner{
+			Name:    "kube-bench",
+			Vendor:  "Aqua Security",
+			Version: version,
+		},
+		Summary:         k.summary(output.Controls),
+		UpdateTimestamp: metav1.NewTime(k.clock.Now()),
+		Sections:        output.Controls,
+	}, nil
+}
+
+func (k *kubeBenchPlugin) summary(sections []v1alpha1.CISKubeBenchSection) v1alpha1.CISKubeBenchSummary {
+	totalPass := 0
+	totalInfo := 0
+	totalWarn := 0
+	totalFail := 0
+
+	for _, section := range sections {
+		totalPass += section.TotalPass
+		totalInfo += section.TotalInfo
+		totalWarn += section.TotalWarn
+		totalFail += section.TotalFail
+	}
+
+	return v1alpha1.CISKubeBenchSummary{
+		PassCount: totalPass,
+		InfoCount: totalInfo,
+		WarnCount: totalWarn,
+		FailCount: totalFail,
+	}
+}
+
+func (k *kubeBenchPlugin) GetContainerName() string {
+	return kubeBenchContainerName
 }

@@ -1032,7 +1032,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	})
 
-	Describe("Command run kube-bench", func() {
+	Describe("Command generate ciskubebenchreports", func() {
 
 		It("should run kube-bench", func() {
 			err := cmd.Run(versionInfo, []string{
@@ -1060,10 +1060,12 @@ var _ = Describe("Starboard CLI", func() {
 							kube.LabelResourceName: Equal(node.Name),
 						}),
 						"OwnerReferences": ConsistOf(metav1.OwnerReference{
-							APIVersion: "v1",
-							Kind:       "Node",
-							Name:       node.Name,
-							UID:        node.UID,
+							APIVersion:         "v1",
+							Kind:               "Node",
+							Name:               node.Name,
+							UID:                node.UID,
+							Controller:         pointer.BoolPtr(true),
+							BlockOwnerDeletion: pointer.BoolPtr(true),
 						}),
 					}),
 					"Report": MatchFields(IgnoreExtras, Fields{

@@ -61,6 +61,9 @@ func (w *rw) FindByOwner(ctx context.Context, node kube.Object) (*v1alpha1.CISKu
 		Name: node.Name,
 	}, report)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return report, nil

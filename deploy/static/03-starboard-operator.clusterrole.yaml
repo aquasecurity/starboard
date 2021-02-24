@@ -17,6 +17,14 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - "nodes"
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
       - configmaps
       - secrets
       - serviceaccounts
@@ -51,6 +59,7 @@ rules:
     resources:
       - vulnerabilityreports
       - configauditreports
+      - ciskubebenchreports
     verbs:
       - get
       - list

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -28,7 +30,12 @@ var (
 
 var (
 	kubeClientset      kubernetes.Interface
+	kubeClient         client.Client
 	starboardClientset versioned.Interface
+)
+
+var (
+	kubeBenchReportReader kubebench.Reader
 )
 
 func TestStarboardOperator(t *testing.T) {
@@ -51,8 +58,13 @@ var _ = BeforeSuite(func(done Done) {
 	kubeClientset, err = kubernetes.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
 
+	kubeClient, err = client.New(kubeConfig, client.Options{Scheme: starboard.NewScheme()})
+	Expect(err).ToNot(HaveOccurred())
+
 	starboardClientset, err = versioned.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
+
+	kubeBenchReportReader = kubebench.NewReadWriter(kubeClient)
 
 	testEnv = &envtest.Environment{
 		UseExistingCluster: pointer.BoolPtr(true),
