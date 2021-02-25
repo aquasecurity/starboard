@@ -7,7 +7,7 @@ metadata:
 data:
   vulnerabilityReports.scanner: Trivy
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-  trivy.imageRef: docker.io/aquasec/trivy:0.14.0
+  trivy.imageRef: docker.io/aquasec/trivy:0.16.0
   trivy.mode: Standalone
   trivy.serverURL: http://trivy-server.trivy-server:4954
   polaris.imageRef: quay.io/fairwinds/polaris:3.0

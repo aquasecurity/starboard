@@ -61,7 +61,7 @@ The following tables list available configuration settings with their default va
 | `vulnerabilityReports.scanner` | `Trivy`                                                | The name of the scanner that generates vulnerability reports. Either `Trivy` or `Aqua`. |
 | `trivy.httpProxy`              | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable in `Standalone` mode. |
 | `trivy.severity`               | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`               | `docker.io/aquasec/trivy:0.14.0`                       | Trivy image reference |
+| `trivy.imageRef`               | `docker.io/aquasec/trivy:0.16.0`                       | Trivy image reference |
 | `trivy.mode`                   | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
 | `trivy.serverURL`              | N/A                                                    | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
 | `trivy.serverTokenHeader`      | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |

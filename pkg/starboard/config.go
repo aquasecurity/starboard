@@ -261,7 +261,7 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: string(Trivy),
 
 		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
+		"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
 		keyTrivyMode:     string(Standalone),
 		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 

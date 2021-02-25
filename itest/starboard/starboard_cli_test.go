@@ -58,6 +58,14 @@ func NewPodSpec(podName string, containers map[string]string, args ...string) (*
 	return pod, err
 }
 
+var (
+	trivyScanner = v1alpha1.Scanner{
+		Name:    "Trivy",
+		Vendor:  "Aqua Security",
+		Version: "0.16.0",
+	}
+)
+
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
@@ -234,11 +242,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -299,11 +303,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 					"tomcat": MatchFields(IgnoreExtras, Fields{
@@ -322,11 +322,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -405,11 +401,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -500,11 +492,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -591,11 +579,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -682,11 +666,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -1173,11 +1153,7 @@ func makeReport(kind kube.Kind, name string) *v1alpha1.VulnerabilityReport {
 		},
 		Report: v1alpha1.VulnerabilityScanResult{
 			UpdateTimestamp: metav1.NewTime(time.Now()),
-			Scanner: v1alpha1.Scanner{
-				Name:    "Trivy",
-				Vendor:  "Aqua Security",
-				Version: "0.14.0",
-			},
+			Scanner:         trivyScanner,
 			Registry: v1alpha1.Registry{
 				Server: "index.docker.io",
 			},
