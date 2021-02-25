@@ -6,7 +6,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
-	extensionsapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 )
@@ -38,20 +38,20 @@ of the scanners.
 All resources created by this command can be removed from the cluster using
 the "cleanup" command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := cf.ToRESTConfig()
+			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return err
 			}
-			clientset, err := kubernetes.NewForConfig(config)
+			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
-			clientsetext, err := extensionsapi.NewForConfig(config)
+			apiExtensionsClientset, err := apiextensionsv1.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
-			configManager := starboard.NewConfigManager(clientset, starboard.NamespaceName)
-			return kube.NewCRManager(clientset, clientsetext, configManager).
+			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
+			return kube.NewCRManager(kubeClientset, apiExtensionsClientset, configManager).
 				Init(context.TODO())
 		},
 	}

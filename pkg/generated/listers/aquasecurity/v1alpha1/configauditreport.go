@@ -10,8 +10,10 @@ import (
 )
 
 // ConfigAuditReportLister helps list ConfigAuditReports.
+// All objects returned here must be treated as read-only.
 type ConfigAuditReportLister interface {
 	// List lists all ConfigAuditReports in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ConfigAuditReport, err error)
 	// ConfigAuditReports returns an object that can list and get ConfigAuditReports.
 	ConfigAuditReports(namespace string) ConfigAuditReportNamespaceLister
@@ -42,10 +44,13 @@ func (s *configAuditReportLister) ConfigAuditReports(namespace string) ConfigAud
 }
 
 // ConfigAuditReportNamespaceLister helps list and get ConfigAuditReports.
+// All objects returned here must be treated as read-only.
 type ConfigAuditReportNamespaceLister interface {
 	// List lists all ConfigAuditReports in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ConfigAuditReport, err error)
 	// Get retrieves the ConfigAuditReport from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.ConfigAuditReport, error)
 	ConfigAuditReportNamespaceListerExpansion
 }
