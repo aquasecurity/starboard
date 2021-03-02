@@ -2,9 +2,10 @@ package v1alpha1
 
 import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
-	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -15,60 +16,67 @@ const (
 )
 
 var (
-	KubeHunterReportCRD = extv1beta1.CustomResourceDefinition{
+	// TODO Once we migrate to Go 1.16 we can use the embed package to load the CRD from ./deploy/crd/kubehunterreports.crd.yaml
+	KubeHunterReportCRD = apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: KubeHunterReportCRName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
 		},
-		Spec: extv1beta1.CustomResourceDefinitionSpec{
+		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: aquasecurity.GroupName,
-			Versions: []extv1beta1.CustomResourceDefinitionVersion{
+			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 				{
 					Name:    KubeHunterReportCRVersion,
 					Served:  true,
 					Storage: true,
+					AdditionalPrinterColumns: []apiextensionsv1.CustomResourceColumnDefinition{
+						{
+							JSONPath: ".report.scanner.name",
+							Type:     "string",
+							Name:     "Scanner",
+						},
+						{
+							JSONPath: ".metadata.creationTimestamp",
+							Type:     "date",
+							Name:     "Age",
+						},
+						{
+							JSONPath: ".report.summary.highCount",
+							Type:     "integer",
+							Name:     "High",
+							Priority: 1,
+						},
+						{
+							JSONPath: ".report.summary.mediumCount",
+							Type:     "integer",
+							Name:     "Medium",
+							Priority: 1,
+						},
+						{
+							JSONPath: ".report.summary.lowCount",
+							Type:     "integer",
+							Name:     "Low",
+							Priority: 1,
+						},
+					},
+					Schema: &apiextensionsv1.CustomResourceValidation{
+						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+							XPreserveUnknownFields: pointer.BoolPtr(true),
+							Type:                   "object",
+						},
+					},
 				},
 			},
-			Scope: extv1beta1.ClusterScoped,
-			Names: extv1beta1.CustomResourceDefinitionNames{
+			Scope: apiextensionsv1.ClusterScoped,
+			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Singular:   "kubehunterreport",
 				Plural:     "kubehunterreports",
 				Kind:       KubeHunterReportKind,
 				ListKind:   KubeHunterReportListKind,
 				Categories: []string{"all"},
 				ShortNames: []string{"kubehunter"},
-			},
-			AdditionalPrinterColumns: []extv1beta1.CustomResourceColumnDefinition{
-				{
-					JSONPath: ".report.scanner.name",
-					Type:     "string",
-					Name:     "Scanner",
-				},
-				{
-					JSONPath: ".metadata.creationTimestamp",
-					Type:     "date",
-					Name:     "Age",
-				},
-				{
-					JSONPath: ".report.summary.highCount",
-					Type:     "integer",
-					Name:     "High",
-					Priority: 1,
-				},
-				{
-					JSONPath: ".report.summary.mediumCount",
-					Type:     "integer",
-					Name:     "Medium",
-					Priority: 1,
-				},
-				{
-					JSONPath: ".report.summary.lowCount",
-					Type:     "integer",
-					Name:     "Low",
-					Priority: 1,
-				},
 			},
 		},
 	}

@@ -91,6 +91,17 @@ var _ = Describe("Starboard Operator", func() {
 
 	// TODO Add a scenario for rolling update, i.e. create Deployment and then update its container image.
 
+	Describe("When operator is started", func() {
+
+		It("Should scan all nodes with CIS Kubernetes Benchmark checks", func() {
+			nodeList, err := kubeClientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			for _, node := range nodeList.Items {
+				Eventually(HasCISKubeBenchReportFor(node), assertionTimeout).Should(BeTrue())
+			}
+		})
+
+	})
 })
 
 func HasActiveReplicaSet(namespace, name string) func() bool {
@@ -164,4 +175,14 @@ func GetActiveReplicaSetForDeployment(namespace, name string) (*appsv1.ReplicaSe
 		return replicaSet.DeepCopy(), nil
 	}
 	return nil, nil
+}
+
+func HasCISKubeBenchReportFor(node corev1.Node) func() bool {
+	return func() bool {
+		report, err := kubeBenchReportReader.FindByOwner(context.Background(), kube.Object{Kind: kube.KindNode, Name: node.Name})
+		if err != nil {
+			return false
+		}
+		return report != nil
+	}
 }

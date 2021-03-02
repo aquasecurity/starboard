@@ -121,7 +121,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 		Report: output,
 	}
 
-	err = controllerutil.SetOwnerReference(&node, &report, s.scheme)
+	err = controllerutil.SetControllerReference(&node, &report, s.scheme)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}

@@ -43,13 +43,15 @@ spec:
             - name: OPERATOR_LOG_DEV_MODE
               value: "false"
             - name: OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT
-              value: "3"
+              value: "10"
             - name: OPERATOR_SCAN_JOB_RETRY_AFTER
               value: "30s"
             - name: OPERATOR_METRICS_BIND_ADDRESS
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
               value: ":9090"
+            - name: OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED
+              value: "true"
           ports:
             - name: metrics
               containerPort: 8080

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	aquasecurityv1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	core "k8s.io/api/core/v1"
-	rbac "k8s.io/api/rbac/v1"
-	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	extapi "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -25,16 +25,16 @@ const (
 )
 
 var (
-	namespace = &core.Namespace{
-		ObjectMeta: meta.ObjectMeta{
+	namespace = &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: starboard.NamespaceName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
 		},
 	}
-	serviceAccount = &core.ServiceAccount{
-		ObjectMeta: meta.ObjectMeta{
+	serviceAccount = &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: starboard.ServiceAccountName,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
@@ -42,14 +42,14 @@ var (
 		},
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 	}
-	clusterRole = &rbac.ClusterRole{
-		ObjectMeta: meta.ObjectMeta{
+	clusterRole = &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleStarboard,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
 		},
-		Rules: []rbac.PolicyRule{
+		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
 					"",
@@ -95,19 +95,19 @@ var (
 			},
 		},
 	}
-	clusterRoleBinding = &rbac.ClusterRoleBinding{
-		ObjectMeta: meta.ObjectMeta{
+	clusterRoleBinding = &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleBindingStarboard,
 			Labels: labels.Set{
 				"app.kubernetes.io/managed-by": "starboard",
 			},
 		},
-		RoleRef: rbac.RoleRef{
+		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
 			Name:     clusterRoleStarboard,
 		},
-		Subjects: []rbac.Subject{
+		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      starboard.ServiceAccountName,
@@ -119,14 +119,14 @@ var (
 
 type CRManager struct {
 	clientset     kubernetes.Interface
-	clientsetext  extapi.ApiextensionsV1beta1Interface
+	clientsetext  extapi.ApiextensionsV1Interface
 	configManager starboard.ConfigManager
 }
 
 // NewCRManager constructs a CRManager with the given starboard.ConfigManager and kubernetes.Interface.
 func NewCRManager(
 	clientset kubernetes.Interface,
-	clientsetext extapi.ApiextensionsV1beta1Interface,
+	clientsetext extapi.ApiextensionsV1Interface,
 	configManager starboard.ConfigManager,
 ) *CRManager {
 	return &CRManager{
@@ -137,22 +137,22 @@ func NewCRManager(
 }
 
 func (m *CRManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.VulnerabilityReportsCRD)
+	err = m.createOrUpdateCRD(ctx, &v1alpha1.VulnerabilityReportsCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.CISKubeBenchReportCRD)
+	err = m.createOrUpdateCRD(ctx, &v1alpha1.CISKubeBenchReportCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.KubeHunterReportCRD)
+	err = m.createOrUpdateCRD(ctx, &v1alpha1.KubeHunterReportCRD)
 	if err != nil {
 		return
 	}
 
-	err = m.createOrUpdateCRD(ctx, &aquasecurityv1alpha1.ConfigAuditReportCRD)
+	err = m.createOrUpdateCRD(ctx, &v1alpha1.ConfigAuditReportCRD)
 	if err != nil {
 		return
 	}
@@ -190,17 +190,17 @@ func (m *CRManager) initRBAC(ctx context.Context) (err error) {
 
 func (m *CRManager) cleanupRBAC(ctx context.Context) (err error) {
 	klog.V(3).Infof("Deleting ClusterRoleBinding %q", clusterRoleBindingStarboard)
-	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingStarboard, meta.DeleteOptions{})
+	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingStarboard, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
 	klog.V(3).Infof("Deleting ClusterRole %q", clusterRoleStarboard)
-	err = m.clientset.RbacV1().ClusterRoles().Delete(ctx, clusterRoleStarboard, meta.DeleteOptions{})
+	err = m.clientset.RbacV1().ClusterRoles().Delete(ctx, clusterRoleStarboard, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
 	klog.V(3).Infof("Deleting ServiceAccount %q", starboard.NamespaceName+"/"+starboard.ServiceAccountName)
-	err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Delete(ctx, starboard.ServiceAccountName, meta.DeleteOptions{})
+	err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Delete(ctx, starboard.ServiceAccountName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
@@ -214,7 +214,7 @@ var (
 
 func (m *CRManager) cleanupNamespace(ctx context.Context) error {
 	klog.V(3).Infof("Deleting Namespace %q", starboard.NamespaceName)
-	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, meta.DeleteOptions{})
+	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -222,7 +222,7 @@ func (m *CRManager) cleanupNamespace(ctx context.Context) error {
 		select {
 		// This case controls the polling interval
 		case <-time.After(cleanupPollingInterval):
-			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, starboard.NamespaceName, meta.GetOptions{})
+			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, starboard.NamespaceName, metav1.GetOptions{})
 			if errors.IsNotFound(err) {
 				klog.V(3).Infof("Deleted Namespace %q", starboard.NamespaceName)
 				return nil
@@ -234,83 +234,83 @@ func (m *CRManager) cleanupNamespace(ctx context.Context) error {
 	}
 }
 
-func (m *CRManager) createNamespaceIfNotFound(ctx context.Context, ns *core.Namespace) (err error) {
-	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, ns.Name, meta.GetOptions{})
+func (m *CRManager) createNamespaceIfNotFound(ctx context.Context, ns *corev1.Namespace) (err error) {
+	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, ns.Name, metav1.GetOptions{})
 	switch {
 	case err == nil:
 		klog.V(3).Infof("Namespace %q already exists", ns.Name)
 		return
 	case errors.IsNotFound(err):
 		klog.V(3).Infof("Creating Namespace %q", ns.Name)
-		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, ns, meta.CreateOptions{})
+		_, err = m.clientset.CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
 		return
 	}
 	return
 }
 
-func (m *CRManager) createServiceAccountIfNotFound(ctx context.Context, sa *core.ServiceAccount) (err error) {
+func (m *CRManager) createServiceAccountIfNotFound(ctx context.Context, sa *corev1.ServiceAccount) (err error) {
 	name := sa.Name
-	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, meta.GetOptions{})
+	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, metav1.GetOptions{})
 	switch {
 	case err == nil:
 		klog.V(3).Infof("ServiceAccount %q already exists", starboard.NamespaceName+"/"+name)
 		return
 	case errors.IsNotFound(err):
 		klog.V(3).Infof("Creating ServiceAccount %q", starboard.NamespaceName+"/"+name)
-		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, meta.CreateOptions{})
+		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, metav1.CreateOptions{})
 		return
 	}
 	return
 }
 
-func (m *CRManager) createOrUpdateClusterRole(ctx context.Context, cr *rbac.ClusterRole) (err error) {
-	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), meta.GetOptions{})
+func (m *CRManager) createOrUpdateClusterRole(ctx context.Context, cr *rbacv1.ClusterRole) (err error) {
+	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), metav1.GetOptions{})
 	switch {
 	case err == nil:
 		klog.V(3).Infof("Updating ClusterRole %q", cr.GetName())
 		deepCopy := existingRole.DeepCopy()
 		deepCopy.Rules = cr.Rules
-		_, err = m.clientset.RbacV1().ClusterRoles().Update(ctx, deepCopy, meta.UpdateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoles().Update(ctx, deepCopy, metav1.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
 		klog.V(3).Infof("Creating ClusterRole %q", cr.GetName())
-		_, err = m.clientset.RbacV1().ClusterRoles().Create(ctx, cr, meta.CreateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoles().Create(ctx, cr, metav1.CreateOptions{})
 		return
 	}
 	return
 }
 
-func (m *CRManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbac.ClusterRoleBinding) (err error) {
-	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, meta.GetOptions{})
+func (m *CRManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbacv1.ClusterRoleBinding) (err error) {
+	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, metav1.GetOptions{})
 	switch {
 	case err == nil:
 		klog.V(3).Infof("Updating ClusterRoleBinding %q", crb.GetName())
 		deepCopy := existingBinding.DeepCopy()
 		deepCopy.RoleRef = crb.RoleRef
 		deepCopy.Subjects = crb.Subjects
-		_, err = m.clientset.RbacV1().ClusterRoleBindings().Update(ctx, deepCopy, meta.UpdateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoleBindings().Update(ctx, deepCopy, metav1.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
 		klog.V(3).Infof("Creating ClusterRoleBinding %q", crb.GetName())
-		_, err = m.clientset.RbacV1().ClusterRoleBindings().Create(ctx, crb, meta.CreateOptions{})
+		_, err = m.clientset.RbacV1().ClusterRoleBindings().Create(ctx, crb, metav1.CreateOptions{})
 		return
 	}
 	return
 }
 
 func (m *CRManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResourceDefinition) (err error) {
-	existingCRD, err := m.clientsetext.CustomResourceDefinitions().Get(ctx, crd.Name, meta.GetOptions{})
+	existingCRD, err := m.clientsetext.CustomResourceDefinitions().Get(ctx, crd.Name, metav1.GetOptions{})
 
 	switch {
 	case err == nil:
 		klog.V(3).Infof("Updating CRD %q", crd.Name)
 		deepCopy := existingCRD.DeepCopy()
 		deepCopy.Spec = crd.Spec
-		_, err = m.clientsetext.CustomResourceDefinitions().Update(ctx, deepCopy, meta.UpdateOptions{})
+		_, err = m.clientsetext.CustomResourceDefinitions().Update(ctx, deepCopy, metav1.UpdateOptions{})
 		return
 	case errors.IsNotFound(err):
 		klog.V(3).Infof("Creating CRD %q", crd.Name)
-		_, err = m.clientsetext.CustomResourceDefinitions().Create(ctx, crd, meta.CreateOptions{})
+		_, err = m.clientsetext.CustomResourceDefinitions().Create(ctx, crd, metav1.CreateOptions{})
 		return
 	}
 	return
@@ -318,7 +318,7 @@ func (m *CRManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 
 func (m *CRManager) deleteCRD(ctx context.Context, name string) (err error) {
 	klog.V(3).Infof("Deleting CRD %q", name)
-	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, meta.DeleteOptions{})
+	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
@@ -326,19 +326,19 @@ func (m *CRManager) deleteCRD(ctx context.Context, name string) (err error) {
 }
 
 func (m *CRManager) Cleanup(ctx context.Context) (err error) {
-	err = m.deleteCRD(ctx, aquasecurityv1alpha1.VulnerabilityReportsCRName)
+	err = m.deleteCRD(ctx, v1alpha1.VulnerabilityReportsCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, aquasecurityv1alpha1.CISKubeBenchReportCRName)
+	err = m.deleteCRD(ctx, v1alpha1.CISKubeBenchReportCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, aquasecurityv1alpha1.KubeHunterReportCRName)
+	err = m.deleteCRD(ctx, v1alpha1.KubeHunterReportCRName)
 	if err != nil {
 		return
 	}
-	err = m.deleteCRD(ctx, aquasecurityv1alpha1.ConfigAuditReportCRName)
+	err = m.deleteCRD(ctx, v1alpha1.ConfigAuditReportCRName)
 	if err != nil {
 		return
 	}

@@ -28,7 +28,8 @@ type Kind string
 const (
 	KindUnknown Kind = "Unknown"
 
-	KindNode Kind = "Node"
+	KindNode      Kind = "Node"
+	KindNamespace Kind = "Namespace"
 
 	KindPod                   Kind = "Pod"
 	KindReplicaSet            Kind = "ReplicaSet"

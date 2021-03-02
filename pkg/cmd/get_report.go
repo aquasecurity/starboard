@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/report"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -15,14 +17,32 @@ import (
 func NewGetReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
 	return &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
-		Short: "Get a full html security report for a specified workload",
-		Long: `Generates a report that contains vulnerabilities and config audits found for the specified workload
+		Short: "Generate an HTML security report for a specified Kubernetes object",
+		Long: fmt.Sprintf(`Generate an HTML security report for a specified Kubernetes object.
+
+If the specified object is a Kubernetes workload, for example Pod or Deployment,
+the report will contain vulnerabilities found in its container images as well as
+results of its configuration audit.
+
+If the specified object is a Kubernetes namespace, the report will contain the
+summary of security risks, including vulnerabilities and results of configuration
+audits for most critical workloads within that namespace.
+
+HTML reports are generated from data already stored as VulnerabilityReport and
+ConfigAuditReport resources. Therefore, before generating a report make sure
+that you scanned Kubernetes workloads for vulnerabilities and configuration
+pitfalls. You can run "%[1]s scan vulnerabilityreports -h" and
+"%[1]s scan configauditreports -h" commands for more details on how to do that.
 
 TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
 NAME is the name of a particular Kubernetes workload.
-`,
-		Example: fmt.Sprintf(`  # Save report to a file
-  %[1]s get report deploy/nginx > report.html`, info.Executable),
+`, info.Executable),
+		Example: fmt.Sprintf(`  # Generate an HTML report for a deployment with the specified name and save it to a file.
+  %[1]s get report deployment/nginx > nginx.deploy.html
+
+  # Generate an HTML report for a namespace with the specified name and save it to a file.
+  %[1]s get report namespace/kube-system > kube-system.ns.html
+`, info.Executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
@@ -45,9 +65,24 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-
-			reporter := report.NewHTMLReporter(kubeClientset, kubeClient)
-			return reporter.GenerateReport(workload, outWriter)
+			clock := ext.NewSystemClock()
+			switch workload.Kind {
+			case kube.KindDeployment,
+				kube.KindReplicaSet,
+				kube.KindReplicationController,
+				kube.KindStatefulSet,
+				kube.KindDaemonSet,
+				kube.KindCronJob,
+				kube.KindJob,
+				kube.KindPod:
+				reporter := report.NewWorkloadReporter(clock, kubeClientset, kubeClient)
+				return reporter.Generate(workload, outWriter)
+			case kube.KindNamespace:
+				reporter := report.NewNamespaceReporter(clock, kubeClient)
+				return reporter.Generate(workload, outWriter)
+			default:
+				return fmt.Errorf("HTML report is not supported for %q", workload.Kind)
+			}
 		},
 	}
 }

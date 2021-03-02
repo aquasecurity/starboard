@@ -88,14 +88,13 @@ itests-starboard-operator: check-env get-ginkgo
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
 	github.com/aquasecurity/starboard/pkg/operator/predicate,\
 	github.com/aquasecurity/starboard/pkg/operator/controller,\
-	github.com/aquasecurity/starboard/pkg/operator/controller/job,\
-	github.com/aquasecurity/starboard/pkg/operator/controller/pod,\
 	github.com/aquasecurity/starboard/pkg/config,\
 	github.com/aquasecurity/starboard/pkg/resources,\
 	github.com/aquasecurity/starboard/pkg/trivy,\
 	github.com/aquasecurity/starboard/pkg/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
-	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
+	github.com/aquasecurity/starboard/pkg/vulnerabilityreport,\
+	github.com/aquasecurity/starboard/pkg/kubebench \
 	./itest/starboard-operator
 
 check-env:
