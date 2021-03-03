@@ -31,8 +31,94 @@ spec:
           priority: 1
       schema:
         openAPIV3Schema:
-          x-kubernetes-preserve-unknown-fields: true
-          type: "object"
+          type: object
+          required:
+            - apiVersion
+            - kind
+            - metadata
+            - report
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            report:
+              type: object
+              required:
+                - scanner
+                - summary
+                - vulnerabilities
+              properties:
+                scanner:
+                  type: object
+                  required:
+                    - name
+                    - vendor
+                    - version
+                  properties:
+                    name:
+                      type: string
+                    vendor:
+                      type: string
+                    version:
+                      type: string
+                summary:
+                  type: object
+                  required:
+                    - highCount
+                    - mediumCount
+                    - lowCount
+                    - unknownCount
+                  properties:
+                    highCount:
+                      type: integer
+                      minimum: 0
+                    mediumCount:
+                      type: integer
+                      minimum: 0
+                    lowCount:
+                      type: integer
+                      minimum: 0
+                    unknownCount:
+                      type: integer
+                      minimum: 0
+                vulnerabilities:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - location
+                      - vid
+                      - category
+                      - severity
+                      - vulnerability
+                      - description
+                      - evidence
+                      - avdReference
+                    properties:
+                      location:
+                        type: string
+                      vid:
+                        type: string
+                      category:
+                        type: string
+                      vulnerability:
+                        type: string
+                      severity:
+                        type: string
+                        enum:
+                          - high
+                          - medium
+                          - low
+                          - unknown
+                      description:
+                        type: string
+                      evidence:
+                        type: string
+                      avdReference:
+                        type: string
   scope: Cluster
   names:
     singular: kubehunterreport

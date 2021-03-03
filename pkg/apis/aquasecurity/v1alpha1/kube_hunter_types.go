@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"strconv"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,8 +65,91 @@ var (
 					},
 					Schema: &apiextensionsv1.CustomResourceValidation{
 						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
-							XPreserveUnknownFields: pointer.BoolPtr(true),
-							Type:                   "object",
+							Type: "object",
+							Required: []string{
+								"apiVersion",
+								"kind",
+								"metadata",
+								"report",
+							},
+							Properties: map[string]apiextensionsv1.JSONSchemaProps{
+								"apiVersion": {Type: "string"},
+								"kind":       {Type: "string"},
+								"metadata":   {Type: "object"},
+								"report": {
+									Type: "object",
+									Required: []string{
+										"scanner",
+										"vulnerabilities",
+									},
+									Properties: map[string]apiextensionsv1.JSONSchemaProps{
+										"scanner": {
+											Type: "object",
+											Required: []string{
+												"name",
+												"vendor",
+												"version",
+											},
+											Properties: map[string]apiextensionsv1.JSONSchemaProps{
+												"name":    {Type: "string"},
+												"vendor":  {Type: "string"},
+												"version": {Type: "string"},
+											},
+										},
+										"summary": {
+											Type: "object",
+											Required: []string{
+												"highCount",
+												"mediumCount",
+												"lowCount",
+												"unknownCount",
+											},
+											Properties: map[string]apiextensionsv1.JSONSchemaProps{
+												"highCount":    {Type: "integer", Minimum: pointer.Float64Ptr(0)},
+												"mediumCount":  {Type: "integer", Minimum: pointer.Float64Ptr(0)},
+												"lowCount":     {Type: "integer", Minimum: pointer.Float64Ptr(0)},
+												"unknownCount": {Type: "integer", Minimum: pointer.Float64Ptr(0)},
+											},
+										},
+										"updateTimestamp": {
+											Type:   "string",
+											Format: "date-time",
+										},
+										"vulnerabilities": {
+											Type: "array",
+											Items: &apiextensionsv1.JSONSchemaPropsOrArray{
+												Schema: &apiextensionsv1.JSONSchemaProps{
+													Type: "object",
+													Required: []string{
+														"category",
+														"severity",
+														"vulnerability",
+														"description",
+														"evidence",
+													},
+													Properties: map[string]apiextensionsv1.JSONSchemaProps{
+														"id":       {Type: "string"},
+														"category": {Type: "string"},
+														"severity": {
+															Type: "string",
+															Enum: []apiextensionsv1.JSON{
+																{Raw: []byte(strconv.Quote(string(KubeHunterSeverityHigh)))},
+																{Raw: []byte(strconv.Quote(string(KubeHunterSeverityMedium)))},
+																{Raw: []byte(strconv.Quote(string(KubeHunterSeverityLow)))},
+																{Raw: []byte(strconv.Quote(string(KubeHunterSeverityUnknown)))},
+															},
+														},
+														"vulnerability": {Type: "string"},
+														"description":   {Type: "string"},
+														"evidence":      {Type: "string"},
+														"avdReference":  {Type: "string"},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
