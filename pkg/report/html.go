@@ -117,3 +117,44 @@ func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
 	templates.WritePageTemplate(out, &data)
 	return nil
 }
+
+type nodeReport struct {
+	clock                      ext.Clock
+	client                     client.Client
+	vulnerabilityReportsReader vulnerabilityreport.ReadWriter
+}
+
+// NewNodeReporter generate the html reporter
+func NewNodeReporter(clock ext.Clock, client client.Client) NodeReporter {
+	return &nodeReport{
+		clock:  clock,
+		client: client,
+	}
+}
+
+func (r *nodeReport) Generate(node kube.Object, out io.Writer) error {
+	data, err := r.RetrieveData(node)
+	if err != nil {
+		return err
+	}
+	templates.WritePageTemplate(out, &data)
+	return nil
+}
+
+func (r *nodeReport) RetrieveData(node kube.Object) (templates.NodeReport, error) {
+	var cisKubeBenchReportList v1alpha1.CISKubeBenchReportList
+	err := r.client.List(context.Background(), &cisKubeBenchReportList, client.InNamespace(node.Name))
+	if err != nil {
+		return templates.NodeReport{}, err
+	}
+
+	return templates.NodeReport{
+		GeneratedAt: r.clock.Now(),
+	}, nil
+}
+
+func (r *nodeReport) vulnerabilities(reports []v1alpha1.CISKubeBenchReport, N int) []v1alpha1.CISKubeBenchReport {
+	b := append(reports[:0:0], reports...)
+
+	return b[:ext.MinInt(N, len(b))]
+}

@@ -1,0 +1,56 @@
+{% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
+
+{% func (p *NodeReport) Title() %}
+Aqua Starboard Node Security Report - Node: {%s p.Node.Name %}
+{% endfunc %}
+
+{% func (p *NodeReport) Body() %}
+<div class="container">
+
+  <div class="col mt-5">
+    <div class="row text-center">{%= imgAquaLogo() %}</div>
+    <div class="row mt-4 text-center">
+      <h2 class="text-muted mx-auto">Aqua Starboard Node Security Report</h2>
+    </div>
+    <div class="row text-center">
+      <h3 class="text-muted mx-auto">{%s string(p.Node.Kind) %}: {%s p.Node.Name %}</h3>
+    </div>
+    <div class="row text-center">
+      <h3 class="text-muted mx-auto">Generated on {%s p.GeneratedAt.Format("2 Jan 2006 15:04:01") %}</h3>
+    </div>
+  </div>
+
+  <h3>Results by Node</h3>
+  <div class="row">
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">Node</th>
+          <th scope="col">Critical</th>
+          <th scope="col">High</th>
+          <th scope="col">Other</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for _, report := range p.Vulnerabilities %}
+      {% code
+        summary := report.Report.Summary
+        otherCount := summary.PassCount + summary.InfoCount + summary.WarnCount
+      %}
+      <tr>
+        <td>{%= nodeReference(report.Report.Sections) %}</td>
+        <td>{%d summary.PassCount %}</td>
+        <td>{%d summary.InfoCount %}</td>
+        <td>{%d otherCount %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endfunc %}
+
+{% func nodeReference(section []v1alpha1.CISKubeBenchSection) %}
+  {%s section[0].ID %}/{%s section[0].Text %}:{%s section[0].NodeType %}/{%s section[0].Tests %}
+{% endfunc %}
