@@ -180,6 +180,16 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
+
+		if err = (&controller.PluginsConfigReconciler{
+			Logger:        ctrl.Log.WithName("reconciler").WithName("pluginsconfig"),
+			Config:        operatorConfig,
+			Client:        mgr.GetClient(),
+			Plugin:        plugin,
+			PluginContext: pluginContext,
+		}).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup %T: %w", controller.PluginsConfigReconciler{}, err)
+		}
 	}
 
 	if operatorConfig.CISKubernetesBenchmarkEnabled {

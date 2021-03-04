@@ -6,6 +6,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
+	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/plugin/trivy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -50,21 +51,7 @@ func (r *Resolver) WithClient(client client.Client) *Resolver {
 	return r
 }
 
-func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, error) {
-	return GetVulnerabilityReportPlugin(r.buildInfo, r.config)
-}
-
-func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.PluginContext, error) {
-	return polaris.NewPlugin(ext.NewSystemClock(), r.config), starboard.NewPluginContext().
-			WithName("Polaris").
-			WithNamespace(r.namespace).
-			WithServiceAccountName(r.serviceAccountName).
-			WithClient(r.client).
-			Build(),
-		nil
-}
-
-// GetVulnerabilityReportPlugin is a factory method that instantiates the
+// GetVulnerabilityPlugin is a factory method that instantiates the
 // vulnerabilityreport.Plugin for the specified starboard.ConfigData.
 //
 // Starboard currently supports Trivy scanner in Standalone and ClientServer
@@ -72,29 +59,45 @@ func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.P
 //
 // You could add your own scanner by implementing the
 // vulnerabilityreport.Plugin interface.
-// Deprecated
-func GetVulnerabilityReportPlugin(buildInfo starboard.BuildInfo, config starboard.ConfigData) (vulnerabilityreport.Plugin, error) {
-	scanner, err := config.GetVulnerabilityReportsScanner()
+func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, error) {
+	scanner, err := r.config.GetVulnerabilityReportsScanner()
 	if err != nil {
 		return nil, err
 	}
 	switch scanner {
 	case starboard.Trivy:
-		return trivy.NewPlugin(ext.NewGoogleUUIDGenerator(), config), nil
+		return trivy.NewPlugin(ext.NewGoogleUUIDGenerator(), r.config), nil
 	case starboard.Aqua:
-		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), buildInfo, config), nil
+		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo, r.config), nil
 	}
 	return nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
 }
 
-// GetConfigAuditReportPlugin is a factory method that instantiates the
+// GetConfigAuditPlugin is a factory method that instantiates the
 // configauditreport.Plugin for the specified starboard.ConfigData.
 //
 // Starboard supports Polaris as the only configuration auditing tool.
 //
 // You could add your own scanner by implementing the configauditreport.Plugin
 // interface.
-// Deprecated
-func GetConfigAuditReportPlugin(_ starboard.BuildInfo, config starboard.ConfigData) (configauditreport.Plugin, error) {
-	return polaris.NewPlugin(ext.NewSystemClock(), config), nil
+func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.PluginContext, error) {
+	scanner, err := r.config.GetConfigAuditReportsScanner()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pluginContext := starboard.NewPluginContext().
+		WithName(string(scanner)).
+		WithNamespace(r.namespace).
+		WithServiceAccountName(r.serviceAccountName).
+		WithClient(r.client).
+		Build()
+
+	switch scanner {
+	case starboard.Polaris:
+		return polaris.NewPlugin(ext.NewSystemClock(), r.config), pluginContext, nil
+	case starboard.Conftest:
+		return conftest.NewPlugin(ext.NewGoogleUUIDGenerator(), ext.NewSystemClock(), r.config), pluginContext, nil
+	}
+	return nil, nil, fmt.Errorf("unsupported configuration audit scanner plugin: %s", scanner)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,6 +38,11 @@ func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 		clock:  clock,
 		config: config,
 	}
+}
+
+func (p *plugin) GetConfigHash(_ starboard.PluginContext) (string, error) {
+	// TODO Compute config hash based on Polaris config
+	return kube.ComputeHash("TODO"), nil
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {

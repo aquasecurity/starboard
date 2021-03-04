@@ -23,6 +23,8 @@ type Config struct {
 	ConfigAuditScannerEnabled     bool          `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"true"`
 	LeaderElectionEnabled         bool          `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
 	LeaderElectionID              string        `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-operator"`
+	BatchDeleteLimit              int           `env:"OPERATOR_BATCH_DELETE_LIMIT" envDefault:"10"`
+	BatchDeleteDelay              time.Duration `env:"OPERATOR_BATCH_DELETE_DELAY" envDefault:"10s"`
 }
 
 func GetOperatorConfig() (Config, error) {
