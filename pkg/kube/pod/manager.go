@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Manager struct {
@@ -24,7 +25,7 @@ func NewPodManager(clientset kubernetes.Interface) *Manager {
 }
 
 // GetPodSpecByWorkload returns a PodSpec of the specified Workload.
-func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec corev1.PodSpec, object metav1.Object, err error) {
+func (pw *Manager) GetPodSpecByWorkload(ctx context.Context, workload kube.Object) (spec corev1.PodSpec, object client.Object, err error) {
 	ns := workload.Namespace
 	switch workload.Kind {
 	case kube.KindPod:
