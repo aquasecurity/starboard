@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/config"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -62,11 +62,11 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}
-		plugin, err := config.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+		instance, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
 		if err != nil {
 			return err
 		}
-		scanner := configauditreport.NewScanner(scheme, kubeClientset, opts, plugin)
+		scanner := configauditreport.NewScanner(scheme, kubeClientset, opts, instance)
 		report, err := scanner.Scan(ctx, workload, gvk)
 		if err != nil {
 			return err
