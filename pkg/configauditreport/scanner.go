@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
@@ -56,12 +57,12 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, err := s.getScanJob(workload, gvk)
+	job, secrets, err := s.getScanJob(workload, owner, gvk)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
 
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job, secrets...))
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("running scan job: %w", err)
 	}
@@ -98,10 +99,10 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		Get()
 }
 
-func (s *Scanner) getScanJob(workload kube.Object, gvk schema.GroupVersionKind) (*batchv1.Job, error) {
-	jobSpec, err := s.plugin.GetScanJobSpec(workload, gvk)
+func (s *Scanner) getScanJob(workload kube.Object, obj client.Object, gvk schema.GroupVersionKind) (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := s.plugin.GetScanJobSpec(workload, obj, gvk)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -128,5 +129,5 @@ func (s *Scanner) getScanJob(workload kube.Object, gvk schema.GroupVersionKind) 
 				Spec: jobSpec,
 			},
 		},
-	}, nil
+	}, secrets, nil
 }
