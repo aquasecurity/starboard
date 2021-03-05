@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/config"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"
@@ -122,7 +122,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	logsReader := kube.NewLogsReader(kubeClientset)
 	secretsReader := kube.NewControllerRuntimeSecretsReader(mgr.GetClient())
 
-	vulnerabilityReportPlugin, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
+	vulnerabilityReportPlugin, err := plugin.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 	}
 
-	configAuditReportPlugin, err := config.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+	configAuditReportPlugin, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
 	if err != nil {
 		return err
 	}
