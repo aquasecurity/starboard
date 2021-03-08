@@ -81,7 +81,7 @@ NAME is the name of a particular Kubernetes workload.
 				reporter := report.NewNamespaceReporter(clock, kubeClient)
 				return reporter.Generate(workload, outWriter)
 			case kube.KindNode:
-				reporter := report.NewNodeReporter(clock, kubeClient)
+				reporter := report.NewNodeReporter(clock, kubeClientset, kubeClient)
 				return reporter.Generate(workload, outWriter)
 			default:
 				return fmt.Errorf("HTML report is not supported for %q", workload.Kind)

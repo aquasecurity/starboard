@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -121,13 +122,33 @@ func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		job, err = r.getScanJob(owner, gvk, hash)
+		job, secrets, err := r.getScanJob(owner, ownerObj, gvk, hash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+
+		for _, secret := range secrets {
+			secret.Namespace = r.Config.Namespace
+			err := r.Client.Create(ctx, secret)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("creating secret: %w", err)
+			}
+		}
+
 		err = r.Client.Create(ctx, job)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
+		}
+
+		for _, secret := range secrets {
+			err = controllerutil.SetOwnerReference(job, secret, r.Client.Scheme())
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("setting owner reference: %w", err)
+			}
+			err := r.Client.Update(ctx, secret)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("updating secret: %w", err)
+			}
 		}
 
 		return ctrl.Result{}, nil
@@ -167,11 +188,11 @@ func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) strin
 	return fmt.Sprintf("scan-configauditreport-%s", resources.ComputeHash(workload))
 }
 
-func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, gvk schema.GroupVersionKind, hash string) (*batchv1.Job, error) {
-	jobSpec, err := r.Plugin.GetScanJobSpec(workload, gvk)
+func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, gvk schema.GroupVersionKind, hash string) (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(workload, obj, gvk)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	jobSpec.ServiceAccountName = r.Config.ServiceAccount
@@ -209,7 +230,7 @@ func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, gvk schem
 				Spec: jobSpec,
 			},
 		},
-	}, nil
+	}, secrets, nil
 }
 
 func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {

@@ -33,5 +33,5 @@ type NodeReport struct {
 	Node        kube.Object
 	GeneratedAt time.Time
 
-	Vulnerabilities []v1alpha1.CISKubeBenchReport
+	CisKubeBenchReport *v1alpha1.CISKubeBenchReport
 }

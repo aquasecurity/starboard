@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -40,10 +41,10 @@ func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 	}
 }
 
-func (p *plugin) GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, error) {
+func (p *plugin) GetScanJobSpec(workload kube.Object, obj client.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, []*corev1.Secret, error) {
 	imageRef, err := p.config.GetPolarisImageRef()
 	if err != nil {
-		return corev1.PodSpec{}, err
+		return corev1.PodSpec{}, nil, err
 	}
 	sourceName := p.sourceNameFrom(workload, gvk)
 
@@ -110,7 +111,7 @@ func (p *plugin) GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKin
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
 			},
 		},
-	}, nil
+	}, nil, nil
 }
 
 func (p *plugin) GetContainerName() string {

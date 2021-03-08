@@ -10,8 +10,10 @@ import (
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -119,16 +121,17 @@ func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
 }
 
 type nodeReport struct {
-	clock                      ext.Clock
-	client                     client.Client
-	vulnerabilityReportsReader vulnerabilityreport.ReadWriter
+	clock                  ext.Clock
+	client                 client.Client
+	kubebenchReportsReader kubebench.ReadWriter
 }
 
 // NewNodeReporter generate the html reporter
-func NewNodeReporter(clock ext.Clock, client client.Client) NodeReporter {
+func NewNodeReporter(clock ext.Clock, kubeClientset kubernetes.Interface, client client.Client) NodeReporter {
 	return &nodeReport{
-		clock:  clock,
-		client: client,
+		clock:                  clock,
+		client:                 client,
+		kubebenchReportsReader: kubebench.NewReadWriter(client),
 	}
 }
 
@@ -142,19 +145,16 @@ func (r *nodeReport) Generate(node kube.Object, out io.Writer) error {
 }
 
 func (r *nodeReport) RetrieveData(node kube.Object) (templates.NodeReport, error) {
-	var cisKubeBenchReportList v1alpha1.CISKubeBenchReportList
-	err := r.client.List(context.Background(), &cisKubeBenchReportList, client.InNamespace(node.Name))
+
+	found := &v1alpha1.CISKubeBenchReport{}
+	err := r.client.Get(context.Background(), types.NamespacedName{Name: node.Name}, found)
 	if err != nil {
 		return templates.NodeReport{}, err
 	}
 
 	return templates.NodeReport{
-		GeneratedAt: r.clock.Now(),
+		GeneratedAt:        r.clock.Now(),
+		Node:               node,
+		CisKubeBenchReport: found,
 	}, nil
-}
-
-func (r *nodeReport) vulnerabilities(reports []v1alpha1.CISKubeBenchReport, N int) []v1alpha1.CISKubeBenchReport {
-	b := append(reports[:0:0], reports...)
-
-	return b[:ext.MinInt(N, len(b))]
 }
