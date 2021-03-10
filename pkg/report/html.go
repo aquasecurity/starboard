@@ -10,8 +10,10 @@ import (
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -116,4 +118,43 @@ func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
 	}
 	templates.WritePageTemplate(out, &data)
 	return nil
+}
+
+type nodeReport struct {
+	clock                  ext.Clock
+	client                 client.Client
+	kubebenchReportsReader kubebench.ReadWriter
+}
+
+// NewNodeReporter generate the html reporter
+func NewNodeReporter(clock ext.Clock, kubeClientset kubernetes.Interface, client client.Client) NodeReporter {
+	return &nodeReport{
+		clock:                  clock,
+		client:                 client,
+		kubebenchReportsReader: kubebench.NewReadWriter(client),
+	}
+}
+
+func (r *nodeReport) Generate(node kube.Object, out io.Writer) error {
+	data, err := r.RetrieveData(node)
+	if err != nil {
+		return err
+	}
+	templates.WritePageTemplate(out, &data)
+	return nil
+}
+
+func (r *nodeReport) RetrieveData(node kube.Object) (templates.NodeReport, error) {
+
+	found := &v1alpha1.CISKubeBenchReport{}
+	err := r.client.Get(context.Background(), types.NamespacedName{Name: node.Name}, found)
+	if err != nil {
+		return templates.NodeReport{}, err
+	}
+
+	return templates.NodeReport{
+		GeneratedAt:        r.clock.Now(),
+		Node:               node,
+		CisKubeBenchReport: found,
+	}, nil
 }

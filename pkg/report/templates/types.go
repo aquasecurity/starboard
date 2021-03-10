@@ -26,3 +26,12 @@ type NamespaceReport struct {
 
 	Top5VulnerableImages []v1alpha1.VulnerabilityReport
 }
+
+// NodeReport is a structure that holds data to render
+// an HTML report for a specified K8s node.
+type NodeReport struct {
+	Node        kube.Object
+	GeneratedAt time.Time
+
+	CisKubeBenchReport *v1alpha1.CISKubeBenchReport
+}
