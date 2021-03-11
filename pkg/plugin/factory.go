@@ -3,9 +3,9 @@ package plugin
 import (
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/aqua"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/trivy"
