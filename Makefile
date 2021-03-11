@@ -72,7 +72,7 @@ itests-starboard: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/kube/pod,\
 	github.com/aquasecurity/starboard/pkg/kubebench,\
 	github.com/aquasecurity/starboard/pkg/kubehunter,\
-	github.com/aquasecurity/starboard/pkg/trivy,\
+	github.com/aquasecurity/starboard/pkg/plugin/trivy,\
 	github.com/aquasecurity/starboard/pkg/plugin/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
@@ -90,7 +90,7 @@ itests-starboard-operator: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/operator/controller,\
 	github.com/aquasecurity/starboard/pkg/plugin,\
 	github.com/aquasecurity/starboard/pkg/resources,\
-	github.com/aquasecurity/starboard/pkg/trivy,\
+	github.com/aquasecurity/starboard/pkg/plugin/trivy,\
 	github.com/aquasecurity/starboard/pkg/plugin/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport,\
