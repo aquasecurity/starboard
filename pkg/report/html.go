@@ -76,19 +76,19 @@ func (h *workloadReporter) Generate(workload kube.Object, writer io.Writer) erro
 	return nil
 }
 
-type namespaceReport struct {
+type namespaceReporter struct {
 	clock  ext.Clock
 	client client.Client
 }
 
 func NewNamespaceReporter(clock ext.Clock, client client.Client) NamespaceReporter {
-	return &namespaceReport{
+	return &namespaceReporter{
 		clock:  clock,
 		client: client,
 	}
 }
 
-func (r *namespaceReport) RetrieveData(namespace kube.Object) (templates.NamespaceReport, error) {
+func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.NamespaceReport, error) {
 	var vulnerabilityReportList v1alpha1.VulnerabilityReportList
 	err := r.client.List(context.Background(), &vulnerabilityReportList, client.InNamespace(namespace.Name))
 	if err != nil {
@@ -102,7 +102,7 @@ func (r *namespaceReport) RetrieveData(namespace kube.Object) (templates.Namespa
 	}, nil
 }
 
-func (r *namespaceReport) topNImagesBySeverityCount(reports []v1alpha1.VulnerabilityReport, N int) []v1alpha1.VulnerabilityReport {
+func (r *namespaceReporter) topNImagesBySeverityCount(reports []v1alpha1.VulnerabilityReport, N int) []v1alpha1.VulnerabilityReport {
 	b := append(reports[:0:0], reports...)
 
 	vulnerabilityreport.OrderedBy(vulnerabilityreport.SummaryCount...).
@@ -111,7 +111,7 @@ func (r *namespaceReport) topNImagesBySeverityCount(reports []v1alpha1.Vulnerabi
 	return b[:ext.MinInt(N, len(b))]
 }
 
-func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
+func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
 	data, err := r.RetrieveData(namespace)
 	if err != nil {
 		return err
@@ -120,22 +120,22 @@ func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
 	return nil
 }
 
-type nodeReport struct {
+type nodeReporter struct {
 	clock                  ext.Clock
 	client                 client.Client
 	kubebenchReportsReader kubebench.ReadWriter
 }
 
 // NewNodeReporter generate the html reporter
-func NewNodeReporter(clock ext.Clock, kubeClientset kubernetes.Interface, client client.Client) NodeReporter {
-	return &nodeReport{
+func NewNodeReporter(clock ext.Clock, client client.Client) NodeReporter {
+	return &nodeReporter{
 		clock:                  clock,
 		client:                 client,
 		kubebenchReportsReader: kubebench.NewReadWriter(client),
 	}
 }
 
-func (r *nodeReport) Generate(node kube.Object, out io.Writer) error {
+func (r *nodeReporter) Generate(node kube.Object, out io.Writer) error {
 	data, err := r.RetrieveData(node)
 	if err != nil {
 		return err
@@ -144,8 +144,7 @@ func (r *nodeReport) Generate(node kube.Object, out io.Writer) error {
 	return nil
 }
 
-func (r *nodeReport) RetrieveData(node kube.Object) (templates.NodeReport, error) {
-
+func (r *nodeReporter) RetrieveData(node kube.Object) (templates.NodeReport, error) {
 	found := &v1alpha1.CISKubeBenchReport{}
 	err := r.client.Get(context.Background(), types.NamespacedName{Name: node.Name}, found)
 	if err != nil {
