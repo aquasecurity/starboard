@@ -4,17 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -35,22 +37,42 @@ type ConfigAuditReportReconciler struct {
 	configauditreport.ReadWriter
 }
 
+var (
+	workloads = []struct {
+		kind       kube.Kind
+		forObject  client.Object
+		ownsObject client.Object
+	}{
+		{kind: kube.KindPod, forObject: &corev1.Pod{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindReplicaSet, forObject: &appsv1.ReplicaSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindReplicationController, forObject: &corev1.ReplicationController{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindStatefulSet, forObject: &appsv1.StatefulSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindDaemonSet, forObject: &appsv1.DaemonSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindCronJob, forObject: &batchv1beta1.CronJob{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindJob, forObject: &batchv1.Job{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+	}
+)
+
 func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	installModePredicate, err := InstallModePredicate(r.Config)
 	if err != nil {
 		return err
 	}
-	err = ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Pod{}, builder.WithPredicates(
-			Not(ManagedByStarboardOperator),
-			Not(PodBeingTerminated),
-			PodHasContainersReadyCondition,
-			installModePredicate,
-		)).
-		Complete(r.reconcilePods())
-	if err != nil {
-		return err
+
+	for _, workload := range workloads {
+		err = ctrl.NewControllerManagedBy(mgr).
+			For(workload.forObject, builder.WithPredicates(
+				Not(ManagedByStarboardOperator),
+				Not(IsBeingTerminated),
+				installModePredicate,
+			)).
+			Owns(workload.ownsObject).
+			Complete(r.reconcileWorkload(workload.kind))
+		if err != nil {
+			return err
+		}
 	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.Job{}, builder.WithPredicates(
 			InNamespace(r.Config.Namespace),
@@ -61,49 +83,64 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r.reconcileJobs())
 }
 
-func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
+func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("pod", req.NamespacedName)
+		log := r.Logger.WithValues("kind", workloadKind, "name", req.NamespacedName)
 
-		pod := &corev1.Pod{}
+		workloadPartial := GetPartialObjectFromKindAndNamespacedName(workloadKind, req.NamespacedName)
 
-		err := r.Client.Get(ctx, req.NamespacedName, pod)
+		log.V(1).Info("Getting workload from cache")
+		workloadObj, err := r.GetObjectFromPartialObject(ctx, workloadPartial)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring pod that must have been deleted")
+				log.V(1).Info("Ignoring cached workload that must have been deleted")
 				return ctrl.Result{}, nil
 			}
-			return ctrl.Result{}, fmt.Errorf("getting pod from cache: %w", err)
+			return ctrl.Result{}, fmt.Errorf("getting %s from cache: %w", workloadKind, err)
 		}
 
-		owner := resources.GetImmediateOwnerReference(pod)
-		hash := resources.ComputeHash(pod.Spec)
+		// Skip processing if it's a Pod controlled by a standard K8s workload.
+		if workloadKind == kube.KindPod {
+			controller := metav1.GetControllerOf(workloadObj)
+			if controller != nil &&
+				(controller.Kind == string(kube.KindReplicaSet) ||
+					controller.Kind == string(kube.KindReplicationController) ||
+					controller.Kind == string(kube.KindStatefulSet) ||
+					controller.Kind == string(kube.KindDaemonSet) ||
+					controller.Kind == string(kube.KindCronJob) ||
+					controller.Kind == string(kube.KindJob)) {
+				log.V(1).Info("Ignoring managed pod", "controllerKind", controller.Kind, "controllerName", controller.Name)
+				return ctrl.Result{}, nil
+			}
+		}
 
-		log.Info("Resolving workload properties",
-			"owner", owner, "hash", hash)
+		podSpec, err := GetPodSpec(workloadObj)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		podSpecHash := resources.ComputeHash(podSpec)
 
-		hasConfigAuditReport, err := r.hasConfigAuditReport(ctx, owner, hash)
+		log = log.WithValues("podSpecHash", podSpecHash)
+
+		log.V(1).Info("Checking whether configuration audit report exists")
+		hasReport, err := r.hasReport(ctx, workloadPartial, podSpecHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 
-		if hasConfigAuditReport {
+		if hasReport {
+			log.V(1).Info("Configuration audit report exists")
 			return ctrl.Result{}, nil
 		}
 
-		ownerObj, err := r.OwnerResolver.Resolve(ctx, owner)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-
-		_, job, err := r.hasActiveScanJob(ctx, owner, hash)
+		log.V(1).Info("Checking whether configuration audit has been scheduled")
+		_, job, err := r.hasActiveScanJob(ctx, workloadPartial, podSpecHash)
 		if err != nil {
 			return ctrl.Result{}, nil
 		}
 		if job != nil {
-			log.V(1).Info("Scan job already exists",
-				"job", fmt.Sprintf("%s/%s", job.Namespace, job.Name),
-				"owner", owner)
+			log.V(1).Info("Configuration audit has been scheduled",
+				"job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 			return ctrl.Result{}, nil
 		}
 
@@ -118,11 +155,7 @@ func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		gvk, err := apiutil.GVKForObject(ownerObj, r.Client.Scheme())
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		job, secrets, err := r.getScanJob(owner, ownerObj, gvk, hash)
+		job, secrets, err := r.getScanJob(workloadPartial, workloadObj, podSpecHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -135,6 +168,7 @@ func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
 			}
 		}
 
+		log.V(1).Info("Scheduling configuration audit", "secrets", len(secrets))
 		err = r.Client.Create(ctx, job)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
@@ -155,7 +189,7 @@ func (r *ConfigAuditReportReconciler) reconcilePods() reconcile.Func {
 	}
 }
 
-func (r *ConfigAuditReportReconciler) hasConfigAuditReport(ctx context.Context, owner kube.Object, hash string) (bool, error) {
+func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, hash string) (bool, error) {
 	report, err := r.ReadWriter.FindByOwner(ctx, owner)
 	if err != nil {
 		return false, err
@@ -188,7 +222,12 @@ func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) strin
 	return fmt.Sprintf("scan-configauditreport-%s", resources.ComputeHash(workload))
 }
 
-func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, gvk schema.GroupVersionKind, hash string) (*batchv1.Job, []*corev1.Secret, error) {
+func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, hash string) (*batchv1.Job, []*corev1.Secret, error) {
+	gvk, err := apiutil.GVKForObject(obj, r.Client.Scheme())
+	if err != nil {
+		return nil, nil, err
+	}
+
 	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(workload, obj, gvk)
 
 	if err != nil {
@@ -238,17 +277,18 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 		log := r.Logger.WithValues("job", req.NamespacedName)
 
 		job := &batchv1.Job{}
+		log.V(1).Info("Getting job from cache")
 		err := r.Client.Get(ctx, req.NamespacedName, job)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring job that must have been deleted")
+				log.V(1).Info("Ignoring cached job that must have been deleted")
 				return ctrl.Result{}, nil
 			}
 			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 		}
 
 		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Job has no conditions despite using predicate")
+			log.V(1).Info("Ignoring job without conditions")
 			return ctrl.Result{}, nil
 		}
 
@@ -258,7 +298,7 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 		case batchv1.JobFailed:
 			err = r.processFailedScanJob(ctx, job)
 		default:
-			err = fmt.Errorf("unrecognized scan job condition: %v", jobCondition)
+			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
 		}
 
 		return ctrl.Result{}, err
@@ -274,19 +314,19 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting workload from scan job labels set: %w", err)
 	}
 
-	log.Info("Processing complete scan job", "owner", owner)
+	log.V(1).Info("Processing complete scan job", "owner", owner)
 
-	ownerObj, err := r.OwnerResolver.Resolve(ctx, owner)
+	ownerObj, err := r.GetObjectFromPartialObject(ctx, owner)
 	if err != nil {
 		return err
 	}
 
-	hash, ok := job.Labels[kube.LabelPodSpecHash]
+	podSpecHash, ok := job.Labels[kube.LabelPodSpecHash]
 	if !ok {
 		return fmt.Errorf("expected label %s not set", kube.LabelPodSpecHash)
 	}
 
-	hasConfigAuditReport, err := r.hasConfigAuditReport(ctx, owner, hash)
+	hasConfigAuditReport, err := r.hasReport(ctx, owner, podSpecHash)
 	if err != nil {
 		return err
 	}
@@ -308,8 +348,8 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 	}()
 
 	report, err := configauditreport.NewBuilder(r.Client.Scheme()).
-		Owner(ownerObj).
-		PodSpecHash(hash).
+		Controller(ownerObj).
+		PodSpecHash(podSpecHash).
 		Result(result).
 		Get()
 	if err != nil {

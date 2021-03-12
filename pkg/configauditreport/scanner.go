@@ -94,7 +94,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 	}()
 
 	return NewBuilder(s.scheme).
-		Owner(owner).
+		Controller(owner).
 		Result(result).
 		Get()
 }
