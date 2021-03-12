@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
+// TODO Rename from Object to PartialObject (consider embedding types.NamespacedName struct)
 // Object is a simplified representation of a Kubernetes object.
 // Each object has kind, which designates the type of the entity it represents.
 // Objects have names and many of them live in namespaces.

@@ -1,6 +1,7 @@
 package starboard_operator
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	"path/filepath"
 	"testing"
 
@@ -29,6 +30,7 @@ var (
 )
 
 var (
+	scheme             *runtime.Scheme
 	kubeClientset      kubernetes.Interface
 	kubeClient         client.Client
 	starboardClientset versioned.Interface
@@ -58,7 +60,8 @@ var _ = BeforeSuite(func(done Done) {
 	kubeClientset, err = kubernetes.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
 
-	kubeClient, err = client.New(kubeConfig, client.Options{Scheme: starboard.NewScheme()})
+	scheme = starboard.NewScheme()
+	kubeClient, err = client.New(kubeConfig, client.Options{Scheme: scheme})
 	Expect(err).ToNot(HaveOccurred())
 
 	starboardClientset, err = versioned.NewForConfig(kubeConfig)
