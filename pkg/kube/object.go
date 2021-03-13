@@ -116,6 +116,9 @@ func GetPartialObjectFromKindAndNamespacedName(kind Kind, name types.NamespacedN
 	}
 }
 
+// GetPodSpec returns v1.PodSpec from the specified Kubernetes
+// client.Object. Returns error if the given client.Object
+// is not a Kubernetes workload.
 func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	switch t := obj.(type) {
 	case *corev1.Pod:
@@ -132,8 +135,10 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
 	case *batchv1beta1.CronJob:
 		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	case *batchv1.Job:
+		return (obj.(*batchv1.Job)).Spec.Template.Spec, nil
 	default:
-		return corev1.PodSpec{}, fmt.Errorf("unsupported workload %T", t)
+		return corev1.PodSpec{}, fmt.Errorf("unsupported workload: %T", t)
 	}
 }
 

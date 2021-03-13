@@ -1,16 +1,70 @@
-package resources_test
+package kube_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
+
+func TestGetContainerImagesFromPodSpec(t *testing.T) {
+	images := kube.GetContainerImagesFromPodSpec(corev1.PodSpec{
+		Containers: []corev1.Container{
+			{
+				Name:  "nginx",
+				Image: "nginx:1.16",
+			},
+			{
+				Name:  "sidecar",
+				Image: "sidecar:1.32.7",
+			},
+		},
+	})
+	assert.Equal(t, kube.ContainerImages{
+		"nginx":   "nginx:1.16",
+		"sidecar": "sidecar:1.32.7",
+	}, images)
+}
+
+func TestGetContainerImagesFromJob(t *testing.T) {
+
+	t.Run("Should return error when annotation is not set", func(t *testing.T) {
+		_, err := kube.GetContainerImagesFromJob(&batchv1.Job{})
+		require.EqualError(t, err, "required annotation not set: starboard.container-images")
+	})
+
+	t.Run("Should return error when annotation is set but has invalid value", func(t *testing.T) {
+		_, err := kube.GetContainerImagesFromJob(&batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"starboard.container-images": ``,
+				},
+			},
+		})
+		require.EqualError(t, err, "parsing annotation: starboard.container-images: unexpected end of JSON input")
+	})
+
+	t.Run("Should return ContainerImages when annotation is set", func(t *testing.T) {
+		images, err := kube.GetContainerImagesFromJob(&batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"starboard.container-images": `{"nginx":"nginx:1.16","sidecar":"sidecar:1.32.7"}`,
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, kube.ContainerImages{
+			"nginx":   "nginx:1.16",
+			"sidecar": "sidecar:1.32.7",
+		}, images)
+	})
+}
 
 func TestGetImmediateOwnerReference(t *testing.T) {
 
@@ -103,7 +157,7 @@ func TestGetImmediateOwnerReference(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			owner := resources.GetImmediateOwnerReference(tc.pod)
+			owner := kube.GetImmediateOwnerReference(tc.pod)
 			assert.Equal(t, tc.expectedOwner, owner)
 		})
 	}
@@ -146,7 +200,7 @@ func TestComputeHash(t *testing.T) {
 
 		assert.NotSame(t, booleanValue1Ptr, booleanValue2Ptr)
 		assert.Equal(t, booleanValue1, booleanValue2)
-		assert.Equal(t, resources.ComputeHash(spec1), resources.ComputeHash(spec2))
+		assert.Equal(t, kube.ComputeHash(spec1), kube.ComputeHash(spec2))
 	})
 
 	t.Run("Should return different hash when pointers point to different values", func(t *testing.T) {
@@ -176,13 +230,13 @@ func TestComputeHash(t *testing.T) {
 
 		assert.NotSame(t, booleanValue1Ptr, booleanValue3Ptr)
 		assert.NotEqual(t, booleanValue1, booleanValue3)
-		assert.Equal(t, resources.ComputeHash(spec1), resources.ComputeHash(spec2))
+		assert.Equal(t, kube.ComputeHash(spec1), kube.ComputeHash(spec2))
 	})
 
 	t.Run("Should return unique hashes", func(t *testing.T) {
 		hashes := make(map[string]bool)
 		for tag := 0; tag < 100; tag++ {
-			hash := resources.ComputeHash(corev1.PodSpec{
+			hash := kube.ComputeHash(corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
 						Name:  "nginx",
