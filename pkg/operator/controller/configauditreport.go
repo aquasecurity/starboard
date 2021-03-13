@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
-	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -118,7 +117,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		podSpecHash := resources.ComputeHash(podSpec)
+		podSpecHash := kube.ComputeHash(podSpec)
 
 		log = log.WithValues("podSpecHash", podSpecHash)
 
@@ -219,7 +218,7 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, owne
 }
 
 func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) string {
-	return fmt.Sprintf("scan-configauditreport-%s", resources.ComputeHash(workload))
+	return fmt.Sprintf("scan-configauditreport-%s", kube.ComputeHash(workload))
 }
 
 func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, hash string) (*batchv1.Job, []*corev1.Secret, error) {
