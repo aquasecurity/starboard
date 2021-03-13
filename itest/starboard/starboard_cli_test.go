@@ -58,14 +58,26 @@ func NewPodSpec(podName string, containers map[string]string, args ...string) (*
 	return pod, err
 }
 
+var (
+	trivyScanner = v1alpha1.Scanner{
+		Name:    "Trivy",
+		Vendor:  "Aqua Security",
+		Version: "0.16.0",
+	}
+	polarisScanner = v1alpha1.Scanner{
+		Name:    "Polaris",
+		Vendor:  "Fairwinds Ops",
+		Version: "3.0",
+	}
+)
+
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
 		err := cmd.Run(versionInfo, []string{
 			"starboard",
 			"init",
-			"-v",
-			starboardCLILogLevel,
+			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 	})
@@ -177,7 +189,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	})
 
-	Describe("Command find vulnerabilities", func() {
+	Describe("Command scan vulnerabilityreports", func() {
 		// TODO 1. Add test cases for other types of Kubernetes controllers (StatefulSets, DaemonSets, etc.)
 
 		// containerNameAsIdFn is used as an identifier by the MatchAllElements matcher
@@ -234,11 +246,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -299,11 +307,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 					"tomcat": MatchFields(IgnoreExtras, Fields{
@@ -322,11 +326,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -405,11 +405,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -500,11 +496,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -591,11 +583,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -682,11 +670,7 @@ var _ = Describe("Starboard CLI", func() {
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Trivy",
-								Vendor:  "Aqua Security",
-								Version: "0.14.0",
-							}),
+							"Scanner": Equal(trivyScanner),
 						}),
 					}),
 				}))
@@ -893,7 +877,7 @@ var _ = Describe("Starboard CLI", func() {
 		})
 	})
 
-	Describe("Command polaris", func() {
+	Describe("Command scan configauditreports", func() {
 		// containerNameAsIDFn is used as an identifier by the MatchAllElements matcher
 		// to group ConfigAuditReport by container name.
 		resourceNameAsIDFn := func(element interface{}) string {
@@ -916,8 +900,9 @@ var _ = Describe("Starboard CLI", func() {
 			It("should create configaudit resource", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
-					"polaris", "pod/" + podName,
-					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
+					"scan", "configauditreports", "pod/" + podName,
+					"--namespace", namespaceItest,
+					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -940,18 +925,16 @@ var _ = Describe("Starboard CLI", func() {
 								kube.LabelResourceNamespace: Equal(podNamespace),
 							}),
 							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
+								APIVersion:         "v1",
+								Kind:               "Pod",
+								Name:               podName,
+								UID:                pod.UID,
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Polaris",
-								Vendor:  "Fairwinds Ops",
-								Version: "3.0",
-							}),
+							"Scanner": Equal(polarisScanner),
 						}),
 					}),
 				}))
@@ -980,8 +963,9 @@ var _ = Describe("Starboard CLI", func() {
 			It("should create configaudit resources", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
-					"polaris", "pod/" + podName,
-					"-v", starboardCLILogLevel, "--namespace", namespaceItest,
+					"scan", "configauditreports", "pod/" + podName,
+					"--namespace", namespaceItest,
+					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -1005,18 +989,16 @@ var _ = Describe("Starboard CLI", func() {
 								kube.LabelResourceNamespace: Equal(podNamespace),
 							}),
 							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
+								APIVersion:         "v1",
+								Kind:               "Pod",
+								Name:               podName,
+								UID:                pod.UID,
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
 							}),
 						}),
 						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(v1alpha1.Scanner{
-								Name:    "Polaris",
-								Vendor:  "Fairwinds Ops",
-								Version: "3.0",
-							}),
+							"Scanner": Equal(polarisScanner),
 						}),
 					}),
 				}))
@@ -1032,7 +1014,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	})
 
-	Describe("Command generate ciskubebenchreports", func() {
+	Describe("Command scan ciskubebenchreports", func() {
 
 		It("should run kube-bench", func() {
 			err := cmd.Run(versionInfo, []string{
@@ -1173,11 +1155,7 @@ func makeReport(kind kube.Kind, name string) *v1alpha1.VulnerabilityReport {
 		},
 		Report: v1alpha1.VulnerabilityScanResult{
 			UpdateTimestamp: metav1.NewTime(time.Now()),
-			Scanner: v1alpha1.Scanner{
-				Name:    "Trivy",
-				Vendor:  "Aqua Security",
-				Version: "0.14.0",
-			},
+			Scanner:         trivyScanner,
 			Registry: v1alpha1.Registry{
 				Server: "index.docker.io",
 			},

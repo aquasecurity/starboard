@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
@@ -25,27 +24,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// Plugin defines the interface between Starboard and Kubernetes configuration
-// checker with CIS Kubernetes Benchmarks.
-type Plugin interface {
-
-	// GetScanJobSpec describes the pod that will be created by Starboard when
-	// it schedules a Kubernetes job to audit the configuration of the specified
-	// node.
-	GetScanJobSpec(node corev1.Node) (corev1.PodSpec, error)
-
-	// ParseCISKubeBenchOutput is a callback to parse and convert logs of
-	// the pod controlled by the scan job to v1alpha1.CISKubeBenchOutput.
-	ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchOutput, error)
-
-	GetContainerName() string
-}
-
 type Scanner struct {
 	scheme     *runtime.Scheme
 	opts       kube.ScannerOpts
 	clientset  kubernetes.Interface
-	pods       *pod.Manager
 	logsReader kube.LogsReader
 	plugin     Plugin
 }
@@ -60,7 +42,6 @@ func NewScanner(
 		scheme:     scheme,
 		opts:       opts,
 		clientset:  clientset,
-		pods:       pod.NewPodManager(clientset),
 		logsReader: kube.NewLogsReader(clientset),
 		plugin:     plugin,
 	}

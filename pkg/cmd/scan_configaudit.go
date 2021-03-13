@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/polaris"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -17,12 +16,12 @@ const (
 	configAuditCmdShort = "Run a variety of checks to ensure that a given workload is configured using best practices"
 )
 
-func NewScanConfigAuditReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanConfigAuditReportsCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configauditreports",
 		Short: configAuditCmdShort,
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  ScanConfigAuditReports(cf),
+		RunE:  ScanConfigAuditReports(buildInfo, cf),
 	}
 
 	registerScannerOpts(cmd)
@@ -30,7 +29,7 @@ func NewScanConfigAuditReportsCmd(cf *genericclioptions.ConfigFlags) *cobra.Comm
 	return cmd
 }
 
-func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
+func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
@@ -59,12 +58,15 @@ func ScanConfigAuditReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.C
 		if err != nil {
 			return err
 		}
-		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+		starboardConfig, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		plugin := polaris.NewPlugin(ext.NewSystemClock(), config)
-		scanner := configauditreport.NewScanner(scheme, kubeClientset, opts, plugin)
+		instance, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+		if err != nil {
+			return err
+		}
+		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, opts, instance)
 		report, err := scanner.Scan(ctx, workload, gvk)
 		if err != nil {
 			return err

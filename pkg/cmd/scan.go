@@ -12,7 +12,7 @@ func NewScanCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags
 		Aliases: []string{"generate"},
 		Short:   "Manage security weakness identification tools",
 	}
-	scanCmd.AddCommand(NewScanConfigAuditReportsCmd(cf))
+	scanCmd.AddCommand(NewScanConfigAuditReportsCmd(buildInfo, cf))
 	scanCmd.AddCommand(NewScanKubeBenchReportsCmd(cf))
 	scanCmd.AddCommand(NewScanKubeHunterReportsCmd(cf))
 	scanCmd.AddCommand(NewScanVulnerabilityReportsCmd(buildInfo, cf))

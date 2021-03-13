@@ -7,7 +7,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/hashicorp/go-version"
@@ -36,7 +35,6 @@ type Scanner struct {
 	clientset kubernetes.Interface
 	ext.IDGenerator
 	opts       kube.ScannerOpts
-	pods       *pod.Manager
 	logsReader kube.LogsReader
 }
 
@@ -52,7 +50,6 @@ func NewScanner(
 		clientset:   clientset,
 		IDGenerator: ext.NewGoogleUUIDGenerator(),
 		opts:        opts,
-		pods:        pod.NewPodManager(clientset),
 		logsReader:  kube.NewLogsReader(clientset),
 	}
 }

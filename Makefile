@@ -66,14 +66,14 @@ itests-starboard: check-env get-ginkgo
 	--v \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/cmd,\
-	github.com/aquasecurity/starboard/pkg/config,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
 	github.com/aquasecurity/starboard/pkg/resources,\
 	github.com/aquasecurity/starboard/pkg/kube,\
 	github.com/aquasecurity/starboard/pkg/kube/pod,\
 	github.com/aquasecurity/starboard/pkg/kubebench,\
 	github.com/aquasecurity/starboard/pkg/kubehunter,\
-	github.com/aquasecurity/starboard/pkg/trivy,\
-	github.com/aquasecurity/starboard/pkg/polaris,\
+	github.com/aquasecurity/starboard/pkg/plugin/trivy,\
+	github.com/aquasecurity/starboard/pkg/plugin/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
 	./itest/starboard
@@ -88,10 +88,10 @@ itests-starboard-operator: check-env get-ginkgo
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
 	github.com/aquasecurity/starboard/pkg/operator/predicate,\
 	github.com/aquasecurity/starboard/pkg/operator/controller,\
-	github.com/aquasecurity/starboard/pkg/config,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
 	github.com/aquasecurity/starboard/pkg/resources,\
-	github.com/aquasecurity/starboard/pkg/trivy,\
-	github.com/aquasecurity/starboard/pkg/polaris,\
+	github.com/aquasecurity/starboard/pkg/plugin/trivy,\
+	github.com/aquasecurity/starboard/pkg/plugin/polaris,\
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport,\
 	github.com/aquasecurity/starboard/pkg/kubebench \

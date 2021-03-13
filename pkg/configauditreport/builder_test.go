@@ -10,11 +10,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 )
 
 func TestBuilder(t *testing.T) {
 	report, err := configauditreport.NewBuilder(scheme.Scheme).
-		Owner(&appsv1.ReplicaSet{
+		Controller(&appsv1.ReplicaSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "some-owner",
 				Namespace: "qa",
@@ -30,9 +31,11 @@ func TestBuilder(t *testing.T) {
 			Namespace: "qa",
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion: "apps/v1",
-					Kind:       "ReplicaSet",
-					Name:       "some-owner",
+					APIVersion:         "apps/v1",
+					Kind:               "ReplicaSet",
+					Name:               "some-owner",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
 				},
 			},
 			Labels: map[string]string{

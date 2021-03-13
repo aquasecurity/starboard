@@ -12,7 +12,7 @@ import (
 )
 
 type Builder interface {
-	Owner(owner metav1.Object) Builder
+	Controller(controller metav1.Object) Builder
 	PodSpecHash(hash string) Builder
 	Result(result v1alpha1.ConfigAuditResult) Builder
 	Get() (v1alpha1.ConfigAuditReport, error)
@@ -25,14 +25,14 @@ func NewBuilder(scheme *runtime.Scheme) Builder {
 }
 
 type builder struct {
-	scheme *runtime.Scheme
-	owner  metav1.Object
-	hash   string
-	result v1alpha1.ConfigAuditResult
+	scheme     *runtime.Scheme
+	controller metav1.Object
+	hash       string
+	result     v1alpha1.ConfigAuditResult
 }
 
-func (b *builder) Owner(owner metav1.Object) Builder {
-	b.owner = owner
+func (b *builder) Controller(controller metav1.Object) Builder {
+	b.controller = controller
 	return b
 }
 
@@ -47,24 +47,24 @@ func (b *builder) Result(result v1alpha1.ConfigAuditResult) Builder {
 }
 
 func (b *builder) reportName() (string, error) {
-	kind, err := kube.KindForObject(b.owner, b.scheme)
+	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s-%s", strings.ToLower(kind),
-		b.owner.GetName()), nil
+		b.controller.GetName()), nil
 }
 
 func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
-	kind, err := kube.KindForObject(b.owner, b.scheme)
+	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
 
 	labels := map[string]string{
 		kube.LabelResourceKind:      kind,
-		kube.LabelResourceName:      b.owner.GetName(),
-		kube.LabelResourceNamespace: b.owner.GetNamespace(),
+		kube.LabelResourceName:      b.controller.GetName(),
+		kube.LabelResourceNamespace: b.controller.GetNamespace(),
 	}
 
 	if b.hash != "" {
@@ -79,12 +79,12 @@ func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
 	report := v1alpha1.ConfigAuditReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      reportName,
-			Namespace: b.owner.GetNamespace(),
+			Namespace: b.controller.GetNamespace(),
 			Labels:    labels,
 		},
 		Report: b.result,
 	}
-	err = controllerutil.SetOwnerReference(b.owner, &report, b.scheme)
+	err = controllerutil.SetControllerReference(b.controller, &report, b.scheme)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}

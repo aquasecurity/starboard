@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -206,8 +207,9 @@ exemptions:
 func NewScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	_ = corev1.AddToScheme(scheme)
-	_ = batchv1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
+	_ = batchv1.AddToScheme(scheme)
+	_ = batchv1beta1.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 	return scheme
 }
@@ -261,7 +263,7 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: string(Trivy),
 
 		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
+		"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
 		keyTrivyMode:     string(Standalone),
 		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 

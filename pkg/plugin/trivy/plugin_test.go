@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/plugin/trivy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/aquasecurity/starboard/pkg/trivy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,6 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const (
@@ -26,7 +29,43 @@ var _ = Describe("Starboard Operator", func() {
 		deploymentName = "wordpress"
 	)
 
-	Describe("When a new Deployment is created", func() {
+	Describe("When unmanaged Pod is created", func() {
+
+		ctx := context.Background()
+		var pod *corev1.Pod
+
+		BeforeEach(func() {
+			pod = &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "unmanaged-nginx",
+					Namespace: corev1.NamespaceDefault,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx:1.16",
+						},
+					},
+				},
+			}
+			err := kubeClient.Create(ctx, pod)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
+			Eventually(HasConfigAuditReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
+			Eventually(HasVulnerabilityReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
+		})
+
+		AfterEach(func() {
+			err := kubeClient.Delete(ctx, pod)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+	})
+
+	Describe("When Deployment is created", func() {
 
 		ctx := context.Background()
 
@@ -66,20 +105,13 @@ var _ = Describe("Starboard Operator", func() {
 			Eventually(HasActiveReplicaSet(namespaceName, deploymentName), assertionTimeout).Should(BeTrue())
 		})
 
-		It("Should create VulnerabilityReport", func() {
-			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploymentName)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rs).ToNot(BeNil())
-
-			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-		})
-
-		It("Should create ConfigAuditReport", func() {
+		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
 			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploymentName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(rs).ToNot(BeNil())
 
 			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
 		})
 
 		AfterEach(func() {
@@ -114,37 +146,44 @@ func HasActiveReplicaSet(namespace, name string) func() bool {
 	}
 }
 
-func HasVulnerabilityReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
+func HasVulnerabilityReportOwnedBy(obj client.Object) func() bool {
 	return func() bool {
-		list, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(rs.Namespace).
-			List(context.Background(), metav1.ListOptions{
-				LabelSelector: labels.Set{
-					kube.LabelResourceKind:      "ReplicaSet",
-					kube.LabelResourceName:      rs.Name,
-					kube.LabelResourceNamespace: rs.Namespace,
-				}.String(),
-			})
+		gvk, err := apiutil.GVKForObject(obj, scheme)
 		if err != nil {
+			// TODO Report error
 			return false
 		}
-		return len(list.Items) == 1
+		var reportList v1alpha1.VulnerabilityReportList
+		err = kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
+			kube.LabelResourceKind:      gvk.Kind,
+			kube.LabelResourceName:      obj.GetName(),
+			kube.LabelResourceNamespace: obj.GetNamespace(),
+		})
+		if err != nil {
+			// TODO Report error
+			return false
+		}
+		return len(reportList.Items) == 1
 	}
 }
 
-func HasConfigAuditReportOwnedBy(rs *appsv1.ReplicaSet) func() bool {
+func HasConfigAuditReportOwnedBy(obj client.Object) func() bool {
 	return func() bool {
-		list, err := starboardClientset.AquasecurityV1alpha1().ConfigAuditReports(rs.Namespace).
-			List(context.Background(), metav1.ListOptions{
-				LabelSelector: labels.Set{
-					kube.LabelResourceKind:      "ReplicaSet",
-					kube.LabelResourceName:      rs.Name,
-					kube.LabelResourceNamespace: rs.Namespace,
-				}.String(),
-			})
+		gvk, err := apiutil.GVKForObject(obj, scheme)
+		if err != nil {
+			// TODO Report error
+			return false
+		}
+		var reportsList v1alpha1.ConfigAuditReportList
+		err = kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
+			kube.LabelResourceKind:      gvk.Kind,
+			kube.LabelResourceName:      obj.GetName(),
+			kube.LabelResourceNamespace: obj.GetNamespace(),
+		})
 		if err != nil {
 			return false
 		}
-		return len(list.Items) == 1
+		return len(reportsList.Items) == 1
 	}
 }
 
