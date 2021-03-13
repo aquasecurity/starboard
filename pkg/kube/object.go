@@ -1,15 +1,22 @@
 package kube
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
@@ -99,4 +106,66 @@ func KindForObject(object metav1.Object, scheme *runtime.Scheme) (string, error)
 		return "", err
 	}
 	return gvk.Kind, nil
+}
+
+func GetPartialObjectFromKindAndNamespacedName(kind Kind, name types.NamespacedName) Object {
+	return Object{
+		Kind:      kind,
+		Name:      name.Name,
+		Namespace: name.Namespace,
+	}
+}
+
+func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
+	switch t := obj.(type) {
+	case *corev1.Pod:
+		return (obj.(*corev1.Pod)).Spec, nil
+	case *appsv1.Deployment:
+		return (obj.(*appsv1.Deployment)).Spec.Template.Spec, nil
+	case *appsv1.ReplicaSet:
+		return (obj.(*appsv1.ReplicaSet)).Spec.Template.Spec, nil
+	case *corev1.ReplicationController:
+		return (obj.(*corev1.ReplicationController)).Spec.Template.Spec, nil
+	case *appsv1.StatefulSet:
+		return (obj.(*appsv1.StatefulSet)).Spec.Template.Spec, nil
+	case *appsv1.DaemonSet:
+		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
+	case *batchv1beta1.CronJob:
+		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	default:
+		return corev1.PodSpec{}, fmt.Errorf("unsupported workload %T", t)
+	}
+}
+
+type ObjectResolver struct {
+	client.Client
+}
+
+func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workload Object) (client.Object, error) {
+	var obj client.Object
+	switch workload.Kind {
+	case KindPod:
+		obj = &corev1.Pod{}
+	case KindReplicaSet:
+		obj = &appsv1.ReplicaSet{}
+	case KindReplicationController:
+		obj = &corev1.ReplicationController{}
+	case KindDeployment:
+		obj = &appsv1.Deployment{}
+	case KindStatefulSet:
+		obj = &appsv1.StatefulSet{}
+	case KindDaemonSet:
+		obj = &appsv1.DaemonSet{}
+	case KindCronJob:
+		obj = &batchv1beta1.CronJob{}
+	case KindJob:
+		obj = &batchv1.Job{}
+	default:
+		return nil, fmt.Errorf("unknown kind: %s", workload.Kind)
+	}
+	err := o.Client.Get(ctx, types.NamespacedName{Name: workload.Name, Namespace: workload.Namespace}, obj)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
 }

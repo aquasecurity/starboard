@@ -7,7 +7,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	batchv1 "k8s.io/api/batch/v1"
@@ -22,36 +21,36 @@ import (
 )
 
 type Scanner struct {
-	scheme     *runtime.Scheme
-	clientset  kubernetes.Interface
-	opts       kube.ScannerOpts
-	pods       *pod.Manager
-	logsReader kube.LogsReader
-	plugin     Plugin
+	scheme         *runtime.Scheme
+	clientset      kubernetes.Interface
+	opts           kube.ScannerOpts
+	objectResolver *kube.ObjectResolver
+	logsReader     kube.LogsReader
+	plugin         Plugin
 	ext.IDGenerator
 }
 
 func NewScanner(
-	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
+	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
 ) *Scanner {
 	return &Scanner{
-		scheme:      scheme,
-		clientset:   clientset,
-		opts:        opts,
-		plugin:      plugin,
-		pods:        pod.NewPodManager(clientset),
-		logsReader:  kube.NewLogsReader(clientset),
-		IDGenerator: ext.NewGoogleUUIDGenerator(),
+		scheme:         client.Scheme(),
+		clientset:      clientset,
+		opts:           opts,
+		plugin:         plugin,
+		objectResolver: &kube.ObjectResolver{Client: client},
+		logsReader:     kube.NewLogsReader(clientset),
+		IDGenerator:    ext.NewGoogleUUIDGenerator(),
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 
-	_, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
+	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, workload)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}

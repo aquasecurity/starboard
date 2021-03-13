@@ -117,10 +117,10 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	ownerResolver := controller.OwnerResolver{Client: mgr.GetClient()}
+	objectResolver := kube.ObjectResolver{Client: mgr.GetClient()}
 	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient())
 	logsReader := kube.NewLogsReader(kubeClientset)
-	secretsReader := kube.NewControllerRuntimeSecretsReader(mgr.GetClient())
+	secretsReader := kube.NewSecretsReader(mgr.GetClient())
 
 	vulnerabilityReportPlugin, err := plugin.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
 	if err != nil {
@@ -128,15 +128,15 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	if err = (&controller.VulnerabilityReportReconciler{
-		Logger:        ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
-		Config:        operatorConfig,
-		Client:        mgr.GetClient(),
-		OwnerResolver: ownerResolver,
-		LimitChecker:  limitChecker,
-		LogsReader:    logsReader,
-		SecretsReader: secretsReader,
-		Plugin:        vulnerabilityReportPlugin,
-		ReadWriter:    vulnerabilityreport.NewReadWriter(mgr.GetClient(), kubeClientset),
+		Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
+		Config:         operatorConfig,
+		Client:         mgr.GetClient(),
+		ObjectResolver: objectResolver,
+		LimitChecker:   limitChecker,
+		LogsReader:     logsReader,
+		SecretsReader:  secretsReader,
+		Plugin:         vulnerabilityReportPlugin,
+		ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient(), kubeClientset),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 	}
@@ -147,14 +147,14 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	if err = (&controller.ConfigAuditReportReconciler{
-		Logger:        ctrl.Log.WithName("reconciler").WithName("configauditreport"),
-		Config:        operatorConfig,
-		Client:        mgr.GetClient(),
-		OwnerResolver: ownerResolver,
-		LimitChecker:  limitChecker,
-		LogsReader:    logsReader,
-		Plugin:        configAuditReportPlugin,
-		ReadWriter:    configauditreport.NewReadWriter(mgr.GetClient(), kubeClientset),
+		Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
+		Config:         operatorConfig,
+		Client:         mgr.GetClient(),
+		ObjectResolver: objectResolver,
+		LimitChecker:   limitChecker,
+		LogsReader:     logsReader,
+		Plugin:         configAuditReportPlugin,
+		ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient(), kubeClientset),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 	}
