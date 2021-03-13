@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/uuid"
@@ -29,7 +28,6 @@ type Scanner struct {
 	scheme     *runtime.Scheme
 	opts       kube.ScannerOpts
 	clientset  kubernetes.Interface
-	pods       *pod.Manager
 	logsReader kube.LogsReader
 	plugin     Plugin
 }
@@ -44,7 +42,6 @@ func NewScanner(
 		scheme:     scheme,
 		opts:       opts,
 		clientset:  clientset,
-		pods:       pod.NewPodManager(clientset),
 		logsReader: kube.NewLogsReader(clientset),
 		plugin:     plugin,
 	}

@@ -30,7 +30,7 @@ type ConfigAuditReportReconciler struct {
 	logr.Logger
 	etc.Config
 	client.Client
-	OwnerResolver
+	kube.ObjectResolver
 	LimitChecker
 	kube.LogsReader
 	configauditreport.Plugin
@@ -87,7 +87,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", workloadKind, "name", req.NamespacedName)
 
-		workloadPartial := GetPartialObjectFromKindAndNamespacedName(workloadKind, req.NamespacedName)
+		workloadPartial := kube.GetPartialObjectFromKindAndNamespacedName(workloadKind, req.NamespacedName)
 
 		log.V(1).Info("Getting workload from cache")
 		workloadObj, err := r.GetObjectFromPartialObject(ctx, workloadPartial)
@@ -114,7 +114,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			}
 		}
 
-		podSpec, err := GetPodSpec(workloadObj)
+		podSpec, err := kube.GetPodSpec(workloadObj)
 		if err != nil {
 			return ctrl.Result{}, err
 		}

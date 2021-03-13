@@ -7,7 +7,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/docker"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -103,74 +102,18 @@ type SecretsReader interface {
 	ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error)
 }
 
-// NewSecretsReader constructs a new SecretsReader which is using the client-go
-// module for interacting with the Kubernetes API server.
-func NewSecretsReader(clientset kubernetes.Interface) SecretsReader {
-	return &reader{
-		clientset: clientset,
-	}
+// NewSecretsReader constructs a new SecretsReader which is using the client
+// package provided by the controller-runtime libraries for interacting with
+// the Kubernetes API server.
+func NewSecretsReader(client client.Client) SecretsReader {
+	return &secretsReader{client: client}
 }
 
-type reader struct {
-	clientset kubernetes.Interface
-}
-
-func (r *reader) ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error) {
-	secrets, err := r.ListByLocalObjectReferences(ctx, spec.ImagePullSecrets, ns)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceAccountName := spec.ServiceAccountName
-	if serviceAccountName == "" {
-		serviceAccountName = serviceAccountDefault
-	}
-
-	serviceAccountSecrets, err := r.ListByServiceAccount(ctx, serviceAccountName, ns)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(secrets, serviceAccountSecrets...), nil
-}
-
-func (r *reader) ListByServiceAccount(ctx context.Context, name string, ns string) ([]corev1.Secret, error) {
-	sa, err := r.clientset.CoreV1().ServiceAccounts(ns).
-		Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("getting service account by name: %s/%s: %w", ns, name, err)
-	}
-
-	return r.ListByLocalObjectReferences(ctx, sa.ImagePullSecrets, ns)
-}
-
-func (r *reader) ListByLocalObjectReferences(ctx context.Context, refs []corev1.LocalObjectReference, ns string) ([]corev1.Secret, error) {
-	secrets := make([]corev1.Secret, 0)
-
-	for _, secretRef := range refs {
-		secret, err := r.clientset.CoreV1().Secrets(ns).
-			Get(ctx, secretRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("getting secret by name: %s/%s: %w", ns, secretRef.Name, err)
-		}
-		secrets = append(secrets, *secret)
-	}
-
-	return secrets, nil
-}
-
-// NewControllerRuntimeSecretsReader constructs a new SecretsReader which is
-// using the client package provided by the controller-runtime libraries for
-// interacting with the Kubernetes API server.
-func NewControllerRuntimeSecretsReader(client client.Client) SecretsReader {
-	return &crReader{client: client}
-}
-
-type crReader struct {
+type secretsReader struct {
 	client client.Client
 }
 
-func (r *crReader) ListByLocalObjectReferences(ctx context.Context, refs []corev1.LocalObjectReference, ns string) ([]corev1.Secret, error) {
+func (r *secretsReader) ListByLocalObjectReferences(ctx context.Context, refs []corev1.LocalObjectReference, ns string) ([]corev1.Secret, error) {
 	secrets := make([]corev1.Secret, 0)
 
 	for _, secretRef := range refs {
@@ -185,7 +128,7 @@ func (r *crReader) ListByLocalObjectReferences(ctx context.Context, refs []corev
 	return secrets, nil
 }
 
-func (r *crReader) ListByServiceAccount(ctx context.Context, name string, ns string) ([]corev1.Secret, error) {
+func (r *secretsReader) ListByServiceAccount(ctx context.Context, name string, ns string) ([]corev1.Secret, error) {
 	var sa corev1.ServiceAccount
 
 	err := r.client.Get(ctx, client.ObjectKey{Name: name, Namespace: ns}, &sa)
@@ -196,7 +139,7 @@ func (r *crReader) ListByServiceAccount(ctx context.Context, name string, ns str
 	return r.ListByLocalObjectReferences(ctx, sa.ImagePullSecrets, ns)
 }
 
-func (r *crReader) ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error) {
+func (r *secretsReader) ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error) {
 	secrets, err := r.ListByLocalObjectReferences(ctx, spec.ImagePullSecrets, ns)
 	if err != nil {
 		return nil, err
