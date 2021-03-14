@@ -7,32 +7,11 @@ on:
   workflow_dispatch:
 env:
   HELM_REP: helm-charts
-  HELM_REP_URL: https://aquasecurity.github.io/helm-charts/
   GH_OWNER: aquasecurity
   CHART_DIR: deploy/helm
 jobs:
-  lint-test:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      # Python is required because `ct lint` runs Yamale (https://github.com/23andMe/Yamale) and yamllint (https://github.com/adrienverge/yamllint) which require Python
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.0.1
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.1.0
-      - name: Run chart-testing lint-install
-        run: ct lint-and-install --chart-dirs deploy --validate-maintainers=false
   release:
     runs-on: ubuntu-20.04
-    needs:
-      - lint-test
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -53,18 +32,18 @@ jobs:
         # Failed with upload the same version: https://github.com/helm/chart-releaser/issues/101
         continue-on-error: true
         run: |
-          ./cr upload -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} -p . -p .cr-release-packages
+          ./cr upload -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} --token ${{ secrets.ORG_GITHUB_TOKEN }} -p .cr-release-packages
       - name: Index helm chart
         run: |
-          ./cr index -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} -c ${{ env.HELM_REP_URL }} -i index.yaml
-      - name: Pushes index file
+          ./cr index -o ${{ env.GH_OWNER }} -r ${{ env.HELM_REP }} -c https://${{ env.GH_OWNER }}.github.io/${{ env.HELM_REP }}/ -i index.yaml
+      - name: Push index file
         uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
         env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          API_TOKEN_GITHUB: ${{ secrets.ORG_GITHUB_TOKEN }}
         with:
           source_file: 'index.yaml'
           destination_repo: '${{ env.GH_OWNER }}/${{ env.HELM_REP }}'
           destination_folder: '.'
-          user_email: 'aqua-bot@aquasec.com'
-          user_name: 'aqua-bot'
           destination_branch: 'gh-pages'
+          user_email: aqua-bot@users.noreply.github.com
+          user_name: 'aqua-bot'
