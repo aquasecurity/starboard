@@ -1,11 +1,10 @@
-package resources
+package kube
 
 import (
 	"fmt"
 	"hash"
 	"hash/fnv"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/davecgh/go-spew/spew"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,25 +12,31 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func GetContainerImagesFromPodSpec(spec corev1.PodSpec) kube.ContainerImages {
-	images := kube.ContainerImages{}
+// GetContainerImagesFromPodSpec returns a map of container names
+// to container images from the specified v1.PodSpec.
+func GetContainerImagesFromPodSpec(spec corev1.PodSpec) ContainerImages {
+	images := ContainerImages{}
 	for _, container := range spec.Containers {
 		images[container.Name] = container.Image
 	}
 	return images
 }
 
-func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
+// GetContainerImagesFromJob returns a map of container names
+// to container images from the specified v1.Job.
+// The mapping is encoded as JSON value of the AnnotationContainerImages
+// annotation.
+func GetContainerImagesFromJob(job *batchv1.Job) (ContainerImages, error) {
 	var containerImagesAsJSON string
 	var ok bool
 
-	if containerImagesAsJSON, ok = job.Annotations[kube.AnnotationContainerImages]; !ok {
-		return nil, fmt.Errorf("job does not have required annotation: %s", kube.AnnotationContainerImages)
+	if containerImagesAsJSON, ok = job.Annotations[AnnotationContainerImages]; !ok {
+		return nil, fmt.Errorf("required annotation not set: %s", AnnotationContainerImages)
 	}
-	containerImages := kube.ContainerImages{}
+	containerImages := ContainerImages{}
 	err := containerImages.FromJSON(containerImagesAsJSON)
 	if err != nil {
-		return nil, fmt.Errorf("parsing job annotation: %s: %w", kube.AnnotationContainerImages, err)
+		return nil, fmt.Errorf("parsing annotation: %s: %w", AnnotationContainerImages, err)
 	}
 	return containerImages, nil
 }
@@ -51,30 +56,30 @@ func GetContainerImagesFromJob(job *batchv1.Job) (kube.ContainerImages, error) {
 // Pods created and controlled by third party frameworks, such as Argo workflow
 // engine, are considered as unmanaged. Otherwise we'd need to maintain and
 // extend the list of RBAC permissions over time.
-// TODO Merge this method with OwnerResolver, which accepts kube.Object and resolves client.Object.
-func GetImmediateOwnerReference(pod *corev1.Pod) kube.Object {
+// TODO Merge this method with ObjectResolver, which accepts kube.Object and resolves client.Object.
+func GetImmediateOwnerReference(pod *corev1.Pod) Object {
 	ownerRef := metav1.GetControllerOf(pod)
 
 	if ownerRef != nil {
 		switch ownerRef.Kind {
 		case "Pod", "ReplicaSet", "ReplicationController", "Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job":
-			return kube.Object{
+			return Object{
 				Namespace: pod.Namespace,
-				Kind:      kube.Kind(ownerRef.Kind),
+				Kind:      Kind(ownerRef.Kind),
 				Name:      ownerRef.Name,
 			}
 		}
 	}
 
 	// Pod owned by anything else is treated the same as an unmanaged pod
-	return kube.Object{
-		Kind:      kube.KindPod,
+	return Object{
+		Kind:      KindPod,
 		Namespace: pod.Namespace,
 		Name:      pod.Name,
 	}
 }
 
-// ComputeHash returns a hash value calculated from pod spec.
+// ComputeHash returns a hash value calculated from a given object.
 // The hash will be safe encoded to avoid bad words.
 func ComputeHash(obj interface{}) string {
 	podSpecHasher := fnv.New32a()
