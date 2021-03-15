@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/rs"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,24 +38,21 @@ type ReadWriter interface {
 }
 
 type readWriter struct {
-	client client.Client
-	// TODO Get rid of it once we refactor ReplicaSet resolver
-	clientset kubernetes.Interface
+	*kube.ObjectResolver
 }
 
 // NewReadWriter constructs a new ReadWriter which is using the client package
 // provided by the controller-runtime libraries for interacting with the
 // Kubernetes API server.
-func NewReadWriter(client client.Client, clientset kubernetes.Interface) ReadWriter {
+func NewReadWriter(client client.Client) ReadWriter {
 	return &readWriter{
-		client:    client,
-		clientset: clientset,
+		ObjectResolver: &kube.ObjectResolver{Client: client},
 	}
 }
 
 func (r *readWriter) Write(ctx context.Context, report v1alpha1.ConfigAuditReport) error {
 	var existing v1alpha1.ConfigAuditReport
-	err := r.client.Get(ctx, types.NamespacedName{
+	err := r.Get(ctx, types.NamespacedName{
 		Name:      report.Name,
 		Namespace: report.Namespace,
 	}, &existing)
@@ -68,11 +62,11 @@ func (r *readWriter) Write(ctx context.Context, report v1alpha1.ConfigAuditRepor
 		copied.Labels = report.Labels
 		copied.Report = report.Report
 
-		return r.client.Update(ctx, copied)
+		return r.Update(ctx, copied)
 	}
 
 	if errors.IsNotFound(err) {
-		return r.client.Create(ctx, &report)
+		return r.Create(ctx, &report)
 	}
 
 	return err
@@ -81,7 +75,7 @@ func (r *readWriter) Write(ctx context.Context, report v1alpha1.ConfigAuditRepor
 func (r *readWriter) FindByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
 	var list v1alpha1.ConfigAuditReportList
 
-	err := r.client.List(ctx, &list, client.MatchingLabels{
+	err := r.List(ctx, &list, client.MatchingLabels{
 		kube.LabelResourceKind:      string(owner.Kind),
 		kube.LabelResourceNamespace: owner.Namespace,
 		kube.LabelResourceName:      owner.Name,
@@ -105,7 +99,7 @@ func (r *readWriter) FindByOwnerInHierarchy(ctx context.Context, owner kube.Obje
 
 	// no reports found for provided owner, look for reports in related replicaset
 	if report == nil && (owner.Kind == kube.KindDeployment || owner.Kind == kube.KindPod) {
-		rsName, err := rs.GetRelatedReplicasetName(ctx, owner, r.clientset)
+		rsName, err := r.GetRelatedReplicasetName(ctx, owner)
 		if err != nil {
 			return nil, fmt.Errorf("getting replicaset related to %s/%s: %w", owner.Kind, owner.Name, err)
 		}

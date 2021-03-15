@@ -174,3 +174,59 @@ func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workloa
 	}
 	return obj, nil
 }
+
+// GetRelatedReplicasetName attempts to find the replicaset that is associated with
+// the given owner. If the owner is a Deployment, it will look for a ReplicaSet
+// that is controlled by the Deployment. If the owner is a Pod, it will look for
+// the ReplicaSet that owns the Pod.
+func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Object) (string, error) {
+	switch object.Kind {
+	case KindDeployment:
+		return o.getActiveReplicaSetByDeployment(ctx, object)
+	case KindPod:
+		return o.getReplicaSetByPod(ctx, object)
+	}
+	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
+}
+
+func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object Object) (string, error) {
+	deploy := &appsv1.Deployment{}
+	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, deploy)
+	if err != nil {
+		return "", fmt.Errorf("getting deployment %q: %w", object.Namespace+"/"+object.Name, err)
+	}
+	var rsList appsv1.ReplicaSetList
+	err = o.Client.List(ctx, &rsList, client.MatchingLabelsSelector{
+		Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
+	})
+	if err != nil {
+		return "", fmt.Errorf("listing replicasets for deployment %q: %w", object.Name, err)
+	}
+	if len(rsList.Items) == 0 {
+		return "", fmt.Errorf("no replicasets associated with deployment %q", object.Name)
+	}
+	for _, rs := range rsList.Items {
+		if deploy.Annotations["deployment.kubernetes.io/revision"] !=
+			rs.Annotations["deployment.kubernetes.io/revision"] {
+			continue
+		}
+		return rs.Name, nil
+	}
+	return "", fmt.Errorf("did not find an active replicaset associated with deployment %q", object.Name)
+}
+
+func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object Object) (string, error) {
+	pod := &corev1.Pod{}
+	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, pod)
+	if err != nil {
+		return "", err
+	}
+	controller := metav1.GetControllerOf(pod)
+	if controller == nil {
+		return "", fmt.Errorf("did not find a controller for pod %q", object.Name)
+	}
+	if controller.Kind != "ReplicaSet" {
+		return "", fmt.Errorf("pod %q is controlled by a %q, want replicaset", object.Name, controller.Kind)
+	}
+	return controller.Name, nil
+}

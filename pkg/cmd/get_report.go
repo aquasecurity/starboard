@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,10 +53,6 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
 			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: starboard.NewScheme()})
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
@@ -81,7 +76,7 @@ NAME is the name of a particular Kubernetes workload.
 				kube.KindCronJob,
 				kube.KindJob,
 				kube.KindPod:
-				reporter := report.NewWorkloadReporter(clock, kubeClientset, kubeClient)
+				reporter := report.NewWorkloadReporter(clock, kubeClient)
 				return reporter.Generate(workload, outWriter)
 			case kube.KindNamespace:
 				reporter := report.NewNamespaceReporter(clock, kubeClient)

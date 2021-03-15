@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	fakeKubernetes "k8s.io/client-go/kubernetes/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -22,7 +21,7 @@ func TestReadWriter(t *testing.T) {
 
 	t.Run("Should create ConfigAuditReport", func(t *testing.T) {
 		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).Build()
-		readWriter := configauditreport.NewReadWriter(client, fakeKubernetes.NewSimpleClientset())
+		readWriter := configauditreport.NewReadWriter(client)
 		err := readWriter.Write(context.TODO(), v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "deployment-app",
@@ -89,7 +88,7 @@ func TestReadWriter(t *testing.T) {
 				},
 			},
 		}).Build()
-		readWriter := configauditreport.NewReadWriter(client, fakeKubernetes.NewSimpleClientset())
+		readWriter := configauditreport.NewReadWriter(client)
 		err := readWriter.Write(context.TODO(), v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "deployment-app",
@@ -164,7 +163,7 @@ func TestReadWriter(t *testing.T) {
 			Report: v1alpha1.ConfigAuditResult{},
 		}).Build()
 
-		readWriter := configauditreport.NewReadWriter(client, fakeKubernetes.NewSimpleClientset())
+		readWriter := configauditreport.NewReadWriter(client)
 		found, err := readWriter.FindByOwner(context.TODO(), kube.Object{
 			Kind:      kube.KindDeployment,
 			Name:      "my-deploy",
