@@ -14,7 +14,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -24,11 +23,11 @@ type workloadReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewWorkloadReporter(clock ext.Clock, kubeClientset kubernetes.Interface, client client.Client) WorkloadReporter {
+func NewWorkloadReporter(clock ext.Clock, client client.Client) WorkloadReporter {
 	return &workloadReporter{
 		clock:                      clock,
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client, kubeClientset),
-		configAuditReportsReader:   configauditreport.NewReadWriter(client, kubeClientset),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client),
+		configAuditReportsReader:   configauditreport.NewReadWriter(client),
 	}
 }
 

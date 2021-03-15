@@ -107,7 +107,7 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 		if err != nil {
 			return err
 		}
-
-		return vulnerabilityreport.NewReadWriter(kubeClient, kubeClientset).Write(ctx, reports)
+		writer := vulnerabilityreport.NewReadWriter(kubeClient)
+		return writer.Write(ctx, reports)
 	}
 }

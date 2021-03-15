@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -42,10 +41,6 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
 			scheme := starboard.NewScheme()
 			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 			if err != nil {
@@ -64,7 +59,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 
-			reader := vulnerabilityreport.NewReadWriter(kubeClient, kubeClientset)
+			reader := vulnerabilityreport.NewReadWriter(kubeClient)
 			items, err := reader.FindByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return fmt.Errorf("list vulnerability reports: %v", err)

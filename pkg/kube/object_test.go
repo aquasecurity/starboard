@@ -1,19 +1,24 @@
 package kube_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestObjectFromLabelsSet(t *testing.T) {
@@ -331,4 +336,120 @@ func TestGetPodSpec(t *testing.T) {
 
 		})
 	}
+}
+
+func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
+
+	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app": "nginx",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "2",
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app": "nginx",
+					},
+				},
+			},
+		},
+		&appsv1.ReplicaSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-7ff78f74b9",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "7ff78f74b9",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "1",
+				},
+			},
+			Spec: appsv1.ReplicaSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":               "nginx",
+						"pod-template-hash": "7ff78f74b9",
+					},
+				},
+			},
+		},
+		&appsv1.ReplicaSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-549f5fcb58",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "549f5fcb58",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "2",
+				},
+			},
+			Spec: appsv1.ReplicaSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":               "nginx",
+						"pod-template-hash": "549f5fcb58",
+					},
+				},
+			},
+		},
+		&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-549f5fcb58-7cr5b",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-hash-template": "549f5fcb58",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "apps/v1",
+						Kind:               "ReplicaSet",
+						Name:               "nginx-549f5fcb58",
+						Controller:         pointer.BoolPtr(true),
+						BlockOwnerDeletion: pointer.BoolPtr(true),
+					},
+				},
+			},
+		},
+	).Build()}
+
+	t.Run("Should return error for unsupported kind", func(t *testing.T) {
+		_, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+			Kind:      kube.KindStatefulSet,
+			Name:      "statefulapp",
+			Namespace: corev1.NamespaceDefault,
+		})
+		require.EqualError(t, err, "can only get related ReplicaSet for Deployment or Pod, not \"StatefulSet\"")
+	})
+
+	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
+		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+			Kind:      kube.KindDeployment,
+			Name:      "nginx",
+			Namespace: corev1.NamespaceDefault,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "nginx-549f5fcb58", name)
+	})
+
+	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
+		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+			Kind:      kube.KindPod,
+			Name:      "nginx-549f5fcb58-7cr5b",
+			Namespace: corev1.NamespaceDefault,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "nginx-549f5fcb58", name)
+	})
+
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -40,10 +39,6 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
@@ -61,7 +56,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			reader := configauditreport.NewReadWriter(kubeClient, kubeClientset)
+			reader := configauditreport.NewReadWriter(kubeClient)
 			report, err := reader.FindByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return nil
