@@ -172,6 +172,11 @@ func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workloa
 	if err != nil {
 		return nil, err
 	}
+	gvk, err := apiutil.GVKForObject(obj, o.Client.Scheme())
+	if err != nil {
+		return nil, err
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 	return obj, nil
 }
 
