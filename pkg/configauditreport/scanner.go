@@ -56,7 +56,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, secrets, err := s.getScanJob(workload, owner, gvk)
+	job, secrets, err := s.getScanJob(workload, owner)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
@@ -87,7 +87,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := s.plugin.ParseConfigAuditResult(logsStream)
+	result, err := s.plugin.ParseConfigAuditReportData(logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
@@ -98,8 +98,8 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		Get()
 }
 
-func (s *Scanner) getScanJob(workload kube.Object, obj client.Object, gvk schema.GroupVersionKind) (*batchv1.Job, []*corev1.Secret, error) {
-	jobSpec, secrets, err := s.plugin.GetScanJobSpec(workload, obj, gvk)
+func (s *Scanner) getScanJob(workload kube.Object, obj client.Object) (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := s.plugin.GetScanJobSpec(obj)
 	if err != nil {
 		return nil, nil, err
 	}

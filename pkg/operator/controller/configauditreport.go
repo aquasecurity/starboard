@@ -20,7 +20,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -222,12 +221,7 @@ func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) strin
 }
 
 func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, hash string) (*batchv1.Job, []*corev1.Secret, error) {
-	gvk, err := apiutil.GVKForObject(obj, r.Client.Scheme())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(workload, obj, gvk)
+	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(obj)
 
 	if err != nil {
 		return nil, nil, err
@@ -341,7 +335,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := r.Plugin.ParseConfigAuditResult(logsStream)
+	result, err := r.Plugin.ParseConfigAuditReportData(logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
