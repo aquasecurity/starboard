@@ -117,7 +117,7 @@ spec:
                         type: string
                       evidence:
                         type: string
-                      avdReference:
+                      avd_reference:
                         type: string
   scope: Cluster
   names:
