@@ -10,9 +10,10 @@ import (
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -22,11 +23,11 @@ type workloadReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewWorkloadReporter(clock ext.Clock, kubeClientset kubernetes.Interface, client client.Client) WorkloadReporter {
+func NewWorkloadReporter(clock ext.Clock, client client.Client) WorkloadReporter {
 	return &workloadReporter{
 		clock:                      clock,
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client, kubeClientset),
-		configAuditReportsReader:   configauditreport.NewReadWriter(client, kubeClientset),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client),
+		configAuditReportsReader:   configauditreport.NewReadWriter(client),
 	}
 }
 
@@ -74,19 +75,19 @@ func (h *workloadReporter) Generate(workload kube.Object, writer io.Writer) erro
 	return nil
 }
 
-type namespaceReport struct {
+type namespaceReporter struct {
 	clock  ext.Clock
 	client client.Client
 }
 
 func NewNamespaceReporter(clock ext.Clock, client client.Client) NamespaceReporter {
-	return &namespaceReport{
+	return &namespaceReporter{
 		clock:  clock,
 		client: client,
 	}
 }
 
-func (r *namespaceReport) RetrieveData(namespace kube.Object) (templates.NamespaceReport, error) {
+func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.NamespaceReport, error) {
 	var vulnerabilityReportList v1alpha1.VulnerabilityReportList
 	err := r.client.List(context.Background(), &vulnerabilityReportList, client.InNamespace(namespace.Name))
 	if err != nil {
@@ -100,7 +101,7 @@ func (r *namespaceReport) RetrieveData(namespace kube.Object) (templates.Namespa
 	}, nil
 }
 
-func (r *namespaceReport) topNImagesBySeverityCount(reports []v1alpha1.VulnerabilityReport, N int) []v1alpha1.VulnerabilityReport {
+func (r *namespaceReporter) topNImagesBySeverityCount(reports []v1alpha1.VulnerabilityReport, N int) []v1alpha1.VulnerabilityReport {
 	b := append(reports[:0:0], reports...)
 
 	vulnerabilityreport.OrderedBy(vulnerabilityreport.SummaryCount...).
@@ -109,11 +110,49 @@ func (r *namespaceReport) topNImagesBySeverityCount(reports []v1alpha1.Vulnerabi
 	return b[:ext.MinInt(N, len(b))]
 }
 
-func (r *namespaceReport) Generate(namespace kube.Object, out io.Writer) error {
+func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
 	data, err := r.RetrieveData(namespace)
 	if err != nil {
 		return err
 	}
 	templates.WritePageTemplate(out, &data)
 	return nil
+}
+
+type nodeReporter struct {
+	clock                  ext.Clock
+	client                 client.Client
+	kubebenchReportsReader kubebench.ReadWriter
+}
+
+// NewNodeReporter generate the html reporter
+func NewNodeReporter(clock ext.Clock, client client.Client) NodeReporter {
+	return &nodeReporter{
+		clock:                  clock,
+		client:                 client,
+		kubebenchReportsReader: kubebench.NewReadWriter(client),
+	}
+}
+
+func (r *nodeReporter) Generate(node kube.Object, out io.Writer) error {
+	data, err := r.RetrieveData(node)
+	if err != nil {
+		return err
+	}
+	templates.WritePageTemplate(out, &data)
+	return nil
+}
+
+func (r *nodeReporter) RetrieveData(node kube.Object) (templates.NodeReport, error) {
+	found := &v1alpha1.CISKubeBenchReport{}
+	err := r.client.Get(context.Background(), types.NamespacedName{Name: node.Name}, found)
+	if err != nil {
+		return templates.NodeReport{}, err
+	}
+
+	return templates.NodeReport{
+		GeneratedAt:        r.clock.Now(),
+		Node:               node,
+		CisKubeBenchReport: found,
+	}, nil
 }

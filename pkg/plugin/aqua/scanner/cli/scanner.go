@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/aqua/client"
+	"github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
 	"github.com/google/go-containerregistry/pkg/name"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

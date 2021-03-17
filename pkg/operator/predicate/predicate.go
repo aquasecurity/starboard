@@ -76,14 +76,10 @@ var PodHasContainersReadyCondition = predicate.NewPredicateFuncs(func(obj client
 	return false
 })
 
-// PodBeingTerminated is a predicate.Predicate that returns true if the specified
-// client.Object is a corev1.Pod that is being terminated, i.e. its
-// DeletionTimestamp property is set to non nil value.
-var PodBeingTerminated = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if pod, ok := obj.(*corev1.Pod); ok {
-		return pod.DeletionTimestamp != nil
-	}
-	return false
+// IsBeingTerminated is a predicate.Predicate that returns true if the specified
+// client.Object is being terminated, i.e. its DeletionTimestamp property is set to non nil value.
+var IsBeingTerminated = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	return obj.GetDeletionTimestamp() != nil
 })
 
 // JobHasConditions is a predicate.Predicate that returns true if the

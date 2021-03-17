@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -34,6 +33,9 @@ that you scanned Kubernetes workloads for vulnerabilities and configuration
 pitfalls. You can run "%[1]s scan vulnerabilityreports -h" and
 "%[1]s scan configauditreports -h" commands for more details on how to do that.
 
+If the specified object is a Kubernetes node, the report will contain configuration
+checks based on CIS Kubernetes Benchmark guides.
+
 TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
 NAME is the name of a particular Kubernetes workload.
 `, info.Executable),
@@ -42,13 +44,12 @@ NAME is the name of a particular Kubernetes workload.
 
   # Generate an HTML report for a namespace with the specified name and save it to a file.
   %[1]s get report namespace/kube-system > kube-system.ns.html
+
+  # Generate an HTML report for a node with the specified name and save it to a file.
+  %[1]s get report node/kind-control-plane > kind-control-plane.node.html
 `, info.Executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
-			if err != nil {
-				return err
-			}
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
 				return err
 			}
@@ -75,10 +76,13 @@ NAME is the name of a particular Kubernetes workload.
 				kube.KindCronJob,
 				kube.KindJob,
 				kube.KindPod:
-				reporter := report.NewWorkloadReporter(clock, kubeClientset, kubeClient)
+				reporter := report.NewWorkloadReporter(clock, kubeClient)
 				return reporter.Generate(workload, outWriter)
 			case kube.KindNamespace:
 				reporter := report.NewNamespaceReporter(clock, kubeClient)
+				return reporter.Generate(workload, outWriter)
+			case kube.KindNode:
+				reporter := report.NewNodeReporter(clock, kubeClient)
 				return reporter.Generate(workload, outWriter)
 			default:
 				return fmt.Errorf("HTML report is not supported for %q", workload.Kind)

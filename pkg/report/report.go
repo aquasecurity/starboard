@@ -16,3 +16,8 @@ type NamespaceReporter interface {
 	RetrieveData(namespace kube.Object) (templates.NamespaceReport, error)
 	Generate(namespace kube.Object, out io.Writer) error
 }
+
+type NodeReporter interface {
+	RetrieveData(node kube.Object) (templates.NodeReport, error)
+	Generate(node kube.Object, out io.Writer) error
+}

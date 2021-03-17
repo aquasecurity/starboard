@@ -7,7 +7,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kube/pod"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	batchv1 "k8s.io/api/batch/v1"
@@ -18,50 +17,51 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
-	scheme     *runtime.Scheme
-	clientset  kubernetes.Interface
-	opts       kube.ScannerOpts
-	pods       *pod.Manager
-	logsReader kube.LogsReader
-	plugin     Plugin
+	scheme         *runtime.Scheme
+	clientset      kubernetes.Interface
+	opts           kube.ScannerOpts
+	objectResolver *kube.ObjectResolver
+	logsReader     kube.LogsReader
+	plugin         Plugin
 	ext.IDGenerator
 }
 
 func NewScanner(
-	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
+	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
 ) *Scanner {
 	return &Scanner{
-		scheme:      scheme,
-		clientset:   clientset,
-		opts:        opts,
-		plugin:      plugin,
-		pods:        pod.NewPodManager(clientset),
-		logsReader:  kube.NewLogsReader(clientset),
-		IDGenerator: ext.NewGoogleUUIDGenerator(),
+		scheme:         client.Scheme(),
+		clientset:      clientset,
+		opts:           opts,
+		plugin:         plugin,
+		objectResolver: &kube.ObjectResolver{Client: client},
+		logsReader:     kube.NewLogsReader(clientset),
+		IDGenerator:    ext.NewGoogleUUIDGenerator(),
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 
-	_, owner, err := s.pods.GetPodSpecByWorkload(ctx, workload)
+	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, workload)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, err := s.getScanJob(workload, gvk)
+	job, secrets, err := s.getScanJob(workload, owner)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
 
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
+	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job, secrets...))
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("running scan job: %w", err)
 	}
@@ -87,21 +87,21 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := s.plugin.ParseConfigAuditResult(logsStream)
+	result, err := s.plugin.ParseConfigAuditReportData(logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
 
 	return NewBuilder(s.scheme).
-		Owner(owner).
+		Controller(owner).
 		Result(result).
 		Get()
 }
 
-func (s *Scanner) getScanJob(workload kube.Object, gvk schema.GroupVersionKind) (*batchv1.Job, error) {
-	jobSpec, err := s.plugin.GetScanJobSpec(workload, gvk)
+func (s *Scanner) getScanJob(workload kube.Object, obj client.Object) (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := s.plugin.GetScanJobSpec(obj)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -128,5 +128,5 @@ func (s *Scanner) getScanJob(workload kube.Object, gvk schema.GroupVersionKind) 
 				Spec: jobSpec,
 			},
 		},
-	}, nil
+	}, secrets, nil
 }

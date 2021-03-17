@@ -1,21 +1,21 @@
 package polaris_test
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/polaris"
+	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
 )
 
@@ -28,9 +28,8 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		config   starboard.ConfigData
-		workload kube.Object
-		gvk      schema.GroupVersionKind
+		config starboard.ConfigData
+		obj    client.Object
 
 		expectedJobSpec corev1.PodSpec
 	}{
@@ -39,15 +38,15 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			config: starboard.ConfigData{
 				"polaris.imageRef": "quay.io/fairwinds/polaris:3.0",
 			},
-			workload: kube.Object{
-				Name:      "nginx",
-				Namespace: corev1.NamespaceDefault,
-				Kind:      kube.KindDeployment,
-			},
-			gvk: schema.GroupVersionKind{
-				Group:   "apps",
-				Version: "v1",
-				Kind:    "Deployment",
+			obj: &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "apps/v1",
+					Kind:       "Deployment",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: metav1.NamespaceDefault,
+				},
 			},
 			expectedJobSpec: corev1.PodSpec{
 				ServiceAccountName:           starboard.ServiceAccountName,
@@ -119,8 +118,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			plugin := polaris.NewPlugin(fixedClock, tc.config)
-			jobSpec, err := plugin.GetScanJobSpec(tc.workload, tc.gvk)
+			jobSpec, secrets, err := plugin.GetScanJobSpec(tc.obj)
 			require.NoError(t, err, tc.name)
+			assert.Nil(t, secrets)
 			assert.Equal(t, tc.expectedJobSpec, jobSpec, tc.name)
 		})
 	}
@@ -143,7 +143,7 @@ func TestPlugin_ParseConfigAuditResult(t *testing.T) {
 		"polaris.imageRef": "quay.io/fairwinds/polaris:3.0",
 	}
 	plugin := polaris.NewPlugin(fixedClock, config)
-	result, err := plugin.ParseConfigAuditResult(testReport)
+	result, err := plugin.ParseConfigAuditReportData(testReport)
 	require.NoError(t, err)
 	assert.Equal(t, metav1.NewTime(fixedTime), result.UpdateTimestamp)
 	assert.Equal(t, v1alpha1.Scanner{

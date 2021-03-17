@@ -1,18 +1,26 @@
 package kube
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
+// TODO Rename from Object to PartialObject (consider embedding types.NamespacedName struct)
 // Object is a simplified representation of a Kubernetes object.
 // Each object has kind, which designates the type of the entity it represents.
 // Objects have names and many of them live in namespaces.
@@ -98,4 +106,132 @@ func KindForObject(object metav1.Object, scheme *runtime.Scheme) (string, error)
 		return "", err
 	}
 	return gvk.Kind, nil
+}
+
+func GetPartialObjectFromKindAndNamespacedName(kind Kind, name types.NamespacedName) Object {
+	return Object{
+		Kind:      kind,
+		Name:      name.Name,
+		Namespace: name.Namespace,
+	}
+}
+
+// GetPodSpec returns v1.PodSpec from the specified Kubernetes
+// client.Object. Returns error if the given client.Object
+// is not a Kubernetes workload.
+func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
+	switch t := obj.(type) {
+	case *corev1.Pod:
+		return (obj.(*corev1.Pod)).Spec, nil
+	case *appsv1.Deployment:
+		return (obj.(*appsv1.Deployment)).Spec.Template.Spec, nil
+	case *appsv1.ReplicaSet:
+		return (obj.(*appsv1.ReplicaSet)).Spec.Template.Spec, nil
+	case *corev1.ReplicationController:
+		return (obj.(*corev1.ReplicationController)).Spec.Template.Spec, nil
+	case *appsv1.StatefulSet:
+		return (obj.(*appsv1.StatefulSet)).Spec.Template.Spec, nil
+	case *appsv1.DaemonSet:
+		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
+	case *batchv1beta1.CronJob:
+		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	case *batchv1.Job:
+		return (obj.(*batchv1.Job)).Spec.Template.Spec, nil
+	default:
+		return corev1.PodSpec{}, fmt.Errorf("unsupported workload: %T", t)
+	}
+}
+
+type ObjectResolver struct {
+	client.Client
+}
+
+func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workload Object) (client.Object, error) {
+	var obj client.Object
+	switch workload.Kind {
+	case KindPod:
+		obj = &corev1.Pod{}
+	case KindReplicaSet:
+		obj = &appsv1.ReplicaSet{}
+	case KindReplicationController:
+		obj = &corev1.ReplicationController{}
+	case KindDeployment:
+		obj = &appsv1.Deployment{}
+	case KindStatefulSet:
+		obj = &appsv1.StatefulSet{}
+	case KindDaemonSet:
+		obj = &appsv1.DaemonSet{}
+	case KindCronJob:
+		obj = &batchv1beta1.CronJob{}
+	case KindJob:
+		obj = &batchv1.Job{}
+	default:
+		return nil, fmt.Errorf("unknown kind: %s", workload.Kind)
+	}
+	err := o.Client.Get(ctx, types.NamespacedName{Name: workload.Name, Namespace: workload.Namespace}, obj)
+	if err != nil {
+		return nil, err
+	}
+	gvk, err := apiutil.GVKForObject(obj, o.Client.Scheme())
+	if err != nil {
+		return nil, err
+	}
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
+	return obj, nil
+}
+
+// GetRelatedReplicasetName attempts to find the replicaset that is associated with
+// the given owner. If the owner is a Deployment, it will look for a ReplicaSet
+// that is controlled by the Deployment. If the owner is a Pod, it will look for
+// the ReplicaSet that owns the Pod.
+func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Object) (string, error) {
+	switch object.Kind {
+	case KindDeployment:
+		return o.getActiveReplicaSetByDeployment(ctx, object)
+	case KindPod:
+		return o.getReplicaSetByPod(ctx, object)
+	}
+	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
+}
+
+func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object Object) (string, error) {
+	deploy := &appsv1.Deployment{}
+	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, deploy)
+	if err != nil {
+		return "", fmt.Errorf("getting deployment %q: %w", object.Namespace+"/"+object.Name, err)
+	}
+	var rsList appsv1.ReplicaSetList
+	err = o.Client.List(ctx, &rsList, client.MatchingLabelsSelector{
+		Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
+	})
+	if err != nil {
+		return "", fmt.Errorf("listing replicasets for deployment %q: %w", object.Name, err)
+	}
+	if len(rsList.Items) == 0 {
+		return "", fmt.Errorf("no replicasets associated with deployment %q", object.Name)
+	}
+	for _, rs := range rsList.Items {
+		if deploy.Annotations["deployment.kubernetes.io/revision"] !=
+			rs.Annotations["deployment.kubernetes.io/revision"] {
+			continue
+		}
+		return rs.Name, nil
+	}
+	return "", fmt.Errorf("did not find an active replicaset associated with deployment %q", object.Name)
+}
+
+func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object Object) (string, error) {
+	pod := &corev1.Pod{}
+	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, pod)
+	if err != nil {
+		return "", err
+	}
+	controller := metav1.GetControllerOf(pod)
+	if controller == nil {
+		return "", fmt.Errorf("did not find a controller for pod %q", object.Name)
+	}
+	if controller.Kind != "ReplicaSet" {
+		return "", fmt.Errorf("pod %q is controlled by a %q, want replicaset", object.Name, controller.Kind)
+	}
+	return controller.Name, nil
 }

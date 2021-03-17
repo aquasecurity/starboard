@@ -217,7 +217,7 @@ var _ = Describe("Predicate", func() {
 
 	Describe("When checking a PodBeingTerminated predicate", func() {
 
-		instance := predicate.PodBeingTerminated
+		instance := predicate.IsBeingTerminated
 		deletionTimestamp := metav1.NewTime(time.Now())
 
 		Context("Where pod is being terminated", func() {

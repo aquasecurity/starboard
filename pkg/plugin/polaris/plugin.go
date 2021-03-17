@@ -8,13 +8,12 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -40,12 +39,12 @@ func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 	}
 }
 
-func (p *plugin) GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKind) (corev1.PodSpec, error) {
+func (p *plugin) GetScanJobSpec(obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	imageRef, err := p.config.GetPolarisImageRef()
 	if err != nil {
-		return corev1.PodSpec{}, err
+		return corev1.PodSpec{}, nil, err
 	}
-	sourceName := p.sourceNameFrom(workload, gvk)
+	sourceName := p.sourceNameFrom(obj)
 
 	return corev1.PodSpec{
 		ServiceAccountName:           starboard.ServiceAccountName,
@@ -110,14 +109,14 @@ func (p *plugin) GetScanJobSpec(workload kube.Object, gvk schema.GroupVersionKin
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
 			},
 		},
-	}, nil
+	}, nil, nil
 }
 
 func (p *plugin) GetContainerName() string {
 	return polarisContainerName
 }
 
-func (p *plugin) ParseConfigAuditResult(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
 	var report Report
 	err := json.NewDecoder(logsReader).Decode(&report)
 	if err != nil {
@@ -126,17 +125,18 @@ func (p *plugin) ParseConfigAuditResult(logsReader io.ReadCloser) (v1alpha1.Conf
 	return p.configAuditResultFrom(report.Results[0])
 }
 
-func (p *plugin) sourceNameFrom(workload kube.Object, gvk schema.GroupVersionKind) string {
+func (p *plugin) sourceNameFrom(obj client.Object) string {
+	gvk := obj.GetObjectKind().GroupVersionKind()
 	group := gvk.Group
 	if len(group) > 0 {
 		group = "." + group
 	}
 	return fmt.Sprintf("%s/%s%s/%s/%s",
-		workload.Namespace,
+		obj.GetNamespace(),
 		gvk.Kind,
 		group,
 		gvk.Version,
-		workload.Name,
+		obj.GetName(),
 	)
 }
 

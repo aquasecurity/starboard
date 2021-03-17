@@ -71,7 +71,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		err := r.Client.Get(ctx, req.NamespacedName, node)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring node read from cache that must have been deleted")
+				log.V(1).Info("Ignoring cached node that must have been deleted")
 				return ctrl.Result{}, nil
 			}
 			return ctrl.Result{}, fmt.Errorf("getting node from cache: %w", err)
@@ -91,7 +91,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		log.V(1).Info("Checking whether CIS Kubernetes Benchmark checks have been scheduled")
 		_, job, err := r.hasScanJob(ctx, node)
 		if err != nil {
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, err
 		}
 		if job != nil {
 			log.V(1).Info("CIS Kubernetes Benchmark have been scheduled",
@@ -193,17 +193,18 @@ func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 		log := r.Logger.WithValues("job", req.NamespacedName)
 
 		job := &batchv1.Job{}
+		log.V(1).Info("Getting job from cache")
 		err := r.Client.Get(ctx, req.NamespacedName, job)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring job read from cache that must have been deleted")
+				log.V(1).Info("Ignoring cached job that must have been deleted")
 				return ctrl.Result{}, nil
 			}
 			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 		}
 
 		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Job has no conditions despite using predicate")
+			log.V(1).Info("Ignoring job without conditions")
 			return ctrl.Result{}, nil
 		}
 
@@ -213,7 +214,7 @@ func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 		case batchv1.JobFailed:
 			err = r.processFailedScanJob(ctx, job)
 		default:
-			err = fmt.Errorf("unrecognized scan job condition: %v", jobCondition)
+			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
 		}
 
 		return ctrl.Result{}, err

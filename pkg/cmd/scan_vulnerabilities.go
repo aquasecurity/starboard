@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/config"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/spf13/cobra"
@@ -98,19 +98,16 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 		if err != nil {
 			return err
 		}
-		plugin, err := config.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
+		instance, err := plugin.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
 		if err != nil {
 			return err
 		}
-		reports, err := vulnerabilityreport.NewScanner(
-			scheme,
-			kubeClientset,
-			opts,
-			plugin).Scan(ctx, workload)
+		scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, opts, instance)
+		reports, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
-
-		return vulnerabilityreport.NewReadWriter(kubeClient, kubeClientset).Write(ctx, reports)
+		writer := vulnerabilityreport.NewReadWriter(kubeClient)
+		return writer.Write(ctx, reports)
 	}
 }

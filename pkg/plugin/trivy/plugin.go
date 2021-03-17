@@ -8,7 +8,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/resources"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
@@ -75,7 +74,7 @@ func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, credentials map[string]doc
 }
 
 func (s *scanner) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
-	containerImages := resources.GetContainerImagesFromPodSpec(spec)
+	containerImages := kube.GetContainerImagesFromPodSpec(spec)
 	secretData := kube.AggregateImagePullSecretsData(containerImages, credentials)
 
 	return &corev1.Secret{
