@@ -96,7 +96,7 @@ spec:
                       - vulnerability
                       - description
                       - evidence
-                      - avdReference
+                      - avd_reference
                     properties:
                       location:
                         type: string
