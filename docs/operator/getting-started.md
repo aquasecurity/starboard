@@ -1,5 +1,7 @@
 # Getting Started
 
+## Scanning Workloads
+
 Assuming that you installed the operator in the `starboard-operator` namespace,
 and it's configured to discover Kubernetes workloads in the `default` namespace,
 let's create the `nginx` Deployment that we know is vulnerable:
@@ -64,5 +66,27 @@ default      └─VulnerabilityReport/replicaset-nginx-7ff78f74b9-nginx  -     
     kubectl get vulnerabilityreports replicaset-nginx-7ff78f74b9-nginx -o json
     kubectl describe configauditreports replicaset-nginx-7ff78f74b9
     ```
+
+## Scanning Nodes
+
+The operator discovers also Kubernetes nodes and runs CIS Kubernetes Benchmark checks on each of them.
+The results are stored as `ciskubebenchreports` objects. In other words, for a cluster with 3 nodes the operator will
+eventually create 3 benchmark reports:
+
+```console
+$ kubectl get node
+NAME                 STATUS   ROLES    AGE     VERSION
+kind-control-plane   Ready    master   3h27m   v1.18.8
+kind-worker          Ready    <none>   3h26m   v1.18.8
+kind-worker2         Ready    <none>   3h26m   v1.18.8
+```
+
+```console
+$ kubectl get ciskubebenchreports -o wide
+NAME                 SCANNER      AGE   FAIL   WARN   INFO   PASS
+kind-control-plane   kube-bench   8s    12     40     0      70
+kind-worker          kube-bench   9s    2      27     0      18
+kind-worker2         kube-bench   9s    2      27     0      18
+```
 
 [tree]: https://github.com/ahmetb/kubectl-tree
