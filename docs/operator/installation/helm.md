@@ -7,10 +7,15 @@ deploy the Starboard operator. The Helm chart supports all [install modes](./../
 As an example, let's install the operator in the `starboard-operator` namespace and
 configure it to watch the `default` namespaces:
 
-1. Clone the chart repository:
+1. Clone the chart directory:
    ```
    git clone --depth 1 --branch {{ var.tag }} https://github.com/aquasecurity/starboard.git
    cd starboard
+   ```
+   Or add Aqua chart repository:
+   ```
+   helm repo add aqua https://aquasecurity.github.io/helm-charts/
+   helm repo update
    ```
 2. Create the `starboard-operator` namespace:
    ```
@@ -30,19 +35,18 @@ configure it to watch the `default` namespaces:
    kubectl describe cm starboard -n starboard-operator
    kubectl describe secret starboard -n starboard-operator
    ```
-4. Install the chart:
+4. Install the chart from local directory:
    ```
    helm install starboard-operator ./deploy/helm \
      -n starboard-operator \
      --set="targetNamespaces=default"
    ```
-    Or install the chart from the Aqua Helm Repository
+    Or install the chart from Aqua repository:
     ```
-    helm repo add aquasecurity https://aquasecurity.github.io/helm-charts/
-    helm repo update
-    helm search repo starboard
-    helm install my-starboard aquasecurity/starboard-operator
-
+    helm install starboard-operator aqua/starboard-operator \
+      -n starboard-operator \
+      --set="targetNamespaces=default" \
+      --version {{ var.chart.version }}
     ```
 5. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
    namespace:
@@ -77,6 +81,7 @@ helm uninstall starboard-operator -n starboard-operator
     ```
     kubectl delete crd vulnerabilityreports.aquasecurity.github.io
     kubectl delete crd configauditreports.aquasecurity.github.io
+    kubectl delete crd ciskubebenchreports.aquasecurity.github.io
     ```
 
 !!! danger
