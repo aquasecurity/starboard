@@ -36,6 +36,14 @@ configure it to watch the `default` namespaces:
      -n starboard-operator \
      --set="targetNamespaces=default"
    ```
+    Or install the chart from the Aqua Helm Repository
+    ```
+    helm repo add aquasecurity https://aquasecurity.github.io/helm-charts/
+    helm repo update
+    helm search repo starboard
+    helm install my-starboard aquasecurity/starboard-operator
+
+    ```
 5. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
    namespace:
    ```console
