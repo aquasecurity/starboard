@@ -103,10 +103,10 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		log.Info("Checking scan jobs limit", "count", jobsCount, "limit", r.ConcurrentScanJobsLimit)
+		log.V(1).Info("Checking scan jobs limit", "count", jobsCount, "limit", r.ConcurrentScanJobsLimit)
 
 		if limitExceeded {
-			log.Info("Pushing back scan job", "count", jobsCount, "retryAfter", r.ScanJobRetryAfter)
+			log.V(1).Info("Pushing back scan job", "count", jobsCount, "retryAfter", r.ScanJobRetryAfter)
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 

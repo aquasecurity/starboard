@@ -66,11 +66,11 @@ These guidelines will help you get started with the Starboard project.
 
 ## Build Binaries
 
-| Binary                   | Image                                      | Description                                                   |
-| ------------------------ | ------------------------------------------ |  ------------------------------------------------------------ |
-| `starboard`              | `docker.io/aquasec/starboard:dev`          | Starboard command-line interface                              |
-| `starboard-operator`     | `docker.io/aquasec/starboard-operator:dev` | Starboard Operator                                            |
-| `starboard-scanner-aqua` | `docker.io/aquasec/starboard-scanner-aqua` | Starboard plugin to integrate with Aqua vulnerability scanner |
+| Binary                   | Image                                          | Description                                                   |
+| ------------------------ | ---------------------------------------------- |  ------------------------------------------------------------ |
+| `starboard`              | `docker.io/aquasec/starboard:dev`              | Starboard command-line interface                              |
+| `starboard-operator`     | `docker.io/aquasec/starboard-operator:dev`     | Starboard Operator                                            |
+| `starboard-scanner-aqua` | `docker.io/aquasec/starboard-scanner-aqua:dev` | Starboard plugin to integrate with Aqua vulnerability scanner |
 
 To build all Starboard binaries, run:
 
@@ -182,14 +182,14 @@ started with a basic development workflow. For other install modes see [Operator
 1. Send custom resource definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
+   $ kubectl create -f deploy/crd/vulnerabilityreports.crd.yaml \
        -f deploy/crd/configauditreports.crd.yaml \
        -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+   $ kubectl create -f deploy/static/01-starboard-operator.ns.yaml \
        -f deploy/static/02-starboard-operator.sa.yaml \
        -f deploy/static/03-starboard-operator.clusterrole.yaml \
        -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
@@ -209,7 +209,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl apply -f deploy/static/06-starboard-operator.deployment.yaml
+   $ kubectl create -f deploy/static/06-starboard-operator.deployment.yaml
    ```
 
 ### Out of cluster
