@@ -90,7 +90,7 @@ polaris:
       runAsPrivileged: danger
       dangerousCapabilities: danger
       insecureCapabilities: warning
-      exemptions:
+    exemptions:
       - controllerNames:
         - kube-apiserver
         - kube-proxy
