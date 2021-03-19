@@ -59,7 +59,9 @@ The following tables list available configuration settings with their default va
 | CONFIGMAP KEY                  | DEFAULT                                                | DESCRIPTION |
 | ------------------------------ | ------------------------------------------------------ | ----------- |
 | `vulnerabilityReports.scanner` | `Trivy`                                                | The name of the scanner that generates vulnerability reports. Either `Trivy` or `Aqua`. |
-| `trivy.httpProxy`              | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. Only applicable in `Standalone` mode. |
+| `trivy.httpProxy`              | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. |
+| `trivy.httpsProxy`             | N/A                                                    | The HTTPS proxy used by Trivy to download the vulnerabilities database from GitHub. |
+| `trivy.noProxy`                | N/A                                                    | A comma separated list of IPs and domain names that are not subject to proxy settings. |
 | `trivy.severity`               | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
 | `trivy.imageRef`               | `docker.io/aquasec/trivy:0.16.0`                       | Trivy image reference |
 | `trivy.mode`                   | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
