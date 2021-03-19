@@ -134,6 +134,30 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 					},
 				},
 			},
+                        {
+                                Name: "HTTPS_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.httpsProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
+                        {
+                                Name: "NO_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.noProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
 			{
 				Name: "GITHUB_TOKEN",
 				ValueFrom: &corev1.EnvVarSource{
@@ -317,6 +341,42 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 	for _, container := range spec.Containers {
 
 		env := []corev1.EnvVar{
+                        {
+                                Name: "HTTP_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.httpProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
+                        {
+                                Name: "HTTPS_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.httpsProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
+                        {
+                                Name: "NO_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.noProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
 			{
 				Name: "TRIVY_SEVERITY",
 				ValueFrom: &corev1.EnvVarSource{
