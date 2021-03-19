@@ -17,38 +17,20 @@ configure it to watch the `default` namespaces:
    helm repo add aqua https://aquasecurity.github.io/helm-charts/
    helm repo update
    ```
-2. Create the `starboard-operator` namespace:
-   ```
-   kubectl create namespace starboard-operator
-   ```
-3. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
-   the `starboard-operator` namespace. For example, you can use Trivy
-   in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
-   [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
-   If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
-   on startup with the default settings:
-   ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/05-starboard-operator.config.yaml
-   ```
-   Review the default values and makes sure the operator is configured properly:
-   ```
-   kubectl describe cm starboard -n starboard-operator
-   kubectl describe secret starboard -n starboard-operator
-   ```
-4. Install the chart from local directory:
+2. Install the chart from local directory:
    ```
    helm install starboard-operator ./deploy/helm \
-     -n starboard-operator \
+     -n starboard-operator --create-namespace \
      --set="targetNamespaces=default"
    ```
     Or install the chart from Aqua repository:
     ```
     helm install starboard-operator aqua/starboard-operator \
-      -n starboard-operator \
+      -n starboard-operator --create-namespace \
       --set="targetNamespaces=default" \
       --version {{ var.chart.version }}
     ```
-5. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
+3. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
    namespace:
    ```console
    $ helm list -n starboard-operator
