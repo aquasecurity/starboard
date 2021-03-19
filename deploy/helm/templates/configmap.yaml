@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  {{- if .Values.trivy.enabled }}
+  vulnerabilityReports.scanner: "Trivy"
+  trivy.imageRef: "{{ .Values.trivy.imageRef }}"
+  trivy.mode: "{{ .Values.trivy.mode }}"
+  {{- if eq .Values.trivy.mode "ClientServer" }}
+  trivy.serverURL: "{{ .Values.trivy.serverURL }}"
+  {{- end }}
+  {{- if eq .Values.trivy.mode "Standalone" }}
+  trivy.httpProxy: "{{ .Values.trivy.httpProxy }}"
+  {{- end }}
+  trivy.severity: "{{ .Values.trivy.severity }}"
+  {{- end }}
+  polaris.imageRef: "{{ .Values.polaris.imageRef }}"
+  polaris.config.yaml: |
+    {{- toYaml .Values.polaris.config | nindent 4 }}
+
+
+
