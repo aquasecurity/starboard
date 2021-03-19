@@ -80,7 +80,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
 		hasReport, err := r.hasReport(ctx, node)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("checking whether report exists: %w", err)
 		}
 
 		if hasReport {
@@ -91,7 +91,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		log.V(1).Info("Checking whether CIS Kubernetes Benchmark checks have been scheduled")
 		_, job, err := r.hasScanJob(ctx, node)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("checking whether scan job has been scheduled: %w", err)
 		}
 		if job != nil {
 			log.V(1).Info("CIS Kubernetes Benchmark have been scheduled",
@@ -223,29 +223,37 @@ func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 
 func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
+	log.V(1).Info("Processing complete scan job")
 
-	owner, err := kube.ObjectFromLabelsSet(job.Labels)
+	log.V(1).Info("Resolving node reference from labels")
+	nodeRef, err := kube.ObjectFromLabelsSet(job.Labels)
 	if err != nil {
-		return fmt.Errorf("getting node from scan job labels set: %w", err)
+		return fmt.Errorf("getting node reference from job labels: %w", err)
 	}
+	log = log.WithValues("node", nodeRef.Name)
 
-	log.V(1).Info("Processing complete scan job", "owner", owner)
-
+	log.V(1).Info("Getting node from cache")
 	node := &corev1.Node{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: owner.Name}, node)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: nodeRef.Name}, node)
 	if err != nil {
-		return err
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignore processing scan job for node that must have been deleted")
+			log.V(1).Info("Deleting complete scan job")
+			return r.deleteJob(ctx, job)
+		}
+		return fmt.Errorf("getting node from cache: %w", err)
 	}
 
+	log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
 	hasReport, err := r.hasReport(ctx, node)
 	if err != nil {
-		return err
+		return fmt.Errorf("checking whether report exists: %w", err)
 	}
 
 	if hasReport {
-		log.V(1).Info("CISKubeBenchReport already exist", "owner", owner)
-		log.V(1).Info("Deleting complete scan job", "owner", owner)
-		return r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+		log.V(1).Info("CISKubeBenchReport already exist")
+		log.V(1).Info("Deleting complete scan job")
+		return r.deleteJob(ctx, job)
 	}
 
 	logsStream, err := r.LogsReader.GetLogsByJobAndContainerName(ctx, job, r.Plugin.GetContainerName())
@@ -272,21 +280,30 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 
 	err = controllerutil.SetControllerReference(node, &report, r.Client.Scheme())
 	if err != nil {
-		return err
+		return fmt.Errorf("setting controller reference: %w", err)
 	}
 
+	log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", report.Name)
 	err = r.ReadWriter.Write(ctx, report)
 	if err != nil {
-		return err
+		return fmt.Errorf("writing report: %w", err)
 	}
-	log.V(1).Info("Deleting complete scan job", "owner", owner)
-	return r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	log.V(1).Info("Deleting complete scan job")
+	return r.deleteJob(ctx, job)
 }
 
-func (r *CISKubeBenchReportReconciler) processFailedScanJob(ctx context.Context, scanJob *batchv1.Job) error {
-	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", scanJob.Namespace, scanJob.Name))
+func (r *CISKubeBenchReportReconciler) deleteJob(ctx context.Context, job *batchv1.Job) error {
+	err := r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	if err != nil {
+		return fmt.Errorf("deleting job: %w", err)
+	}
+	return nil
+}
 
-	statuses, err := r.LogsReader.GetTerminatedContainersStatusesByJob(ctx, scanJob)
+func (r *CISKubeBenchReportReconciler) processFailedScanJob(ctx context.Context, job *batchv1.Job) error {
+	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
+
+	statuses, err := r.LogsReader.GetTerminatedContainersStatusesByJob(ctx, job)
 	if err != nil {
 		return err
 	}
@@ -297,5 +314,5 @@ func (r *CISKubeBenchReportReconciler) processFailedScanJob(ctx context.Context,
 		log.Error(nil, "Scan job container", "container", container, "status.reason", status.Reason, "status.message", status.Message)
 	}
 	log.V(1).Info("Deleting failed scan job")
-	return r.Client.Delete(ctx, scanJob, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	return r.deleteJob(ctx, job)
 }
