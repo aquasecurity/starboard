@@ -17,6 +17,9 @@ data:
   {{- end }}
   trivy.severity: "{{ .Values.trivy.severity }}"
   {{- end }}
+  {{- if .Values.kubeBench.enabled }}
+  kube-bench.imageRef: "{{ .Values.kubeBench.imageRef }}"
+  {{- end }}
   polaris.imageRef: "{{ .Values.polaris.imageRef }}"
   polaris.config.yaml: |
     {{- toYaml .Values.polaris.config | nindent 4 }}

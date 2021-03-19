@@ -132,7 +132,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		log.V(1).Info("Checking whether configuration audit has been scheduled")
 		_, job, err := r.hasActiveScanJob(ctx, workloadPartial, podSpecHash)
 		if err != nil {
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, err
 		}
 		if job != nil {
 			log.V(1).Info("Configuration audit has been scheduled",
