@@ -142,7 +142,7 @@ var (
 														"vulnerability": {Type: "string"},
 														"description":   {Type: "string"},
 														"evidence":      {Type: "string"},
-														"avd_reference":  {Type: "string"},
+														"avd_reference": {Type: "string"},
 													},
 												},
 											},
