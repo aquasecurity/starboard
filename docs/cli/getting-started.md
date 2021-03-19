@@ -87,7 +87,7 @@ starboard scan configauditreports deployment/nginx
 Retrieve the configuration audit report:
 
 ```
-starboard get configauditreport deployment/nginx -o yaml
+starboard get configaudit deployment/nginx -o yaml
 ```
 
 or
