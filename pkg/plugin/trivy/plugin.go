@@ -218,6 +218,30 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 					},
 				},
 			},
+                        {
+                                Name: "HTTPS_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.httpsProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
+                        {
+                                Name: "NO_PROXY",
+                                ValueFrom: &corev1.EnvVarSource{
+                                        ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+                                                LocalObjectReference: corev1.LocalObjectReference{
+                                                        Name: starboard.ConfigMapName,
+                                                },
+                                                Key:      "trivy.noProxy",
+                                                Optional: pointer.BoolPtr(true),
+                                        },
+                                },
+                        },
 		}
 
 		if _, ok := credentials[c.Name]; ok && secret != nil {
