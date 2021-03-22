@@ -62,6 +62,10 @@ trivy:
   noProxy: 
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
+kubeBench:
+  enabled: true
+  imageRef: docker.io/aquasec/kube-bench:0.5.0
+
 polaris:
   imageRef: quay.io/fairwinds/polaris:3.0
   config:
