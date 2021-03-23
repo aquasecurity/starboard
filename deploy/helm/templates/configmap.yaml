@@ -12,9 +12,9 @@ data:
   {{- if eq .Values.trivy.mode "ClientServer" }}
   trivy.serverURL: "{{ .Values.trivy.serverURL }}"
   {{- end }}
-  {{- if eq .Values.trivy.mode "Standalone" }}
   trivy.httpProxy: "{{ .Values.trivy.httpProxy }}"
-  {{- end }}
+  trivy.httpsProxy: "{{ .Values.trivy.httpsProxy }}"
+  trivy.noProxy: "{{ .Values.trivy.noProxy }}"
   trivy.severity: "{{ .Values.trivy.severity }}"
   {{- end }}
   {{- if .Values.kubeBench.enabled }}

@@ -58,6 +58,8 @@ trivy:
   mode: Standalone
   serverURL: 
   httpProxy: 
+  httpsProxy: 
+  noProxy: 
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
 kubeBench:
