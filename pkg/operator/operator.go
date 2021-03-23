@@ -43,6 +43,12 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		HealthProbeBindAddress: operatorConfig.HealthProbeBindAddress,
 	}
 
+	if operatorConfig.LeaderElectionEnabled {
+		options.LeaderElection = operatorConfig.LeaderElectionEnabled
+		options.LeaderElectionID = operatorConfig.LeaderElectionID
+		options.LeaderElectionNamespace = operatorConfig.LeaderElectionNamespace
+	}
+
 	switch installMode {
 	case etc.OwnNamespace:
 		// Add support for OwnNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
