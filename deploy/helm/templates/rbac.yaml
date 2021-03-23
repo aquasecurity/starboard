@@ -69,6 +69,14 @@ rules:
       - watch
   - apiGroups:
       - batch
+    resources:
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
     resources: # jobs are inspected and directly used by the starboard-operator
       - jobs
     verbs:

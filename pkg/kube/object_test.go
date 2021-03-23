@@ -3,6 +3,7 @@ package kube_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -20,6 +21,43 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func TestIsBuiltInWorkload(t *testing.T) {
+	testCases := []struct {
+		kind              string
+		isBuiltInWorkload bool
+	}{
+		{
+			kind:              "ReplicationController",
+			isBuiltInWorkload: true,
+		},
+		{
+			kind:              "ReplicaSet",
+			isBuiltInWorkload: true,
+		},
+		{
+			kind:              "StatefulSet",
+			isBuiltInWorkload: true,
+		},
+		{
+			kind:              "DaemonSet",
+			isBuiltInWorkload: true,
+		},
+		{
+			kind:              "Job",
+			isBuiltInWorkload: true,
+		},
+		{
+			kind:              "ArgoCD",
+			isBuiltInWorkload: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tc.isBuiltInWorkload, tc.kind), func(t *testing.T) {
+			assert.Equal(t, tc.isBuiltInWorkload, kube.IsBuiltInWorkload(&metav1.OwnerReference{Kind: tc.kind}))
+		})
+	}
+}
 
 func TestObjectFromLabelsSet(t *testing.T) {
 	testCases := []struct {

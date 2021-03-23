@@ -118,6 +118,9 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		log.V(1).Info("Scheduling CIS Kubernetes Benchmark checks")
 		err = r.Client.Create(ctx, job)
 		if err != nil {
+			if errors.IsAlreadyExists(err) {
+				return ctrl.Result{}, nil
+			}
 			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
 		}
 
