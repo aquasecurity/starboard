@@ -36,7 +36,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		{
 			name: "Should return job spec for Deployment",
 			config: starboard.ConfigData{
-				"polaris.imageRef": "quay.io/fairwinds/polaris:3.0",
+				"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 			},
 			obj: &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
@@ -68,7 +68,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Containers: []corev1.Container{
 					{
 						Name:                     "polaris",
-						Image:                    "quay.io/fairwinds/polaris:3.0",
+						Image:                    "quay.io/fairwinds/polaris:3.2",
 						ImagePullPolicy:          corev1.PullIfNotPresent,
 						TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 						Resources: corev1.ResourceRequirements{
@@ -140,7 +140,7 @@ func TestPlugin_ParseConfigAuditResult(t *testing.T) {
 	}()
 
 	config := starboard.ConfigData{
-		"polaris.imageRef": "quay.io/fairwinds/polaris:3.0",
+		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 	}
 	plugin := polaris.NewPlugin(fixedClock, config)
 	result, err := plugin.ParseConfigAuditReportData(testReport)
@@ -149,7 +149,7 @@ func TestPlugin_ParseConfigAuditResult(t *testing.T) {
 	assert.Equal(t, v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
-		Version: "3.0",
+		Version: "3.2",
 	}, result.Scanner)
 	assert.Equal(t, v1alpha1.ConfigAuditSummary{
 		PassCount:    2,

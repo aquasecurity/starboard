@@ -67,7 +67,7 @@ kubeBench:
   imageRef: docker.io/aquasec/kube-bench:0.5.0
 
 polaris:
-  imageRef: quay.io/fairwinds/polaris:3.0
+  imageRef: quay.io/fairwinds/polaris:3.2
   config:
     checks:
       # reliability

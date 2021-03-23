@@ -72,7 +72,7 @@ The following tables list available configuration settings with their default va
 | `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.5.0`                   | kube-bench image reference |
 | `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.4.1`                  | kube-hunter image reference |
 | `kube-hunter.quick`            | `"false"`                                              | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
-| `polaris.imageRef`             | `quay.io/fairwinds/polaris:3.0`                        | Polaris image reference |
+| `polaris.imageRef`             | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
 | `polaris.config.yaml`          | [Check the default value here][default-polaris-config] | Polaris configuration file |
 
 | SECRET KEY                  | DESCRIPTION |

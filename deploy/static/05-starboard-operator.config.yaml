@@ -10,7 +10,7 @@ data:
   trivy.imageRef: docker.io/aquasec/trivy:0.16.0
   trivy.mode: Standalone
   trivy.serverURL: http://trivy-server.trivy-server:4954
-  polaris.imageRef: quay.io/fairwinds/polaris:3.0
+  polaris.imageRef: quay.io/fairwinds/polaris:3.2
   polaris.config.yaml: |
     checks:
       # reliability
