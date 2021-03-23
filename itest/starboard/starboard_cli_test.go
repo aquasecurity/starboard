@@ -67,7 +67,7 @@ var (
 	polarisScanner = v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
-		Version: "3.0",
+		Version: "3.2",
 	}
 )
 
