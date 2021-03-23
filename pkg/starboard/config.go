@@ -271,7 +271,7 @@ func GetDefaultConfig() ConfigData {
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
 
-		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.0",
+		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.2",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
