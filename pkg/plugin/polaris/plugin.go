@@ -117,8 +117,9 @@ func (p *plugin) GetContainerName() string {
 }
 
 func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+	jsonReader := ext.NewJsonReader(logsReader)
 	var report Report
-	err := json.NewDecoder(logsReader).Decode(&report)
+	err := json.NewDecoder(jsonReader).Decode(&report)
 	if err != nil {
 		return v1alpha1.ConfigAuditResult{}, err
 	}
