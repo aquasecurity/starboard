@@ -138,13 +138,14 @@ To open the test coverage report in your web browser, run:
 $ go tool cover -html=itest/starboard/coverage.txt
 ```
 
-To run the integration tests for Starboard Operator and view the coverage report, first do the [prerequisite steps](https://github.com/aquasecurity/starboard/blob/main/CONTRIBUTING.md#prerequisites), and then run:
+To run the integration tests for Starboard Operator and view the coverage report, first do the
+[prerequisite steps](#prerequisites), and then run:
 
 ```
 $ OPERATOR_NAMESPACE=starboard-operator \
-     OPERATOR_TARGET_NAMESPACES=default \
-     OPERATOR_LOG_DEV_MODE=true \
-     make itests-starboard-operator
+    OPERATOR_TARGET_NAMESPACES=default \
+    OPERATOR_LOG_DEV_MODE=true \
+    make itests-starboard-operator
 $ go tool cover -html=itest/starboard-operator/coverage.txt
 ```
 
