@@ -20,7 +20,6 @@ type Config struct {
 	LogDevMode                    bool          `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
 	CISKubernetesBenchmarkEnabled bool          `env:"OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED" envDefault:"true"`
 	LeaderElectionEnabled         bool          `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
-	LeaderElectionNamespace       string        `env:"OPERATOR_LEADER_ELECTION_NAMESPACE"`
 	LeaderElectionID              string        `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-operator"`
 }
 

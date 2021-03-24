@@ -46,7 +46,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	if operatorConfig.LeaderElectionEnabled {
 		options.LeaderElection = operatorConfig.LeaderElectionEnabled
 		options.LeaderElectionID = operatorConfig.LeaderElectionID
-		options.LeaderElectionNamespace = operatorConfig.LeaderElectionNamespace
+		options.LeaderElectionNamespace = operatorNamespace
 	}
 
 	switch installMode {
