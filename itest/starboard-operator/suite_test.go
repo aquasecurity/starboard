@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
@@ -30,10 +29,9 @@ var (
 )
 
 var (
-	scheme             *runtime.Scheme
-	kubeClientset      kubernetes.Interface
-	kubeClient         client.Client
-	starboardClientset versioned.Interface
+	scheme        *runtime.Scheme
+	kubeClientset kubernetes.Interface
+	kubeClient    client.Client
 )
 
 var (
@@ -62,9 +60,6 @@ var _ = BeforeSuite(func(done Done) {
 
 	scheme = starboard.NewScheme()
 	kubeClient, err = client.New(kubeConfig, client.Options{Scheme: scheme})
-	Expect(err).ToNot(HaveOccurred())
-
-	starboardClientset, err = versioned.NewForConfig(kubeConfig)
 	Expect(err).ToNot(HaveOccurred())
 
 	kubeBenchReportReader = kubebench.NewReadWriter(kubeClient)

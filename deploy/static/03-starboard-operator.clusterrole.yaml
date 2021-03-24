@@ -48,6 +48,14 @@ rules:
   - apiGroups:
       - batch
     resources:
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
       - jobs
     verbs:
       - get

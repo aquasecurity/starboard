@@ -15,11 +15,14 @@ import (
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gstruct"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -897,7 +900,7 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should create configaudit resource", func() {
+			It("should create ConfigAuditReport", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"scan", "configauditreports", "pod/" + podName,
@@ -960,7 +963,7 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should create configaudit resources", func() {
+			It("should create ConfigAuditReport", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"scan", "configauditreports", "pod/" + podName,
@@ -1012,6 +1015,93 @@ var _ = Describe("Starboard CLI", func() {
 
 		})
 
+		Context("when CronJob is specified as workload", func() {
+
+			var cronJob *batchv1beta1.CronJob
+
+			BeforeEach(func() {
+				cronJob = &batchv1beta1.CronJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceItest,
+						Name:      "hello",
+					},
+					Spec: batchv1beta1.CronJobSpec{
+						Schedule: "*/1 * * * *",
+						JobTemplate: batchv1beta1.JobTemplateSpec{
+							Spec: batchv1.JobSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										RestartPolicy: corev1.RestartPolicyOnFailure,
+										Containers: []corev1.Container{
+											{
+												Name:  "hello",
+												Image: "busybox",
+												Command: []string{
+													"/bin/sh",
+													"-c",
+													"date; echo Hello from the Kubernetes cluster",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				err := kubeClient.Create(context.Background(), cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should create ConfigAuditReport", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"scan", "configauditreports", "cronjob/hello",
+					"--namespace", namespaceItest,
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+
+				var reportList v1alpha1.ConfigAuditReportList
+
+				err = kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
+					kube.LabelResourceKind:      string(kube.KindCronJob),
+					kube.LabelResourceName:      cronJob.Name,
+					kube.LabelResourceNamespace: cronJob.Namespace,
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
+					"hello": MatchFields(IgnoreExtras, Fields{
+
+						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
+							"Labels": MatchAllKeys(Keys{
+								kube.LabelResourceKind:      Equal("CronJob"),
+								kube.LabelResourceName:      Equal("hello"),
+								kube.LabelResourceNamespace: Equal(namespaceItest),
+							}),
+							"OwnerReferences": ConsistOf(metav1.OwnerReference{
+								APIVersion:         "batch/v1beta1",
+								Kind:               "CronJob",
+								Name:               "hello",
+								UID:                cronJob.UID,
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
+							}),
+						}),
+						"Report": MatchFields(IgnoreExtras, Fields{
+							"Scanner": Equal(polarisScanner),
+						}),
+					}),
+				}))
+
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(context.Background(), cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
 	})
 
 	Describe("Command scan ciskubebenchreports", func() {
