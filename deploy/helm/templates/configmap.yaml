@@ -23,6 +23,3 @@ data:
   polaris.imageRef: "{{ .Values.polaris.imageRef }}"
   polaris.config.yaml: |
     {{- toYaml .Values.polaris.config | nindent 4 }}
-
-
-
