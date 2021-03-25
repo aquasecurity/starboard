@@ -49,6 +49,17 @@ const (
 	KindJob                   Kind = "Job"
 )
 
+// IsBuiltInWorkload returns true if the specified v1.OwnerReference
+// is a built-in Kubernetes workload, false otherwise.
+func IsBuiltInWorkload(controller *metav1.OwnerReference) bool {
+	return controller != nil &&
+		(controller.Kind == string(KindReplicaSet) ||
+			controller.Kind == string(KindReplicationController) ||
+			controller.Kind == string(KindStatefulSet) ||
+			controller.Kind == string(KindDaemonSet) ||
+			controller.Kind == string(KindJob))
+}
+
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
 	if !set.Has(LabelResourceKind) {
 		return Object{}, fmt.Errorf("required label does not exist: %s", LabelResourceKind)

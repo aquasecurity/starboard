@@ -10,6 +10,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -146,35 +148,83 @@ var _ = Describe("Starboard Operator", func() {
 		})
 	})
 
+	Describe("When CronJob is created", func() {
+		var cronJob *batchv1beta1.CronJob
+
+		BeforeEach(func() {
+			cronJob = &batchv1beta1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: namespaceName,
+					Name:      "hello",
+				},
+				Spec: batchv1beta1.CronJobSpec{
+					Schedule: "*/1 * * * *",
+					JobTemplate: batchv1beta1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								Spec: corev1.PodSpec{
+									RestartPolicy: corev1.RestartPolicyOnFailure,
+									Containers: []corev1.Container{
+										{
+											Name:  "hello",
+											Image: "busybox",
+											Command: []string{
+												"/bin/sh",
+												"-c",
+												"date; echo Hello from the Kubernetes cluster",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			err := kubeClient.Create(context.Background(), cronJob)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
+			Eventually(HasConfigAuditReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
+			// FIXME(issue: #415): Assign VulnerabilityReports to CronJob instead of Jobs. The PodSpec of a CronJob does not change so there's no point in rescanning individual Jobs.
+			// Eventually(HasVulnerabilityReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
+		})
+
+		AfterEach(func() {
+			err := kubeClient.Delete(context.Background(), cronJob)
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
 	Describe("When operator is started", func() {
 
 		It("Should scan all nodes with CIS Kubernetes Benchmark checks", func() {
 			nodeList, err := kubeClientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			for _, node := range nodeList.Items {
-				Eventually(HasCISKubeBenchReportFor(node), assertionTimeout).Should(BeTrue())
+				Eventually(HasCISKubeBenchReportOwnedBy(node), assertionTimeout).Should(BeTrue())
 			}
 		})
 
 	})
 })
 
-func HasActiveReplicaSet(namespace, name string) func() bool {
-	return func() bool {
+func HasActiveReplicaSet(namespace, name string) func() (bool, error) {
+	return func() (bool, error) {
 		rs, err := GetActiveReplicaSetForDeployment(namespace, name)
 		if err != nil {
-			return false
+			return false, err
 		}
-		return rs != nil
+		return rs != nil, nil
 	}
 }
 
-func HasVulnerabilityReportOwnedBy(obj client.Object) func() bool {
-	return func() bool {
+func HasVulnerabilityReportOwnedBy(obj client.Object) func() (bool, error) {
+	return func() (bool, error) {
 		gvk, err := apiutil.GVKForObject(obj, scheme)
 		if err != nil {
-			// TODO Report error
-			return false
+			return false, err
 		}
 		var reportList v1alpha1.VulnerabilityReportList
 		err = kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
@@ -183,19 +233,17 @@ func HasVulnerabilityReportOwnedBy(obj client.Object) func() bool {
 			kube.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
-			// TODO Report error
-			return false
+			return false, err
 		}
-		return len(reportList.Items) == 1
+		return len(reportList.Items) == 1, nil
 	}
 }
 
-func HasConfigAuditReportOwnedBy(obj client.Object) func() bool {
-	return func() bool {
+func HasConfigAuditReportOwnedBy(obj client.Object) func() (bool, error) {
+	return func() (bool, error) {
 		gvk, err := apiutil.GVKForObject(obj, scheme)
 		if err != nil {
-			// TODO Report error
-			return false
+			return false, err
 		}
 		var reportsList v1alpha1.ConfigAuditReportList
 		err = kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
@@ -204,9 +252,9 @@ func HasConfigAuditReportOwnedBy(obj client.Object) func() bool {
 			kube.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
-			return false
+			return false, err
 		}
-		return len(reportsList.Items) == 1
+		return len(reportsList.Items) == 1, nil
 	}
 }
 
@@ -239,13 +287,13 @@ func GetActiveReplicaSetForDeployment(namespace, name string) (*appsv1.ReplicaSe
 	return nil, nil
 }
 
-func HasCISKubeBenchReportFor(node corev1.Node) func() bool {
-	return func() bool {
+func HasCISKubeBenchReportOwnedBy(node corev1.Node) func() (bool, error) {
+	return func() (bool, error) {
 		report, err := kubeBenchReportReader.FindByOwner(context.Background(), kube.Object{Kind: kube.KindNode, Name: node.Name})
 		if err != nil {
-			return false
+			return false, err
 		}
-		return report != nil
+		return report != nil, nil
 	}
 }
 
