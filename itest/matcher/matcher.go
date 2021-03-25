@@ -67,10 +67,12 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 				kube.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
 			}),
 			"OwnerReferences": ConsistOf(metav1.OwnerReference{
-				APIVersion: gvk.GroupVersion().Identifier(),
-				Kind:       gvk.Kind,
-				Name:       m.owner.GetName(),
-				UID:        m.owner.GetUID(),
+				APIVersion:         gvk.GroupVersion().Identifier(),
+				Kind:               gvk.Kind,
+				Name:               m.owner.GetName(),
+				UID:                m.owner.GetUID(),
+				Controller:         pointer.BoolPtr(true),
+				BlockOwnerDeletion: pointer.BoolPtr(true),
 			}),
 		}),
 		"Report": MatchFields(IgnoreExtras, Fields{

@@ -10,7 +10,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 )
 
 func TestGetContainerImagesFromPodSpec(t *testing.T) {
@@ -64,104 +63,6 @@ func TestGetContainerImagesFromJob(t *testing.T) {
 			"sidecar": "sidecar:1.32.7",
 		}, images)
 	})
-}
-
-func TestGetImmediateOwnerReference(t *testing.T) {
-
-	testCases := []struct {
-		name          string
-		pod           *corev1.Pod
-		expectedOwner kube.Object
-	}{
-		{
-			name: "Should return pod as owner of unmanaged pod",
-			pod: &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "foo",
-					Name:      "unmanaged-pod",
-				},
-			},
-			expectedOwner: kube.Object{
-				Kind:      "Pod",
-				Namespace: "foo",
-				Name:      "unmanaged-pod",
-			},
-		},
-		{
-			name: "Should return ReplicaSet as owner of pod managed by Deployment",
-			pod: &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "bar",
-					Name:      "nginx-6d4cf56db6-8g9j6",
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							APIVersion: "apps/v1",
-							Kind:       "ReplicaSet",
-							Name:       "nginx-6d4cf56db6",
-							Controller: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
-			expectedOwner: kube.Object{
-				Kind:      "ReplicaSet",
-				Namespace: "bar",
-				Name:      "nginx-6d4cf56db6",
-			},
-		},
-		{
-			name: "Should return pod as owner of static pod managed by kubelet",
-			pod: &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "kube-system",
-					Name:      "etcd-kind-control-plane",
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							APIVersion: "v1",
-							Kind:       "Node",
-							Name:       "kind-control-plane",
-							Controller: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
-			expectedOwner: kube.Object{
-				Kind:      "Pod",
-				Namespace: "kube-system",
-				Name:      "etcd-kind-control-plane",
-			},
-		},
-		{
-			name: "Should return pod as owner of pod managed by third party workload",
-			pod: &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "dev",
-					Name:      "hello-world-argo",
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							APIVersion: "argoproj.io/v1alpha1",
-							Kind:       "Workflow",
-							Name:       "hello-world-argo-r99sq",
-							Controller: pointer.BoolPtr(true),
-						},
-					},
-				},
-			},
-			expectedOwner: kube.Object{
-				Kind:      "Pod",
-				Namespace: "dev",
-				Name:      "hello-world-argo",
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			owner := kube.GetImmediateOwnerReference(tc.pod)
-			assert.Equal(t, tc.expectedOwner, owner)
-		})
-	}
-
 }
 
 func TestComputeHash(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -59,19 +58,6 @@ var InNamespace = func(namespace string) predicate.Predicate {
 var ManagedByStarboardOperator = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if managedBy, ok := obj.GetLabels()["app.kubernetes.io/managed-by"]; ok {
 		return managedBy == "starboard-operator"
-	}
-	return false
-})
-
-// PodHasContainersReadyCondition is a predicate.Predicate that returns true if the
-// specified client.Object is a corev1.Pod with corev1.ContainersReady condition.
-var PodHasContainersReadyCondition = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if pod, ok := obj.(*corev1.Pod); ok {
-		for _, condition := range pod.Status.Conditions {
-			if condition.Type == corev1.ContainersReady {
-				return true
-			}
-		}
 	}
 	return false
 })

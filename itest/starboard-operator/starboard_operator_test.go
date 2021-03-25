@@ -187,8 +187,7 @@ var _ = Describe("Starboard Operator", func() {
 
 		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
 			Eventually(HasConfigAuditReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
-			// FIXME(issue: #415): Assign VulnerabilityReports to CronJob instead of Jobs. The PodSpec of a CronJob does not change so there's no point in rescanning individual Jobs.
-			// Eventually(HasVulnerabilityReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
+			Eventually(HasVulnerabilityReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
 		})
 
 		AfterEach(func() {

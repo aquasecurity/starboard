@@ -298,6 +298,9 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 func (r *CISKubeBenchReportReconciler) deleteJob(ctx context.Context, job *batchv1.Job) error {
 	err := r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return fmt.Errorf("deleting job: %w", err)
 	}
 	return nil
