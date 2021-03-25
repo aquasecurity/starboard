@@ -36,6 +36,12 @@ rules:
       - create
       - update
   - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
       - apps
     resources:
       - replicasets
