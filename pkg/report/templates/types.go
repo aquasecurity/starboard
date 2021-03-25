@@ -25,6 +25,12 @@ type NamespaceReport struct {
 	GeneratedAt time.Time
 
 	Top5VulnerableImages []v1alpha1.VulnerabilityReport
+	Top5FailedChecks     []CheckWithCount
+}
+
+type CheckWithCount struct {
+	v1alpha1.Check
+	AffectedWorkloads int
 }
 
 // NodeReport is a structure that holds data to render

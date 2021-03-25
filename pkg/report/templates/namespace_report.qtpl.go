@@ -149,162 +149,210 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
     </table>
   </div>
 
+   <h3>Top 5 failed configuration checks by affected workloads count</h3>
+    <div class="row">
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Category</th>
+            <th scope="col">Affected Workloads</th>
+          </tr>
+        </thead>
+        <tbody>
+        `)
+//line pkg/report/templates/namespace_report.qtpl:63
+	for _, report := range p.Top5FailedChecks {
+//line pkg/report/templates/namespace_report.qtpl:63
+		qw422016.N().S(`
+        <tr>
+          <td>`)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.E().S(report.ID)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.N().S(`</td>
+          <td>`)
+//line pkg/report/templates/namespace_report.qtpl:66
+		qw422016.E().S(report.Severity)
+//line pkg/report/templates/namespace_report.qtpl:66
+		qw422016.N().S(`</td>
+          <td>`)
+//line pkg/report/templates/namespace_report.qtpl:67
+		qw422016.E().S(report.Category)
+//line pkg/report/templates/namespace_report.qtpl:67
+		qw422016.N().S(`</td>
+          <td>`)
+//line pkg/report/templates/namespace_report.qtpl:68
+		qw422016.N().D(report.AffectedWorkloads)
+//line pkg/report/templates/namespace_report.qtpl:68
+		qw422016.N().S(`</td>
+        </tr>
+        `)
+//line pkg/report/templates/namespace_report.qtpl:70
+	}
+//line pkg/report/templates/namespace_report.qtpl:70
+	qw422016.N().S(`
+        </tbody>
+      </table>
+    </div>
+
 </div>
 `)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 }
 
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 func (p *NamespaceReport) WriteBody(qq422016 qtio422016.Writer) {
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	p.StreamBody(qw422016)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	qt422016.ReleaseWriter(qw422016)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 }
 
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 func (p *NamespaceReport) Body() string {
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	qb422016 := qt422016.AcquireByteBuffer()
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	p.WriteBody(qb422016)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	qs422016 := string(qb422016.B)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	qt422016.ReleaseByteBuffer(qb422016)
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 	return qs422016
-//line pkg/report/templates/namespace_report.qtpl:52
+//line pkg/report/templates/namespace_report.qtpl:76
 }
 
-//line pkg/report/templates/namespace_report.qtpl:54
+//line pkg/report/templates/namespace_report.qtpl:78
 func streamimageReference(qw422016 *qt422016.Writer, registry v1alpha1.Registry, artifact v1alpha1.Artifact) {
-//line pkg/report/templates/namespace_report.qtpl:54
+//line pkg/report/templates/namespace_report.qtpl:78
 	qw422016.N().S(`
   `)
-//line pkg/report/templates/namespace_report.qtpl:55
+//line pkg/report/templates/namespace_report.qtpl:79
 	if artifact.Tag != "" && artifact.Digest != "" {
-//line pkg/report/templates/namespace_report.qtpl:55
+//line pkg/report/templates/namespace_report.qtpl:79
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.E().S(registry.Server)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.N().S(`/`)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.E().S(artifact.Repository)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.N().S(`:`)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.E().S(artifact.Tag)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.N().S(`@`)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.E().S(artifact.Digest)
-//line pkg/report/templates/namespace_report.qtpl:56
+//line pkg/report/templates/namespace_report.qtpl:80
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:57
+//line pkg/report/templates/namespace_report.qtpl:81
 		return
-//line pkg/report/templates/namespace_report.qtpl:58
+//line pkg/report/templates/namespace_report.qtpl:82
 	}
-//line pkg/report/templates/namespace_report.qtpl:58
+//line pkg/report/templates/namespace_report.qtpl:82
 	qw422016.N().S(`
 
   `)
-//line pkg/report/templates/namespace_report.qtpl:60
+//line pkg/report/templates/namespace_report.qtpl:84
 	if artifact.Tag == "" && artifact.Digest != "" {
-//line pkg/report/templates/namespace_report.qtpl:60
+//line pkg/report/templates/namespace_report.qtpl:84
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.E().S(registry.Server)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.N().S(`/`)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.E().S(artifact.Repository)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.N().S(`@`)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.E().S(artifact.Digest)
-//line pkg/report/templates/namespace_report.qtpl:61
+//line pkg/report/templates/namespace_report.qtpl:85
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:62
+//line pkg/report/templates/namespace_report.qtpl:86
 		return
-//line pkg/report/templates/namespace_report.qtpl:63
+//line pkg/report/templates/namespace_report.qtpl:87
 	}
-//line pkg/report/templates/namespace_report.qtpl:63
+//line pkg/report/templates/namespace_report.qtpl:87
 	qw422016.N().S(`
 
   `)
-//line pkg/report/templates/namespace_report.qtpl:65
+//line pkg/report/templates/namespace_report.qtpl:89
 	if artifact.Tag != "" && artifact.Digest == "" {
-//line pkg/report/templates/namespace_report.qtpl:65
+//line pkg/report/templates/namespace_report.qtpl:89
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.E().S(registry.Server)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`/`)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.E().S(artifact.Repository)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`:`)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.E().S(artifact.Tag)
-//line pkg/report/templates/namespace_report.qtpl:66
+//line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`
     `)
-//line pkg/report/templates/namespace_report.qtpl:67
+//line pkg/report/templates/namespace_report.qtpl:91
 		return
-//line pkg/report/templates/namespace_report.qtpl:68
+//line pkg/report/templates/namespace_report.qtpl:92
 	}
-//line pkg/report/templates/namespace_report.qtpl:68
+//line pkg/report/templates/namespace_report.qtpl:92
 	qw422016.N().S(`
 
   `)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.E().S(registry.Server)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.N().S(`/`)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.E().S(artifact.Repository)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.N().S(`:`)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.E().S(artifact.Tag)
-//line pkg/report/templates/namespace_report.qtpl:70
+//line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.N().S(`
 `)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 }
 
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 func writeimageReference(qq422016 qtio422016.Writer, registry v1alpha1.Registry, artifact v1alpha1.Artifact) {
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	streamimageReference(qw422016, registry, artifact)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	qt422016.ReleaseWriter(qw422016)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 }
 
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 func imageReference(registry v1alpha1.Registry, artifact v1alpha1.Artifact) string {
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	qb422016 := qt422016.AcquireByteBuffer()
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	writeimageReference(qb422016, registry, artifact)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	qs422016 := string(qb422016.B)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	qt422016.ReleaseByteBuffer(qb422016)
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 	return qs422016
-//line pkg/report/templates/namespace_report.qtpl:71
+//line pkg/report/templates/namespace_report.qtpl:95
 }

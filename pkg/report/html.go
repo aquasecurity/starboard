@@ -94,10 +94,17 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		return templates.NamespaceReport{}, err
 	}
 
+	var configAuditReportList v1alpha1.ConfigAuditReportList
+	err = r.client.List(context.Background(), &configAuditReportList, client.InNamespace(namespace.Name))
+	if err != nil {
+		return templates.NamespaceReport{}, err
+	}
+
 	return templates.NamespaceReport{
 		Namespace:            namespace,
 		GeneratedAt:          r.clock.Now(),
 		Top5VulnerableImages: r.topNImagesBySeverityCount(vulnerabilityReportList.Items, 5),
+		Top5FailedChecks:     r.topNFailedChecksByAffectedWorkloadsCount(configAuditReportList.Items, 5),
 	}, nil
 }
 
@@ -108,6 +115,68 @@ func (r *namespaceReporter) topNImagesBySeverityCount(reports []v1alpha1.Vulnera
 		SortDesc(b)
 
 	return b[:ext.MinInt(N, len(b))]
+}
+
+func (r *namespaceReporter) topNFailedChecksByAffectedWorkloadsCount(reports []v1alpha1.ConfigAuditReport, N int) []templates.CheckWithCount {
+	checksMap := make(map[string]templates.CheckWithCount)
+
+	for _, report := range reports {
+		for _, podCheck := range report.Report.PodChecks {
+			if podCheck.Success {
+				continue
+			}
+			configId := podCheck.ID
+			_, ok := checksMap[configId]
+			if ok {
+				config := checksMap[configId]
+				config.AffectedWorkloads++
+				checksMap[configId] = config
+			} else {
+				checksMap[configId] = templates.CheckWithCount{
+					Check:             podCheck,
+					AffectedWorkloads: 1,
+				}
+			}
+		}
+
+		alreadyCheckedForWorkload := make(map[string]bool)
+		for _, container := range report.Report.ContainerChecks {
+			for _, containerCheck := range container {
+				if containerCheck.Success {
+					continue
+				}
+
+				configId := containerCheck.ID
+				if alreadyCheckedForWorkload[configId] {
+					continue
+				}
+
+				alreadyCheckedForWorkload[configId] = true
+				_, ok := checksMap[configId]
+				if ok {
+					config := checksMap[configId]
+					config.AffectedWorkloads++
+					checksMap[configId] = config
+				} else {
+					checksMap[configId] = templates.CheckWithCount{
+						Check:             containerCheck,
+						AffectedWorkloads: 1,
+					}
+				}
+			}
+		}
+	}
+
+	failedChecks := make([]templates.CheckWithCount, len(checksMap))
+	i := 0
+	for _, check := range checksMap {
+		failedChecks[i] = check
+		i++
+	}
+
+	OrderedBy(checkCompareFunc...).SortDesc(failedChecks)
+
+	return failedChecks[:ext.MinInt(N, len(failedChecks))]
 }
 
 func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
