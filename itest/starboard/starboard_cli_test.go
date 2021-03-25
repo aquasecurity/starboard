@@ -1,6 +1,12 @@
 package starboard
 
 import (
+	. "github.com/aquasecurity/starboard/itest/matcher"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gstruct"
+
 	"context"
 	"os"
 	"strings"
@@ -10,10 +16,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gbytes"
-	. "github.com/onsi/gomega/gstruct"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -66,11 +68,6 @@ var (
 		Name:    "Trivy",
 		Vendor:  "Aqua Security",
 		Version: "0.16.0",
-	}
-	polarisScanner = v1alpha1.Scanner{
-		Name:    "Polaris",
-		Vendor:  "Fairwinds Ops",
-		Version: "3.2",
 	}
 )
 
@@ -195,9 +192,7 @@ var _ = Describe("Starboard CLI", func() {
 	Describe("Command scan vulnerabilityreports", func() {
 		// TODO 1. Add test cases for other types of Kubernetes controllers (StatefulSets, DaemonSets, etc.)
 
-		// containerNameAsIdFn is used as an identifier by the MatchAllElements matcher
-		// to group Vulnerability reports by container name.
-		containerNameAsIdFn := func(element interface{}) string {
+		groupByContainerName := func(element interface{}) string {
 			return element.(v1alpha1.VulnerabilityReport).
 				Labels[kube.LabelContainerName]
 		}
@@ -214,7 +209,7 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should create vulnerabilities resource", func() {
+			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
 					"starboard",
 					"find", "vulnerabilities", "pod/" + podName,
@@ -232,26 +227,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal(podName),
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
 				}))
 			})
 
@@ -293,45 +270,9 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("nginx"),
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
-					"tomcat": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("tomcat"),
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx":  IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
+					"tomcat": IsVulnerabilityReportForContainerOwnedBy("tomcat", pod),
 				}))
 			})
 
@@ -391,26 +332,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("nginx"),
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "Pod",
-								Name:       podName,
-								UID:        pod.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
 				}))
 			})
 
@@ -482,26 +405,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("nginx"),
-								kube.LabelResourceKind:      Equal("ReplicaSet"),
-								kube.LabelResourceName:      Equal(rsName),
-								kube.LabelResourceNamespace: Equal(rsNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "apps/v1",
-								Kind:       "ReplicaSet",
-								Name:       rsName,
-								UID:        rs.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", rs),
 				}))
 			})
 
@@ -569,26 +474,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("nginx"),
-								kube.LabelResourceKind:      Equal("ReplicationController"),
-								kube.LabelResourceName:      Equal(rcName),
-								kube.LabelResourceNamespace: Equal(rcNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "v1",
-								Kind:       "ReplicationController",
-								Name:       rcName,
-								UID:        rc.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", rc),
 				}))
 			})
 
@@ -656,26 +543,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(containerNameAsIdFn, Elements{
-					"nginx": MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelContainerName:     Equal("nginx"),
-								kube.LabelResourceKind:      Equal("Deployment"),
-								kube.LabelResourceName:      Equal(deployName),
-								kube.LabelResourceNamespace: Equal(deployNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion: "apps/v1",
-								Kind:       "Deployment",
-								Name:       deployName,
-								UID:        deploy.UID,
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(trivyScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", deploy),
 				}))
 			})
 
@@ -881,9 +750,8 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command scan configauditreports", func() {
-		// containerNameAsIDFn is used as an identifier by the MatchAllElements matcher
-		// to group ConfigAuditReport by container name.
-		resourceNameAsIDFn := func(element interface{}) string {
+
+		groupByWorkloadName := func(element interface{}) string {
 			return element.(v1alpha1.ConfigAuditReport).
 				Labels[kube.LabelResourceName]
 		}
@@ -919,27 +787,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
-					podName: MatchFields(IgnoreExtras, Fields{
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion:         "v1",
-								Kind:               "Pod",
-								Name:               podName,
-								UID:                pod.UID,
-								Controller:         pointer.BoolPtr(true),
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(polarisScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					podName: IsConfigAuditReportOwnedBy(pod),
 				}))
 			})
 
@@ -982,28 +831,8 @@ var _ = Describe("Starboard CLI", func() {
 					})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
-					podName: MatchFields(IgnoreExtras, Fields{
-
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelResourceKind:      Equal("Pod"),
-								kube.LabelResourceName:      Equal(podName),
-								kube.LabelResourceNamespace: Equal(podNamespace),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion:         "v1",
-								Kind:               "Pod",
-								Name:               podName,
-								UID:                pod.UID,
-								Controller:         pointer.BoolPtr(true),
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(polarisScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					podName: IsConfigAuditReportOwnedBy(pod),
 				}))
 			})
 
@@ -1071,28 +900,8 @@ var _ = Describe("Starboard CLI", func() {
 				})
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(reportList.Items).To(MatchAllElements(resourceNameAsIDFn, Elements{
-					"hello": MatchFields(IgnoreExtras, Fields{
-
-						"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-							"Labels": MatchAllKeys(Keys{
-								kube.LabelResourceKind:      Equal("CronJob"),
-								kube.LabelResourceName:      Equal("hello"),
-								kube.LabelResourceNamespace: Equal(namespaceItest),
-							}),
-							"OwnerReferences": ConsistOf(metav1.OwnerReference{
-								APIVersion:         "batch/v1beta1",
-								Kind:               "CronJob",
-								Name:               "hello",
-								UID:                cronJob.UID,
-								Controller:         pointer.BoolPtr(true),
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-							}),
-						}),
-						"Report": MatchFields(IgnoreExtras, Fields{
-							"Scanner": Equal(polarisScanner),
-						}),
-					}),
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					"hello": IsConfigAuditReportOwnedBy(cronJob),
 				}))
 
 			})
