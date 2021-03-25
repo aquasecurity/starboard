@@ -36,6 +36,12 @@ rules:
       - create
       - update
   - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
       - apps
     resources:
       - replicasets
@@ -74,4 +80,12 @@ rules:
       - list
       - watch
       - create
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
       - update
