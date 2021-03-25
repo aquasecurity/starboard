@@ -26,6 +26,15 @@ type NamespaceReport struct {
 
 	Top5VulnerableImages []v1alpha1.VulnerabilityReport
 	Top5FailedChecks     []CheckWithCount
+	Top5Vulnerability    []Vulnerability
+}
+
+type Vulnerability struct {
+	ID                string
+	Link              string
+	Severity          string
+	Score             float64
+	AffectedWorkloads int
 }
 
 type CheckWithCount struct {

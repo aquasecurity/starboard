@@ -72,6 +72,30 @@ Aqua Starboard Namespace Security Report - Namespace: {%s p.Namespace.Name %}
       </table>
     </div>
 
+  <h3>Top 5 vulnerability by score</h3>
+    <div class="row">
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Score</th>
+            <th scope="col">Affected Workloads</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for _, vulnerability := range p.Top5Vulnerability %}
+        <tr>
+          <td><a href="{%s vulnerability.Link %}">{%s vulnerability.ID %}</a></td>
+          <td>{%s vulnerability.Severity %}</td>
+          <td>{%f vulnerability.Score %}</td>
+          <td>{%d vulnerability.AffectedWorkloads %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
 </div>
 {% endfunc %}
 

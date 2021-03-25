@@ -473,6 +473,11 @@ func (in *Vulnerability) DeepCopyInto(out *Vulnerability) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Score != nil {
+		in, out := &in.Score, &out.Score
+		*out = new(float64)
+		**out = **in
+	}
 	return
 }
 

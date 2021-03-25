@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -94,6 +95,11 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		return templates.NamespaceReport{}, err
 	}
 
+	top5Vulnerability, err := r.topNVulnerabilityByScore(vulnerabilityReportList.Items, 5)
+	if err != nil {
+		return templates.NamespaceReport{}, err
+	}
+
 	var configAuditReportList v1alpha1.ConfigAuditReportList
 	err = r.client.List(context.Background(), &configAuditReportList, client.InNamespace(namespace.Name))
 	if err != nil {
@@ -105,6 +111,7 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		GeneratedAt:          r.clock.Now(),
 		Top5VulnerableImages: r.topNImagesBySeverityCount(vulnerabilityReportList.Items, 5),
 		Top5FailedChecks:     r.topNFailedChecksByAffectedWorkloadsCount(configAuditReportList.Items, 5),
+		Top5Vulnerability:    top5Vulnerability,
 	}, nil
 }
 
@@ -179,6 +186,52 @@ func (r *namespaceReporter) topNFailedChecksByAffectedWorkloadsCount(reports []v
 	return failedChecks[:ext.MinInt(N, len(failedChecks))]
 }
 
+func (r *namespaceReporter) topNVulnerabilityByScore(reports []v1alpha1.VulnerabilityReport, N int) ([]templates.Vulnerability, error) {
+	vulnerabilityMap := make(map[string]templates.Vulnerability)
+
+	for _, report := range reports {
+		vulnMap := make(map[string]bool)
+		for _, vulnerability := range report.Report.Vulnerabilities {
+			vulnId := vulnerability.VulnerabilityID
+			if vulnMap[vulnId] {
+				continue
+			}
+			vulnMap[vulnId] = true
+
+			if _, ok := vulnerabilityMap[vulnerability.VulnerabilityID]; ok {
+				tempVuln := vulnerabilityMap[vulnId]
+				tempVuln.AffectedWorkloads++
+				vulnerabilityMap[vulnId] = tempVuln
+			} else {
+				if vulnerability.Score == nil {
+					continue
+				}
+
+				vulnerabilityMap[vulnId] = templates.Vulnerability{
+					ID:                vulnerability.VulnerabilityID,
+					Link:              getVulnerabilityLink(vulnerability),
+					Severity:          string(vulnerability.Severity),
+					Score:             *vulnerability.Score,
+					AffectedWorkloads: 1,
+				}
+			}
+		}
+	}
+
+	vulnerabilities := make([]templates.Vulnerability, len(vulnerabilityMap))
+	i := 0
+	for _, vulnerability := range vulnerabilityMap {
+		vulnerabilities[i] = vulnerability
+		i++
+	}
+
+	sort.SliceStable(vulnerabilities, func(i, j int) bool {
+		return vulnerabilities[i].Score > vulnerabilities[j].Score
+	})
+
+	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))], nil
+}
+
 func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
 	data, err := r.RetrieveData(namespace)
 	if err != nil {
@@ -224,4 +277,13 @@ func (r *nodeReporter) RetrieveData(node kube.Object) (templates.NodeReport, err
 		Node:               node,
 		CisKubeBenchReport: found,
 	}, nil
+}
+
+func getVulnerabilityLink(vul v1alpha1.Vulnerability) string {
+	vulId := strings.ToLower(vul.VulnerabilityID)
+	if strings.HasPrefix(vulId, "cve") {
+		return "https://avd.aquasec.com/nvd/" + vulId
+	}
+
+	return vul.PrimaryLink
 }

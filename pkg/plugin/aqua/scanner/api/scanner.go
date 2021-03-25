@@ -8,6 +8,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
 	"github.com/google/go-containerregistry/pkg/name"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -72,6 +73,7 @@ func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesRes
 			FixedVersion:     result.FixVersion,
 			Description:      result.Description,
 			Links:            []string{},
+			Score:            pointer.Float64Ptr(result.AquaScore),
 		})
 	}
 

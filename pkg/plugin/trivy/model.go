@@ -20,6 +20,11 @@ type Vulnerability struct {
 	Layer            Layer             `json:"Layer"`
 	PrimaryURL       string            `json:"PrimaryURL"`
 	References       []string          `json:"References"`
+	Cvss             map[string]*CVSS  `json:"CVSS"`
+}
+
+type CVSS struct {
+	V3Score float64 `json:"V3Score,omitempty"`
 }
 
 type Layer struct {
