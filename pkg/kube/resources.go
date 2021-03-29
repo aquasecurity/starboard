@@ -8,7 +8,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
@@ -39,44 +38,6 @@ func GetContainerImagesFromJob(job *batchv1.Job) (ContainerImages, error) {
 		return nil, fmt.Errorf("parsing annotation: %s: %w", AnnotationContainerImages, err)
 	}
 	return containerImages, nil
-}
-
-// GetImmediateOwnerReference returns the immediate owner of the specified pod.
-// For example, for a pod controlled by a Deployment it will return the active
-// ReplicaSet, whereas for an unmanaged pod the immediate owner is the pod
-// itself.
-//
-// Note that kubelet can manage pods independently by reading pod definition
-// files from a configured host directory (typically /etc/kubernetes/manifests).
-// Such pods are called *static pods* and are owned by a cluster Node.
-// In this case we treat them as unmanaged pods. (Otherwise we'd require
-// cluster-scoped permissions to get Nodes in order to set the owner reference
-// when we create an instance of custom security report.)
-//
-// Pods created and controlled by third party frameworks, such as Argo workflow
-// engine, are considered as unmanaged. Otherwise we'd need to maintain and
-// extend the list of RBAC permissions over time.
-// TODO Merge this method with ObjectResolver, which accepts kube.Object and resolves client.Object.
-func GetImmediateOwnerReference(pod *corev1.Pod) Object {
-	ownerRef := metav1.GetControllerOf(pod)
-
-	if ownerRef != nil {
-		switch ownerRef.Kind {
-		case "Pod", "ReplicaSet", "ReplicationController", "Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job":
-			return Object{
-				Namespace: pod.Namespace,
-				Kind:      Kind(ownerRef.Kind),
-				Name:      ownerRef.Name,
-			}
-		}
-	}
-
-	// Pod owned by anything else is treated the same as an unmanaged pod
-	return Object{
-		Kind:      KindPod,
-		Namespace: pod.Namespace,
-		Name:      pod.Name,
-	}
 }
 
 // ComputeHash returns a hash value calculated from a given object.

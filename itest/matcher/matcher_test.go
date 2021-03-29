@@ -44,10 +44,12 @@ func TestVulnerabilityReportMatcher(t *testing.T) {
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{
-						APIVersion: "v1",
-						Kind:       "Pod",
-						Name:       "nginx-pod",
-						UID:        "56d53a84-c81b-4620-81a1-e226c35d3983",
+						APIVersion:         "v1",
+						Kind:               "Pod",
+						Name:               "nginx-pod",
+						UID:                "56d53a84-c81b-4620-81a1-e226c35d3983",
+						Controller:         pointer.BoolPtr(true),
+						BlockOwnerDeletion: pointer.BoolPtr(true),
 					},
 				},
 			},

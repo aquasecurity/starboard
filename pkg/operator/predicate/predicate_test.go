@@ -251,48 +251,6 @@ var _ = Describe("Predicate", func() {
 		})
 	})
 
-	Describe("When checking a PodHasContainersReadyCondition predicate", func() {
-
-		instance := predicate.PodHasContainersReadyCondition
-
-		Context("Where pod has ContainersReady condition", func() {
-			It("Should return true", func() {
-				obj := &corev1.Pod{
-					Status: corev1.PodStatus{
-						Conditions: []corev1.PodCondition{
-							{Type: corev1.PodInitialized},
-							{Type: corev1.PodReady},
-							{Type: corev1.ContainersReady},
-						},
-					},
-				}
-
-				Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeTrue())
-				Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeTrue())
-				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
-				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
-			})
-		})
-
-		Context("Where pod doesn't have ContainersReady condition", func() {
-			It("Should return false", func() {
-				obj := &corev1.Pod{
-					Status: corev1.PodStatus{
-						Conditions: []corev1.PodCondition{
-							{Type: corev1.PodInitialized},
-							{Type: corev1.PodReady},
-						},
-					},
-				}
-
-				Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
-				Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
-				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
-				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
-			})
-		})
-	})
-
 	Describe("When checking a JobHasAnyCondition predicate", func() {
 		instance := predicate.JobHasAnyCondition
 		Context("Where job has any condition", func() {

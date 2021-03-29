@@ -35,8 +35,13 @@ type ConfigAuditReportReconciler struct {
 	configauditreport.ReadWriter
 }
 
-var (
-	workloads = []struct {
+func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	installModePredicate, err := InstallModePredicate(r.Config)
+	if err != nil {
+		return err
+	}
+
+	workloads := []struct {
 		kind       kube.Kind
 		forObject  client.Object
 		ownsObject client.Object
@@ -48,13 +53,6 @@ var (
 		{kind: kube.KindDaemonSet, forObject: &appsv1.DaemonSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindCronJob, forObject: &batchv1beta1.CronJob{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindJob, forObject: &batchv1.Job{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
-	}
-)
-
-func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	installModePredicate, err := InstallModePredicate(r.Config)
-	if err != nil {
-		return err
 	}
 
 	for _, workload := range workloads {
@@ -97,7 +95,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{}, fmt.Errorf("getting %s from cache: %w", workloadKind, err)
 		}
 
-		// Skip processing if it's a Pod controlled by a standard K8s workload.
+		// Skip processing if it's a Pod controlled by a built-in K8s workload.
 		if workloadKind == kube.KindPod {
 			controller := metav1.GetControllerOf(workloadObj)
 			if kube.IsBuiltInWorkload(controller) {
