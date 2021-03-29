@@ -48,6 +48,30 @@ Aqua Starboard Namespace Security Report - Namespace: {%s p.Namespace.Name %}
     </table>
   </div>
 
+   <h3>Top 5 failed configuration checks by affected workloads count</h3>
+    <div class="row">
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Category</th>
+            <th scope="col">Affected Workloads</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for _, report := range p.Top5FailedChecks %}
+        <tr>
+          <td>{%s report.ID %}</td>
+          <td>{%s report.Severity %}</td>
+          <td>{%s report.Category %}</td>
+          <td>{%d report.AffectedWorkloads %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
 </div>
 {% endfunc %}
 
