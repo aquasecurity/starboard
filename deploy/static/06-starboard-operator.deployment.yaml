@@ -52,6 +52,10 @@ spec:
               value: ":9090"
             - name: OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED
               value: "true"
+            - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
+              value: "true"
+            - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
+              value: "true"
           ports:
             - name: metrics
               containerPort: 8080

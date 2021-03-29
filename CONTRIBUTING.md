@@ -224,6 +224,9 @@ started with a basic development workflow. For other install modes see [Operator
    $ OPERATOR_NAMESPACE=starboard-operator \
      OPERATOR_TARGET_NAMESPACES=default \
      OPERATOR_LOG_DEV_MODE=true \
+     OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED=true \
+     OPERATOR_VULNERABILITY_SCANNER_ENABLED=true \
+     OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED=true \
      go run cmd/starboard-operator/main.go
    ```
 
