@@ -133,36 +133,40 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 		return err
 	}
 
-	if err = (&controller.VulnerabilityReportReconciler{
-		Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
-		Config:         operatorConfig,
-		Client:         mgr.GetClient(),
-		ObjectResolver: objectResolver,
-		LimitChecker:   limitChecker,
-		LogsReader:     logsReader,
-		SecretsReader:  secretsReader,
-		Plugin:         vulnerabilityReportPlugin,
-		ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
-	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
+	if operatorConfig.VulnerabilityScannerEnabled {
+		if err = (&controller.VulnerabilityReportReconciler{
+			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
+			Config:         operatorConfig,
+			Client:         mgr.GetClient(),
+			ObjectResolver: objectResolver,
+			LimitChecker:   limitChecker,
+			LogsReader:     logsReader,
+			SecretsReader:  secretsReader,
+			Plugin:         vulnerabilityReportPlugin,
+			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
+		}).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
+		}
 	}
 
-	configAuditReportPlugin, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
-	if err != nil {
-		return err
-	}
+	if operatorConfig.ConfigAuditScannerEnabled {
+		configAuditReportPlugin, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+		if err != nil {
+			return err
+		}
 
-	if err = (&controller.ConfigAuditReportReconciler{
-		Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
-		Config:         operatorConfig,
-		Client:         mgr.GetClient(),
-		ObjectResolver: objectResolver,
-		LimitChecker:   limitChecker,
-		LogsReader:     logsReader,
-		Plugin:         configAuditReportPlugin,
-		ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
-	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
+		if err = (&controller.ConfigAuditReportReconciler{
+			Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
+			Config:         operatorConfig,
+			Client:         mgr.GetClient(),
+			ObjectResolver: objectResolver,
+			LimitChecker:   limitChecker,
+			LogsReader:     logsReader,
+			Plugin:         configAuditReportPlugin,
+			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+		}).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
+		}
 	}
 
 	if operatorConfig.CISKubernetesBenchmarkEnabled {
