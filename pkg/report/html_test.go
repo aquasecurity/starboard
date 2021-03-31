@@ -3,6 +3,13 @@ package report
 import (
 	"testing"
 
+	"github.com/aquasecurity/starboard/pkg/report/templates"
+
+	"k8s.io/utils/pointer"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
@@ -112,4 +119,212 @@ func TestHTMLReporter_GenerateReport(t *testing.T) {
 	//assert.Contains(t, htmlReportStr, "1.1.1c-r0")
 	//assert.Contains(t, htmlReportStr, "Trivy")
 	//assert.Contains(t, htmlReportStr, "index.docker.io")
+}
+
+func Test_topNVulnerabilitiesByScore(t *testing.T) {
+	testCases := []struct {
+		name           string
+		reports        []v1alpha1.VulnerabilityReport
+		expectedOutput []templates.VulnerabilityWithCount
+	}{
+		{
+			name: "Should return top 5 vulnerabilities with count",
+			reports: []starboard.VulnerabilityReport{
+				{
+					Report: starboard.VulnerabilityScanResult{
+						Vulnerabilities: []starboard.Vulnerability{
+							{
+								VulnerabilityID: "CVE-2019-1549",
+								Severity:        starboard.SeverityCritical,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1549",
+								Score:           pointer.Float64Ptr(8.2),
+							},
+							{
+								VulnerabilityID: "CVE-2019-1547",
+								Severity:        starboard.SeverityLow,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1547",
+								Score:           pointer.Float64Ptr(6.3),
+							},
+							{
+								VulnerabilityID: "CVE-2011-3374",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+								Score:           pointer.Float64Ptr(3.7),
+							},
+						},
+					},
+				},
+				{
+					Report: starboard.VulnerabilityScanResult{
+						Vulnerabilities: []starboard.Vulnerability{
+							{
+								VulnerabilityID: "CVE-2019-1548",
+								Severity:        starboard.SeverityCritical,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1548",
+								Score:           pointer.Float64Ptr(9.1),
+							},
+							{
+								VulnerabilityID: "CVE-2019-1547",
+								Severity:        starboard.SeverityLow,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1547",
+								Score:           pointer.Float64Ptr(6.3),
+							},
+							{
+								VulnerabilityID: "CVE-2020-27350",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2020-27350",
+								Score:           pointer.Float64Ptr(5.7),
+							},
+							{
+								VulnerabilityID: "CVE-2011-3374",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+								Score:           pointer.Float64Ptr(3.7),
+							},
+							{
+								VulnerabilityID: "CVE-2011-3375",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+								Score:           pointer.Float64Ptr(3.6),
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []templates.VulnerabilityWithCount{
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2019-1548",
+						Severity:        starboard.SeverityCritical,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1548",
+						Score:           pointer.Float64Ptr(9.1),
+					},
+					AffectedWorkloads: 1,
+				},
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2019-1549",
+						Severity:        starboard.SeverityCritical,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1549",
+						Score:           pointer.Float64Ptr(8.2),
+					},
+					AffectedWorkloads: 1,
+				},
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2019-1547",
+						Severity:        starboard.SeverityLow,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1547",
+						Score:           pointer.Float64Ptr(6.3),
+					},
+					AffectedWorkloads: 2,
+				},
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2020-27350",
+						Severity:        starboard.SeverityMedium,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2020-27350",
+						Score:           pointer.Float64Ptr(5.7),
+					},
+					AffectedWorkloads: 1,
+				},
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2011-3374",
+						Severity:        starboard.SeverityMedium,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+						Score:           pointer.Float64Ptr(3.7),
+					},
+					AffectedWorkloads: 2,
+				},
+			},
+		},
+		{
+			name: "Should return 2 vulnerabilities with count when some input has nil scores",
+			reports: []starboard.VulnerabilityReport{
+				{
+					Report: starboard.VulnerabilityScanResult{
+						Vulnerabilities: []starboard.Vulnerability{
+							{
+								VulnerabilityID: "CVE-2019-1549",
+								Severity:        starboard.SeverityCritical,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1549",
+								Score:           pointer.Float64Ptr(8.2),
+							},
+							{
+								VulnerabilityID: "CVE-2019-1547",
+								Severity:        starboard.SeverityLow,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1547",
+								Score:           nil,
+							},
+							{
+								VulnerabilityID: "CVE-2011-3374",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+								Score:           pointer.Float64Ptr(3.7),
+							},
+						},
+					},
+				},
+				{
+					Report: starboard.VulnerabilityScanResult{
+						Vulnerabilities: []starboard.Vulnerability{
+							{
+								VulnerabilityID: "CVE-2019-1548",
+								Severity:        starboard.SeverityCritical,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1548",
+								Score:           nil,
+							},
+							{
+								VulnerabilityID: "CVE-2019-1547",
+								Severity:        starboard.SeverityLow,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1547",
+								Score:           nil,
+							},
+							{
+								VulnerabilityID: "CVE-2020-27350",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2020-27350",
+								Score:           nil,
+							},
+							{
+								VulnerabilityID: "CVE-2011-3374",
+								Severity:        starboard.SeverityMedium,
+								PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+								Score:           pointer.Float64Ptr(3.7),
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: []templates.VulnerabilityWithCount{
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2019-1549",
+						Severity:        starboard.SeverityCritical,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2019-1549",
+						Score:           pointer.Float64Ptr(8.2),
+					},
+					AffectedWorkloads: 1,
+				},
+				{
+					Vulnerability: starboard.Vulnerability{
+						VulnerabilityID: "CVE-2011-3374",
+						Severity:        starboard.SeverityMedium,
+						PrimaryLink:     "https://avd.aquasec.com/nvd/cve-2011-3374",
+						Score:           pointer.Float64Ptr(3.7),
+					},
+					AffectedWorkloads: 2,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		r := namespaceReporter{}
+		t.Run(tc.name, func(t *testing.T) {
+			vulWithCount := r.topNVulnerabilitiesByScore(tc.reports, 5)
+			assert.Equal(t, tc.expectedOutput, vulWithCount)
+		})
+	}
 }

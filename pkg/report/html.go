@@ -94,11 +94,6 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		return templates.NamespaceReport{}, err
 	}
 
-	top5Vulnerability, err := r.topNVulnerabilitiesByScore(vulnerabilityReportList.Items, 5)
-	if err != nil {
-		return templates.NamespaceReport{}, err
-	}
-
 	var configAuditReportList v1alpha1.ConfigAuditReportList
 	err = r.client.List(context.Background(), &configAuditReportList, client.InNamespace(namespace.Name))
 	if err != nil {
@@ -110,7 +105,7 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		GeneratedAt:          r.clock.Now(),
 		Top5VulnerableImages: r.topNImagesBySeverityCount(vulnerabilityReportList.Items, 5),
 		Top5FailedChecks:     r.topNFailedChecksByAffectedWorkloadsCount(configAuditReportList.Items, 5),
-		Top5Vulnerability:    top5Vulnerability,
+		Top5Vulnerability:    r.topNVulnerabilitiesByScore(vulnerabilityReportList.Items, 5),
 	}, nil
 }
 
@@ -185,7 +180,7 @@ func (r *namespaceReporter) topNFailedChecksByAffectedWorkloadsCount(reports []v
 	return failedChecks[:ext.MinInt(N, len(failedChecks))]
 }
 
-func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.VulnerabilityReport, N int) ([]templates.VulnerabilityWithCount, error) {
+func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.VulnerabilityReport, N int) []templates.VulnerabilityWithCount {
 	vulnerabilityMap := make(map[string]templates.VulnerabilityWithCount)
 
 	for _, report := range reports {
@@ -230,7 +225,7 @@ func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.Vulner
 		return *vulnerabilities[i].Score > *vulnerabilities[j].Score
 	})
 
-	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))], nil
+	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))]
 }
 
 func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
