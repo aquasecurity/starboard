@@ -197,7 +197,7 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
       </table>
     </div>
 
-  <h3>Top 5 vulnerability by score</h3>
+  <h3>Top 5 vulnerabilities by score</h3>
     <div class="row">
       <table class="table table-sm table-bordered">
         <thead>
@@ -217,21 +217,21 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
         <tr>
           <td><a href="`)
 //line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.E().S(vulnerability.Link)
+		qw422016.E().S(vulnerability.PrimaryLink)
 //line pkg/report/templates/namespace_report.qtpl:89
 		qw422016.N().S(`">`)
 //line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.E().S(vulnerability.ID)
+		qw422016.E().S(vulnerability.VulnerabilityID)
 //line pkg/report/templates/namespace_report.qtpl:89
 		qw422016.N().S(`</a></td>
           <td>`)
 //line pkg/report/templates/namespace_report.qtpl:90
-		qw422016.E().S(vulnerability.Severity)
+		qw422016.E().S(string(vulnerability.Severity))
 //line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`</td>
           <td>`)
 //line pkg/report/templates/namespace_report.qtpl:91
-		qw422016.N().F(vulnerability.Score)
+		qw422016.N().F(*vulnerability.Score)
 //line pkg/report/templates/namespace_report.qtpl:91
 		qw422016.N().S(`</td>
           <td>`)

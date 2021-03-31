@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -95,7 +94,7 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		return templates.NamespaceReport{}, err
 	}
 
-	top5Vulnerability, err := r.topNVulnerabilityByScore(vulnerabilityReportList.Items, 5)
+	top5Vulnerability, err := r.topNVulnerabilitiesByScore(vulnerabilityReportList.Items, 5)
 	if err != nil {
 		return templates.NamespaceReport{}, err
 	}
@@ -186,8 +185,8 @@ func (r *namespaceReporter) topNFailedChecksByAffectedWorkloadsCount(reports []v
 	return failedChecks[:ext.MinInt(N, len(failedChecks))]
 }
 
-func (r *namespaceReporter) topNVulnerabilityByScore(reports []v1alpha1.VulnerabilityReport, N int) ([]templates.Vulnerability, error) {
-	vulnerabilityMap := make(map[string]templates.Vulnerability)
+func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.VulnerabilityReport, N int) ([]templates.VulnerabilityWithCount, error) {
+	vulnerabilityMap := make(map[string]templates.VulnerabilityWithCount)
 
 	for _, report := range reports {
 		vulnMap := make(map[string]bool)
@@ -207,18 +206,20 @@ func (r *namespaceReporter) topNVulnerabilityByScore(reports []v1alpha1.Vulnerab
 					continue
 				}
 
-				vulnerabilityMap[vulnId] = templates.Vulnerability{
-					ID:                vulnerability.VulnerabilityID,
-					Link:              getVulnerabilityLink(vulnerability),
-					Severity:          string(vulnerability.Severity),
-					Score:             *vulnerability.Score,
+				vulnerabilityMap[vulnId] = templates.VulnerabilityWithCount{
+					Vulnerability: v1alpha1.Vulnerability{
+						VulnerabilityID: vulnerability.VulnerabilityID,
+						PrimaryLink:     vulnerability.PrimaryLink,
+						Severity:        vulnerability.Severity,
+						Score:           vulnerability.Score,
+					},
 					AffectedWorkloads: 1,
 				}
 			}
 		}
 	}
 
-	vulnerabilities := make([]templates.Vulnerability, len(vulnerabilityMap))
+	vulnerabilities := make([]templates.VulnerabilityWithCount, len(vulnerabilityMap))
 	i := 0
 	for _, vulnerability := range vulnerabilityMap {
 		vulnerabilities[i] = vulnerability
@@ -226,7 +227,7 @@ func (r *namespaceReporter) topNVulnerabilityByScore(reports []v1alpha1.Vulnerab
 	}
 
 	sort.SliceStable(vulnerabilities, func(i, j int) bool {
-		return vulnerabilities[i].Score > vulnerabilities[j].Score
+		return *vulnerabilities[i].Score > *vulnerabilities[j].Score
 	})
 
 	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))], nil
@@ -277,13 +278,4 @@ func (r *nodeReporter) RetrieveData(node kube.Object) (templates.NodeReport, err
 		Node:               node,
 		CisKubeBenchReport: found,
 	}, nil
-}
-
-func getVulnerabilityLink(vul v1alpha1.Vulnerability) string {
-	vulId := strings.ToLower(vul.VulnerabilityID)
-	if strings.HasPrefix(vulId, "cve") {
-		return "https://avd.aquasec.com/nvd/" + vulId
-	}
-
-	return vul.PrimaryLink
 }
