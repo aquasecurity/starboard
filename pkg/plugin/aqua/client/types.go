@@ -15,7 +15,6 @@ type VulnerabilitiesResponseResult struct {
 	AquaVectors         string   `json:"aqua_vectors"`
 	AquaScoringSystem   string   `json:"aqua_scoring_system"`
 	FixVersion          string   `json:"fix_version"`
-	AquaScore           float64  `json:"aqua_score"`
 }
 
 type Resource struct {
