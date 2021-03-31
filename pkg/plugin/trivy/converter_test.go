@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 var (
@@ -164,4 +165,70 @@ func TestConverter_Convert(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetScoreFromCvss(t *testing.T) {
+	testCases := []struct {
+		name          string
+		cvss          map[string]*trivy.CVSS
+		expectedScore *float64
+	}{
+		{
+			name: "Should return vendor score when vendor v3 score exist",
+			cvss: map[string]*trivy.CVSS{
+				"nvd": {
+					V3Score: pointer.Float64Ptr(8.1),
+				},
+				"redhat": {
+					V3Score: pointer.Float64Ptr(8.3),
+				},
+			},
+			expectedScore: pointer.Float64Ptr(8.3),
+		},
+		{
+			name: "Should return nvd score when vendor v3 score is nil",
+			cvss: map[string]*trivy.CVSS{
+				"nvd": {
+					V3Score: pointer.Float64Ptr(8.1),
+				},
+				"redhat": {
+					V3Score: nil,
+				},
+			},
+			expectedScore: pointer.Float64Ptr(8.1),
+		},
+		{
+			name: "Should return nvd score when vendor doesn't exist",
+			cvss: map[string]*trivy.CVSS{
+				"nvd": {
+					V3Score: pointer.Float64Ptr(8.1),
+				},
+			},
+			expectedScore: pointer.Float64Ptr(8.1),
+		},
+		{
+			name: "Should return nil when vendor and nvd both v3 scores are nil",
+			cvss: map[string]*trivy.CVSS{
+				"nvd": {
+					V3Score: nil,
+				},
+				"redhat": {
+					V3Score: nil,
+				},
+			},
+			expectedScore: nil,
+		},
+		{
+			name:          "Should return nil when cvss doesn't exist",
+			cvss:          map[string]*trivy.CVSS{},
+			expectedScore: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			score := trivy.GetScoreFromCvss(tc.cvss)
+			assert.Equal(t, tc.expectedScore, score)
+		})
+	}
 }
