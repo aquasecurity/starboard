@@ -105,6 +105,7 @@ func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.Names
 		GeneratedAt:          r.clock.Now(),
 		Top5VulnerableImages: r.topNImagesBySeverityCount(vulnerabilityReportList.Items, 5),
 		Top5FailedChecks:     r.topNFailedChecksByAffectedWorkloadsCount(configAuditReportList.Items, 5),
+		Top5Vulnerability:    r.topNVulnerabilitiesByScore(vulnerabilityReportList.Items, 5),
 	}, nil
 }
 
@@ -177,6 +178,54 @@ func (r *namespaceReporter) topNFailedChecksByAffectedWorkloadsCount(reports []v
 	OrderedBy(checkCompareFunc...).SortDesc(failedChecks)
 
 	return failedChecks[:ext.MinInt(N, len(failedChecks))]
+}
+
+func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.VulnerabilityReport, N int) []templates.VulnerabilityWithCount {
+	vulnerabilityMap := make(map[string]templates.VulnerabilityWithCount)
+
+	for _, report := range reports {
+		vulnMap := make(map[string]bool)
+		for _, vulnerability := range report.Report.Vulnerabilities {
+			vulnId := vulnerability.VulnerabilityID
+			if vulnMap[vulnId] {
+				continue
+			}
+			vulnMap[vulnId] = true
+
+			if _, ok := vulnerabilityMap[vulnerability.VulnerabilityID]; ok {
+				tempVuln := vulnerabilityMap[vulnId]
+				tempVuln.AffectedWorkloads++
+				vulnerabilityMap[vulnId] = tempVuln
+			} else {
+				if vulnerability.Score == nil {
+					continue
+				}
+
+				vulnerabilityMap[vulnId] = templates.VulnerabilityWithCount{
+					Vulnerability: v1alpha1.Vulnerability{
+						VulnerabilityID: vulnerability.VulnerabilityID,
+						PrimaryLink:     vulnerability.PrimaryLink,
+						Severity:        vulnerability.Severity,
+						Score:           vulnerability.Score,
+					},
+					AffectedWorkloads: 1,
+				}
+			}
+		}
+	}
+
+	vulnerabilities := make([]templates.VulnerabilityWithCount, len(vulnerabilityMap))
+	i := 0
+	for _, vulnerability := range vulnerabilityMap {
+		vulnerabilities[i] = vulnerability
+		i++
+	}
+
+	sort.SliceStable(vulnerabilities, func(i, j int) bool {
+		return *vulnerabilities[i].Score > *vulnerabilities[j].Score
+	})
+
+	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))]
 }
 
 func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {

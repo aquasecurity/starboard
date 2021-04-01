@@ -52,6 +52,7 @@ func (c *converter) convert(imageRef string, reports []ScanReport) (v1alpha1.Vul
 				Title:            sr.Title,
 				PrimaryLink:      sr.PrimaryURL,
 				Links:            []string{},
+				Score:            GetScoreFromCvss(sr.Cvss),
 			})
 		}
 	}
@@ -123,4 +124,22 @@ func (c *converter) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.
 	}
 
 	return registry, artifact, nil
+}
+
+func GetScoreFromCvss(CVSSs map[string]*CVSS) *float64 {
+	var nvdScore, vendorScore *float64
+
+	for name, cvss := range CVSSs {
+		if name == "nvd" {
+			nvdScore = cvss.V3Score
+		} else {
+			vendorScore = cvss.V3Score
+		}
+	}
+
+	if vendorScore != nil {
+		return vendorScore
+	}
+
+	return nvdScore
 }
