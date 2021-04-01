@@ -198,7 +198,7 @@ var _ = Describe("Starboard Operator", func() {
 
 	Describe("When operator is started", func() {
 
-		It("Should scan all nodes with CIS Kubernetes Benchmark checks", func() {
+		It("Should create CISKubeBenchReports", func() {
 			nodeList, err := kubeClientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			for _, node := range nodeList.Items {
