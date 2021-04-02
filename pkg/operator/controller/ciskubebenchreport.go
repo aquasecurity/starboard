@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -41,6 +42,7 @@ type CISKubeBenchReportReconciler struct {
 	LimitChecker
 	kubebench.ReadWriter
 	kubebench.Plugin
+	starboard.PluginContext
 }
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -150,12 +152,10 @@ func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *cor
 }
 
 func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.Job, error) {
-	templateSpec, err := r.Plugin.GetScanJobSpec(*node)
+	templateSpec, err := r.Plugin.GetScanJobSpec(r.PluginContext, *node)
 	if err != nil {
 		return nil, err
 	}
-
-	templateSpec.ServiceAccountName = r.Config.ServiceAccount
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

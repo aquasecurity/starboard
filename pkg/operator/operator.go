@@ -143,7 +143,11 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 			LogsReader:     logsReader,
 			SecretsReader:  secretsReader,
 			Plugin:         vulnerabilityReportPlugin,
-			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
+			PluginContext: starboard.NewPluginContext().
+				WithNamespace(operatorNamespace).
+				WithServiceAccountName(operatorConfig.ServiceAccount).
+				Build(),
+			ReadWriter: vulnerabilityreport.NewReadWriter(mgr.GetClient()),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 		}
@@ -163,7 +167,11 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 			LimitChecker:   limitChecker,
 			LogsReader:     logsReader,
 			Plugin:         configAuditReportPlugin,
-			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+			PluginContext: starboard.NewPluginContext().
+				WithNamespace(operatorNamespace).
+				WithServiceAccountName(operatorConfig.ServiceAccount).
+				Build(),
+			ReadWriter: configauditreport.NewReadWriter(mgr.GetClient()),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}

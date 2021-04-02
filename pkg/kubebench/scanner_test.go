@@ -33,9 +33,13 @@ func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 			Name: "control-plane",
 		},
 	}
+	pluginContext := starboard.NewPluginContext().
+		WithNamespace(starboard.NamespaceName).
+		WithServiceAccountName(starboard.ServiceAccountName).
+		Build()
 	instance := kubebench.NewKubeBenchPlugin(fixedClock, config)
 
-	podSpec, err := instance.GetScanJobSpec(node)
+	podSpec, err := instance.GetScanJobSpec(pluginContext, node)
 
 	require.NoError(t, err)
 	assert.Equal(t, corev1.PodSpec{

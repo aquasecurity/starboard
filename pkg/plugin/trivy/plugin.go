@@ -58,28 +58,29 @@ func NewPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityreport.P
 	}
 }
 
-func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	mode, err := s.config.GetTrivyMode()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
 	switch mode {
 	case starboard.Standalone:
-		return s.getPodSpecForStandaloneMode(spec, credentials)
+		return s.getPodSpecForStandaloneMode(ctx, spec, credentials)
 	case starboard.ClientServer:
-		return s.getPodSpecForClientServerMode(spec, credentials)
+		return s.getPodSpecForClientServerMode(ctx, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
 }
 
-func (s *scanner) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
+func (s *scanner) newSecretWithAggregateImagePullCredentials(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
 	containerImages := kube.GetContainerImagesFromPodSpec(spec)
 	secretData := kube.AggregateImagePullSecretsData(containerImages, credentials)
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.idGenerator.GenerateID(),
+			Name:      s.idGenerator.GenerateID(),
+			Namespace: ctx.GetNamespace(),
 		},
 		Data: secretData,
 	}
@@ -102,12 +103,12 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) getPodSpecForStandaloneMode(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
 	if len(credentials) > 0 {
-		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secret = s.newSecretWithAggregateImagePullCredentials(ctx, spec, credentials)
 		secrets = append(secrets, secret)
 	}
 
@@ -341,7 +342,7 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) getPodSpecForClientServerMode(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -356,7 +357,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 	}
 
 	if len(credentials) > 0 {
-		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secret = s.newSecretWithAggregateImagePullCredentials(ctx, spec, credentials)
 		secrets = append(secrets, secret)
 	}
 

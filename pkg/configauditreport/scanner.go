@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
@@ -27,6 +26,7 @@ type Scanner struct {
 	objectResolver *kube.ObjectResolver
 	logsReader     kube.LogsReader
 	plugin         Plugin
+	pluginContext  starboard.PluginContext
 	ext.IDGenerator
 }
 
@@ -35,19 +35,21 @@ func NewScanner(
 	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
+	pluginContext starboard.PluginContext,
 ) *Scanner {
 	return &Scanner{
 		scheme:         client.Scheme(),
 		clientset:      clientset,
 		opts:           opts,
 		plugin:         plugin,
+		pluginContext:  pluginContext,
 		objectResolver: &kube.ObjectResolver{Client: client},
 		logsReader:     kube.NewLogsReader(clientset),
 		IDGenerator:    ext.NewGoogleUUIDGenerator(),
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.GroupVersionKind) (v1alpha1.ConfigAuditReport, error) {
+func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
 
 	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, workload)
@@ -56,7 +58,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, secrets, err := s.getScanJob(workload, owner)
+	job, secrets, err := s.getScanJob(owner)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
@@ -98,8 +100,8 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object, gvk schema.Gro
 		Get()
 }
 
-func (s *Scanner) getScanJob(workload kube.Object, obj client.Object) (*batchv1.Job, []*corev1.Secret, error) {
-	jobSpec, secrets, err := s.plugin.GetScanJobSpec(obj)
+func (s *Scanner) getScanJob(obj client.Object) (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, obj)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,9 +110,9 @@ func (s *Scanner) getScanJob(workload kube.Object, obj client.Object) (*batchv1.
 			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
-				kube.LabelResourceKind:      string(workload.Kind),
-				kube.LabelResourceName:      workload.Name,
-				kube.LabelResourceNamespace: workload.Namespace,
+				kube.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
+				kube.LabelResourceName:      obj.GetName(),
+				kube.LabelResourceNamespace: obj.GetNamespace(),
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -120,9 +122,9 @@ func (s *Scanner) getScanJob(workload kube.Object, obj client.Object) (*batchv1.
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind:      string(workload.Kind),
-						kube.LabelResourceName:      workload.Name,
-						kube.LabelResourceNamespace: workload.Namespace,
+						kube.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
+						kube.LabelResourceName:      obj.GetName(),
+						kube.LabelResourceNamespace: obj.GetNamespace(),
 					},
 				},
 				Spec: jobSpec,

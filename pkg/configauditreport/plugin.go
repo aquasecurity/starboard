@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -18,7 +19,7 @@ type Plugin interface {
 	// it schedules a Kubernetes job to scan the specified workload client.Object.
 	// The plugin might return zero to many v1.Secret objects which will be
 	// created by Starboard and associated with the scan job.
-	GetScanJobSpec(obj client.Object) (corev1.PodSpec, []*corev1.Secret, error)
+	GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error)
 
 	// ParseConfigAuditReportData is a callback to parse and convert logs of
 	// the container in a pod controlled by the scan job to v1alpha1.ConfigAuditResult.

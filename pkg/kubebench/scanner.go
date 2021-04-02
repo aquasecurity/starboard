@@ -25,11 +25,12 @@ import (
 )
 
 type Scanner struct {
-	scheme     *runtime.Scheme
-	opts       kube.ScannerOpts
-	clientset  kubernetes.Interface
-	logsReader kube.LogsReader
-	plugin     Plugin
+	scheme        *runtime.Scheme
+	opts          kube.ScannerOpts
+	clientset     kubernetes.Interface
+	logsReader    kube.LogsReader
+	plugin        Plugin
+	pluginContext starboard.PluginContext
 }
 
 func NewScanner(
@@ -37,13 +38,15 @@ func NewScanner(
 	clientset kubernetes.Interface,
 	opts kube.ScannerOpts,
 	plugin Plugin,
+	pluginContext starboard.PluginContext,
 ) *Scanner {
 	return &Scanner{
-		scheme:     scheme,
-		opts:       opts,
-		clientset:  clientset,
-		logsReader: kube.NewLogsReader(clientset),
-		plugin:     plugin,
+		scheme:        scheme,
+		opts:          opts,
+		clientset:     clientset,
+		logsReader:    kube.NewLogsReader(clientset),
+		plugin:        plugin,
+		pluginContext: pluginContext,
 	}
 }
 
@@ -111,7 +114,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 }
 
 func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
-	templateSpec, err := s.plugin.GetScanJobSpec(node)
+	templateSpec, err := s.plugin.GetScanJobSpec(s.pluginContext, node)
 	if err != nil {
 		return nil, err
 	}
@@ -164,13 +167,13 @@ func NewKubeBenchPlugin(clock ext.Clock, config Config) Plugin {
 	}
 }
 
-func (k *kubeBenchPlugin) GetScanJobSpec(node corev1.Node) (corev1.PodSpec, error) {
+func (k *kubeBenchPlugin) GetScanJobSpec(ctx starboard.PluginContext, node corev1.Node) (corev1.PodSpec, error) {
 	imageRef, err := k.config.GetKubeBenchImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, err
 	}
 	return corev1.PodSpec{
-		ServiceAccountName:           starboard.ServiceAccountName,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(true),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		HostPID:                      true,

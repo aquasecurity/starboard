@@ -376,8 +376,12 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			jobSpec, secrets, err := trivy.NewPlugin(ext.NewSimpleIDGenerator(), tc.config).
-				GetScanJobSpec(tc.workloadSpec, nil)
+			pluginContext := starboard.NewPluginContext().
+				WithNamespace(starboard.NamespaceName).
+				WithServiceAccountName(starboard.ServiceAccountName).
+				Build()
+			instance := trivy.NewPlugin(ext.NewSimpleIDGenerator(), tc.config)
+			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
 			assert.Equal(t, tc.expectedJobSpec, jobSpec)

@@ -40,7 +40,7 @@ func NewPlugin(
 	}
 }
 
-func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
 	aquaImageRef, err := s.config.GetAquaImageRef()
