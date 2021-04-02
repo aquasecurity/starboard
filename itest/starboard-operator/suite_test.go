@@ -1,6 +1,9 @@
 package starboard_operator
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"path/filepath"
 	"testing"
 
@@ -8,10 +11,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,9 +29,8 @@ var (
 )
 
 var (
-	scheme        *runtime.Scheme
-	kubeClientset kubernetes.Interface
-	kubeClient    client.Client
+	scheme     *runtime.Scheme
+	kubeClient client.Client
 )
 
 var (
@@ -55,11 +54,10 @@ var _ = BeforeSuite(func(done Done) {
 	kubeConfig, err := ctrl.GetConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	kubeClientset, err = kubernetes.NewForConfig(kubeConfig)
-	Expect(err).ToNot(HaveOccurred())
-
 	scheme = starboard.NewScheme()
-	kubeClient, err = client.New(kubeConfig, client.Options{Scheme: scheme})
+	kubeClient, err = client.New(kubeConfig, client.Options{
+		Scheme: scheme,
+	})
 	Expect(err).ToNot(HaveOccurred())
 
 	kubeBenchReportReader = kubebench.NewReadWriter(kubeClient)

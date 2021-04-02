@@ -9,9 +9,9 @@ import (
 
 	"context"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -29,56 +29,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// NewPodSpec returns the creation a pod spec
-func NewPodSpec(podName string, containers map[string]string, args ...string) (*corev1.Pod, error) {
-
-	var specContainer []corev1.Container
-	for k, v := range containers {
-		specContainer = append(specContainer, corev1.Container{
-			Name:            k,
-			Image:           v,
-			ImagePullPolicy: corev1.PullIfNotPresent,
-		})
-	}
-
-	var secretSpec []corev1.LocalObjectReference
-	if len(args) > 1 {
-		secretSpec = []corev1.LocalObjectReference{
-			{
-				Name: args[0],
-			},
-		}
-	}
-
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: namespaceItest,
-		},
-		Spec: corev1.PodSpec{
-			Containers:       specContainer,
-			ImagePullSecrets: secretSpec,
-		},
-	}
-
-	err := kubeClient.Create(context.TODO(), pod)
-	return pod, err
-}
-
-var (
-	trivyScanner = v1alpha1.Scanner{
-		Name:    "Trivy",
-		Vendor:  "Aqua Security",
-		Version: "0.16.0",
-	}
-)
-
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
 		err := cmd.Run(versionInfo, []string{
-			"starboard",
-			"init",
+			"starboard", "init",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
@@ -214,8 +169,11 @@ var _ = Describe("Starboard CLI", func() {
 			var pod *corev1.Pod
 
 			BeforeEach(func() {
-				var err error
-				pod, err = NewPodSpec("nginx", map[string]string{"nginx": "nginx:1.16"})
+				pod = helper.NewPod().WithName("nginx").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "nginx:1.16").
+					Build()
+				err := kubeClient.Create(context.TODO(), pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -237,7 +195,7 @@ var _ = Describe("Starboard CLI", func() {
 
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
+					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
 				}))
 			})
 
@@ -253,11 +211,12 @@ var _ = Describe("Starboard CLI", func() {
 			var pod *corev1.Pod
 
 			BeforeEach(func() {
-				var err error
-				pod, err = NewPodSpec("nginx-and-tomcat", map[string]string{
-					"nginx":  "nginx:1.16",
-					"tomcat": "tomcat:8",
-				})
+				pod = helper.NewPod().WithName("nginx-and-tomcat").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "nginx:1.16").
+					WithContainer("tomcat-container", "tomcat:8").
+					Build()
+				err := kubeClient.Create(context.TODO(), pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -278,8 +237,8 @@ var _ = Describe("Starboard CLI", func() {
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx":  IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
-					"tomcat": IsVulnerabilityReportForContainerOwnedBy("tomcat", pod),
+					"nginx-container":  IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
+					"tomcat-container": IsVulnerabilityReportForContainerOwnedBy("tomcat-container", pod),
 				}))
 			})
 
@@ -311,9 +270,12 @@ var _ = Describe("Starboard CLI", func() {
 				err = kubeClient.Create(context.TODO(), imagePullSecret)
 				Expect(err).ToNot(HaveOccurred())
 
-				pod, err = NewPodSpec("nginx-with-private-image",
-					map[string]string{"nginx": "starboardcicd/private-nginx:1.16"},
-					imagePullSecret.Name)
+				pod = helper.NewPod().WithName("nginx-with-private-image").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "starboardcicd/private-nginx:1.16").
+					WithImagePullSecret(imagePullSecret.Name).
+					Build()
+				err = kubeClient.Create(context.TODO(), pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -334,7 +296,7 @@ var _ = Describe("Starboard CLI", func() {
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", pod),
+					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
 				}))
 			})
 
@@ -484,33 +446,10 @@ var _ = Describe("Starboard CLI", func() {
 			var deploy *appsv1.Deployment
 
 			BeforeEach(func() {
-				deploy = &appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "nginx",
-						Namespace: testNamespace.Name,
-					},
-					Spec: appsv1.DeploymentSpec{
-						Replicas: pointer.Int32Ptr(1),
-						Selector: &metav1.LabelSelector{
-							MatchLabels: map[string]string{"app": "nginx"},
-						},
-						Template: corev1.PodTemplateSpec{
-							ObjectMeta: metav1.ObjectMeta{
-								Labels: labels.Set{
-									"app": "nginx",
-								},
-							},
-							Spec: corev1.PodSpec{
-								Containers: []corev1.Container{
-									{
-										Name:  "nginx",
-										Image: "nginx:1.16",
-									},
-								},
-							},
-						},
-					},
-				}
+				deploy = helper.NewDeployment().WithName("nginx").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "nginx:1.16").
+					Build()
 				err := kubeClient.Create(context.TODO(), deploy)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -532,7 +471,7 @@ var _ = Describe("Starboard CLI", func() {
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx": IsVulnerabilityReportForContainerOwnedBy("nginx", deploy),
+					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", deploy),
 				}))
 			})
 
@@ -677,14 +616,26 @@ var _ = Describe("Starboard CLI", func() {
 	Describe("Command get vulnerabilities", func() {
 		Context("for deployment/nginx resource", func() {
 			When("vulnerabilities are associated with the deployment itself", func() {
-				//ctx := context.TODO()
+
+				var ctx context.Context
 				var deploy *appsv1.Deployment
 				var report *v1alpha1.VulnerabilityReport
+
 				BeforeEach(func() {
-					deploy = makeDeployment("nginx:1.16")
-					report = makeReport(kube.KindDeployment, deploy.Name)
-					err := kubeClient.Create(context.TODO(), report)
-					//_, err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Create(ctx, report, metav1.CreateOptions{})
+					ctx = context.TODO()
+					deploy = helper.NewDeployment().WithName("nginx").
+						WithNamespace(testNamespace.Name).
+						WithContainer("nginx", "nginx:1.16").
+						Build()
+					err := kubeClient.Create(ctx, deploy)
+					Expect(err).ToNot(HaveOccurred())
+
+					report = helper.NewVulnerabilityReport().WithName("0e1e25ab-8c55-4cdc-af64-21fb8f412cb0").
+						WithNamespace(testNamespace.Name).
+						WithOwnerKind(kube.KindDeployment).
+						WithOwnerName(deploy.Name).
+						Build()
+					err = kubeClient.Create(ctx, report)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -696,7 +647,7 @@ var _ = Describe("Starboard CLI", func() {
 						err := cmd.Run(versionInfo, []string{
 							"starboard", "get", "vulnerabilities",
 							"deployment/" + deploy.Name,
-							"--namespace", namespaceItest,
+							"--namespace", deploy.Namespace,
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -716,29 +667,31 @@ var _ = Describe("Starboard CLI", func() {
 				})
 
 				AfterEach(func() {
-					err := kubeClient.Delete(context.TODO(), report)
-					//err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Delete(ctx, report.Name, metav1.DeleteOptions{})
+					err := kubeClient.Delete(ctx, report)
+					Expect(err).ToNot(HaveOccurred())
+
+					err = kubeClient.Delete(ctx, deploy)
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
 
 			When("vulnerabilities are associated with the managed replicaset", func() {
-				//ctx := context.TODO()
 				var deploy *appsv1.Deployment
 				var replicasetName string
 				var podName string
 				var report *v1alpha1.VulnerabilityReport
 
 				BeforeEach(func() {
-					deploy = makeDeployment("nginx:1.16")
+					deploy = helper.NewDeployment().WithName("nginx").
+						WithNamespace(testNamespace.Name).
+						WithContainer("nginx", "nginx:1.16").
+						Build()
 					err := kubeClient.Create(context.TODO(), deploy)
-					//_, err := kubernetesClientset.AppsV1().Deployments(namespaceItest).Create(ctx, deploy, metav1.CreateOptions{})
 					Expect(err).ToNot(HaveOccurred())
 
 					for i := 0; i < 10; i++ {
 						var rsList appsv1.ReplicaSetList
 						err := kubeClient.List(context.TODO(), &rsList)
-						//rsList, err := kubernetesClientset.AppsV1().ReplicaSets(namespaceItest).List(ctx, metav1.ListOptions{})
 						Expect(err).ToNot(HaveOccurred())
 						if len(rsList.Items) > 0 {
 							for _, rs := range rsList.Items {
@@ -759,7 +712,6 @@ var _ = Describe("Starboard CLI", func() {
 					for i := 0; i < 10; i++ {
 						var podList corev1.PodList
 						err := kubeClient.List(context.TODO(), &podList)
-						//podList, err := kubernetesClientset.CoreV1().Pods(namespaceItest).List(ctx, metav1.ListOptions{})
 						Expect(err).ToNot(HaveOccurred())
 						if len(podList.Items) > 0 {
 							for _, pod := range podList.Items {
@@ -777,9 +729,12 @@ var _ = Describe("Starboard CLI", func() {
 					}
 					Expect(podName).ToNot(BeEmpty())
 
-					report = makeReport(kube.KindReplicaSet, replicasetName)
+					report = helper.NewVulnerabilityReport().WithName("0e1e25ab-8c55-4cdc-af64-21fb8f412cb0").
+						WithNamespace(testNamespace.Name).
+						WithOwnerKind(kube.KindReplicaSet).
+						WithOwnerName(replicasetName).
+						Build()
 					err = kubeClient.Create(context.TODO(), report)
-					//_, err = starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Create(ctx, report, metav1.CreateOptions{})
 					Expect(err).ToNot(HaveOccurred())
 				})
 
@@ -866,10 +821,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				AfterEach(func() {
 					err := kubeClient.Delete(context.TODO(), report)
-					//err := starboardClientset.AquasecurityV1alpha1().VulnerabilityReports(namespaceItest).Delete(ctx, report.Name, metav1.DeleteOptions{})
 					Expect(err).ToNot(HaveOccurred())
+
 					err = kubeClient.Delete(context.TODO(), deploy)
-					//err = kubernetesClientset.AppsV1().Deployments(namespaceItest).Delete(ctx, deploy.Name, metav1.DeleteOptions{})
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -885,13 +839,16 @@ var _ = Describe("Starboard CLI", func() {
 
 		Context("when unmanaged Pod is specified as workload", func() {
 
+			var ctx context.Context
 			var pod *corev1.Pod
 
 			BeforeEach(func() {
-				var err error
-				pod, err = NewPodSpec("nginx-polaris", map[string]string{
-					"nginx-container": "nginx:1.16",
-				})
+				ctx = context.TODO()
+				pod = helper.NewPod().WithName("nginx-polaris").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "nginx:1.16").
+					Build()
+				err := kubeClient.Create(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -905,7 +862,7 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				var reportList v1alpha1.ConfigAuditReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
 					kube.LabelResourceKind:      string(kube.KindPod),
 					kube.LabelResourceName:      pod.Name,
 					kube.LabelResourceNamespace: pod.Namespace,
@@ -918,7 +875,7 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.TODO(), pod)
+				err := kubeClient.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -926,14 +883,17 @@ var _ = Describe("Starboard CLI", func() {
 
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
 
+			var ctx context.Context
 			var pod *corev1.Pod
 
 			BeforeEach(func() {
-				var err error
-				pod, err = NewPodSpec("nginx-and-tomcat-starboard", map[string]string{
-					"nginx":  "nginx:1.16",
-					"tomcat": "tomcat:8",
-				})
+				ctx = context.TODO()
+				pod = helper.NewPod().WithName("nginx-and-tomcat-starboard").
+					WithNamespace(testNamespace.Name).
+					WithContainer("nginx-container", "nginx:1.16").
+					WithContainer("tomcat-container", "tomcat:8").
+					Build()
+				err := kubeClient.Create(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -947,7 +907,7 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				var reportList v1alpha1.ConfigAuditReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
 					kube.LabelResourceKind:      string(kube.KindPod),
 					kube.LabelResourceName:      pod.Name,
 					kube.LabelResourceNamespace: pod.Namespace,
@@ -960,7 +920,7 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.TODO(), pod)
+				err := kubeClient.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -968,9 +928,11 @@ var _ = Describe("Starboard CLI", func() {
 
 		Context("when CronJob is specified as workload", func() {
 
+			var ctx context.Context
 			var cronJob *batchv1beta1.CronJob
 
 			BeforeEach(func() {
+				ctx = context.TODO()
 				cronJob = &batchv1beta1.CronJob{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "hello",
@@ -1000,7 +962,7 @@ var _ = Describe("Starboard CLI", func() {
 						},
 					},
 				}
-				err := kubeClient.Create(context.Background(), cronJob)
+				err := kubeClient.Create(ctx, cronJob)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -1015,7 +977,7 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.ConfigAuditReportList
 
-				err = kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
 					kube.LabelResourceKind:      string(kube.KindCronJob),
 					kube.LabelResourceName:      cronJob.Name,
 					kube.LabelResourceNamespace: cronJob.Namespace,
@@ -1028,7 +990,7 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.Background(), cronJob)
+				err := kubeClient.Delete(ctx, cronJob)
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
@@ -1128,77 +1090,3 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 })
-
-func makeDeployment(image string) *appsv1.Deployment {
-	name := strings.Split(image, ":")[0]
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespaceItest,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: pointer.Int32Ptr(1),
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": name},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels.Set{
-						"app": name,
-					},
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  name,
-							Image: image,
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func makeReport(kind kube.Kind, name string) *v1alpha1.VulnerabilityReport {
-	return &v1alpha1.VulnerabilityReport{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "0e1e25ab-8c55-4cdc-af64-21fb8f412cb0",
-			Namespace: namespaceItest,
-			Labels: map[string]string{
-				"starboard.container.name":     "nginx",
-				"starboard.resource.kind":      string(kind),
-				"starboard.resource.name":      name,
-				"starboard.resource.namespace": namespaceItest,
-			},
-		},
-		Report: v1alpha1.VulnerabilityScanResult{
-			UpdateTimestamp: metav1.NewTime(time.Now()),
-			Scanner:         trivyScanner,
-			Registry: v1alpha1.Registry{
-				Server: "index.docker.io",
-			},
-			Artifact: v1alpha1.Artifact{
-				Repository: "library/nginx",
-				Tag:        "1.16",
-			},
-			Summary: v1alpha1.VulnerabilitySummary{
-				MediumCount: 1,
-			},
-			Vulnerabilities: []v1alpha1.Vulnerability{
-				{
-					VulnerabilityID:  "CVE-2020-3810",
-					Resource:         "apt",
-					InstalledVersion: "1.8.2",
-					FixedVersion:     "1.8.2.1",
-					Severity:         v1alpha1.SeverityMedium,
-					Title:            "",
-					Description:      "Missing input validation in the ar/tar implementations of APT before version 2.1.2 could result in denial of service when processing specially crafted deb files.",
-					Links: []string{
-						"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-3810",
-					},
-				},
-			},
-		},
-	}
-}
