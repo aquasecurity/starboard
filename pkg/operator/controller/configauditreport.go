@@ -120,11 +120,15 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{}, err
 		}
 		podSpecHash := kube.ComputeHash(podSpec)
+		pluginConfigHash, err := r.Plugin.GetConfigHash(r.PluginContext)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 
-		log = log.WithValues("podSpecHash", podSpecHash)
+		log = log.WithValues("podSpecHash", podSpecHash, "pluginConfigHash", pluginConfigHash)
 
 		log.V(1).Info("Checking whether configuration audit report exists")
-		hasReport, err := r.hasReport(ctx, workloadPartial, podSpecHash)
+		hasReport, err := r.hasReport(ctx, workloadPartial, podSpecHash, pluginConfigHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -194,15 +198,14 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 	}
 }
 
-func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, hash string) (bool, error) {
+func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
 	report, err := r.ReadWriter.FindByOwner(ctx, owner)
 	if err != nil {
 		return false, err
 	}
 	if report != nil {
-		if report.Labels[kube.LabelPodSpecHash] == hash {
-			return true, nil
-		}
+		return report.Labels[kube.LabelPodSpecHash] == podSpecHash &&
+			report.Labels[kube.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -227,9 +230,14 @@ func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) strin
 	return fmt.Sprintf("scan-configauditreport-%s", kube.ComputeHash(workload))
 }
 
-func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, hash string) (*batchv1.Job, []*corev1.Secret, error) {
+func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, podSpecHash string) (*batchv1.Job, []*corev1.Secret, error) {
 	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(r.PluginContext, obj)
 
+	if err != nil {
+		return nil, nil, err
+	}
+
+	configHash, err := r.Plugin.GetConfigHash(r.PluginContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -243,7 +251,8 @@ func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj clien
 				kube.LabelResourceName:          workload.Name,
 				kube.LabelResourceNamespace:     workload.Namespace,
 				kube.LabelK8SAppManagedBy:       kube.AppStarboardOperator,
-				kube.LabelPodSpecHash:           hash,
+				kube.LabelPodSpecHash:           podSpecHash,
+				kube.LabelPluginConfigHash:      configHash,
 				kube.LabelConfigAuditReportScan: "true",
 			},
 		},
@@ -258,7 +267,8 @@ func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj clien
 						kube.LabelResourceName:          workload.Name,
 						kube.LabelResourceNamespace:     workload.Namespace,
 						kube.LabelK8SAppManagedBy:       kube.AppStarboardOperator,
-						kube.LabelPodSpecHash:           hash,
+						kube.LabelPodSpecHash:           podSpecHash,
+						kube.LabelPluginConfigHash:      configHash,
 						kube.LabelConfigAuditReportScan: "true",
 					},
 				},
@@ -321,8 +331,12 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 	if !ok {
 		return fmt.Errorf("expected label %s not set", kube.LabelPodSpecHash)
 	}
+	pluginConfigHash, ok := job.Labels[kube.LabelPluginConfigHash]
+	if !ok {
+		return fmt.Errorf("expected label %s not set", kube.LabelPluginConfigHash)
+	}
 
-	hasConfigAuditReport, err := r.hasReport(ctx, owner, podSpecHash)
+	hasConfigAuditReport, err := r.hasReport(ctx, owner, podSpecHash, pluginConfigHash)
 	if err != nil {
 		return err
 	}
@@ -346,6 +360,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 	report, err := configauditreport.NewBuilder(r.Client.Scheme()).
 		Controller(ownerObj).
 		PodSpecHash(podSpecHash).
+		PluginConfigHash(pluginConfigHash).
 		Result(result).
 		Get()
 	if err != nil {

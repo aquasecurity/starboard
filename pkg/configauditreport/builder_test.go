@@ -5,8 +5,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -14,6 +13,8 @@ import (
 )
 
 func TestBuilder(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+
 	report, err := configauditreport.NewBuilder(scheme.Scheme).
 		Controller(&appsv1.ReplicaSet{
 			ObjectMeta: metav1.ObjectMeta{
@@ -22,10 +23,11 @@ func TestBuilder(t *testing.T) {
 			},
 		}).
 		PodSpecHash("xyz").
+		PluginConfigHash("nop").
 		Result(v1alpha1.ConfigAuditResult{}).Get()
 
-	require.NoError(t, err)
-	assert.Equal(t, v1alpha1.ConfigAuditReport{
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(report).To(gomega.Equal(v1alpha1.ConfigAuditReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "replicaset-some-owner",
 			Namespace: "qa",
@@ -43,8 +45,9 @@ func TestBuilder(t *testing.T) {
 				"starboard.resource.name":      "some-owner",
 				"starboard.resource.namespace": "qa",
 				"pod-spec-hash":                "xyz",
+				"plugin-config-hash":           "nop",
 			},
 		},
 		Report: v1alpha1.ConfigAuditResult{},
-	}, report)
+	}))
 }

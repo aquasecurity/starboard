@@ -6,6 +6,7 @@ metadata:
   namespace: starboard-operator
 data:
   vulnerabilityReports.scanner: Trivy
+  configAuditReports.scanner: Polaris
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.imageRef: docker.io/aquasec/trivy:0.16.0
   trivy.mode: Standalone
@@ -195,6 +196,7 @@ data:
         - kube-hunter
         rules:
         - runAsRootAllowed
+  conftest.imageRef: openpolicyagent/conftest:v0.23.0
   kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
 ---
 apiVersion: v1

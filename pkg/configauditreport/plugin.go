@@ -28,4 +28,8 @@ type Plugin interface {
 	// GetContainerName returns the name of the container in a pod created by a scan job
 	// to read logs from.
 	GetContainerName() string
+
+	// GetConfigHash returns hash of the plugin's configuration settings. The computed hash
+	// is used to invalidate v1alpha1.ConfigAuditReport object whenever configuration changes.
+	GetConfigHash(ctx starboard.PluginContext) (string, error)
 }

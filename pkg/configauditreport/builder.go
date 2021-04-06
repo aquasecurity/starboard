@@ -14,6 +14,7 @@ import (
 type Builder interface {
 	Controller(controller metav1.Object) Builder
 	PodSpecHash(hash string) Builder
+	PluginConfigHash(hash string) Builder
 	Result(result v1alpha1.ConfigAuditResult) Builder
 	Get() (v1alpha1.ConfigAuditReport, error)
 }
@@ -28,6 +29,7 @@ type builder struct {
 	scheme     *runtime.Scheme
 	controller metav1.Object
 	hash       string
+	configHash string
 	result     v1alpha1.ConfigAuditResult
 }
 
@@ -38,6 +40,11 @@ func (b *builder) Controller(controller metav1.Object) Builder {
 
 func (b *builder) PodSpecHash(hash string) Builder {
 	b.hash = hash
+	return b
+}
+
+func (b *builder) PluginConfigHash(hash string) Builder {
+	b.configHash = hash
 	return b
 }
 
@@ -69,6 +76,10 @@ func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
 
 	if b.hash != "" {
 		labels[kube.LabelPodSpecHash] = b.hash
+	}
+
+	if b.configHash != "" {
+		labels[kube.LabelPluginConfigHash] = b.configHash
 	}
 
 	reportName, err := b.reportName()
