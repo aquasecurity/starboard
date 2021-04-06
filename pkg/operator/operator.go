@@ -128,12 +128,18 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	logsReader := kube.NewLogsReader(kubeClientset)
 	secretsReader := kube.NewSecretsReader(mgr.GetClient())
 
-	vulnerabilityReportPlugin, err := plugin.GetVulnerabilityReportPlugin(buildInfo, starboardConfig)
-	if err != nil {
-		return err
-	}
-
 	if operatorConfig.VulnerabilityScannerEnabled {
+		plugin, err := plugin.NewResolver().
+			WithBuildInfo(buildInfo).
+			WithNamespace(operatorNamespace).
+			WithServiceAccountName(operatorConfig.ServiceAccount).
+			WithConfig(starboardConfig).
+			WithClient(mgr.GetClient()).
+			GetVulnerabilityPlugin()
+		if err != nil {
+			return err
+		}
+
 		if err = (&controller.VulnerabilityReportReconciler{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
 			Config:         operatorConfig,
@@ -142,7 +148,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 			LimitChecker:   limitChecker,
 			LogsReader:     logsReader,
 			SecretsReader:  secretsReader,
-			Plugin:         vulnerabilityReportPlugin,
+			Plugin:         plugin,
 			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
@@ -150,7 +156,13 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	if operatorConfig.ConfigAuditScannerEnabled {
-		configAuditReportPlugin, err := plugin.GetConfigAuditReportPlugin(buildInfo, starboardConfig)
+		plugin, pluginContext, err := plugin.NewResolver().
+			WithBuildInfo(buildInfo).
+			WithNamespace(operatorNamespace).
+			WithServiceAccountName(operatorConfig.ServiceAccount).
+			WithConfig(starboardConfig).
+			WithClient(mgr.GetClient()).
+			GetConfigAuditPlugin()
 		if err != nil {
 			return err
 		}
@@ -162,12 +174,9 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 			ObjectResolver: objectResolver,
 			LimitChecker:   limitChecker,
 			LogsReader:     logsReader,
-			Plugin:         configAuditReportPlugin,
-			PluginContext: starboard.NewPluginContext().
-				WithNamespace(operatorNamespace).
-				WithServiceAccountName(operatorConfig.ServiceAccount).
-				Build(),
-			ReadWriter: configauditreport.NewReadWriter(mgr.GetClient()),
+			Plugin:         plugin,
+			PluginContext:  pluginContext,
+			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
