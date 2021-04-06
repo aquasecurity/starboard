@@ -40,7 +40,7 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}
-		workload, gvk, err := WorkloadFromArgs(mapper, ns, args)
+		workload, _, err := WorkloadFromArgs(mapper, ns, args)
 		if err != nil {
 			return err
 		}
@@ -66,8 +66,12 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}
-		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, opts, instance)
-		report, err := scanner.Scan(ctx, workload, gvk)
+		pluginContext := starboard.NewPluginContext().
+			WithNamespace(starboard.NamespaceName).
+			WithServiceAccountName(starboard.ServiceAccountName).
+			Build()
+		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, opts, instance, pluginContext)
+		report, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
