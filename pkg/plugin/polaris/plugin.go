@@ -39,7 +39,7 @@ func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 	}
 }
 
-func (p *plugin) GetScanJobSpec(obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	imageRef, err := p.config.GetPolarisImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -47,7 +47,7 @@ func (p *plugin) GetScanJobSpec(obj client.Object) (corev1.PodSpec, []*corev1.Se
 	sourceName := p.sourceNameFrom(obj)
 
 	return corev1.PodSpec{
-		ServiceAccountName:           starboard.ServiceAccountName,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(true),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		Affinity:                     starboard.LinuxNodeAffinity(),

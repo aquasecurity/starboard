@@ -9,6 +9,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,6 +33,7 @@ type ConfigAuditReportReconciler struct {
 	LimitChecker
 	kube.LogsReader
 	configauditreport.Plugin
+	starboard.PluginContext
 	configauditreport.ReadWriter
 }
 
@@ -226,19 +228,15 @@ func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) strin
 }
 
 func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, hash string) (*batchv1.Job, []*corev1.Secret, error) {
-	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(obj)
+	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(r.PluginContext, obj)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	jobSpec.ServiceAccountName = r.Config.ServiceAccount
-
-	jobName := r.getScanJobName(workload)
-
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
+			Name:      r.getScanJobName(workload),
 			Namespace: r.Config.Namespace,
 			Labels: map[string]string{
 				kube.LabelResourceKind:          string(workload.Kind),

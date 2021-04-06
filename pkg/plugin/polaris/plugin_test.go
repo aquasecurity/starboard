@@ -117,8 +117,12 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			pluginContext := starboard.NewPluginContext().
+				WithNamespace(starboard.NamespaceName).
+				WithServiceAccountName(starboard.ServiceAccountName).
+				Build()
 			plugin := polaris.NewPlugin(fixedClock, tc.config)
-			jobSpec, secrets, err := plugin.GetScanJobSpec(tc.obj)
+			jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, tc.obj)
 			require.NoError(t, err, tc.name)
 			assert.Nil(t, secrets)
 			assert.Equal(t, tc.expectedJobSpec, jobSpec, tc.name)
