@@ -26,7 +26,7 @@ spec:
         fsGroup: 10000
       containers:
         - name: operator
-          image: docker.io/aquasec/starboard-operator:0.10.0-rc3
+          image: docker.io/aquasec/starboard-operator:0.10.0-rc4
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
@@ -56,6 +56,10 @@ spec:
               value: "true"
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
               value: "true"
+            - name: OPERATOR_BATCH_DELETE_LIMIT
+              value: "10"
+            - name: OPERATOR_BATCH_DELETE_DELAY
+              value: "10s"
           ports:
             - name: metrics
               containerPort: 8080
