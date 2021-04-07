@@ -2,8 +2,8 @@ package predicate
 
 import (
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -78,21 +78,21 @@ var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) boo
 })
 
 var IsVulnerabilityReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[kube.LabelVulnerabilityReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelVulnerabilityReportScan]; ok {
 		return true
 	}
 	return false
 })
 
 var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[kube.LabelConfigAuditReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScan]; ok {
 		return true
 	}
 	return false
 })
 
 var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[kube.LabelKubeBenchReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScan]; ok {
 		return true
 	}
 	return false

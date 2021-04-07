@@ -12,6 +12,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/report/templates"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,7 +45,7 @@ func (h *workloadReporter) RetrieveData(workload kube.Object) (templates.Workloa
 
 	vulnsReports := map[string]v1alpha1.VulnerabilityScanResult{}
 	for _, vulnerabilityReport := range vulnerabilityReports {
-		containerName, ok := vulnerabilityReport.Labels[kube.LabelContainerName]
+		containerName, ok := vulnerabilityReport.Labels[starboard.LabelContainerName]
 		if !ok {
 			continue
 		}

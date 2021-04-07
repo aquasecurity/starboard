@@ -2,8 +2,8 @@ package controller
 
 import (
 	"context"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,7 +37,7 @@ func (c *checker) Check(ctx context.Context) (bool, int, error) {
 func (c *checker) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
 	err := c.client.List(ctx, &scanJobs, client.MatchingLabels{
-		kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+		starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
 	}, client.InNamespace(c.config.Namespace))
 	if err != nil {
 		return 0, err

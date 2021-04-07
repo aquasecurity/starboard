@@ -110,9 +110,9 @@ func (s *Scanner) getScanJob(obj client.Object) (*batchv1.Job, []*corev1.Secret,
 			Name:      s.GenerateID(),
 			Namespace: starboard.NamespaceName,
 			Labels: map[string]string{
-				kube.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
-				kube.LabelResourceName:      obj.GetName(),
-				kube.LabelResourceNamespace: obj.GetNamespace(),
+				starboard.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
+				starboard.LabelResourceName:      obj.GetName(),
+				starboard.LabelResourceNamespace: obj.GetNamespace(),
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -122,9 +122,9 @@ func (s *Scanner) getScanJob(obj client.Object) (*batchv1.Job, []*corev1.Secret,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
-						kube.LabelResourceName:      obj.GetName(),
-						kube.LabelResourceNamespace: obj.GetNamespace(),
+						starboard.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
+						starboard.LabelResourceName:      obj.GetName(),
+						starboard.LabelResourceNamespace: obj.GetNamespace(),
 					},
 				},
 				Spec: jobSpec,

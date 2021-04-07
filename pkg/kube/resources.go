@@ -5,6 +5,7 @@ import (
 	"hash"
 	"hash/fnv"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/davecgh/go-spew/spew"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,13 +30,13 @@ func GetContainerImagesFromJob(job *batchv1.Job) (ContainerImages, error) {
 	var containerImagesAsJSON string
 	var ok bool
 
-	if containerImagesAsJSON, ok = job.Annotations[AnnotationContainerImages]; !ok {
-		return nil, fmt.Errorf("required annotation not set: %s", AnnotationContainerImages)
+	if containerImagesAsJSON, ok = job.Annotations[starboard.AnnotationContainerImages]; !ok {
+		return nil, fmt.Errorf("required annotation not set: %s", starboard.AnnotationContainerImages)
 	}
 	containerImages := ContainerImages{}
 	err := containerImages.FromJSON(containerImagesAsJSON)
 	if err != nil {
-		return nil, fmt.Errorf("parsing annotation: %s: %w", AnnotationContainerImages, err)
+		return nil, fmt.Errorf("parsing annotation: %s: %w", starboard.AnnotationContainerImages, err)
 	}
 	return containerImages, nil
 }

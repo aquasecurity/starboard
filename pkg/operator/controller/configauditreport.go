@@ -199,13 +199,14 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 }
 
 func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
+	// TODO FindByOwner should accept optional label selector to further narrow down search results
 	report, err := r.ReadWriter.FindByOwner(ctx, owner)
 	if err != nil {
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[kube.LabelPodSpecHash] == podSpecHash &&
-			report.Labels[kube.LabelPluginConfigHash] == pluginConfigHash, nil
+		return report.Labels[starboard.LabelPodSpecHash] == podSpecHash &&
+			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -220,7 +221,7 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, owne
 		}
 		return false, nil, fmt.Errorf("getting pod from cache: %w", err)
 	}
-	if job.Labels[kube.LabelPodSpecHash] == hash {
+	if job.Labels[starboard.LabelPodSpecHash] == hash {
 		return true, job, nil
 	}
 	return false, nil, nil
@@ -247,13 +248,13 @@ func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj clien
 			Name:      r.getScanJobName(workload),
 			Namespace: r.Config.Namespace,
 			Labels: map[string]string{
-				kube.LabelResourceKind:          string(workload.Kind),
-				kube.LabelResourceName:          workload.Name,
-				kube.LabelResourceNamespace:     workload.Namespace,
-				kube.LabelK8SAppManagedBy:       kube.AppStarboardOperator,
-				kube.LabelPodSpecHash:           podSpecHash,
-				kube.LabelPluginConfigHash:      configHash,
-				kube.LabelConfigAuditReportScan: "true",
+				starboard.LabelResourceKind:          string(workload.Kind),
+				starboard.LabelResourceName:          workload.Name,
+				starboard.LabelResourceNamespace:     workload.Namespace,
+				starboard.LabelK8SAppManagedBy:       starboard.AppStarboardOperator,
+				starboard.LabelPodSpecHash:           podSpecHash,
+				starboard.LabelPluginConfigHash:      configHash,
+				starboard.LabelConfigAuditReportScan: "true",
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -263,13 +264,13 @@ func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj clien
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						kube.LabelResourceKind:          string(workload.Kind),
-						kube.LabelResourceName:          workload.Name,
-						kube.LabelResourceNamespace:     workload.Namespace,
-						kube.LabelK8SAppManagedBy:       kube.AppStarboardOperator,
-						kube.LabelPodSpecHash:           podSpecHash,
-						kube.LabelPluginConfigHash:      configHash,
-						kube.LabelConfigAuditReportScan: "true",
+						starboard.LabelResourceKind:          string(workload.Kind),
+						starboard.LabelResourceName:          workload.Name,
+						starboard.LabelResourceNamespace:     workload.Namespace,
+						starboard.LabelK8SAppManagedBy:       starboard.AppStarboardOperator,
+						starboard.LabelPodSpecHash:           podSpecHash,
+						starboard.LabelPluginConfigHash:      configHash,
+						starboard.LabelConfigAuditReportScan: "true",
 					},
 				},
 				Spec: jobSpec,
@@ -327,13 +328,13 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return err
 	}
 
-	podSpecHash, ok := job.Labels[kube.LabelPodSpecHash]
+	podSpecHash, ok := job.Labels[starboard.LabelPodSpecHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", kube.LabelPodSpecHash)
+		return fmt.Errorf("expected label %s not set", starboard.LabelPodSpecHash)
 	}
-	pluginConfigHash, ok := job.Labels[kube.LabelPluginConfigHash]
+	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", kube.LabelPluginConfigHash)
+		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
 	hasConfigAuditReport, err := r.hasReport(ctx, owner, podSpecHash, pluginConfigHash)

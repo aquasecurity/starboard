@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,10 +162,10 @@ func (b *VulnerabilityReportBuilder) Build() *v1alpha1.VulnerabilityReport {
 			Name:      b.name,
 			Namespace: b.namespace,
 			Labels: map[string]string{
-				kube.LabelContainerName:     "nginx", // TODO Make it configurable
-				kube.LabelResourceKind:      string(b.ownerKind),
-				kube.LabelResourceName:      b.ownerName,
-				kube.LabelResourceNamespace: b.namespace,
+				starboard.LabelContainerName:     "nginx", // TODO Make it configurable
+				starboard.LabelResourceKind:      string(b.ownerKind),
+				starboard.LabelResourceName:      b.ownerName,
+				starboard.LabelResourceNamespace: b.namespace,
 			},
 		},
 		Report: v1alpha1.VulnerabilityScanResult{

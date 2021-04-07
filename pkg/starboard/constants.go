@@ -17,3 +17,23 @@ const (
 	// configuration.
 	SecretName = "starboard"
 )
+
+const (
+	LabelResourceKind      = "starboard.resource.kind"
+	LabelResourceName      = "starboard.resource.name"
+	LabelResourceNamespace = "starboard.resource.namespace"
+	LabelContainerName     = "starboard.container.name"
+	LabelPodSpecHash       = "pod-spec-hash"
+	LabelPluginConfigHash  = "plugin-config-hash"
+
+	LabelConfigAuditReportScan   = "configAuditReport.scanner"
+	LabelVulnerabilityReportScan = "vulnerabilityReport.scanner"
+	LabelKubeBenchReportScan     = "kubeBenchReport.scanner"
+
+	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
+	AppStarboardOperator = "starboard-operator"
+)
+
+const (
+	AnnotationContainerImages = "starboard.container-images"
+)

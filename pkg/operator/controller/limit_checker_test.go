@@ -1,14 +1,14 @@
 package controller_test
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -34,21 +34,21 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-vulnerabilityreport-hash2",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-configauditreport-hash2",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
 					},
 				}},
 			).Build()
@@ -74,7 +74,7 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						kube.LabelK8SAppManagedBy: kube.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
 					},
 				}},
 			).Build()

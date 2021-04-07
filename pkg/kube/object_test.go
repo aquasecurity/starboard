@@ -69,9 +69,9 @@ func TestObjectFromLabelsSet(t *testing.T) {
 		{
 			name: "Should return object for namespaced object",
 			labelsSet: labels.Set{
-				kube.LabelResourceKind:      "Deployment",
-				kube.LabelResourceName:      "my-deployment",
-				kube.LabelResourceNamespace: "my-namespace",
+				starboard.LabelResourceKind:      "Deployment",
+				starboard.LabelResourceName:      "my-deployment",
+				starboard.LabelResourceNamespace: "my-namespace",
 			},
 			expectedObject: kube.Object{
 				Kind:      kube.KindDeployment,
@@ -82,8 +82,8 @@ func TestObjectFromLabelsSet(t *testing.T) {
 		{
 			name: "Should return object for cluster-scoped object",
 			labelsSet: labels.Set{
-				kube.LabelResourceKind: "Node",
-				kube.LabelResourceName: "my-node",
+				starboard.LabelResourceKind: "Node",
+				starboard.LabelResourceName: "my-node",
 			},
 			expectedObject: kube.Object{
 				Kind:      kube.KindNode,
@@ -94,15 +94,15 @@ func TestObjectFromLabelsSet(t *testing.T) {
 		{
 			name: "Should return error when object kind is not specified as label",
 			labelsSet: labels.Set{
-				kube.LabelResourceName:      "my-deployment",
-				kube.LabelResourceNamespace: "my-namespace",
+				starboard.LabelResourceName:      "my-deployment",
+				starboard.LabelResourceNamespace: "my-namespace",
 			},
 			expectedError: errors.New("required label does not exist: starboard.resource.kind"),
 		},
 		{
 			name: "Should return error when object name is not specified as label",
 			labelsSet: labels.Set{
-				kube.LabelResourceKind: "Deployment",
+				starboard.LabelResourceKind: "Deployment",
 			},
 			expectedError: errors.New("required label does not exist: starboard.resource.name"),
 		},

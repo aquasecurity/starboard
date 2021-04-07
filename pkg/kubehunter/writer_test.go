@@ -6,8 +6,8 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/fake"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,8 +38,8 @@ func TestWriter_Write(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-cluster",
 					Labels: map[string]string{
-						kube.LabelResourceKind: "Cluster",
-						kube.LabelResourceName: "my-cluster",
+						starboard.LabelResourceKind: "Cluster",
+						starboard.LabelResourceName: "my-cluster",
 					},
 				},
 				Report: v1alpha1.KubeHunterOutput{
@@ -56,8 +56,8 @@ func TestWriter_Write(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "my-cluster",
 				Labels: map[string]string{
-					kube.LabelResourceKind: "Cluster",
-					kube.LabelResourceName: "my-cluster",
+					starboard.LabelResourceKind: "Cluster",
+					starboard.LabelResourceName: "my-cluster",
 				},
 			},
 			Report: v1alpha1.KubeHunterOutput{
@@ -87,8 +87,8 @@ func TestWriter_Write(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-cluster",
 					Labels: map[string]string{
-						kube.LabelResourceKind: "Cluster",
-						kube.LabelResourceName: "my-cluster",
+						starboard.LabelResourceKind: "Cluster",
+						starboard.LabelResourceName: "my-cluster",
 					},
 				},
 				Report: v1alpha1.KubeHunterOutput{

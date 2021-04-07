@@ -161,7 +161,7 @@ var _ = Describe("Starboard CLI", func() {
 
 		groupByContainerName := func(element interface{}) string {
 			return element.(v1alpha1.VulnerabilityReport).
-				Labels[kube.LabelContainerName]
+				Labels[starboard.LabelContainerName]
 		}
 
 		Context("when unmanaged Pod is specified as workload", func() {
@@ -188,9 +188,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindPod),
-					kube.LabelResourceName:      pod.Name,
-					kube.LabelResourceNamespace: pod.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 
 				Expect(err).ToNot(HaveOccurred())
@@ -231,9 +231,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindPod),
-					kube.LabelResourceName:      pod.Name,
-					kube.LabelResourceNamespace: pod.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -290,9 +290,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindPod),
-					kube.LabelResourceName:      pod.Name,
-					kube.LabelResourceNamespace: pod.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -358,9 +358,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindReplicaSet),
-					kube.LabelResourceName:      rs.Name,
-					kube.LabelResourceNamespace: rs.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindReplicaSet),
+					starboard.LabelResourceName:      rs.Name,
+					starboard.LabelResourceNamespace: rs.Namespace,
 				})
 
 				Expect(err).ToNot(HaveOccurred())
@@ -424,9 +424,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindReplicationController),
-					kube.LabelResourceName:      rc.Name,
-					kube.LabelResourceNamespace: rc.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindReplicationController),
+					starboard.LabelResourceName:      rc.Name,
+					starboard.LabelResourceNamespace: rc.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -465,9 +465,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindDeployment),
-					kube.LabelResourceName:      deploy.Name,
-					kube.LabelResourceNamespace: deploy.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindDeployment),
+					starboard.LabelResourceName:      deploy.Name,
+					starboard.LabelResourceNamespace: deploy.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -531,9 +531,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindStatefulSet),
-					kube.LabelResourceName:      sts.Name,
-					kube.LabelResourceNamespace: sts.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindStatefulSet),
+					starboard.LabelResourceName:      sts.Name,
+					starboard.LabelResourceNamespace: sts.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -596,9 +596,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.VulnerabilityReportList
 				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindDaemonSet),
-					kube.LabelResourceName:      ds.Name,
-					kube.LabelResourceNamespace: ds.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindDaemonSet),
+					starboard.LabelResourceName:      ds.Name,
+					starboard.LabelResourceNamespace: ds.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
@@ -834,7 +834,7 @@ var _ = Describe("Starboard CLI", func() {
 
 		groupByWorkloadName := func(element interface{}) string {
 			return element.(v1alpha1.ConfigAuditReport).
-				Labels[kube.LabelResourceName]
+				Labels[starboard.LabelResourceName]
 		}
 
 		Context("when unmanaged Pod is specified as workload", func() {
@@ -863,9 +863,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.ConfigAuditReportList
 				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindPod),
-					kube.LabelResourceName:      pod.Name,
-					kube.LabelResourceNamespace: pod.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -908,9 +908,9 @@ var _ = Describe("Starboard CLI", func() {
 
 				var reportList v1alpha1.ConfigAuditReportList
 				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindPod),
-					kube.LabelResourceName:      pod.Name,
-					kube.LabelResourceNamespace: pod.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -978,9 +978,9 @@ var _ = Describe("Starboard CLI", func() {
 				var reportList v1alpha1.ConfigAuditReportList
 
 				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
-					kube.LabelResourceKind:      string(kube.KindCronJob),
-					kube.LabelResourceName:      cronJob.Name,
-					kube.LabelResourceNamespace: cronJob.Namespace,
+					starboard.LabelResourceKind:      string(kube.KindCronJob),
+					starboard.LabelResourceName:      cronJob.Name,
+					starboard.LabelResourceNamespace: cronJob.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
@@ -1019,8 +1019,8 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(report).To(MatchFields(IgnoreExtras, Fields{
 					"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 						"Labels": MatchAllKeys(Keys{
-							kube.LabelResourceKind: Equal("Node"),
-							kube.LabelResourceName: Equal(node.Name),
+							starboard.LabelResourceKind: Equal("Node"),
+							starboard.LabelResourceName: Equal(node.Name),
 						}),
 						"OwnerReferences": ConsistOf(metav1.OwnerReference{
 							APIVersion:         "v1",
@@ -1074,8 +1074,8 @@ var _ = Describe("Starboard CLI", func() {
 			err = kubeClient.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, &report)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(report.Labels).To(MatchAllKeys(Keys{
-				kube.LabelResourceKind: Equal("Cluster"),
-				kube.LabelResourceName: Equal("cluster"),
+				starboard.LabelResourceKind: Equal("Cluster"),
+				starboard.LabelResourceName: Equal("cluster"),
 			}))
 		})
 	})
