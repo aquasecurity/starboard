@@ -1,6 +1,8 @@
 package controller
 
 import (
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+
 	"context"
 	"fmt"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -162,10 +164,10 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			Name:      r.getScanJobName(node),
 			Namespace: r.Config.Namespace,
 			Labels: labels.Set{
-				kube.LabelResourceKind:        string(kube.KindNode),
-				kube.LabelResourceName:        node.Name,
-				kube.LabelK8SAppManagedBy:     kube.AppStarboardOperator,
-				kube.LabelKubeBenchReportScan: "true",
+				starboard.LabelResourceKind:        string(kube.KindNode),
+				starboard.LabelResourceName:        node.Name,
+				starboard.LabelK8SAppManagedBy:     starboard.AppStarboardOperator,
+				starboard.LabelKubeBenchReportScan: "true",
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -175,10 +177,10 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
-						kube.LabelResourceKind:        string(kube.KindNode),
-						kube.LabelResourceName:        node.Name,
-						kube.LabelK8SAppManagedBy:     kube.AppStarboardOperator,
-						kube.LabelKubeBenchReportScan: "true",
+						starboard.LabelResourceKind:        string(kube.KindNode),
+						starboard.LabelResourceName:        node.Name,
+						starboard.LabelK8SAppManagedBy:     starboard.AppStarboardOperator,
+						starboard.LabelKubeBenchReportScan: "true",
 					},
 				},
 				Spec: templateSpec,
@@ -274,8 +276,8 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 		ObjectMeta: metav1.ObjectMeta{
 			Name: node.Name,
 			Labels: map[string]string{
-				kube.LabelResourceKind: string(kube.KindNode),
-				kube.LabelResourceName: node.Name,
+				starboard.LabelResourceKind: string(kube.KindNode),
+				starboard.LabelResourceName: node.Name,
 			},
 		},
 		Report: output,

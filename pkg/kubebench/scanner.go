@@ -95,8 +95,8 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 		ObjectMeta: metav1.ObjectMeta{
 			Name: node.Name,
 			Labels: map[string]string{
-				kube.LabelResourceKind: string(kube.KindNode),
-				kube.LabelResourceName: node.Name,
+				starboard.LabelResourceKind: string(kube.KindNode),
+				starboard.LabelResourceName: node.Name,
 			},
 		},
 		Report: output,
@@ -121,8 +121,8 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 			Name:      uuid.New().String(),
 			Namespace: starboard.NamespaceName,
 			Labels: labels.Set{
-				kube.LabelResourceKind: string(kube.KindNode),
-				kube.LabelResourceName: node.Name,
+				starboard.LabelResourceKind: string(kube.KindNode),
+				starboard.LabelResourceName: node.Name,
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -132,8 +132,8 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
-						kube.LabelResourceKind: string(kube.KindNode),
-						kube.LabelResourceName: node.Name,
+						starboard.LabelResourceKind: string(kube.KindNode),
+						starboard.LabelResourceName: node.Name,
 					},
 				},
 				Spec: templateSpec,

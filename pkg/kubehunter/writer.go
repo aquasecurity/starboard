@@ -7,7 +7,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,8 +34,8 @@ func (w *writer) Write(ctx context.Context, report v1alpha1.KubeHunterOutput, cl
 		ObjectMeta: metav1.ObjectMeta{
 			Name: cluster,
 			Labels: map[string]string{
-				kube.LabelResourceKind: "Cluster",
-				kube.LabelResourceName: cluster,
+				starboard.LabelResourceKind: "Cluster",
+				starboard.LabelResourceName: cluster,
 			},
 		},
 		Report: report,

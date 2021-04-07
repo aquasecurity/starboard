@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,10 +60,10 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 			"Labels": MatchAllKeys(Keys{
-				kube.LabelContainerName:     Equal(m.containerName),
-				kube.LabelResourceKind:      Equal(gvk.Kind),
-				kube.LabelResourceName:      Equal(m.owner.GetName()),
-				kube.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
+				starboard.LabelContainerName:     Equal(m.containerName),
+				starboard.LabelResourceKind:      Equal(gvk.Kind),
+				starboard.LabelResourceName:      Equal(m.owner.GetName()),
+				starboard.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
 			}),
 			"OwnerReferences": ConsistOf(metav1.OwnerReference{
 				APIVersion:         gvk.GroupVersion().Identifier(),
@@ -129,9 +128,9 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 			"Labels": MatchAllKeys(Keys{
-				kube.LabelResourceKind:      Equal(gvk.Kind),
-				kube.LabelResourceName:      Equal(m.owner.GetName()),
-				kube.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
+				starboard.LabelResourceKind:      Equal(gvk.Kind),
+				starboard.LabelResourceName:      Equal(m.owner.GetName()),
+				starboard.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
 			}),
 			"OwnerReferences": ConsistOf(metav1.OwnerReference{
 				APIVersion:         gvk.GroupVersion().Identifier(),

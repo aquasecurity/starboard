@@ -11,6 +11,7 @@ import (
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -230,9 +231,9 @@ func HasVulnerabilityReportOwnedBy(obj client.Object) func() (bool, error) {
 		}
 		var reportList v1alpha1.VulnerabilityReportList
 		err = kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
-			kube.LabelResourceKind:      gvk.Kind,
-			kube.LabelResourceName:      obj.GetName(),
-			kube.LabelResourceNamespace: obj.GetNamespace(),
+			starboard.LabelResourceKind:      gvk.Kind,
+			starboard.LabelResourceName:      obj.GetName(),
+			starboard.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
 			return false, err
@@ -249,9 +250,9 @@ func HasConfigAuditReportOwnedBy(obj client.Object) func() (bool, error) {
 		}
 		var reportsList v1alpha1.ConfigAuditReportList
 		err = kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
-			kube.LabelResourceKind:      gvk.Kind,
-			kube.LabelResourceName:      obj.GetName(),
-			kube.LabelResourceNamespace: obj.GetNamespace(),
+			starboard.LabelResourceKind:      gvk.Kind,
+			starboard.LabelResourceName:      obj.GetName(),
+			starboard.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
 			return false, err

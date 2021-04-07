@@ -25,8 +25,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					kube.LabelResourceKind: string(kube.KindNode),
-					kube.LabelResourceName: "control-plane",
+					starboard.LabelResourceKind: string(kube.KindNode),
+					starboard.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchOutput{
@@ -58,8 +58,8 @@ func TestReadWriter(t *testing.T) {
 				Name:            "control-plane",
 				ResourceVersion: "1",
 				Labels: map[string]string{
-					kube.LabelResourceKind: string(kube.KindNode),
-					kube.LabelResourceName: "control-plane",
+					starboard.LabelResourceKind: string(kube.KindNode),
+					starboard.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchOutput{
@@ -85,8 +85,8 @@ func TestReadWriter(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "control-plane",
 					Labels: map[string]string{
-						kube.LabelResourceKind: string(kube.KindNode),
-						kube.LabelResourceName: "control-plane",
+						starboard.LabelResourceKind: string(kube.KindNode),
+						starboard.LabelResourceName: "control-plane",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchOutput{
@@ -109,8 +109,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					kube.LabelResourceKind: string(kube.KindNode),
-					kube.LabelResourceName: "control-plane",
+					starboard.LabelResourceKind: string(kube.KindNode),
+					starboard.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchOutput{
@@ -141,8 +141,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					kube.LabelResourceKind: string(kube.KindNode),
-					kube.LabelResourceName: "control-plane",
+					starboard.LabelResourceKind: string(kube.KindNode),
+					starboard.LabelResourceName: "control-plane",
 				},
 				ResourceVersion: "1",
 			},
@@ -169,8 +169,8 @@ func TestReadWriter(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "control-plane",
 					Labels: map[string]string{
-						kube.LabelResourceKind: string(kube.KindNode),
-						kube.LabelResourceName: "control-plane",
+						starboard.LabelResourceKind: string(kube.KindNode),
+						starboard.LabelResourceName: "control-plane",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchOutput{
@@ -190,8 +190,8 @@ func TestReadWriter(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "worker",
 					Labels: map[string]string{
-						kube.LabelResourceKind: string(kube.KindNode),
-						kube.LabelResourceName: "worker",
+						starboard.LabelResourceKind: string(kube.KindNode),
+						starboard.LabelResourceName: "worker",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchOutput{
@@ -222,8 +222,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "worker",
 				Labels: map[string]string{
-					kube.LabelResourceKind: string(kube.KindNode),
-					kube.LabelResourceName: "worker",
+					starboard.LabelResourceKind: string(kube.KindNode),
+					starboard.LabelResourceName: "worker",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchOutput{

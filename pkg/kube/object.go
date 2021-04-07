@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -61,16 +62,16 @@ func IsBuiltInWorkload(controller *metav1.OwnerReference) bool {
 }
 
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
-	if !set.Has(LabelResourceKind) {
-		return Object{}, fmt.Errorf("required label does not exist: %s", LabelResourceKind)
+	if !set.Has(starboard.LabelResourceKind) {
+		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
 	}
-	if !set.Has(LabelResourceName) {
-		return Object{}, fmt.Errorf("required label does not exist: %s", LabelResourceName)
+	if !set.Has(starboard.LabelResourceName) {
+		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
 	}
 	return Object{
-		Kind:      Kind(set.Get(LabelResourceKind)),
-		Name:      set.Get(LabelResourceName),
-		Namespace: set.Get(LabelResourceNamespace),
+		Kind:      Kind(set.Get(starboard.LabelResourceKind)),
+		Name:      set.Get(starboard.LabelResourceName),
+		Namespace: set.Get(starboard.LabelResourceNamespace),
 	}, nil
 }
 

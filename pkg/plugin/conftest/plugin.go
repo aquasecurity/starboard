@@ -114,7 +114,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: "conftestconfig",
+							Name: "starboard-conftest-config",
 						},
 						Items: volumeItems,
 					},

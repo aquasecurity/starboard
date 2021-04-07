@@ -6,6 +6,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -69,17 +70,17 @@ func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
 	}
 
 	labels := map[string]string{
-		kube.LabelResourceKind:      kind,
-		kube.LabelResourceName:      b.controller.GetName(),
-		kube.LabelResourceNamespace: b.controller.GetNamespace(),
+		starboard.LabelResourceKind:      kind,
+		starboard.LabelResourceName:      b.controller.GetName(),
+		starboard.LabelResourceNamespace: b.controller.GetNamespace(),
 	}
 
 	if b.hash != "" {
-		labels[kube.LabelPodSpecHash] = b.hash
+		labels[starboard.LabelPodSpecHash] = b.hash
 	}
 
 	if b.configHash != "" {
-		labels[kube.LabelPluginConfigHash] = b.configHash
+		labels[starboard.LabelPluginConfigHash] = b.configHash
 	}
 
 	reportName, err := b.reportName()

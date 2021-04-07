@@ -8,7 +8,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -41,7 +40,7 @@ func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	log := r.Logger.WithValues("configMap", req.NamespacedName)
 
 	// TODO Use Predicate instead
-	if req.Name != strings.ToLower("starboard-"+r.PluginContext.GetName()+"config") {
+	if req.Name != "starboard-"+strings.ToLower(r.PluginContext.GetName())+"-config" {
 		return ctrl.Result{}, nil
 	}
 
@@ -61,7 +60,7 @@ func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	labelSelector, err := labels.Parse(fmt.Sprintf("%s != %s", kube.LabelPluginConfigHash, configHash))
+	labelSelector, err := labels.Parse(fmt.Sprintf("%s != %s", starboard.LabelPluginConfigHash, configHash))
 	if err != nil {
 		return ctrl.Result{}, err
 	}
