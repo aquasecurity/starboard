@@ -29,11 +29,11 @@ spec:
               value: {{ tpl .Values.targetNamespaces . | quote }}
             - name: OPERATOR_SERVICE_ACCOUNT
               value: {{ include "starboard-operator.serviceAccountName" . }}
-            {{- if gt .Values.operator.replicas 1 }}
+            {{- if gt (int .Values.operator.replicas) 1 }}
             - name: OPERATOR_LEADER_ELECTION_ENABLED
               value: "true"
             {{- end }}
-            {{- if gt .Values.operator.replicas 1 }}
+            {{- if gt (int .Values.operator.replicas) 1 }}
             - name: OPERATOR_LEADER_ELECTION_ID
               value: {{ .Values.operator.leaderElectionId | quote }}
             {{- end }}
