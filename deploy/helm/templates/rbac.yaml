@@ -103,7 +103,7 @@ rules:
       - watch
       - create
       - update
-  {{- if gt .Values.operator.replicas 1 }}
+  {{- if gt (int .Values.operator.replicas) 1 }}
   - apiGroups:
       - coordination.k8s.io
     resources:
