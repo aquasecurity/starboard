@@ -30,7 +30,7 @@ jobs:
           # Note: It is not the same as ${{ secrets.GITHUB_TOKEN }} !
           GH_TOKEN: ${{ secrets.MKDOCS_GH_TOKEN }}
       - run: |
-          git config user.name "Daniel Pacak"
-          git config user.email "pacak.daniel@gmail.com"
+          git config user.name "aqua-bot"
+          git config user.email "aqua-bot@users.noreply.github.com"
       - run: |
           mike deploy --push --update-aliases ${{ github.event.inputs.version }} latest
