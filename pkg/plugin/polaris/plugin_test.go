@@ -136,7 +136,7 @@ func TestPlugin_GetContainerName(t *testing.T) {
 	assert.Equal(t, "polaris", plugin.GetContainerName())
 }
 
-func TestPlugin_ParseConfigAuditResult(t *testing.T) {
+func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	testReport, err := os.Open("testdata/polaris-report.json")
 	require.NoError(t, err)
 	defer func() {
