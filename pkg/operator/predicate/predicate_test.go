@@ -121,6 +121,43 @@ var _ = Describe("Predicate", func() {
 		})
 	})
 
+	Describe("When checking a HasName predicate", func() {
+
+		Context("When object has desired name", func() {
+
+			It("Should return true", func() {
+				instance := predicate.HasName("starboard-polaris-config")
+				obj := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "starboard-polaris-config",
+					},
+				}
+
+				Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeTrue())
+				Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeTrue())
+				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
+				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
+			})
+		})
+
+		Context("When object does not have desired name", func() {
+
+			It("Should return false", func() {
+				instance := predicate.HasName("starboard-conftest-config")
+				obj := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "starboard",
+					},
+				}
+
+				Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
+				Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
+				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
+				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
+			})
+		})
+	})
+
 	Describe("When checking a InNamespace predicate", func() {
 
 		Context("When object is in desired namespace", func() {

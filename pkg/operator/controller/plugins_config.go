@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -32,17 +31,13 @@ func (r *PluginsConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ConfigMap{}, builder.WithPredicates(
 			predicate.Not(predicate.IsBeingTerminated),
+			predicate.HasName(starboard.GetPluginConfigMapName(r.PluginContext.GetName())),
 			predicate.InNamespace(r.Config.Namespace))).
 		Complete(r)
 }
 
 func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Logger.WithValues("configMap", req.NamespacedName)
-
-	// TODO Use Predicate instead
-	if req.Name != "starboard-"+strings.ToLower(r.PluginContext.GetName())+"-config" {
-		return ctrl.Result{}, nil
-	}
 
 	cm := &corev1.ConfigMap{}
 
