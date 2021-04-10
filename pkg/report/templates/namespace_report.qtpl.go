@@ -94,8 +94,8 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
     </div>
   </div>
 
-  <h3>Top 5 vulnerable images by count</h3>
   <div class="row">
+    <h3>Top 5 vulnerable images by count</h3>
     <table class="table table-sm table-bordered">
       <thead>
         <tr>
@@ -149,105 +149,105 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
     </table>
   </div>
 
-   <h3>Top 5 failed configuration checks by affected workloads count</h3>
-    <div class="row">
-      <table class="table table-sm table-bordered">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Category</th>
-            <th scope="col">Affected Workloads</th>
-          </tr>
-        </thead>
-        <tbody>
-        `)
-//line pkg/report/templates/namespace_report.qtpl:63
-	for _, report := range p.Top5FailedChecks {
-//line pkg/report/templates/namespace_report.qtpl:63
-		qw422016.N().S(`
+  <div class="row">
+    <h3>Top 5 vulnerabilities by score</h3>
+    <table class="table table-sm table-bordered">
+      <thead>
         <tr>
-          <td>`)
-//line pkg/report/templates/namespace_report.qtpl:65
-		qw422016.E().S(report.ID)
-//line pkg/report/templates/namespace_report.qtpl:65
-		qw422016.N().S(`</td>
-          <td>`)
-//line pkg/report/templates/namespace_report.qtpl:66
-		qw422016.E().S(report.Severity)
-//line pkg/report/templates/namespace_report.qtpl:66
-		qw422016.N().S(`</td>
-          <td>`)
-//line pkg/report/templates/namespace_report.qtpl:67
-		qw422016.E().S(report.Category)
-//line pkg/report/templates/namespace_report.qtpl:67
-		qw422016.N().S(`</td>
-          <td>`)
-//line pkg/report/templates/namespace_report.qtpl:68
-		qw422016.N().D(report.AffectedWorkloads)
-//line pkg/report/templates/namespace_report.qtpl:68
-		qw422016.N().S(`</td>
+          <th scope="col">ID</th>
+          <th scope="col">Severity</th>
+          <th scope="col">Score</th>
+          <th scope="col">Affected Workloads</th>
         </tr>
-        `)
-//line pkg/report/templates/namespace_report.qtpl:70
-	}
-//line pkg/report/templates/namespace_report.qtpl:70
-	qw422016.N().S(`
-        </tbody>
-      </table>
-    </div>
-
-  <h3>Top 5 vulnerabilities by score</h3>
-    <div class="row">
-      <table class="table table-sm table-bordered">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Score</th>
-            <th scope="col">Affected Workloads</th>
-          </tr>
-        </thead>
-        <tbody>
-        `)
-//line pkg/report/templates/namespace_report.qtpl:87
+      </thead>
+      <tbody>
+      `)
+//line pkg/report/templates/namespace_report.qtpl:63
 	for _, vulnerability := range p.Top5Vulnerability {
+//line pkg/report/templates/namespace_report.qtpl:63
+		qw422016.N().S(`
+      <tr>
+        <td><a href="`)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.E().S(vulnerability.PrimaryLink)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.N().S(`">`)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.E().S(vulnerability.VulnerabilityID)
+//line pkg/report/templates/namespace_report.qtpl:65
+		qw422016.N().S(`</a></td>
+        <td>`)
+//line pkg/report/templates/namespace_report.qtpl:66
+		qw422016.E().S(string(vulnerability.Severity))
+//line pkg/report/templates/namespace_report.qtpl:66
+		qw422016.N().S(`</td>
+        <td>`)
+//line pkg/report/templates/namespace_report.qtpl:67
+		qw422016.N().F(*vulnerability.Score)
+//line pkg/report/templates/namespace_report.qtpl:67
+		qw422016.N().S(`</td>
+        <td>`)
+//line pkg/report/templates/namespace_report.qtpl:68
+		qw422016.N().D(vulnerability.AffectedWorkloads)
+//line pkg/report/templates/namespace_report.qtpl:68
+		qw422016.N().S(`</td>
+      </tr>
+      `)
+//line pkg/report/templates/namespace_report.qtpl:70
+	}
+//line pkg/report/templates/namespace_report.qtpl:70
+	qw422016.N().S(`
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <h3>Top 5 failed workload configs</h3>
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Severity</th>
+          <th scope="col">Category</th>
+          <th scope="col">Affected Workloads</th>
+        </tr>
+      </thead>
+      <tbody>
+      `)
+//line pkg/report/templates/namespace_report.qtpl:87
+	for _, report := range p.Top5FailedChecks {
 //line pkg/report/templates/namespace_report.qtpl:87
 		qw422016.N().S(`
-        <tr>
-          <td><a href="`)
+      <tr>
+        <td>`)
 //line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.E().S(vulnerability.PrimaryLink)
+		qw422016.E().S(report.ID)
 //line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.N().S(`">`)
-//line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.E().S(vulnerability.VulnerabilityID)
-//line pkg/report/templates/namespace_report.qtpl:89
-		qw422016.N().S(`</a></td>
-          <td>`)
+		qw422016.N().S(`</td>
+        <td>`)
 //line pkg/report/templates/namespace_report.qtpl:90
-		qw422016.E().S(string(vulnerability.Severity))
+		qw422016.E().S(report.Severity)
 //line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`</td>
-          <td>`)
+        <td>`)
 //line pkg/report/templates/namespace_report.qtpl:91
-		qw422016.N().F(*vulnerability.Score)
+		qw422016.E().S(report.Category)
 //line pkg/report/templates/namespace_report.qtpl:91
 		qw422016.N().S(`</td>
-          <td>`)
+        <td>`)
 //line pkg/report/templates/namespace_report.qtpl:92
-		qw422016.N().D(vulnerability.AffectedWorkloads)
+		qw422016.N().D(report.AffectedWorkloads)
 //line pkg/report/templates/namespace_report.qtpl:92
 		qw422016.N().S(`</td>
-        </tr>
-        `)
+      </tr>
+      `)
 //line pkg/report/templates/namespace_report.qtpl:94
 	}
 //line pkg/report/templates/namespace_report.qtpl:94
 	qw422016.N().S(`
-        </tbody>
-      </table>
-    </div>
+      </tbody>
+    </table>
+  </div>
 
 </div>
 `)
