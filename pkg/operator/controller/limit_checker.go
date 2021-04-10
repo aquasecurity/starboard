@@ -2,9 +2,9 @@ package controller
 
 import (
 	"context"
-	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

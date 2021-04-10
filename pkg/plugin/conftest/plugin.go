@@ -65,7 +65,8 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: p.idGenerator.GenerateID(),
+			Name:      p.idGenerator.GenerateID(),
+			Namespace: ctx.GetNamespace(),
 		},
 		StringData: map[string]string{
 			"workload.yaml": string(workloadAsYAML),
@@ -86,13 +87,13 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 
 		volumeItems = append(volumeItems, corev1.KeyToPath{
 			Key:  "conftest.policy." + control,
-			Path: control + ".rego",
+			Path: control,
 		})
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "policies",
-			MountPath: "/project/policy/" + control + ".rego",
-			SubPath:   control + ".rego",
+			MountPath: "/project/policy/" + control,
+			SubPath:   control,
 		})
 
 	}
@@ -187,6 +188,9 @@ func (p *plugin) getPolicies(ctx starboard.PluginContext) ([]string, error) {
 		if !strings.HasPrefix(key, "conftest.policy.") {
 			continue
 		}
+		if !strings.HasSuffix(key, ".rego") {
+			continue
+		}
 		policyName := strings.TrimPrefix(key, "conftest.policy.")
 		policies = append(policies, policyName)
 	}
@@ -210,7 +214,10 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 	var successesCount, warningCount, dangerCount int
 
 	for _, cr := range checkResults {
-		successesCount += cr.Successes
+		// Conftest reportedly returns negative count of passed tests is some cases: https://github.com/open-policy-agent/conftest/issues/464
+		if cr.Successes > 0 {
+			successesCount += cr.Successes
+		}
 
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
@@ -252,7 +259,7 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 			Version: version,
 		},
 		Summary: v1alpha1.ConfigAuditSummary{
-			PassCount:    successesCount, // TODO This should be a pointer to tell 0 from nil
+			PassCount:    successesCount,
 			WarningCount: warningCount,
 			DangerCount:  dangerCount,
 		},
