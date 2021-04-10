@@ -211,6 +211,47 @@ var _ = Describe("Starboard Operator", func() {
 		})
 
 	})
+
+	Describe("When ConfigAuditReport is deleted", func() {
+
+		var ctx context.Context
+		var deploy *appsv1.Deployment
+
+		BeforeEach(func() {
+			By("Creating Deployment wordpress")
+			ctx = context.Background()
+			deploy = helper.NewDeployment().
+				WithName(baseDeploymentName+"-"+rand.String(5)).
+				WithNamespace(namespaceName).
+				WithContainer("wordpress", "wordpress:4.9").
+				Build()
+
+			err := kubeClient.Create(ctx, deploy)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+		})
+
+		It("Should rescan the deployment when previous ConfigAuditReport is deleted", func() {
+			By("Getting active ReplicaSet")
+			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(rs).ToNot(BeNil())
+
+			By("Waiting for ConfigAuditReport")
+			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			By("Deleting ConfigAuditReport")
+			err = DeleteConfigAuditReportOwnedBy(rs)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("Waiting for new ConfigAuditReport")
+			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+		})
+
+		AfterEach(func() {
+			err := kubeClient.Delete(ctx, deploy)
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
 })
 
 func HasActiveReplicaSet(namespace, name string) func() (bool, error) {
@@ -257,8 +298,27 @@ func HasConfigAuditReportOwnedBy(obj client.Object) func() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		return len(reportsList.Items) == 1, nil
+
+		return len(reportsList.Items) == 1 && reportsList.Items[0].DeletionTimestamp == nil, nil
 	}
+}
+
+func DeleteConfigAuditReportOwnedBy(obj client.Object) error {
+	gvk, err := apiutil.GVKForObject(obj, scheme)
+	if err != nil {
+		return err
+	}
+	var reportsList v1alpha1.ConfigAuditReportList
+	err = kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
+		starboard.LabelResourceKind:      gvk.Kind,
+		starboard.LabelResourceName:      obj.GetName(),
+		starboard.LabelResourceNamespace: obj.GetNamespace(),
+	})
+	if err != nil {
+		return err
+	}
+
+	return kubeClient.Delete(context.Background(), &reportsList.Items[0])
 }
 
 func GetActiveReplicaSetForDeployment(namespace, name string) (*appsv1.ReplicaSet, error) {
