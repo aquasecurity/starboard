@@ -20,8 +20,8 @@ Aqua Starboard Namespace Security Report - Namespace: {%s p.Namespace.Name %}
     </div>
   </div>
 
-  <h3>Top 5 vulnerable images by count</h3>
   <div class="row">
+    <h3>Top 5 vulnerable images by count</h3>
     <table class="table table-sm table-bordered">
       <thead>
         <tr>
@@ -48,53 +48,53 @@ Aqua Starboard Namespace Security Report - Namespace: {%s p.Namespace.Name %}
     </table>
   </div>
 
-   <h3>Top 5 failed configuration checks by affected workloads count</h3>
-    <div class="row">
-      <table class="table table-sm table-bordered">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Category</th>
-            <th scope="col">Affected Workloads</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for _, report := range p.Top5FailedChecks %}
+  <div class="row">
+    <h3>Top 5 vulnerabilities by score</h3>
+    <table class="table table-sm table-bordered">
+      <thead>
         <tr>
-          <td>{%s report.ID %}</td>
-          <td>{%s report.Severity %}</td>
-          <td>{%s report.Category %}</td>
-          <td>{%d report.AffectedWorkloads %}</td>
+          <th scope="col">ID</th>
+          <th scope="col">Severity</th>
+          <th scope="col">Score</th>
+          <th scope="col">Affected Workloads</th>
         </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
+      </thead>
+      <tbody>
+      {% for _, vulnerability := range p.Top5Vulnerability %}
+      <tr>
+        <td><a href="{%s vulnerability.PrimaryLink %}">{%s vulnerability.VulnerabilityID %}</a></td>
+        <td>{%s string(vulnerability.Severity) %}</td>
+        <td>{%f *vulnerability.Score %}</td>
+        <td>{%d vulnerability.AffectedWorkloads %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-  <h3>Top 5 vulnerabilities by score</h3>
-    <div class="row">
-      <table class="table table-sm table-bordered">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Score</th>
-            <th scope="col">Affected Workloads</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for _, vulnerability := range p.Top5Vulnerability %}
+  <div class="row">
+    <h3>Top 5 failed workload configs</h3>
+    <table class="table table-sm table-bordered">
+      <thead>
         <tr>
-          <td><a href="{%s vulnerability.PrimaryLink %}">{%s vulnerability.VulnerabilityID %}</a></td>
-          <td>{%s string(vulnerability.Severity) %}</td>
-          <td>{%f *vulnerability.Score %}</td>
-          <td>{%d vulnerability.AffectedWorkloads %}</td>
+          <th scope="col">Name</th>
+          <th scope="col">Severity</th>
+          <th scope="col">Category</th>
+          <th scope="col">Affected Workloads</th>
         </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
+      </thead>
+      <tbody>
+      {% for _, report := range p.Top5FailedChecks %}
+      <tr>
+        <td>{%s report.ID %}</td>
+        <td>{%s report.Severity %}</td>
+        <td>{%s report.Category %}</td>
+        <td>{%d report.AffectedWorkloads %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
 </div>
 {% endfunc %}
