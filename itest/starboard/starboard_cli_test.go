@@ -46,11 +46,11 @@ var _ = Describe("Starboard CLI", func() {
 			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			id := func(element interface{}) string {
+			groupByName := func(element interface{}) string {
 				return element.(apiextensionsv1beta1.CustomResourceDefinition).Name
 			}
 
-			Expect(crdList.Items).To(MatchAllElements(id, Elements{
+			Expect(crdList.Items).To(MatchAllElements(groupByName, Elements{
 				"vulnerabilityreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Group":   Equal("aquasecurity.github.io"),
@@ -58,7 +58,7 @@ var _ = Describe("Starboard CLI", func() {
 						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
 							Plural:     "vulnerabilityreports",
 							Singular:   "vulnerabilityreport",
-							ShortNames: []string{"vulns", "vuln"},
+							ShortNames: []string{"vuln", "vulns"},
 							Kind:       "VulnerabilityReport",
 							ListKind:   "VulnerabilityReportList",
 							Categories: []string{"all"},

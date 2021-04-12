@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	embedded "github.com/aquasecurity/starboard"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
@@ -136,40 +137,43 @@ func NewCRManager(
 	}
 }
 
-func (m *CRManager) Init(ctx context.Context) (err error) {
-	err = m.createOrUpdateCRD(ctx, &v1alpha1.VulnerabilityReportsCRD)
+func (m *CRManager) Init(ctx context.Context) error {
+	vulnerabilityReportsCRD, err := embedded.GetVulnerabilityReportsCRD()
 	if err != nil {
-		return
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &vulnerabilityReportsCRD)
+	if err != nil {
+		return err
 	}
 
 	err = m.createOrUpdateCRD(ctx, &v1alpha1.CISKubeBenchReportCRD)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.createOrUpdateCRD(ctx, &v1alpha1.KubeHunterReportCRD)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.createOrUpdateCRD(ctx, &v1alpha1.ConfigAuditReportCRD)
 	if err != nil {
-		return
+		return err
 	}
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 
 	err = m.createNamespaceIfNotFound(ctx, namespace)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.configManager.EnsureDefault(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
-	err = m.initRBAC(ctx)
-	return
+	return m.initRBAC(ctx)
 }
 
 func (m *CRManager) initRBAC(ctx context.Context) (err error) {
