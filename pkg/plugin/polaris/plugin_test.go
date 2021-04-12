@@ -58,7 +58,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: starboard.ConfigMapName,
+									Name: starboard.GetPluginConfigMapName(string(starboard.Polaris)),
 								},
 							},
 						},
@@ -117,10 +117,11 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
 
 			pluginContext := starboard.NewPluginContext().
+				WithName(string(starboard.Polaris)).
 				WithNamespace(starboard.NamespaceName).
 				WithServiceAccountName(starboard.ServiceAccountName).
 				Build()
-			plugin := polaris.NewPlugin(fixedClock, tc.config)
+			plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, tc.config)
 			jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, tc.obj)
 
 			g.Expect(err).ToNot(gomega.HaveOccurred())
@@ -133,7 +134,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 func TestPlugin_GetContainerName(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
-	plugin := polaris.NewPlugin(fixedClock, starboard.ConfigData{})
+	plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, starboard.ConfigData{})
 	g.Expect(plugin.GetContainerName()).To(gomega.Equal("polaris"))
 }
 
@@ -148,7 +149,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	config := starboard.ConfigData{
 		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 	}
-	plugin := polaris.NewPlugin(fixedClock, config)
+	plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, config)
 	result, err := plugin.ParseConfigAuditReportData(testReport)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(result.UpdateTimestamp).To(gomega.Equal(metav1.NewTime(fixedTime)))

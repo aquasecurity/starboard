@@ -12,6 +12,15 @@ data:
   trivy.mode: Standalone
   trivy.serverURL: http://trivy-server.trivy-server:4954
   polaris.imageRef: quay.io/fairwinds/polaris:3.2
+  conftest.imageRef: openpolicyagent/conftest:v0.23.0
+  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-polaris-config
+  namespace: starboard-operator
+data:
   polaris.config.yaml: |
     checks:
       # reliability
@@ -196,8 +205,6 @@ data:
         - kube-hunter
         rules:
         - runAsRootAllowed
-  conftest.imageRef: openpolicyagent/conftest:v0.23.0
-  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
 ---
 apiVersion: v1
 kind: Secret

@@ -43,3 +43,13 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-polaris-config
+  labels:
+  {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  polaris.config.yaml: |
+  {{- toYaml .Values.polaris.config | nindent 4 }}
