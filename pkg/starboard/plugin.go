@@ -26,6 +26,12 @@ type PluginContext interface {
 	GetServiceAccountName() string
 }
 
+// GetPluginConfigMapName returns the name of a ConfigMap used to configure a plugin
+// with the given name.
+func GetPluginConfigMapName(pluginName string) string {
+	return "starboard-" + strings.ToLower(pluginName) + "-config"
+}
+
 type pluginContext struct {
 	name               string
 	client             client.Client

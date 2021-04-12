@@ -42,6 +42,14 @@ var InstallModePredicate = func(config etc.Config) (predicate.Predicate, error) 
 	}), nil
 }
 
+// HasName is predicate.Predicate that returns true if the
+// specified client.Object has the desired name.
+var HasName = func(name string) predicate.Predicate {
+	return predicate.NewPredicateFuncs(func(obj client.Object) bool {
+		return name == obj.GetName()
+	})
+}
+
 // InNamespace is a predicate.Predicate that returns true if the
 // specified client.Object is in the desired namespace.
 var InNamespace = func(namespace string) predicate.Predicate {
@@ -68,8 +76,8 @@ var IsBeingTerminated = predicate.NewPredicateFuncs(func(obj client.Object) bool
 	return obj.GetDeletionTimestamp() != nil
 })
 
-// JobHasConditions is a predicate.Predicate that returns true if the
-// specified client.Object is a batchv1.Job with any batchv1.JobConditionType.
+// JobHasAnyCondition is a predicate.Predicate that returns true if the
+// specified client.Object is a v1.Job with any v1.JobConditionType.
 var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if job, ok := obj.(*batchv1.Job); ok {
 		return len(job.Status.Conditions) > 0

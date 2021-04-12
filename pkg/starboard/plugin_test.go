@@ -10,6 +10,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+func TestGetPluginConfigMapName(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	name := starboard.GetPluginConfigMapName("Conftest")
+	g.Expect(name).To(gomega.Equal("starboard-conftest-config"))
+}
+
 func TestPluginContext_GetConfig(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 
