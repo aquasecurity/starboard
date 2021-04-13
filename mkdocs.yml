@@ -60,9 +60,9 @@ extra:
     tag: "v0.10.0"
     tag_prev: "v0.9.2"
     build:
-      version: "0.9.2"
-      commit: "a11a033e13ee87e02b673f008dbcd6c40be4da06"
-      date: "2021-02-15T08:32:46Z"
+      version: "0.10.0"
+      commit: "40f061c9721476091d080e27d191a3c9c3182bcf"
+      date: "2021-04-13T20:51:53Z"
     chart:
       version: 0.5.0
 
