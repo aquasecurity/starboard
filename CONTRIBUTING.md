@@ -184,24 +184,14 @@ started with a basic development workflow. For other install modes see [Operator
 
 ### Prerequisites
 
-1. Build the operator binary into the Docker image:
-
-   ```
-   $ make docker-build-starboard-operator
-   ```
-2. Load the Docker image from host into KIND cluster nodes:
-
-   ```
-   $ kind load docker-image aquasec/starboard-operator:dev
-   ```
-3. Send custom resource definitions to the Kubernetes API:
+1. Send custom resource definitions to the Kubernetes API:
 
    ```
    $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
        -f deploy/crd/configauditreports.crd.yaml \
        -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
-4. Send the following Kubernetes objects definitions to the Kubernetes API:
+2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
    ```
    $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
@@ -213,7 +203,7 @@ started with a basic development workflow. For other install modes see [Operator
    This will create the `starboard-operator` namespace, and the `starboard-operator` service account. Beyond that,
    it will create the `starboard-operator` ClusterRole and bind it to the `starboard-operator` service account in the
    `starboard-operator` namespace via the `starboard-operator` ClusterRoleBinding.
-5. (Optional) Create configuration objects:
+3. (Optional) Create configuration objects:
 
    ```
    $ kubectl apply -f deploy/static/05-starboard-operator.config.yaml
@@ -221,7 +211,17 @@ started with a basic development workflow. For other install modes see [Operator
 
 ### In cluster
 
-1. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
+1. Build the operator binary into the Docker image:
+
+   ```
+   $ make docker-build-starboard-operator
+   ```
+2. Load the Docker image from your host into KIND cluster nodes:
+
+   ```
+   $ kind load docker-image aquasec/starboard-operator:dev
+   ```
+3. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
    $ kubectl apply -k deploy/static
