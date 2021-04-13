@@ -15,7 +15,20 @@ operator:
   # leaderElectionId determines the name of the resource that leader election
   # will use for holding the leader lock.
   leaderElectionId: "starboard-operator"
-
+  # vulnerabilityScannerEnabled the flag to enable vulnerability scanner
+  vulnerabilityScannerEnabled: true
+  # configAuditScannerEnabled the flag to enable configuration audit scanner
+  configAuditScannerEnabled: true
+  # kubernetesBenchmarkEnabled the flag to enable CIS Kubernetes Benchmark scanner
+  kubernetesBenchmarkEnabled: true
+  # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
+  vulnerabilityReportsPlugin: "Trivy"
+  # configAuditReportsPlugin the name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`.
+  configAuditReportsPlugin: "Polaris"
+  # batchDeleteLimit the maximum number of config audit reports deleted by the operator when the plugin's config has changed.
+  batchDeleteLimit: 10
+  # batchDeleteDelay the duration to wait before deleting another batch of config audit reports.
+  batchDeleteDelay: 10s
 image:
   repository: "aquasec/starboard-operator"
   # tag is an override of the image tag, which is by default set by the
@@ -56,14 +69,8 @@ envSecret:
   #       properly.
   stringData:
     OPERATOR_LOG_DEV_MODE: "false"
-    OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED: "true"
-    OPERATOR_VULNERABILITY_SCANNER_ENABLED: "true"
-    OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED: "true"
-    OPERATOR_BATCH_DELETE_LIMIT: "10"
-    OPERATOR_BATCH_DELETE_DELAY: "10s"
 
 trivy:
-  enabled: true
   imageRef: docker.io/aquasec/trivy:0.16.0
   mode: Standalone
   serverURL:
@@ -73,7 +80,6 @@ trivy:
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
 kubeBench:
-  enabled: true
   imageRef: docker.io/aquasec/kube-bench:0.5.0
 
 polaris:
@@ -263,6 +269,9 @@ polaris:
         rules:
         - runAsRootAllowed
 
+conftest:
+  # imageRef the image reference
+  imageRef: docker.io/openpolicyagent/conftest:v0.23.0
 
 rbac:
   create: true

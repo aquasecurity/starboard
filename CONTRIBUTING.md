@@ -19,6 +19,7 @@ These guidelines will help you get started with the Starboard project.
   - [Prerequisites](#prerequisites)
   - [In Cluster](#in-cluster)
   - [Out of Cluster](#out-of-cluster)
+  - [Uninstall](#uninstall)
 - [Operator Lifecycle Manager (OLM)](#operator-lifecycle-manager-olm)
   - [Install OLM](#install-olm)
   - [Build the Catalog Image](#build-the-catalog-image)
@@ -183,17 +184,27 @@ started with a basic development workflow. For other install modes see [Operator
 
 ### Prerequisites
 
-1. Send custom resource definitions to the Kubernetes API:
+1. Build the operator binary into the Docker image:
 
    ```
-   $ kubectl create -f deploy/crd/vulnerabilityreports.crd.yaml \
+   $ make docker-build-starboard-operator
+   ```
+2. Load the Docker image from host into KIND cluster nodes:
+
+   ```
+   $ kind load docker-image aquasec/starboard-operator:dev
+   ```
+3. Send custom resource definitions to the Kubernetes API:
+
+   ```
+   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
        -f deploy/crd/configauditreports.crd.yaml \
        -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
-2. Send the following Kubernetes objects definitions to the Kubernetes API:
+4. Send the following Kubernetes objects definitions to the Kubernetes API:
 
    ```
-   $ kubectl create -f deploy/static/01-starboard-operator.ns.yaml \
+   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
        -f deploy/static/02-starboard-operator.sa.yaml \
        -f deploy/static/03-starboard-operator.clusterrole.yaml \
        -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
@@ -202,10 +213,10 @@ started with a basic development workflow. For other install modes see [Operator
    This will create the `starboard-operator` namespace, and the `starboard-operator` service account. Beyond that,
    it will create the `starboard-operator` ClusterRole and bind it to the `starboard-operator` service account in the
    `starboard-operator` namespace via the `starboard-operator` ClusterRoleBinding.
-3. (Optional) Create configuration objects:
+5. (Optional) Create configuration objects:
 
    ```
-   $ kubectl create -f deploy/static/05-starboard-operator.config.yaml
+   $ kubectl apply -f deploy/static/05-starboard-operator.config.yaml
    ```
 
 ### In cluster
@@ -213,7 +224,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl create -f deploy/static/06-starboard-operator.deployment.yaml
+   $ kubectl apply -k deploy/static
    ```
 
 ### Out of cluster
@@ -231,6 +242,20 @@ started with a basic development workflow. For other install modes see [Operator
      OPERATOR_BATCH_DELETE_DELAY="30s" \
      go run cmd/starboard-operator/main.go
    ```
+
+### Uninstall
+
+```
+$ kubectl delete -k deploy/static
+$ kubectl delete -f deploy/static/05-starboard-operator.config.yaml
+$ kubectl delete -f deploy/static/01-starboard-operator.ns.yaml \
+    -f deploy/static/02-starboard-operator.sa.yaml \
+    -f deploy/static/03-starboard-operator.clusterrole.yaml \
+    -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+$ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
+    -f deploy/crd/configauditreports.crd.yaml \
+    -f deploy/crd/ciskubebenchreports.crd.yaml
+```
 
 ## Operator Lifecycle Manager (OLM)
 

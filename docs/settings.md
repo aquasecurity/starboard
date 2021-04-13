@@ -58,7 +58,8 @@ The following tables list available configuration settings with their default va
 
 | CONFIGMAP KEY                  | DEFAULT                                                | DESCRIPTION |
 | ------------------------------ | ------------------------------------------------------ | ----------- |
-| `vulnerabilityReports.scanner` | `Trivy`                                                | The name of the scanner that generates vulnerability reports. Either `Trivy` or `Aqua`. |
+| `vulnerabilityReports.scanner` | `Trivy`                                                | The name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`. |
+| `configAuditReports.scanner`   | `Polaris`                                              | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
 | `trivy.httpProxy`              | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. |
 | `trivy.httpsProxy`             | N/A                                                    | The HTTPS proxy used by Trivy to download the vulnerabilities database from GitHub. |
 | `trivy.noProxy`                | N/A                                                    | A comma separated list of IPs and domain names that are not subject to proxy settings. |
@@ -74,6 +75,7 @@ The following tables list available configuration settings with their default va
 | `kube-hunter.quick`            | `"false"`                                              | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
 | `polaris.imageRef`             | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
 | `polaris.config.yaml`          | [Check the default value here][default-polaris-config] | Polaris configuration file |
+| `conftest.imageRef`            | `docker.io/openpolicyagent/conftest:v0.23.0`           | Conftest image reference |
 
 | SECRET KEY                  | DESCRIPTION |
 | --------------------------- | ----------- |

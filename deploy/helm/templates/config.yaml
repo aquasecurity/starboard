@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,9 +6,9 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  {{- if .Values.trivy.enabled }}
-  vulnerabilityReports.scanner: "Trivy"
-  configAuditReports.scanner: "Polaris"
+  {{- if .Values.operator.vulnerabilityScannerEnabled }}
+  vulnerabilityReports.scanner: {{ .Values.operator.vulnerabilityReportsPlugin | quote }}
+  {{- if eq .Values.operator.vulnerabilityReportsPlugin "Trivy" }}
   trivy.imageRef: "{{ .Values.trivy.imageRef }}"
   trivy.mode: "{{ .Values.trivy.mode }}"
   {{- if eq .Values.trivy.mode "ClientServer" }}
@@ -18,11 +19,27 @@ data:
   trivy.noProxy: "{{ .Values.trivy.noProxy }}"
   trivy.severity: "{{ .Values.trivy.severity }}"
   {{- end }}
-  {{- if .Values.kubeBench.enabled }}
+  {{- end }}
+  {{- if .Values.operator.kubernetesBenchmarkEnabled }}
   kube-bench.imageRef: "{{ .Values.kubeBench.imageRef }}"
   {{- end }}
+  {{- if .Values.operator.configAuditScannerEnabled }}
+  configAuditReports.scanner: {{ .Values.operator.configAuditReportsPlugin | quote }}
+  {{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
   polaris.imageRef: "{{ .Values.polaris.imageRef }}"
   polaris.config.yaml: |
     {{- toYaml .Values.polaris.config | nindent 4 }}
-  conftest.imageRef: openpolicyagent/conftest:v0.23.0
-  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
+  {{- end }}
+  {{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
+  conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
+  {{- end }}
+  {{- end }}
+{{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-conftest-config
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+{{- end }}
