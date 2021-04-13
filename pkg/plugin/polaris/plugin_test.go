@@ -9,8 +9,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -87,12 +86,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								MountPath: "/etc/starboard",
 							},
 						},
-						Command: []string{"polaris"},
+						Command: []string{"sh"},
 						Args: []string{
-							"audit",
-							"--log-level", "error",
-							"--config", "/etc/starboard/polaris.config.yaml",
-							"--resource", "default/Deployment.apps/v1/nginx",
+							"-c",
+							"polaris audit --log-level error --config /etc/starboard/polaris.config.yaml --resource default/Deployment.apps/v1/nginx 2> /dev/null",
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -117,28 +114,33 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			g := gomega.NewGomegaWithT(t)
+
 			pluginContext := starboard.NewPluginContext().
 				WithNamespace(starboard.NamespaceName).
 				WithServiceAccountName(starboard.ServiceAccountName).
 				Build()
 			plugin := polaris.NewPlugin(fixedClock, tc.config)
 			jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, tc.obj)
-			require.NoError(t, err, tc.name)
-			assert.Nil(t, secrets)
-			assert.Equal(t, tc.expectedJobSpec, jobSpec, tc.name)
+
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			g.Expect(secrets).To(gomega.BeNil())
+			g.Expect(jobSpec).To(gomega.Equal(tc.expectedJobSpec))
 		})
 	}
 
 }
 
 func TestPlugin_GetContainerName(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
 	plugin := polaris.NewPlugin(fixedClock, starboard.ConfigData{})
-	assert.Equal(t, "polaris", plugin.GetContainerName())
+	g.Expect(plugin.GetContainerName()).To(gomega.Equal("polaris"))
 }
 
 func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
 	testReport, err := os.Open("testdata/polaris-report.json")
-	require.NoError(t, err)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	defer func() {
 		_ = testReport.Close()
 	}()
@@ -148,49 +150,43 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}
 	plugin := polaris.NewPlugin(fixedClock, config)
 	result, err := plugin.ParseConfigAuditReportData(testReport)
-	require.NoError(t, err)
-	assert.Equal(t, metav1.NewTime(fixedTime), result.UpdateTimestamp)
-	assert.Equal(t, v1alpha1.Scanner{
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(result.UpdateTimestamp).To(gomega.Equal(metav1.NewTime(fixedTime)))
+	g.Expect(result.Scanner).To(gomega.Equal(v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
 		Version: "3.2",
-	}, result.Scanner)
-	assert.Equal(t, v1alpha1.ConfigAuditSummary{
+	}))
+	g.Expect(result.Summary).To(gomega.Equal(v1alpha1.ConfigAuditSummary{
 		PassCount:    2,
 		DangerCount:  1,
 		WarningCount: 1,
-	}, result.Summary)
-	assert.ElementsMatch(t, []v1alpha1.Check{
-		{
-			ID:       "hostIPCSet",
-			Message:  "Host IPC is not configured",
-			Success:  false,
-			Severity: "danger",
-			Category: "Security",
-		},
-		{
-			ID:       "hostNetworkSet",
-			Message:  "Host network is not configured",
-			Success:  true,
-			Severity: "warning",
-			Category: "Networking",
-		},
-	}, result.PodChecks)
-	assert.Len(t, result.ContainerChecks, 1)
-	assert.ElementsMatch(t, []v1alpha1.Check{
-		{
-			ID:       "cpuLimitsMissing",
-			Message:  "CPU limits are set",
-			Success:  false,
-			Severity: "warning",
-			Category: "Resources",
-		},
-		{
-			ID:       "cpuRequestsMissing",
-			Message:  "CPU requests are set",
-			Success:  true,
-			Severity: "warning",
-			Category: "Resources",
-		},
-	}, result.ContainerChecks["db"])
+	}))
+	g.Expect(result.PodChecks).To(gomega.ConsistOf(v1alpha1.Check{
+		ID:       "hostIPCSet",
+		Message:  "Host IPC is not configured",
+		Success:  false,
+		Severity: "danger",
+		Category: "Security",
+	}, v1alpha1.Check{
+		ID:       "hostNetworkSet",
+		Message:  "Host network is not configured",
+		Success:  true,
+		Severity: "warning",
+		Category: "Networking",
+	}))
+	g.Expect(result.ContainerChecks).To(gomega.HaveLen(1))
+	g.Expect(result.ContainerChecks["db"]).To(gomega.ConsistOf(v1alpha1.Check{
+		ID:       "cpuLimitsMissing",
+		Message:  "CPU limits are set",
+		Success:  false,
+		Severity: "warning",
+		Category: "Resources",
+	}, v1alpha1.Check{
+		ID:       "cpuRequestsMissing",
+		Message:  "CPU requests are set",
+		Success:  true,
+		Severity: "warning",
+		Category: "Resources",
+	}))
 }

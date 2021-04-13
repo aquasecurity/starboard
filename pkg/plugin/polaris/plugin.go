@@ -91,12 +91,10 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 						MountPath: "/etc/starboard",
 					},
 				},
-				Command: []string{"polaris"},
+				Command: []string{"sh"},
 				Args: []string{
-					"audit",
-					"--log-level", "error",
-					"--config", "/etc/starboard/polaris.config.yaml",
-					"--resource", sourceName,
+					"-c",
+					"polaris audit --log-level error --config /etc/starboard/polaris.config.yaml --resource " + sourceName + " 2> /dev/null",
 				},
 				SecurityContext: &corev1.SecurityContext{
 					Privileged:               pointer.BoolPtr(false),
