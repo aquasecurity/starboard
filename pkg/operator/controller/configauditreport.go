@@ -325,7 +325,11 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 
 	ownerObj, err := r.GetObjectFromPartialObject(ctx, owner)
 	if err != nil {
-		return err
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Deleting complete scan job for workload that must have been deleted")
+			return r.deleteJob(ctx, job)
+		}
+		return fmt.Errorf("getting object from partial object: %w", err)
 	}
 
 	podSpecHash, ok := job.Labels[starboard.LabelPodSpecHash]
@@ -337,15 +341,15 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
-	hasConfigAuditReport, err := r.hasReport(ctx, owner, podSpecHash, pluginConfigHash)
+	hasReport, err := r.hasReport(ctx, owner, podSpecHash, pluginConfigHash)
 	if err != nil {
 		return err
 	}
 
-	if hasConfigAuditReport {
+	if hasReport {
 		log.V(1).Info("ConfigAuditReport already exist", "owner", owner)
 		log.V(1).Info("Deleting complete scan job", "owner", owner)
-		return r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+		return r.deleteJob(ctx, job)
 	}
 
 	logsStream, err := r.LogsReader.GetLogsByJobAndContainerName(ctx, job, r.Plugin.GetContainerName())
@@ -373,7 +377,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return err
 	}
 	log.V(1).Info("Deleting complete scan job", "owner", owner)
-	return r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	return r.deleteJob(ctx, job)
 }
 
 func (r *ConfigAuditReportReconciler) processFailedScanJob(ctx context.Context, scanJob *batchv1.Job) error {
@@ -391,4 +395,15 @@ func (r *ConfigAuditReportReconciler) processFailedScanJob(ctx context.Context, 
 	}
 	log.V(1).Info("Deleting failed scan job")
 	return r.Client.Delete(ctx, scanJob, client.PropagationPolicy(metav1.DeletePropagationBackground))
+}
+
+func (r *ConfigAuditReportReconciler) deleteJob(ctx context.Context, job *batchv1.Job) error {
+	err := r.Client.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("deleting job: %w", err)
+	}
+	return nil
 }
