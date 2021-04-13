@@ -55,7 +55,7 @@ markdown_extensions:
 extra:
   generator: false
   version:
-    method: mike
+    provider: mike
   var:
     tag: "v0.10.0"
     tag_prev: "v0.9.2"
