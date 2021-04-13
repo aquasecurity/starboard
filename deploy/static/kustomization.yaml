@@ -1,0 +1,6 @@
+resources:
+  - 06-starboard-operator.deployment.yaml
+images:
+  - name: docker.io/aquasec/starboard-operator
+    newName: docker.io/aquasec/starboard-operator
+    newTag: dev

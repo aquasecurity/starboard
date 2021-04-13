@@ -204,3 +204,9 @@ kind: Secret
 metadata:
   name: starboard
   namespace: starboard-operator
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-conftest-config
+  namespace: starboard-operator
