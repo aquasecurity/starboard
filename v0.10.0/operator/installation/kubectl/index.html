@@ -842,10 +842,9 @@ You're not viewing the latest version.
                 
                   <h1>kubectl</h1>
                 
-                <p>You can install the operator with provided static YAML manifests with fixed
-values. However, this approach has its shortcomings. For example, if you want to
-change the container image or modify default configuration settings, you have
-to create new manifests or edit existing ones.</p>
+                <p>You can install the operator with provided static YAML manifests with fixed values. However, this approach has its
+shortcomings. For example, if you want to change the container image or modify default configuration settings, you have
+to edit existing manifests or customize them with tools such as <a href="https://kustomize.io">Kustomize</a>.</p>
 <p>As an example, let's install the operator in the <code>starboard-operator</code> namespace and configure it to
 watch the <code>default</code> namespace:</p>
 <ol>
