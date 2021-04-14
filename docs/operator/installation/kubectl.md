@@ -1,7 +1,6 @@
-You can install the operator with provided static YAML manifests with fixed
-values. However, this approach has its shortcomings. For example, if you want to
-change the container image or modify default configuration settings, you have
-to create new manifests or edit existing ones.
+You can install the operator with provided static YAML manifests with fixed values. However, this approach has its
+shortcomings. For example, if you want to change the container image or modify default configuration settings, you have
+to edit existing manifests or customize them with tools such as [Kustomize].
 
 As an example, let's install the operator in the `starboard-operator` namespace and configure it to
 watch the `default` namespace:
@@ -74,3 +73,5 @@ Delete custom resources definitions:
       -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/configauditreports.crd.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/ciskubebenchreports.crd.yaml
     ```
+
+[Kustomize]: https://kustomize.io
