@@ -1,7 +1,7 @@
 [Helm][helm], which is de facto standard package manager for Kubernetes, allows
 installing applications from parameterized YAML manifests called Helm [charts][helm-charts].
 
-To address shortcomings of static YAML manifests we provide the Helm chart to
+To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to
 deploy the Starboard operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
 
 As an example, let's install the operator in the `starboard-operator` namespace and
@@ -23,13 +23,14 @@ configure it to watch the `default` namespaces:
      -n starboard-operator --create-namespace \
      --set="targetNamespaces=default"
    ```
-    Or install the chart from Aqua repository:
-    ```
-    helm install starboard-operator aqua/starboard-operator \
-      -n starboard-operator --create-namespace \
-      --set="targetNamespaces=default" \
-      --version {{ var.chart.version }}
-    ```
+   Or install the chart from Aqua chart repository:
+   ```
+   helm install starboard-operator aqua/starboard-operator \
+     -n starboard-operator --create-namespace \
+     --set="targetNamespaces=default" \
+     --version {{ var.chart.version }}
+   ```
+   There are many [values][helm-values] in the chart that can be set to configure Starboard.
 3. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
    namespace:
    ```console
@@ -71,3 +72,4 @@ You have to manually delete custom resource definitions created by the `helm ins
 
 [helm]: https://helm.sh/
 [helm-charts]: https://helm.sh/docs/topics/charts/
+[helm-values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/helm/values.yaml
