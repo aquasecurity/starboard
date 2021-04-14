@@ -3,8 +3,6 @@
 bin/
 dist/
 
-*.html
-
 coverage.txt
 itest/coverage.txt
 itest/itest.test
