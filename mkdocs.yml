@@ -31,12 +31,16 @@ nav:
           - Overview: integrations/vulnerability-scanners/index.md
           - Trivy: integrations/vulnerability-scanners/trivy.md
           - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
+      - Configuration Checkers:
+          - Overview: integrations/config-checkers/index.md
+          - Conftest: integrations/config-checkers/conftest.md
       - Private Registries: integrations/private-registries.md
       - Managed Registries: integrations/managed-registries.md
       - Octant Plugin: integrations/octant.md
       - Lens Extension: integrations/lens.md
   - Custom Resource Definitions: crds.md
   - Frequently Asked Questions: faq.md
+  - Further Reading: further-reading.md
 
 theme:
   name: material
