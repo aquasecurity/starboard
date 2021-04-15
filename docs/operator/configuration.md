@@ -1,4 +1,4 @@
-Configuration of the operator's pod is done via environment variables at startup.
+Configuration of the operator's Pod is done via environment variables at startup.
 
 | NAME                                        | DEFAULT                | DESCRIPTION |
 | ------------------------------------------- | ---------------------- | ----------- |

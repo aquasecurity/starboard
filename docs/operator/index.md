@@ -1,4 +1,6 @@
-# Overview
+# Starboard Operator
+
+## Overview
 
 This operator automatically updates security report resources in response to workload and other changes on a Kubernetes
 cluster - for example, initiating a vulnerability scan and configuration audit when a new Pod is started.
@@ -13,7 +15,7 @@ for each of them.
 
 <figure>
   <img src="../images/operator/starboard-operator-infrastructure.png" />
-  <figcaption>Infrastructure reconciler discovers K8s nodes, manage scan jobs, and create CISKubeBenchReport objects.</figcaption>
+  <figcaption>Infrastructure reconciler discovers K8s nodes, manages scan jobs, and creates CISKubeBenchReport objects.</figcaption>
 </figure>
 
 In other words, the desired state for the controllers managed by this operator is that for each workload or node there
@@ -32,13 +34,17 @@ with new plugin's configuration.
 
 <figure>
   <img src="../images/operator/starboard-operator-config.png" />
-  <figurecaption>Plugins' configuration reconciler deletes ConfigAuditReports whenever configuration changes.</figurecaption>
+  <figurecaption>Plugin configuration reconciler deletes ConfigAuditReports whenever the configuration changes.</figurecaption>
 </figure>
 
 !!! warning
     Currently, the operator supports [vulnerabilityreports], [configauditreports], and [ciskubebenchreports] security
     resources. We plan to support [kubehunterreports]. We also plan to implement rescan on configurable schedule, for
     example every 24 hours.
+
+## What's Next?
+
+- Install the operator and follow the [getting started](./getting-started.md) guide.
 
 [vulnerabilityreports]: ./../crds.md#vulnerabilityreport
 [configauditreports]: ./../crds.md#configauditreport
