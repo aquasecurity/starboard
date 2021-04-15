@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#overview" class="md-skip">
+        <a href="#starboard-operator" class="md-skip">
           Skip to content
         </a>
       
@@ -443,9 +443,45 @@ You're not viewing the latest version.
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Overview
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    What's Next?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -684,6 +720,67 @@ You're not viewing the latest version.
   
   
   
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_2" type="checkbox" id="__nav_5_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_2">
+          Configuration Checkers
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Checkers" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Checkers
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/config-checkers/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/config-checkers/conftest/" class="md-nav__link">
+        Conftest
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
     <li class="md-nav__item">
       <a href="../integrations/private-registries/" class="md-nav__link">
         Private Registries
@@ -771,6 +868,21 @@ You're not viewing the latest version.
   
 
     
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../further-reading/" class="md-nav__link">
+        Further Reading
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -789,6 +901,28 @@ You're not viewing the latest version.
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    What's Next?
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -800,7 +934,8 @@ You're not viewing the latest version.
               
                 
                 
-                <h1 id="overview">Overview</h1>
+                <h1 id="starboard-operator">Starboard Operator</h1>
+<h2 id="overview">Overview</h2>
 <p>This operator automatically updates security report resources in response to workload and other changes on a Kubernetes
 cluster - for example, initiating a vulnerability scan and configuration audit when a new Pod is started.</p>
 <figure>
@@ -812,7 +947,7 @@ cluster - for example, initiating a vulnerability scan and configuration audit w
 for each of them.</p>
 <figure>
   <img src="../images/operator/starboard-operator-infrastructure.png" />
-  <figcaption>Infrastructure reconciler discovers K8s nodes, manage scan jobs, and create CISKubeBenchReport objects.</figcaption>
+  <figcaption>Infrastructure reconciler discovers K8s nodes, manages scan jobs, and creates CISKubeBenchReport objects.</figcaption>
 </figure>
 
 <p>In other words, the desired state for the controllers managed by this operator is that for each workload or node there
@@ -829,7 +964,7 @@ If hashes are not equal then affected ConfigAuditReport objects are deleted, whi
 with new plugin's configuration.</p>
 <figure>
   <img src="../images/operator/starboard-operator-config.png" />
-  <figurecaption>Plugins' configuration reconciler deletes ConfigAuditReports whenever configuration changes.</figurecaption>
+  <figurecaption>Plugin configuration reconciler deletes ConfigAuditReports whenever the configuration changes.</figurecaption>
 </figure>
 
 <div class="admonition warning">
@@ -838,6 +973,10 @@ with new plugin's configuration.</p>
 resources. We plan to support <a href="../crds/#kubehunterreport">kubehunterreports</a>. We also plan to implement rescan on configurable schedule, for
 example every 24 hours.</p>
 </div>
+<h2 id="whats-next">What's Next?</h2>
+<ul>
+<li>Install the operator and follow the <a href="getting-started/">getting started</a> guide.</li>
+</ul>
                 
               
               
