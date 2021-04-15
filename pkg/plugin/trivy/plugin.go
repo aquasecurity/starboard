@@ -488,8 +488,8 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 				"trivy",
 			},
 			Args: []string{
-				"client",
 				"--quiet",
+				"client",
 				"--format",
 				"json",
 				"--remote",
