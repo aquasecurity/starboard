@@ -71,7 +71,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 
 	t.Run("Should return error when actual is not ConfigAuditReport", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		instance := matcher.IsConfigAuditReportOwnedBy(&appsv1.ReplicaSet{})
+		instance := matcher.IsConfigAuditReportOwnedBy(&appsv1.ReplicaSet{}, starboard.Polaris)
 		_, err := instance.Match("I AM INVALID ACTUAL")
 		g.Expect(err).To(MatchError("matcher.configAuditReportMatcher expects a v1alpha1.ConfigAuditReport"))
 	})
@@ -84,7 +84,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 				Namespace: "default",
 				UID:       "494b2727-5d52-4057-9a9b-8b508c753fea",
 			},
-		})
+		}, starboard.Polaris)
 		success, err := instance.Match(v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "replicaset-nginx-6d4cf56db6",

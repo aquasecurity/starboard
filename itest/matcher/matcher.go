@@ -26,6 +26,11 @@ var (
 		Vendor:  "Fairwinds Ops",
 		Version: "3.2",
 	}
+	conftestScanner = v1alpha1.Scanner{
+		Name:    "Conftest",
+		Vendor:  "Open Policy Agent",
+		Version: "v0.23.0",
+	}
 )
 
 // IsVulnerabilityReportForContainerOwnedBy succeeds if a v1alpha1.VulnerabilityReport has a valid structure,
@@ -103,14 +108,16 @@ func (m *vulnerabilityReportMatcher) NegatedFailureMessage(_ interface{}) string
 //
 // Note: This matcher is not suitable for unit tests because it does not perform a strict validation
 // of the actual v1alpha1.ConfigAuditReport.
-func IsConfigAuditReportOwnedBy(owner client.Object) types.GomegaMatcher {
+func IsConfigAuditReportOwnedBy(owner client.Object, scanner starboard.Scanner) types.GomegaMatcher {
 	return &configAuditReportMatcher{
-		owner: owner,
+		owner:   owner,
+		scanner: scanner,
 	}
 }
 
 type configAuditReportMatcher struct {
 	owner                 client.Object
+	scanner               starboard.Scanner
 	failureMessage        string
 	negatedFailureMessage string
 }
@@ -123,6 +130,11 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	gvk, err := apiutil.GVKForObject(m.owner, starboard.NewScheme())
 	if err != nil {
 		return false, err
+	}
+
+	scanner := polarisScanner
+	if m.scanner == starboard.Conftest {
+		scanner = conftestScanner
 	}
 
 	matcher := MatchFields(IgnoreExtras, Fields{
@@ -142,7 +154,7 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 			}),
 		}),
 		"Report": MatchFields(IgnoreExtras, Fields{
-			"Scanner": Equal(polarisScanner),
+			"Scanner": Equal(scanner),
 		}),
 	})
 	success, err := matcher.Match(actual)
