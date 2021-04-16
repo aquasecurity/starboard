@@ -350,8 +350,8 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"client",
 							"--quiet",
+							"client",
 							"--format",
 							"json",
 							"--remote",
