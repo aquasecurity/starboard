@@ -27,18 +27,16 @@ type Config interface {
 }
 
 type plugin struct {
-	idGenerator ext.IDGenerator
-	clock       ext.Clock
-	config      Config
+	clock  ext.Clock
+	config Config
 }
 
 // NewPlugin constructs a new configauditreport.Plugin, which is using an
 // official Polaris container image to audit Kubernetes workloads.
-func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock, config Config) configauditreport.Plugin {
+func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 	return &plugin{
-		idGenerator: idGenerator,
-		clock:       clock,
-		config:      config,
+		clock:  clock,
+		config: config,
 	}
 }
 

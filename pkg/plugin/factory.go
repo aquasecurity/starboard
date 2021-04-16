@@ -95,7 +95,7 @@ func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.P
 
 	switch scanner {
 	case starboard.Polaris:
-		return polaris.NewPlugin(ext.NewGoogleUUIDGenerator(), ext.NewSystemClock(), r.config), pluginContext, nil
+		return polaris.NewPlugin(ext.NewSystemClock(), r.config), pluginContext, nil
 	case starboard.Conftest:
 		return conftest.NewPlugin(ext.NewGoogleUUIDGenerator(), ext.NewSystemClock(), r.config), pluginContext, nil
 	}

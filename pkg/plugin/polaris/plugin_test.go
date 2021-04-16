@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 var (
@@ -121,7 +122,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				WithNamespace(starboard.NamespaceName).
 				WithServiceAccountName(starboard.ServiceAccountName).
 				Build()
-			plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, tc.config)
+			plugin := polaris.NewPlugin(fixedClock, tc.config)
 			jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, tc.obj)
 
 			g.Expect(err).ToNot(gomega.HaveOccurred())
@@ -134,7 +135,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 func TestPlugin_GetContainerName(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
-	plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, starboard.ConfigData{})
+	plugin := polaris.NewPlugin(fixedClock, starboard.ConfigData{})
 	g.Expect(plugin.GetContainerName()).To(gomega.Equal("polaris"))
 }
 
@@ -149,7 +150,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	config := starboard.ConfigData{
 		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 	}
-	plugin := polaris.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, config)
+	plugin := polaris.NewPlugin(fixedClock, config)
 	result, err := plugin.ParseConfigAuditReportData(testReport)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(result.UpdateTimestamp).To(gomega.Equal(metav1.NewTime(fixedTime)))
@@ -190,4 +191,65 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Severity: "warning",
 		Category: "Resources",
 	}))
+}
+
+func TestPlugin_GetConfigHash(t *testing.T) {
+
+	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
+		return starboard.NewPluginContext().
+			WithName(string(starboard.Polaris)).
+			WithNamespace("starboard-ns").
+			WithClient(fake.NewClientBuilder().
+				WithObjects(&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "starboard-polaris-config",
+						Namespace: "starboard-ns",
+					},
+					Data: data,
+				}).
+				Build()).
+			Build()
+	}
+
+	t.Run("Should return different hash for different config data", func(t *testing.T) {
+		g := gomega.NewGomegaWithT(t)
+
+		pluginContext1 := newPluginContextWithConfigData(map[string]string{
+			"foo":   "bar",
+			"brown": "fox",
+		})
+		pluginContext2 := newPluginContextWithConfigData(map[string]string{
+			"brown": "fox",
+			"foo":   "baz",
+		})
+
+		plugin := polaris.NewPlugin(fixedClock, starboard.ConfigData{})
+		hash1, err := plugin.GetConfigHash(pluginContext1)
+		g.Expect(err).ToNot(gomega.HaveOccurred())
+
+		hash2, err := plugin.GetConfigHash(pluginContext2)
+		g.Expect(err).ToNot(gomega.HaveOccurred())
+		g.Expect(hash1).ToNot(gomega.Equal(hash2))
+	})
+
+	t.Run("Should return the same hash for the same config data", func(t *testing.T) {
+		g := gomega.NewGomegaWithT(t)
+
+		pluginContext1 := newPluginContextWithConfigData(map[string]string{
+			"foo":   "bar",
+			"brown": "fox",
+		})
+		pluginContext2 := newPluginContextWithConfigData(map[string]string{
+			"brown": "fox",
+			"foo":   "bar",
+		})
+
+		plugin := polaris.NewPlugin(fixedClock, starboard.ConfigData{})
+		hash1, err := plugin.GetConfigHash(pluginContext1)
+		g.Expect(err).ToNot(gomega.HaveOccurred())
+
+		hash2, err := plugin.GetConfigHash(pluginContext2)
+		g.Expect(err).ToNot(gomega.HaveOccurred())
+		g.Expect(hash1).To(gomega.Equal(hash2))
+	})
 }

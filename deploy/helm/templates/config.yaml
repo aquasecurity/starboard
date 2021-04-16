@@ -27,8 +27,6 @@ data:
   configAuditReports.scanner: {{ .Values.operator.configAuditReportsPlugin | quote }}
   {{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
   polaris.imageRef: "{{ .Values.polaris.imageRef }}"
-  polaris.config.yaml: |
-    {{- toYaml .Values.polaris.config | nindent 4 }}
   {{- end }}
   {{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
   conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
@@ -43,6 +41,7 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 {{- end }}
+{{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -53,3 +52,4 @@ metadata:
 data:
   polaris.config.yaml: |
   {{- toYaml .Values.polaris.config | nindent 4 }}
+{{- end }}
