@@ -17,7 +17,7 @@
         
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.1+insiders-2.5.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.2+insiders-2.6.0">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.5d6318de.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.7377d152.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.77b964be.min.css">
@@ -723,12 +723,36 @@ You're not viewing the latest version.
       
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
+      
         
       
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Conftest
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         Conftest
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -864,8 +888,17 @@ You're not viewing the latest version.
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -924,10 +957,10 @@ policies.</p>
 <p>As an example, let's create the <code>starboard-conftest-config</code> ConfigMap with <a href="https://raw.githubusercontent.com/aquasecurity/appshield/master/kubernetes/policies/general/file_system_not_read_only.rego">file_system_not_read_only.rego</a> and
 <a href="https://raw.githubusercontent.com/aquasecurity/appshield/master/kubernetes/policies/general/uses_image_tag_latest.rego">uses_image_tag_latest.rego</a> policies. Those two are very common checks performed by many other tools:</p>
 <div class="highlight"><pre><span></span><code>kubectl create configmap starboard-conftest-config -n &lt;starboard_namespace&gt; \
---from-file=conftest.policy.kubernetes.rego=kubernetes/lib/kubernetes.rego \
---from-file=conftest.policy.utils.rego=kubernetes/lib/utils.rego \
---from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
---from-file=conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego
+  --from-file=conftest.policy.kubernetes.rego=kubernetes/lib/kubernetes.rego \
+  --from-file=conftest.policy.utils.rego=kubernetes/lib/utils.rego \
+  --from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
+  --from-file=conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego
 </code></pre></div>
 <p>To test this setup out with Starboard CLI you can create the <code>nginx</code> Deployment with the latest <code>nginx</code> image and check
 its configuration:</p>
@@ -1040,7 +1073,7 @@ in which the <code>starboard-conftest-config</code> ConfigMap is created.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../../assets/javascripts/workers/search.d10a1f1d.min.js", "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.196050f9.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.f3077d77.min.js"></script>
       
     
   </body>
