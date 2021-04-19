@@ -129,6 +129,15 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(cm.Data).To(BeEquivalentTo(starboard.GetDefaultConfig()))
 
+			var polarisCm corev1.ConfigMap
+			err = kubeClient.Get(context.TODO(), types.NamespacedName{
+				Name:      starboard.GetPluginConfigMapName(string(starboard.Polaris)),
+				Namespace: starboard.NamespaceName,
+			}, &polarisCm)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(polarisCm.Data).To(BeEquivalentTo(starboard.GetDefaultPolarisConfig()))
+
 			var secret corev1.Secret
 			err = kubeClient.Get(context.TODO(), types.NamespacedName{
 				Name:      starboard.SecretName,

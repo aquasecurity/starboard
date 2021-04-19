@@ -277,10 +277,16 @@ func GetDefaultConfig() ConfigData {
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
 
-		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.2",
-		"polaris.config.yaml": polarisConfigYAML,
+		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 
 		"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+	}
+}
+
+// GetDefaultPolarisConfig returns the default Polaris configuration.
+func GetDefaultPolarisConfig() ConfigData {
+	return map[string]string{
+		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
@@ -433,6 +439,21 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		return err
 	}
 
+	polarisCm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.namespace,
+			Name:      GetPluginConfigMapName(string(Polaris)),
+			Labels: labels.Set{
+				"app.kubernetes.io/managed-by": "starboard",
+			},
+		},
+		Data: GetDefaultPolarisConfig(),
+	}
+	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, polarisCm, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.namespace,
@@ -474,6 +495,10 @@ func (c *configManager) Read(ctx context.Context) (ConfigData, error) {
 
 func (c *configManager) Delete(ctx context.Context) error {
 	err := c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, ConfigMapName, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	err = c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, GetPluginConfigMapName(string(Polaris)), metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}

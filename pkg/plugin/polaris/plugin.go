@@ -40,9 +40,12 @@ func NewPlugin(clock ext.Clock, config Config) configauditreport.Plugin {
 	}
 }
 
-func (p *plugin) GetConfigHash(_ starboard.PluginContext) (string, error) {
-	// TODO Compute config hash based on Polaris config
-	return kube.ComputeHash("TODO"), nil
+func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
+	cm, err := ctx.GetConfig()
+	if err != nil {
+		return "", err
+	}
+	return kube.ComputeHash(cm.Data), nil
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
@@ -63,7 +66,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: starboard.GetPluginConfigMapName(ctx.GetName()),
 						},
 					},
 				},
