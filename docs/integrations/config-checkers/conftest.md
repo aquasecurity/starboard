@@ -58,10 +58,10 @@ As an example, let's create the `starboard-conftest-config` ConfigMap with [file
 
 ```
 kubectl create configmap starboard-conftest-config -n <starboard_namespace> \
---from-file=conftest.policy.kubernetes.rego=kubernetes/lib/kubernetes.rego \
---from-file=conftest.policy.utils.rego=kubernetes/lib/utils.rego \
---from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
---from-file=conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego
+  --from-file=conftest.policy.kubernetes.rego=kubernetes/lib/kubernetes.rego \
+  --from-file=conftest.policy.utils.rego=kubernetes/lib/utils.rego \
+  --from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
+  --from-file=conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego
 ```
 
 To test this setup out with Starboard CLI you can create the `nginx` Deployment with the latest `nginx` image and check

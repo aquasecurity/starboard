@@ -75,7 +75,7 @@ configure it to watch the `default` namespaces:
    ```console
    $ kubectl get clusterserviceversions -n starboard-operator
    NAME                        DISPLAY              VERSION   REPLACES                    PHASE
-   starboard-operator.{{ var.tag }}   Starboard Operator   {{ var.build.version }}     starboard-operator.{{ var.tag_prev }}   Succeeded
+   starboard-operator.{{ var.tag }}  Starboard Operator   {{ var.build.version }}    starboard-operator.{{ var.tag_prev }}   Succeeded
    ```
    If the above command succeeds and the ClusterServiceVersion has transitioned from `Installing` to `Succeeded` phase
    you will also find the operator's Deployment in the same namespace where the Subscription is:
