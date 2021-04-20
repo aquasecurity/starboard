@@ -26,8 +26,6 @@ var (
 )
 
 func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
-	setupLog.Info("Starting operator", "buildInfo", buildInfo)
-
 	installMode, operatorNamespace, targetNamespaces, err := operatorConfig.ResolveInstallMode()
 	if err != nil {
 		return fmt.Errorf("resolving install mode: %w", err)

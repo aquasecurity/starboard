@@ -757,7 +757,7 @@ var _ = Describe("Starboard CLI", func() {
 						err := cmd.Run(versionInfo, []string{
 							"starboard", "get", "vulnerabilities",
 							"deployment/" + deploy.Name,
-							"--namespace", namespaceItest,
+							"--namespace", testNamespace.Name,
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -784,7 +784,7 @@ var _ = Describe("Starboard CLI", func() {
 						err := cmd.Run(versionInfo, []string{
 							"starboard", "get", "vulnerabilities",
 							"replicaset/" + replicasetName,
-							"--namespace", namespaceItest,
+							"--namespace", testNamespace.Name,
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -811,7 +811,7 @@ var _ = Describe("Starboard CLI", func() {
 						err := cmd.Run(versionInfo, []string{
 							"starboard", "get", "vulnerabilities",
 							"pod/" + podName,
-							"--namespace", namespaceItest,
+							"--namespace", testNamespace.Name,
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
