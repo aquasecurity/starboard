@@ -2,6 +2,7 @@ package conftest
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 
@@ -20,6 +21,11 @@ import (
 
 const (
 	conftestContainerName = "conftest"
+	policyPrefix          = "conftest.policy."
+	workloadKey           = "starboard.workload.yaml"
+	defaultCheckCategory  = "Security"
+	severityWarning       = "WARNING"
+	severityDanger        = "DANGER"
 )
 
 type Config interface {
@@ -32,8 +38,8 @@ type plugin struct {
 	config      Config
 }
 
-// NewPlugin constructs a new configauditreport.Plugin, which is using an
-// official Conftest container image to audit Kubernetes workloads.
+// NewPlugin constructs a new configauditreport.Plugin, which is using
+// the upstream Conftest container image to audit K8s workloads.
 func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock, config Config) configauditreport.Plugin {
 	return &plugin{
 		idGenerator: idGenerator,
@@ -53,158 +59,148 @@ func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	imageRef, err := p.config.GetConftestImageRef()
 	if err != nil {
-		return corev1.PodSpec{}, nil, err
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting image reference: %w", err)
 	}
 
-	var secrets []*corev1.Secret
-
-	workloadAsYAML, err := yaml.Marshal(obj)
+	config, err := ctx.GetConfig()
 	if err != nil {
-		return corev1.PodSpec{}, nil, err
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting config: %w", err)
 	}
 
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.idGenerator.GenerateID(),
-			Namespace: ctx.GetNamespace(),
-		},
-		StringData: map[string]string{
-			"workload.yaml": string(workloadAsYAML),
-		},
-	}
-
-	secrets = append(secrets, secret)
-
-	policies, err := p.getPolicies(ctx)
-	if err != nil {
-		return corev1.PodSpec{}, nil, err
-	}
+	policies := p.getPolicies(config)
 
 	var volumeMounts []corev1.VolumeMount
 	var volumeItems []corev1.KeyToPath
 
-	for _, control := range policies {
+	secretName := p.idGenerator.GenerateID()
+	secretData := make(map[string]string)
+
+	for policy, script := range policies {
+		policyName := strings.TrimPrefix(policy, policyPrefix)
+
+		// Copy policies so even if the starboard-conftest-config ConfigMap has changed
+		// before the scan Job is run, it won't fail with references to non-existent config key error.
+		secretData[policy] = script
 
 		volumeItems = append(volumeItems, corev1.KeyToPath{
-			Key:  "conftest.policy." + control,
-			Path: control,
+			Key:  policy,
+			Path: policyName,
 		})
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "policies",
-			MountPath: "/project/policy/" + control,
-			SubPath:   control,
+			Name:      secretName,
+			MountPath: "/project/policy/" + policyName,
+			SubPath:   policyName,
+			ReadOnly:  true,
 		})
 
 	}
 
+	workloadAsYAML, err := yaml.Marshal(obj)
+	if err != nil {
+		return corev1.PodSpec{}, nil, fmt.Errorf("marshalling workload: %w", err)
+	}
+
+	secretData[workloadKey] = string(workloadAsYAML)
+
+	volumeItems = append(volumeItems, corev1.KeyToPath{
+		Key:  workloadKey,
+		Path: "workload.yaml",
+	})
+
 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      secret.Name,
+		Name:      secretName,
 		MountPath: "/project/workload.yaml",
 		SubPath:   "workload.yaml",
+		ReadOnly:  true,
 	})
 
 	return corev1.PodSpec{
-		ServiceAccountName:           ctx.GetServiceAccountName(),
-		AutomountServiceAccountToken: pointer.BoolPtr(false),
-		RestartPolicy:                corev1.RestartPolicyNever,
-		Affinity:                     starboard.LinuxNodeAffinity(),
-		Volumes: []corev1.Volume{
-			{
-				Name: "policies",
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.GetPluginConfigMapName(ctx.GetName()),
+			ServiceAccountName:           ctx.GetServiceAccountName(),
+			AutomountServiceAccountToken: pointer.BoolPtr(false),
+			RestartPolicy:                corev1.RestartPolicyNever,
+			Affinity:                     starboard.LinuxNodeAffinity(),
+			Volumes: []corev1.Volume{
+				{
+					Name: secretName,
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: secretName,
+							Items:      volumeItems,
 						},
-						Items: volumeItems,
 					},
 				},
 			},
-			{
-				Name: secret.Name,
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: secret.Name,
+			Containers: []corev1.Container{
+				{
+					Name:                     conftestContainerName,
+					Image:                    imageRef,
+					ImagePullPolicy:          corev1.PullIfNotPresent,
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("300m"),
+							corev1.ResourceMemory: resource.MustParse("300M"),
+						},
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("50m"),
+							corev1.ResourceMemory: resource.MustParse("50M"),
+						},
+					},
+					VolumeMounts: volumeMounts,
+					Command: []string{
+						"sh",
+					},
+					// TODO Follow up with Conftest maintainers to allow returning 0 exit code in case of failures
+					Args: []string{
+						"-c",
+						"conftest test --output json --all-namespaces --policy /project/policy /project/workload.yaml || true",
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged:               pointer.BoolPtr(false),
+						AllowPrivilegeEscalation: pointer.BoolPtr(false),
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"all"},
+						},
+						ReadOnlyRootFilesystem: pointer.BoolPtr(true),
 					},
 				},
 			},
-		},
-		Containers: []corev1.Container{
-			{
-				Name:                     conftestContainerName,
-				Image:                    imageRef,
-				ImagePullPolicy:          corev1.PullIfNotPresent,
-				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("300m"),
-						corev1.ResourceMemory: resource.MustParse("300M"),
-					},
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("50m"),
-						corev1.ResourceMemory: resource.MustParse("50M"),
-					},
-				},
-				VolumeMounts: volumeMounts,
-				Command: []string{
-					"sh",
-				},
-				// TODO Follow up with Conftest maintainers to allow returning 0 exit code in case of failures
-				Args: []string{
-					"-c",
-					"conftest test --output json --all-namespaces --policy /project/policy /project/workload.yaml || true",
-				},
-				SecurityContext: &corev1.SecurityContext{
-					Privileged:               pointer.BoolPtr(false),
-					AllowPrivilegeEscalation: pointer.BoolPtr(false),
-					Capabilities: &corev1.Capabilities{
-						Drop: []corev1.Capability{"all"},
-					},
-					ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsUser:  pointer.Int64Ptr(1000),
+				RunAsGroup: pointer.Int64Ptr(1000),
+				SeccompProfile: &corev1.SeccompProfile{
+					Type: corev1.SeccompProfileTypeRuntimeDefault,
 				},
 			},
-		},
-		SecurityContext: &corev1.PodSecurityContext{
-			RunAsUser:  pointer.Int64Ptr(1000),
-			RunAsGroup: pointer.Int64Ptr(1000),
-			SeccompProfile: &corev1.SeccompProfile{
-				Type: corev1.SeccompProfileTypeRuntimeDefault,
+		}, []*corev1.Secret{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: ctx.GetNamespace(),
 			},
-		},
-	}, secrets, nil
-
+			StringData: secretData,
+		}}, nil
 }
 
-func (p *plugin) getPolicies(ctx starboard.PluginContext) ([]string, error) {
-	cm, err := ctx.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+func (p *plugin) getPolicies(cm *corev1.ConfigMap) map[string]string {
+	policies := make(map[string]string)
 
-	var policies []string
-
-	for key := range cm.Data {
-		if !strings.HasPrefix(key, "conftest.policy.") {
+	for key, value := range cm.Data {
+		if !strings.HasPrefix(key, policyPrefix) {
 			continue
 		}
 		if !strings.HasSuffix(key, ".rego") {
 			continue
 		}
-		policyName := strings.TrimPrefix(key, "conftest.policy.")
-		policies = append(policies, policyName)
+		policies[key] = value
 	}
 
-	return policies, nil
+	return policies
 }
 
 func (p *plugin) GetContainerName() string {
 	return conftestContainerName
 }
-
-const (
-	defaultCategory = "Security"
-)
 
 func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
 	var checkResults []CheckResult
@@ -222,9 +218,9 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(warning),
-				Severity: "WARNING",
+				Severity: severityWarning,
 				Message:  warning.Message,
-				Category: defaultCategory,
+				Category: defaultCheckCategory,
 				Success:  false,
 			})
 			warningCount++
@@ -233,9 +229,9 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 		for _, failure := range cr.Failures {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(failure),
-				Severity: "DANGER",
+				Severity: severityDanger,
 				Message:  failure.Message,
-				Category: defaultCategory,
+				Category: defaultCheckCategory,
 			})
 			dangerCount++
 		}

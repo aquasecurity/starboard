@@ -73,21 +73,12 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		"AutomountServiceAccountToken": PointTo(BeFalse()),
 		"RestartPolicy":                Equal(corev1.RestartPolicyNever),
 		"Affinity":                     Equal(starboard.LinuxNodeAffinity()),
-		"Volumes": ContainElements(
-			MatchFields(IgnoreExtras, Fields{
-				"Name": Equal("policies"),
-				// We cannot inline assert here on the ConfigMap property with
-				// the MatchFields matcher, because the value is the pointer
-				// to corev1.ConfigMapVolumeSource. The MatchFields matcher
-				// only works with structs :-(
-			}),
+		"Volumes": ConsistOf(
 			MatchFields(IgnoreExtras, Fields{
 				"Name": Equal("00000000-0000-0000-0000-000000000001"),
-				"VolumeSource": Equal(corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: "00000000-0000-0000-0000-000000000001",
-					},
-				}),
+				// We cannot inline assert here on other properties with the MatchFields matcher
+				// because the value of the Secret field is the pointer to v1.SecretVolumeSource.
+				// The MatchFields matcher only works with structs :-(
 			}),
 		),
 		"Containers": ContainElements(
@@ -108,29 +99,34 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				}),
 				"VolumeMounts": ConsistOf(
 					corev1.VolumeMount{
-						Name:      "policies",
+						Name:      "00000000-0000-0000-0000-000000000001",
 						MountPath: "/project/policy/libkubernetes.rego",
 						SubPath:   "libkubernetes.rego",
+						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "policies",
+						Name:      "00000000-0000-0000-0000-000000000001",
 						MountPath: "/project/policy/libutil.rego",
 						SubPath:   "libutil.rego",
+						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "policies",
+						Name:      "00000000-0000-0000-0000-000000000001",
 						MountPath: "/project/policy/access_to_host_pid.rego",
 						SubPath:   "access_to_host_pid.rego",
+						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "policies",
+						Name:      "00000000-0000-0000-0000-000000000001",
 						MountPath: "/project/policy/cpu_not_limited.rego",
 						SubPath:   "cpu_not_limited.rego",
+						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
 						Name:      "00000000-0000-0000-0000-000000000001",
 						MountPath: "/project/workload.yaml",
 						SubPath:   "workload.yaml",
+						ReadOnly:  true,
 					},
 				),
 				"Command": Equal([]string{
@@ -158,10 +154,8 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			},
 		}),
 	}))
-	g.Expect(*jobSpec.Volumes[0].VolumeSource.ConfigMap).To(MatchFields(IgnoreExtras, Fields{
-		"LocalObjectReference": Equal(corev1.LocalObjectReference{
-			Name: "starboard-conftest-config",
-		}),
+	g.Expect(*jobSpec.Volumes[0].VolumeSource.Secret).To(MatchFields(IgnoreExtras, Fields{
+		"SecretName": Equal("00000000-0000-0000-0000-000000000001"),
 		"Items": ConsistOf(
 			corev1.KeyToPath{
 				Key:  "conftest.policy.libkubernetes.rego",
@@ -179,6 +173,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Key:  "conftest.policy.cpu_not_limited.rego",
 				Path: "cpu_not_limited.rego",
 			},
+			corev1.KeyToPath{
+				Key:  "starboard.workload.yaml",
+				Path: "workload.yaml",
+			},
 		),
 	}))
 	g.Expect(secrets).To(ConsistOf(
@@ -188,7 +186,11 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			StringData: map[string]string{
-				"workload.yaml": `metadata:
+				"conftest.policy.libkubernetes.rego":      "<REGO>",
+				"conftest.policy.libutil.rego":            "<REGO>",
+				"conftest.policy.access_to_host_pid.rego": "<REGO>",
+				"conftest.policy.cpu_not_limited.rego":    "<REGO>",
+				"starboard.workload.yaml": `metadata:
   creationTimestamp: null
   name: nginx
   namespace: default
