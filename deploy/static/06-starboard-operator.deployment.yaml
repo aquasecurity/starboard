@@ -20,10 +20,7 @@ spec:
     spec:
       serviceAccountName: starboard-operator
       automountServiceAccountToken: true
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10000
-        fsGroup: 10000
+      securityContext: {}
       containers:
         - name: operator
           image: docker.io/aquasec/starboard-operator:0.10.1-rc1
