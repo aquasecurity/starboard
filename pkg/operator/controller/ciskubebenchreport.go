@@ -189,7 +189,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 }
 
 func (r *CISKubeBenchReportReconciler) getScanJobName(node *corev1.Node) string {
-	return "scan-kubebenchreports-" + node.Name
+	return "scan-cisbenchmark-" + kube.ComputeHash(node.Name)
 }
 
 func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
