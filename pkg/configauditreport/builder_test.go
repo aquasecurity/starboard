@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,15 +38,15 @@ func TestBuilder(t *testing.T) {
 					Kind:               "ReplicaSet",
 					Name:               "some-owner",
 					Controller:         pointer.BoolPtr(true),
-					BlockOwnerDeletion: pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(false),
 				},
 			},
 			Labels: map[string]string{
-				"starboard.resource.kind":      "ReplicaSet",
-				"starboard.resource.name":      "some-owner",
-				"starboard.resource.namespace": "qa",
-				"pod-spec-hash":                "xyz",
-				"plugin-config-hash":           "nop",
+				starboard.LabelResourceKind:      "ReplicaSet",
+				starboard.LabelResourceName:      "some-owner",
+				starboard.LabelResourceNamespace: "qa",
+				starboard.LabelPodSpecHash:       "xyz",
+				starboard.LabelPluginConfigHash:  "nop",
 			},
 		},
 		Report: v1alpha1.ConfigAuditResult{},

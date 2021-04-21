@@ -21,7 +21,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type Scanner struct {
@@ -91,20 +90,12 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
 
-	report := v1alpha1.CISKubeBenchReport{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: node.Name,
-			Labels: map[string]string{
-				starboard.LabelResourceKind: string(kube.KindNode),
-				starboard.LabelResourceName: node.Name,
-			},
-		},
-		Report: output,
-	}
-
-	err = controllerutil.SetControllerReference(&node, &report, s.scheme)
+	report, err := NewBuilder(s.scheme).
+		Controller(&node).
+		Data(output).
+		Get()
 	if err != nil {
-		return v1alpha1.CISKubeBenchReport{}, err
+		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("building report: %w", err)
 	}
 
 	return report, nil

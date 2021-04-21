@@ -1044,7 +1044,7 @@ var _ = Describe("Starboard CLI", func() {
 							Name:               node.Name,
 							UID:                node.UID,
 							Controller:         pointer.BoolPtr(true),
-							BlockOwnerDeletion: pointer.BoolPtr(true),
+							BlockOwnerDeletion: pointer.BoolPtr(false),
 						}),
 					}),
 					"Report": MatchFields(IgnoreExtras, Fields{

@@ -22,7 +22,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -271,21 +270,12 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 		_ = logsStream.Close()
 	}()
 
-	// TODO We have a similar code in CLI
-	report := v1alpha1.CISKubeBenchReport{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: node.Name,
-			Labels: map[string]string{
-				starboard.LabelResourceKind: string(kube.KindNode),
-				starboard.LabelResourceName: node.Name,
-			},
-		},
-		Report: output,
-	}
-
-	err = controllerutil.SetControllerReference(node, &report, r.Client.Scheme())
+	report, err := kubebench.NewBuilder(r.Client.Scheme()).
+		Controller(node).
+		Data(output).
+		Get()
 	if err != nil {
-		return fmt.Errorf("setting controller reference: %w", err)
+		return fmt.Errorf("building report: %w", err)
 	}
 
 	log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", report.Name)

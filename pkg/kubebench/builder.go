@@ -1,8 +1,7 @@
-package configauditreport
+package kubebench
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -15,10 +14,8 @@ import (
 
 type Builder interface {
 	Controller(controller metav1.Object) Builder
-	PodSpecHash(hash string) Builder
-	PluginConfigHash(hash string) Builder
-	Result(result v1alpha1.ConfigAuditResult) Builder
-	Get() (v1alpha1.ConfigAuditReport, error)
+	Data(data v1alpha1.CISKubeBenchOutput) Builder
+	Get() (v1alpha1.CISKubeBenchReport, error)
 }
 
 func NewBuilder(scheme *runtime.Scheme) Builder {
@@ -28,11 +25,9 @@ func NewBuilder(scheme *runtime.Scheme) Builder {
 }
 
 type builder struct {
-	scheme           *runtime.Scheme
-	controller       metav1.Object
-	podSpecHash      string
-	pluginConfigHash string
-	result           v1alpha1.ConfigAuditResult
+	scheme     *runtime.Scheme
+	controller metav1.Object
+	data       v1alpha1.CISKubeBenchOutput
 }
 
 func (b *builder) Controller(controller metav1.Object) Builder {
@@ -40,66 +35,39 @@ func (b *builder) Controller(controller metav1.Object) Builder {
 	return b
 }
 
-func (b *builder) PodSpecHash(hash string) Builder {
-	b.podSpecHash = hash
+func (b *builder) Data(data v1alpha1.CISKubeBenchOutput) Builder {
+	b.data = data
 	return b
 }
 
-func (b *builder) PluginConfigHash(hash string) Builder {
-	b.pluginConfigHash = hash
-	return b
+func (b *builder) reportName() string {
+	return b.controller.GetName()
 }
 
-func (b *builder) Result(result v1alpha1.ConfigAuditResult) Builder {
-	b.result = result
-	return b
-}
-
-func (b *builder) reportName() (string, error) {
+func (b *builder) Get() (v1alpha1.CISKubeBenchReport, error) {
 	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s-%s", strings.ToLower(kind),
-		b.controller.GetName()), nil
-}
-
-func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
-	kind, err := kube.KindForObject(b.controller, b.scheme)
-	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting kind for object: %w", err)
+		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("getting kind for object: %w", err)
 	}
 
 	labels := map[string]string{
-		starboard.LabelResourceKind:      kind,
-		starboard.LabelResourceName:      b.controller.GetName(),
-		starboard.LabelResourceNamespace: b.controller.GetNamespace(),
+		starboard.LabelResourceKind: kind,
+		starboard.LabelResourceName: b.controller.GetName(),
 	}
 
-	if b.podSpecHash != "" {
-		labels[starboard.LabelPodSpecHash] = b.podSpecHash
-	}
+	reportName := b.reportName()
 
-	if b.pluginConfigHash != "" {
-		labels[starboard.LabelPluginConfigHash] = b.pluginConfigHash
-	}
-
-	reportName, err := b.reportName()
-	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, err
-	}
-
-	report := v1alpha1.ConfigAuditReport{
+	report := v1alpha1.CISKubeBenchReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      reportName,
 			Namespace: b.controller.GetNamespace(),
 			Labels:    labels,
 		},
-		Report: b.result,
+		Report: b.data,
 	}
 	err = controllerutil.SetControllerReference(b.controller, &report, b.scheme)
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("setting controller reference: %w", err)
+		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("setting controller reference: %w", err)
 	}
 	// The OwnerReferencesPermissionsEnforcement admission controller protects the
 	// access to metadata.ownerReferences[x].blockOwnerDeletion of an object, so

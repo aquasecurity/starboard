@@ -76,7 +76,7 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 				Name:               m.owner.GetName(),
 				UID:                m.owner.GetUID(),
 				Controller:         pointer.BoolPtr(true),
-				BlockOwnerDeletion: pointer.BoolPtr(true),
+				BlockOwnerDeletion: pointer.BoolPtr(false),
 			}),
 		}),
 		"Report": MatchFields(IgnoreExtras, Fields{
@@ -150,7 +150,7 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 				Name:               m.owner.GetName(),
 				UID:                m.owner.GetUID(),
 				Controller:         pointer.BoolPtr(true),
-				BlockOwnerDeletion: pointer.BoolPtr(true),
+				BlockOwnerDeletion: pointer.BoolPtr(false),
 			}),
 		}),
 		"Report": MatchFields(IgnoreExtras, Fields{

@@ -38,6 +38,12 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - secrets
+    verbs:
+      - delete
+  - apiGroups:
+      - ""
+    resources:
       - events
     verbs:
       - create
