@@ -62,8 +62,8 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.10.0"
-    tag_prev: "v0.9.2"
+    tag: "v0.10.1-rc1"
+    tag_prev: "v0.10.0"
     build:
       version: "0.10.0"
       commit: "40f061c9721476091d080e27d191a3c9c3182bcf"
