@@ -62,14 +62,14 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.10.1-rc1"
+    tag: "v0.10.1"
     tag_prev: "v0.10.0"
     build:
-      version: "0.10.0"
+      version: "0.10.1"
       commit: "40f061c9721476091d080e27d191a3c9c3182bcf"
       date: "2021-04-13T20:51:53Z"
     chart:
-      version: 0.5.0
+      version: 0.5.1
 
 # Requires pip install mkdocs-macros-plugin
 plugins:
