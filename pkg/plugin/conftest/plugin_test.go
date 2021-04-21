@@ -146,13 +146,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				}),
 			}),
 		),
-		"SecurityContext": Equal(&corev1.PodSecurityContext{
-			RunAsUser:  pointer.Int64Ptr(1000),
-			RunAsGroup: pointer.Int64Ptr(1000),
-			SeccompProfile: &corev1.SeccompProfile{
-				Type: corev1.SeccompProfileTypeRuntimeDefault,
-			},
-		}),
+		"SecurityContext": Equal(&corev1.PodSecurityContext{}),
 	}))
 	g.Expect(*jobSpec.Volumes[0].VolumeSource.Secret).To(MatchFields(IgnoreExtras, Fields{
 		"SecretName": Equal("00000000-0000-0000-0000-000000000001"),

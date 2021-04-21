@@ -166,13 +166,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 					},
 				},
 			},
-			SecurityContext: &corev1.PodSecurityContext{
-				RunAsUser:  pointer.Int64Ptr(1000),
-				RunAsGroup: pointer.Int64Ptr(1000),
-				SeccompProfile: &corev1.SeccompProfile{
-					Type: corev1.SeccompProfileTypeRuntimeDefault,
-				},
-			},
+			SecurityContext: &corev1.PodSecurityContext{},
 		}, []*corev1.Secret{{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      secretName,

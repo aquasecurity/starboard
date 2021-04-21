@@ -17,8 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const namespaceItest = "starboard-itest"
-
 var (
 	kubeClient             client.Client
 	apiextensionsClientset apiextensions.ApiextensionsV1beta1Interface
@@ -34,7 +32,7 @@ var (
 	}
 	testNamespace = &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespaceItest,
+			Name: "starboard-itest",
 		},
 	}
 
@@ -44,7 +42,7 @@ var (
 			Namespace: "starboard",
 		},
 		Data: map[string]string{
-			"conftest.policy.kubernetes": `
+			"conftest.policy.runs_as_root.rego": `
 	package main
     
     deny[msg] {
