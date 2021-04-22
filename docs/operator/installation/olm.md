@@ -10,7 +10,7 @@ configure it to watch the `default` namespaces:
 
 1. Install the Operator Lifecycle Manager:
    ```
-   curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/install.sh | bash -s 0.16.1
+   curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh | bash -s v0.17.0
    ```
 2. Create the namespace to install the operator in:
    ```
@@ -74,7 +74,7 @@ configure it to watch the `default` namespaces:
 6. After install, watch the operator come up using the following command:
    ```console
    $ kubectl get clusterserviceversions -n starboard-operator
-   NAME                        DISPLAY              VERSION   REPLACES                    PHASE
+   NAME                        DISPLAY              VERSION   REPLACES                     PHASE
    starboard-operator.{{ var.tag }}  Starboard Operator   {{ var.build.version }}    starboard-operator.{{ var.tag_prev }}   Succeeded
    ```
    If the above command succeeds and the ClusterServiceVersion has transitioned from `Installing` to `Succeeded` phase
