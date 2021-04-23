@@ -36,7 +36,7 @@ func TestPluginContext_GetConfig(t *testing.T) {
 		WithName("polaris").
 		WithNamespace("starboard-ns").
 		WithClient(client).
-		Build()
+		Get()
 
 	cm, err := pluginContext.GetConfig()
 

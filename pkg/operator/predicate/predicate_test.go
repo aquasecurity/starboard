@@ -1,12 +1,13 @@
 package predicate_test
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -207,7 +208,7 @@ var _ = Describe("Predicate", func() {
 				obj := &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"app.kubernetes.io/managed-by": "starboard-operator",
+							"app.kubernetes.io/managed-by": "starboard",
 						},
 					},
 				}

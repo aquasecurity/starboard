@@ -37,7 +37,7 @@ func (c *checker) Check(ctx context.Context) (bool, int, error) {
 func (c *checker) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
 	err := c.client.List(ctx, &scanJobs, client.MatchingLabels{
-		starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
+		starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
 	}, client.InNamespace(c.config.Namespace))
 	if err != nil {
 		return 0, err

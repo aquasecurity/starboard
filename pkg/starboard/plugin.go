@@ -90,6 +90,6 @@ func (b *PluginContextBuilder) WithServiceAccountName(name string) *PluginContex
 	return b
 }
 
-func (b *PluginContextBuilder) Build() PluginContext {
+func (b *PluginContextBuilder) Get() PluginContext {
 	return b.ctx
 }

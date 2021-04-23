@@ -163,10 +163,10 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			Name:      r.getScanJobName(node),
 			Namespace: r.Config.Namespace,
 			Labels: labels.Set{
-				starboard.LabelResourceKind:        string(kube.KindNode),
-				starboard.LabelResourceName:        node.Name,
-				starboard.LabelK8SAppManagedBy:     starboard.AppStarboardOperator,
-				starboard.LabelKubeBenchReportScan: "true",
+				starboard.LabelResourceKind:           string(kube.KindNode),
+				starboard.LabelResourceName:           node.Name,
+				starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
+				starboard.LabelKubeBenchReportScanner: "true",
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -176,10 +176,10 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
-						starboard.LabelResourceKind:        string(kube.KindNode),
-						starboard.LabelResourceName:        node.Name,
-						starboard.LabelK8SAppManagedBy:     starboard.AppStarboardOperator,
-						starboard.LabelKubeBenchReportScan: "true",
+						starboard.LabelResourceKind:           string(kube.KindNode),
+						starboard.LabelResourceName:           node.Name,
+						starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
+						starboard.LabelKubeBenchReportScanner: "true",
 					},
 				},
 				Spec: templateSpec,

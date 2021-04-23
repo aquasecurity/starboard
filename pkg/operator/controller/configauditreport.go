@@ -17,7 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -139,7 +138,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		}
 
 		log.V(1).Info("Checking whether configuration audit has been scheduled")
-		_, job, err := r.hasActiveScanJob(ctx, workloadPartial, podSpecHash)
+		_, job, err := r.hasActiveScanJob(ctx, workloadObj, podSpecHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -160,7 +159,12 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		job, secrets, err := r.getScanJob(workloadPartial, workloadObj, podSpecHash)
+		job, secrets, err := configauditreport.NewScanJob().
+			WithPlugin(r.Plugin).
+			WithPluginContext(r.PluginContext).
+			WithTimeout(r.Config.ScanJobTimeout).
+			WithObject(workloadObj).
+			Get()
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -211,8 +215,8 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 	return false, nil
 }
 
-func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, owner kube.Object, hash string) (bool, *batchv1.Job, error) {
-	jobName := r.getScanJobName(owner)
+func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj client.Object, hash string) (bool, *batchv1.Job, error) {
+	jobName := configauditreport.GetScanJobName(obj)
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: r.Config.Namespace, Name: jobName}, job)
 	if err != nil {
@@ -225,58 +229,6 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, owne
 		return true, job, nil
 	}
 	return false, nil, nil
-}
-
-func (r *ConfigAuditReportReconciler) getScanJobName(workload kube.Object) string {
-	return fmt.Sprintf("scan-configauditreport-%s", kube.ComputeHash(workload))
-}
-
-func (r *ConfigAuditReportReconciler) getScanJob(workload kube.Object, obj client.Object, podSpecHash string) (*batchv1.Job, []*corev1.Secret, error) {
-	jobSpec, secrets, err := r.Plugin.GetScanJobSpec(r.PluginContext, obj)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	configHash, err := r.Plugin.GetConfigHash(r.PluginContext)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.getScanJobName(workload),
-			Namespace: r.Config.Namespace,
-			Labels: map[string]string{
-				starboard.LabelResourceKind:          string(workload.Kind),
-				starboard.LabelResourceName:          workload.Name,
-				starboard.LabelResourceNamespace:     workload.Namespace,
-				starboard.LabelK8SAppManagedBy:       starboard.AppStarboardOperator,
-				starboard.LabelPodSpecHash:           podSpecHash,
-				starboard.LabelPluginConfigHash:      configHash,
-				starboard.LabelConfigAuditReportScan: "true",
-			},
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(0),
-			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(r.Config.ScanJobTimeout),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						starboard.LabelResourceKind:          string(workload.Kind),
-						starboard.LabelResourceName:          workload.Name,
-						starboard.LabelResourceNamespace:     workload.Namespace,
-						starboard.LabelK8SAppManagedBy:       starboard.AppStarboardOperator,
-						starboard.LabelPodSpecHash:           podSpecHash,
-						starboard.LabelPluginConfigHash:      configHash,
-						starboard.LabelConfigAuditReportScan: "true",
-					},
-				},
-				Spec: jobSpec,
-			},
-		},
-	}, secrets, nil
 }
 
 func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
@@ -362,11 +314,11 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		_ = logsStream.Close()
 	}()
 
-	report, err := configauditreport.NewBuilder(r.Client.Scheme()).
+	report, err := configauditreport.NewReportBuilder(r.Client.Scheme()).
 		Controller(ownerObj).
 		PodSpecHash(podSpecHash).
 		PluginConfigHash(pluginConfigHash).
-		Result(result).
+		Data(result).
 		Get()
 	if err != nil {
 		return err

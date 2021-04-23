@@ -26,12 +26,12 @@ const (
 	LabelPodSpecHash       = "pod-spec-hash"
 	LabelPluginConfigHash  = "plugin-config-hash"
 
-	LabelConfigAuditReportScan   = "configAuditReport.scanner"
-	LabelVulnerabilityReportScan = "vulnerabilityReport.scanner"
-	LabelKubeBenchReportScan     = "kubeBenchReport.scanner"
+	LabelConfigAuditReportScanner   = "configAuditReport.scanner"
+	LabelVulnerabilityReportScanner = "vulnerabilityReport.scanner"
+	LabelKubeBenchReportScanner     = "kubeBenchReport.scanner"
 
 	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
-	AppStarboardOperator = "starboard-operator"
+	AppStarboard         = "starboard"
 )
 
 const (

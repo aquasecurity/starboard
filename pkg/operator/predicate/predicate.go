@@ -59,13 +59,13 @@ var InNamespace = func(namespace string) predicate.Predicate {
 }
 
 // ManagedByStarboardOperator is a predicate.Predicate that returns true if the
-// specified client.Object is managed by the Starboard Operator.
+// specified client.Object is managed by Starboard.
 //
 // For example, pods controlled by jobs scheduled by Starboard Operator are
-// labeled with `app.kubernetes.io/managed-by=starboard-operator`.
+// labeled with `app.kubernetes.io/managed-by=starboard`.
 var ManagedByStarboardOperator = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if managedBy, ok := obj.GetLabels()["app.kubernetes.io/managed-by"]; ok {
-		return managedBy == "starboard-operator"
+	if managedBy, ok := obj.GetLabels()[starboard.LabelK8SAppManagedBy]; ok {
+		return managedBy == starboard.AppStarboard
 	}
 	return false
 })
@@ -86,21 +86,21 @@ var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) boo
 })
 
 var IsVulnerabilityReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelVulnerabilityReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelVulnerabilityReportScanner]; ok {
 		return true
 	}
 	return false
 })
 
 var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]; ok {
 		return true
 	}
 	return false
 })
 
 var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScan]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok {
 		return true
 	}
 	return false
