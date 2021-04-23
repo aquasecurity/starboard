@@ -12,6 +12,10 @@ var (
 	vulnerabilityReportsCRD []byte
 	//go:embed deploy/crd/configauditreports.crd.yaml
 	configAuditReportsCRD []byte
+	//go:embed deploy/crd/ciskubebenchreports.crd.yaml
+	kubeBenchReportsCRD []byte
+	//go:embed deploy/crd/kubehunterreports.crd.yaml
+	kubeHunterReportsCRD []byte
 )
 
 func GetVulnerabilityReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
@@ -20,6 +24,14 @@ func GetVulnerabilityReportsCRD() (apiextensionsv1.CustomResourceDefinition, err
 
 func GetConfigAuditReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
 	return getCRDFromBytes(configAuditReportsCRD)
+}
+
+func GetCISKubeBenchReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
+	return getCRDFromBytes(kubeBenchReportsCRD)
+}
+
+func GetKubeHunterReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
+	return getCRDFromBytes(kubeHunterReportsCRD)
 }
 
 func getCRDFromBytes(bytes []byte) (apiextensionsv1.CustomResourceDefinition, error) {

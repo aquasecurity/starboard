@@ -1,11 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/utils/pointer"
 )
 
 const (
@@ -13,79 +9,6 @@ const (
 	CISKubeBenchReportCRVersion = "v1alpha1"
 	CISKubeBenchReportKind      = "CISKubeBenchReport"
 	CISKubeBenchReportListKind  = "CISKubeBenchReportList"
-)
-
-var (
-	// TODO Once we migrate to Go 1.16 we can use the embed package to load the CRD from ./deploy/crd/ciskubebenchreports.crd.yaml
-	CISKubeBenchReportCRD = apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: CISKubeBenchReportCRName,
-			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
-			},
-		},
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: aquasecurity.GroupName,
-			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
-				{
-					Name:    CISKubeBenchReportCRVersion,
-					Served:  true,
-					Storage: true,
-					AdditionalPrinterColumns: []apiextensionsv1.CustomResourceColumnDefinition{
-						{
-							JSONPath: ".report.scanner.name",
-							Type:     "string",
-							Name:     "Scanner",
-						},
-						{
-							JSONPath: ".metadata.creationTimestamp",
-							Type:     "date",
-							Name:     "Age",
-						},
-						{
-							JSONPath: ".report.summary.failCount",
-							Type:     "integer",
-							Name:     "Fail",
-							Priority: 1,
-						},
-						{
-							JSONPath: ".report.summary.warnCount",
-							Type:     "integer",
-							Name:     "Warn",
-							Priority: 1,
-						},
-						{
-							JSONPath: ".report.summary.infoCount",
-							Type:     "integer",
-							Name:     "Info",
-							Priority: 1,
-						},
-						{
-							JSONPath: ".report.summary.passCount",
-							Type:     "integer",
-							Name:     "Pass",
-							Priority: 1,
-						},
-					},
-					Schema: &apiextensionsv1.CustomResourceValidation{
-						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
-							XPreserveUnknownFields: pointer.BoolPtr(true),
-							Type:                   "object",
-						},
-					},
-				},
-			},
-			Scope: apiextensionsv1.ClusterScoped,
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Singular:   "ciskubebenchreport",
-				Plural:     "ciskubebenchreports",
-				Kind:       CISKubeBenchReportKind,
-				ListKind:   CISKubeBenchReportListKind,
-				Categories: []string{"all"},
-				ShortNames: []string{"kubebench"},
-			},
-		},
-	}
 )
 
 // +genclient
