@@ -207,9 +207,9 @@ func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChe
 			continue
 		}
 		switch c.Severity {
-		case v1alpha1.ConfigAuditDangerSeverity:
+		case v1alpha1.ConfigAuditSeverityDanger:
 			summary.DangerCount++
-		case v1alpha1.ConfigAuditWarningSeverity:
+		case v1alpha1.ConfigAuditSeverityWarning:
 			summary.WarningCount++
 		}
 	}
@@ -220,9 +220,9 @@ func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChe
 				continue
 			}
 			switch c.Severity {
-			case v1alpha1.ConfigAuditDangerSeverity:
+			case v1alpha1.ConfigAuditSeverityDanger:
 				summary.DangerCount++
-			case v1alpha1.ConfigAuditWarningSeverity:
+			case v1alpha1.ConfigAuditSeverityWarning:
 				summary.WarningCount++
 			}
 		}
