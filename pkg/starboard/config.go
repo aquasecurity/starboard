@@ -284,10 +284,15 @@ func GetDefaultConfig() ConfigData {
 }
 
 // GetDefaultPolarisConfig returns the default Polaris configuration.
-func GetDefaultPolarisConfig() ConfigData {
+func GetDefaultPolarisConfig() map[string]string {
 	return map[string]string{
 		"polaris.config.yaml": polarisConfigYAML,
 	}
+}
+
+// GetDefaultConftestConfig return the defautl Conftest configuration.
+func GetDefaultConftestConfig() map[string]string {
+	return map[string]string{}
 }
 
 func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
@@ -424,34 +429,26 @@ type configManager struct {
 }
 
 func (c *configManager) EnsureDefault(ctx context.Context) error {
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: c.namespace,
-			Name:      ConfigMapName,
-			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
-			},
-		},
-		Data: GetDefaultConfig(),
-	}
-	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, cm, metav1.CreateOptions{})
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return err
-	}
+	cm, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, ConfigMapName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("getting config: %w", err)
+		}
 
-	polarisCm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: c.namespace,
-			Name:      GetPluginConfigMapName(string(Polaris)),
-			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+		cm, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: c.namespace,
+				Name:      ConfigMapName,
+				Labels: labels.Set{
+					LabelK8SAppManagedBy: "starboard",
+				},
 			},
-		},
-		Data: GetDefaultPolarisConfig(),
-	}
-	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, polarisCm, metav1.CreateOptions{})
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return err
+			Data: GetDefaultConfig(),
+		}, metav1.CreateOptions{})
+
+		if err != nil {
+			return fmt.Errorf("creating config: %w", err)
+		}
 	}
 
 	secret := &corev1.Secret{
@@ -459,7 +456,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 			Namespace: c.namespace,
 			Name:      SecretName,
 			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+				LabelK8SAppManagedBy: "starboard",
 			},
 		},
 	}
@@ -467,6 +464,35 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
+
+	scanner, err := ConfigData(cm.Data).GetConfigAuditReportsScanner()
+	if err != nil {
+		return fmt.Errorf("getting scanner: %w", err)
+	}
+
+	var pluginConfigData map[string]string
+	switch scanner {
+	case Polaris:
+		pluginConfigData = GetDefaultPolarisConfig()
+	case Conftest:
+		pluginConfigData = GetDefaultConftestConfig()
+	}
+
+	pluginConfig := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.namespace,
+			Name:      GetPluginConfigMapName(string(scanner)),
+			Labels: labels.Set{
+				LabelK8SAppManagedBy: "starboard",
+			},
+		},
+		Data: pluginConfigData,
+	}
+	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, pluginConfig, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
 	return nil
 }
 
