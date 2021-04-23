@@ -1,11 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/utils/pointer"
 )
 
 const (
@@ -15,76 +11,9 @@ const (
 	ConfigAuditReportListKind  = "ConfigAuditReportList"
 )
 
-var (
-	// TODO Once we migrate to Go 1.16 we can use the embed package to load the CRD from ./deploy/crd/configauditreports.crd.yaml
-	ConfigAuditReportCRD = apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: ConfigAuditReportCRName,
-			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
-			},
-		},
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: aquasecurity.GroupName,
-			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
-				{
-					Name:    ConfigAuditReportCRVersion,
-					Served:  true,
-					Storage: true,
-					AdditionalPrinterColumns: []apiextensionsv1.CustomResourceColumnDefinition{
-						{
-							JSONPath: ".report.scanner.name",
-							Type:     "string",
-							Name:     "Scanner",
-						},
-						{
-							JSONPath: ".metadata.creationTimestamp",
-							Type:     "date",
-							Name:     "Age",
-						},
-						{
-							JSONPath: ".report.summary.dangerCount",
-							Type:     "integer",
-							Name:     "Danger",
-							Priority: 1,
-						},
-						{
-							JSONPath: ".report.summary.warningCount",
-							Type:     "integer",
-							Name:     "Warning",
-							Priority: 1,
-						},
-						{
-							JSONPath: ".report.summary.passCount",
-							Type:     "integer",
-							Name:     "Pass",
-							Priority: 1,
-						},
-					},
-					Schema: &apiextensionsv1.CustomResourceValidation{
-						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
-							XPreserveUnknownFields: pointer.BoolPtr(true),
-							Type:                   "object",
-						},
-					},
-				},
-			},
-			Scope: apiextensionsv1.NamespaceScoped,
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Singular:   "configauditreport",
-				Plural:     "configauditreports",
-				Kind:       ConfigAuditReportKind,
-				ListKind:   ConfigAuditReportListKind,
-				Categories: []string{"all"},
-				ShortNames: []string{"configaudit"},
-			},
-		},
-	}
-)
-
 const (
-	ConfigAuditDangerSeverity  = "danger"
-	ConfigAuditWarningSeverity = "warning"
+	ConfigAuditSeverityDanger  = "danger"
+	ConfigAuditSeverityWarning = "warning"
 )
 
 type ConfigAuditSummary struct {

@@ -24,8 +24,6 @@ const (
 	policyPrefix          = "conftest.policy."
 	workloadKey           = "starboard.workload.yaml"
 	defaultCheckCategory  = "Security"
-	severityWarning       = "WARNING"
-	severityDanger        = "DANGER"
 )
 
 type Config interface {
@@ -212,7 +210,7 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(warning),
-				Severity: severityWarning,
+				Severity: v1alpha1.ConfigAuditSeverityWarning,
 				Message:  warning.Message,
 				Category: defaultCheckCategory,
 				Success:  false,
@@ -223,7 +221,7 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 		for _, failure := range cr.Failures {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(failure),
-				Severity: severityDanger,
+				Severity: v1alpha1.ConfigAuditSeverityDanger,
 				Message:  failure.Message,
 				Category: defaultCheckCategory,
 			})

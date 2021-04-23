@@ -157,7 +157,11 @@ func (m *CRManager) Init(ctx context.Context) error {
 		return err
 	}
 
-	err = m.createOrUpdateCRD(ctx, &v1alpha1.ConfigAuditReportCRD)
+	configAuditReportsCRD, err := embedded.GetConfigAuditReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &configAuditReportsCRD)
 	if err != nil {
 		return err
 	}
