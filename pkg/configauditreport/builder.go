@@ -3,31 +3,108 @@ package configauditreport
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-type Builder interface {
-	Controller(controller metav1.Object) Builder
-	PodSpecHash(hash string) Builder
-	PluginConfigHash(hash string) Builder
-	Result(result v1alpha1.ConfigAuditResult) Builder
-	Get() (v1alpha1.ConfigAuditReport, error)
+type ScanJobBuilder struct {
+	plugin        Plugin
+	pluginContext starboard.PluginContext
+	timeout       time.Duration
+	object        client.Object
 }
 
-func NewBuilder(scheme *runtime.Scheme) Builder {
-	return &builder{
-		scheme: scheme,
+func NewScanJob() *ScanJobBuilder {
+	return &ScanJobBuilder{}
+}
+
+func (s *ScanJobBuilder) WithPlugin(plugin Plugin) *ScanJobBuilder {
+	s.plugin = plugin
+	return s
+}
+
+func (s *ScanJobBuilder) WithPluginContext(pluginContext starboard.PluginContext) *ScanJobBuilder {
+	s.pluginContext = pluginContext
+	return s
+}
+
+func (s *ScanJobBuilder) WithTimeout(timeout time.Duration) *ScanJobBuilder {
+	s.timeout = timeout
+	return s
+}
+
+func (s *ScanJobBuilder) WithObject(object client.Object) *ScanJobBuilder {
+	s.object = object
+	return s
+}
+
+func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
+	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, s.object)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	podSpec, err := kube.GetPodSpec(s.object)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	podSpecHash := kube.ComputeHash(podSpec)
+
+	pluginConfigHash, err := s.plugin.GetConfigHash(s.pluginContext)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	labels := map[string]string{
+		starboard.LabelResourceKind:             s.object.GetObjectKind().GroupVersionKind().Kind,
+		starboard.LabelResourceName:             s.object.GetName(),
+		starboard.LabelResourceNamespace:        s.object.GetNamespace(),
+		starboard.LabelPodSpecHash:              podSpecHash,
+		starboard.LabelPluginConfigHash:         pluginConfigHash,
+		starboard.LabelConfigAuditReportScanner: s.pluginContext.GetName(),
+		starboard.LabelK8SAppManagedBy:          starboard.AppStarboard,
+	}
+
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      GetScanJobName(s.object),
+			Namespace: s.pluginContext.GetNamespace(),
+			Labels:    labels,
+		},
+		Spec: batchv1.JobSpec{
+			BackoffLimit:          pointer.Int32Ptr(0),
+			Completions:           pointer.Int32Ptr(1),
+			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.timeout),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: jobSpec,
+			},
+		},
+	}, secrets, nil
 }
 
-type builder struct {
+func GetScanJobName(obj client.Object) string {
+	return fmt.Sprintf("scan-configauditreport-%s", kube.ComputeHash(kube.Object{
+		Kind:      kube.Kind(obj.GetObjectKind().GroupVersionKind().Kind),
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	}))
+}
+
+type ReportBuilder struct {
 	scheme           *runtime.Scheme
 	controller       metav1.Object
 	podSpecHash      string
@@ -35,27 +112,33 @@ type builder struct {
 	result           v1alpha1.ConfigAuditResult
 }
 
-func (b *builder) Controller(controller metav1.Object) Builder {
+func NewReportBuilder(scheme *runtime.Scheme) *ReportBuilder {
+	return &ReportBuilder{
+		scheme: scheme,
+	}
+}
+
+func (b *ReportBuilder) Controller(controller metav1.Object) *ReportBuilder {
 	b.controller = controller
 	return b
 }
 
-func (b *builder) PodSpecHash(hash string) Builder {
+func (b *ReportBuilder) PodSpecHash(hash string) *ReportBuilder {
 	b.podSpecHash = hash
 	return b
 }
 
-func (b *builder) PluginConfigHash(hash string) Builder {
+func (b *ReportBuilder) PluginConfigHash(hash string) *ReportBuilder {
 	b.pluginConfigHash = hash
 	return b
 }
 
-func (b *builder) Result(result v1alpha1.ConfigAuditResult) Builder {
+func (b *ReportBuilder) Data(result v1alpha1.ConfigAuditResult) *ReportBuilder {
 	b.result = result
 	return b
 }
 
-func (b *builder) reportName() (string, error) {
+func (b *ReportBuilder) reportName() (string, error) {
 	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
 		return "", err
@@ -64,7 +147,7 @@ func (b *builder) reportName() (string, error) {
 		b.controller.GetName()), nil
 }
 
-func (b *builder) Get() (v1alpha1.ConfigAuditReport, error) {
+func (b *ReportBuilder) Get() (v1alpha1.ConfigAuditReport, error) {
 	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting kind for object: %w", err)

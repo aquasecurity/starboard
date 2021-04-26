@@ -91,7 +91,7 @@ func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.P
 		WithNamespace(r.namespace).
 		WithServiceAccountName(r.serviceAccountName).
 		WithClient(r.client).
-		Build()
+		Get()
 
 	switch scanner {
 	case starboard.Polaris:

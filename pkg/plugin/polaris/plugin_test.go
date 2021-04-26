@@ -121,7 +121,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				WithName(string(starboard.Polaris)).
 				WithNamespace(starboard.NamespaceName).
 				WithServiceAccountName(starboard.ServiceAccountName).
-				Build()
+				Get()
 			plugin := polaris.NewPlugin(fixedClock, tc.config)
 			jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, tc.obj)
 
@@ -208,7 +208,7 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 					Data: data,
 				}).
 				Build()).
-			Build()
+			Get()
 	}
 
 	t.Run("Should return different hash for different config data", func(t *testing.T) {

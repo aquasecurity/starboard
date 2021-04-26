@@ -5,17 +5,13 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,7 +23,6 @@ type Scanner struct {
 	logsReader     kube.LogsReader
 	plugin         Plugin
 	pluginContext  starboard.PluginContext
-	ext.IDGenerator
 }
 
 func NewScanner(
@@ -45,7 +40,6 @@ func NewScanner(
 		pluginContext:  pluginContext,
 		objectResolver: &kube.ObjectResolver{Client: client},
 		logsReader:     kube.NewLogsReader(clientset),
-		IDGenerator:    ext.NewGoogleUUIDGenerator(),
 	}
 }
 
@@ -58,7 +52,12 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, secrets, err := s.getScanJob(owner)
+	job, secrets, err := NewScanJob().
+		WithPlugin(s.plugin).
+		WithPluginContext(s.pluginContext).
+		WithTimeout(s.opts.ScanJobTimeout).
+		WithObject(owner).
+		Get()
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
@@ -94,41 +93,19 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		_ = logsStream.Close()
 	}()
 
-	return NewBuilder(s.scheme).
-		Controller(owner).
-		Result(result).
-		Get()
-}
-
-func (s *Scanner) getScanJob(obj client.Object) (*batchv1.Job, []*corev1.Secret, error) {
-	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, obj)
-	if err != nil {
-		return nil, nil, err
+	podSpecHash, ok := job.Labels[starboard.LabelPodSpecHash]
+	if !ok {
+		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("expected label %s not set", starboard.LabelPodSpecHash)
 	}
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.GenerateID(),
-			Namespace: starboard.NamespaceName,
-			Labels: map[string]string{
-				starboard.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
-				starboard.LabelResourceName:      obj.GetName(),
-				starboard.LabelResourceNamespace: obj.GetNamespace(),
-			},
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit:          pointer.Int32Ptr(0),
-			Completions:           pointer.Int32Ptr(1),
-			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						starboard.LabelResourceKind:      obj.GetObjectKind().GroupVersionKind().Kind,
-						starboard.LabelResourceName:      obj.GetName(),
-						starboard.LabelResourceNamespace: obj.GetNamespace(),
-					},
-				},
-				Spec: jobSpec,
-			},
-		},
-	}, secrets, nil
+	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
+	if !ok {
+		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
+	}
+
+	return NewReportBuilder(s.scheme).
+		Controller(owner).
+		PodSpecHash(podSpecHash).
+		PluginConfigHash(pluginConfigHash).
+		Data(result).
+		Get()
 }

@@ -34,21 +34,21 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-vulnerabilityreport-hash2",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-configauditreport-hash2",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
 					},
 				}},
 			).Build()
@@ -74,7 +74,7 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "starboard-operator",
 					Labels: map[string]string{
-						starboard.LabelK8SAppManagedBy: starboard.AppStarboardOperator,
+						starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
 					},
 				}},
 			).Build()

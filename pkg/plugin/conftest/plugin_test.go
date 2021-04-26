@@ -48,7 +48,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"foo":                                     "bar",    // This one should be skipped (no conftest.policy. prefix)
 				"conftest.policy.privileged":              "<REGO>", // This one should be skipped (no .rego suffix)
 			},
-		}).Build()).Build()
+		}).Build()).Get()
 
 	plugin := conftest.NewPlugin(sequence, fixedClock, config)
 
@@ -364,7 +364,7 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 					Data: data,
 				}).
 				Build()).
-			Build()
+			Get()
 	}
 
 	t.Run("Should return different hash for different config data", func(t *testing.T) {
