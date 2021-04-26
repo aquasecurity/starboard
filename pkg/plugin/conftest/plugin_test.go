@@ -75,7 +75,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		"Affinity":                     Equal(starboard.LinuxNodeAffinity()),
 		"Volumes": ConsistOf(
 			MatchFields(IgnoreExtras, Fields{
-				"Name": Equal("00000000-0000-0000-0000-000000000001"),
+				"Name": Equal("scan-configauditreport-5d4445db4f-volume"),
 				// We cannot inline assert here on other properties with the MatchFields matcher
 				// because the value of the Secret field is the pointer to v1.SecretVolumeSource.
 				// The MatchFields matcher only works with structs :-(
@@ -99,31 +99,31 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				}),
 				"VolumeMounts": ConsistOf(
 					corev1.VolumeMount{
-						Name:      "00000000-0000-0000-0000-000000000001",
+						Name:      "scan-configauditreport-5d4445db4f-volume",
 						MountPath: "/project/policy/libkubernetes.rego",
 						SubPath:   "libkubernetes.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "00000000-0000-0000-0000-000000000001",
+						Name:      "scan-configauditreport-5d4445db4f-volume",
 						MountPath: "/project/policy/libutil.rego",
 						SubPath:   "libutil.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "00000000-0000-0000-0000-000000000001",
+						Name:      "scan-configauditreport-5d4445db4f-volume",
 						MountPath: "/project/policy/access_to_host_pid.rego",
 						SubPath:   "access_to_host_pid.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "00000000-0000-0000-0000-000000000001",
+						Name:      "scan-configauditreport-5d4445db4f-volume",
 						MountPath: "/project/policy/cpu_not_limited.rego",
 						SubPath:   "cpu_not_limited.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
-						Name:      "00000000-0000-0000-0000-000000000001",
+						Name:      "scan-configauditreport-5d4445db4f-volume",
 						MountPath: "/project/workload.yaml",
 						SubPath:   "workload.yaml",
 						ReadOnly:  true,
@@ -149,7 +149,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		"SecurityContext": Equal(&corev1.PodSecurityContext{}),
 	}))
 	g.Expect(*jobSpec.Volumes[0].VolumeSource.Secret).To(MatchFields(IgnoreExtras, Fields{
-		"SecretName": Equal("00000000-0000-0000-0000-000000000001"),
+		"SecretName": Equal("scan-configauditreport-5d4445db4f-volume"),
 		"Items": ConsistOf(
 			corev1.KeyToPath{
 				Key:  "conftest.policy.libkubernetes.rego",
@@ -176,7 +176,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g.Expect(secrets).To(ConsistOf(
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "00000000-0000-0000-0000-000000000001",
+				Name:      "scan-configauditreport-5d4445db4f-volume",
 				Namespace: "starboard-ns",
 			},
 			StringData: map[string]string{

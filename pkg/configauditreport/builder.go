@@ -76,6 +76,15 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		starboard.LabelK8SAppManagedBy:          starboard.AppStarboard,
 	}
 
+	for _, secret := range secrets {
+		if secret.Labels == nil {
+			secret.Labels = make(map[string]string)
+		}
+		for k, v := range labels {
+			secret.Labels[k] = v
+		}
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetScanJobName(s.object),
