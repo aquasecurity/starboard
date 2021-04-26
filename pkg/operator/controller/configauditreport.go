@@ -1,6 +1,8 @@
 package controller
 
 import (
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+
 	"context"
 	"fmt"
 
@@ -8,7 +10,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -170,9 +171,12 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		}
 
 		for _, secret := range secrets {
-			secret.Namespace = r.Config.Namespace
 			err := r.Client.Create(ctx, secret)
 			if err != nil {
+				if !errors.IsAlreadyExists(err) {
+					log.V(1).Info("Secret already exists", "secretName", secret.Name)
+					return ctrl.Result{}, nil
+				}
 				return ctrl.Result{}, fmt.Errorf("creating secret: %w", err)
 			}
 		}
@@ -182,6 +186,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		if err != nil {
 			if errors.IsAlreadyExists(err) {
 				// TODO Delete secrets that were created in the previous step. Alternatively we can delete them on schedule.
+				log.V(1).Info("Job already exists", "jobName", job.Name)
 				return ctrl.Result{}, nil
 			}
 			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
