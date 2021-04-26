@@ -147,12 +147,20 @@ func (m *CRManager) Init(ctx context.Context) error {
 		return err
 	}
 
-	err = m.createOrUpdateCRD(ctx, &v1alpha1.CISKubeBenchReportCRD)
+	kubeBenchReportsCRD, err := embedded.GetCISKubeBenchReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &kubeBenchReportsCRD)
 	if err != nil {
 		return err
 	}
 
-	err = m.createOrUpdateCRD(ctx, &v1alpha1.KubeHunterReportCRD)
+	kubeHunterReportsCRD, err := embedded.GetKubeHunterReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &kubeHunterReportsCRD)
 	if err != nil {
 		return err
 	}
