@@ -264,16 +264,16 @@ $ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
 To install [Operator Lifecycle Manager][olm] (OLM) run:
 
 ```
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/crds.yaml
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/olm.yaml
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml
+$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml
 ```
 
 or
 
 ```
-$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/install.sh -o install.sh
+$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh -o install.sh
 $ chmod +x install.sh
-$ ./install.sh 0.16.1
+$ ./install.sh v0.17.0
 ```
 
 ### Build the Catalog Image
@@ -311,8 +311,8 @@ Place the `starboard-catalog.Dockerfile` in the top-level directory of your clon
 it to your Kubernetes cluster:
 
 ```
-$ docker build -f starboard-catalog.Dockerfile -t starboard-catalog:dev .
-$ kind load docker-image starboard-catalog:dev
+$ docker build -f starboard-catalog.Dockerfile -t docker.io/<your account>/starboard-catalog:dev .
+$ docker push docker.io/<your account>/starboard-catalog:dev
 ```
 
 ### Register the Catalog Image
@@ -331,7 +331,7 @@ spec:
   publisher: Starboard Maintainers
   displayName: Starboard Catalog
   sourceType: grpc
-  image: starboard-catalog:dev
+  image: docker.io/<your account>/starboard-catalog:dev
 EOF
 ```
 
@@ -350,8 +350,8 @@ starboard-operator   Starboard Catalog   97s
 ```
 
 If the Starboard Operator appears in this list, the catalog was successfully parsed and it is now available to install.
-Follow the installation instructions for [OLM](https://aquasecurity.github.io/starboard/operator/installation/olm/).
-Make sure that the Subscription's `spec.source` property refers to the `starboard-catalog` source instead of `operatorhubio-catalog`.
+Follow the installation instructions for [OLM][starboard-install-olm]. Make sure that the Subscription's `spec.source`
+property refers to the `starboard-catalog` source instead of `operatorhubio-catalog`.
 
 You can find more details about testing Operators with Operator Framework [here][olm-testing-operators].
 
@@ -364,4 +364,5 @@ You can find more details about testing Operators with Operator Framework [here]
 [community-operators]: https://github.com/operator-framework/community-operators
 [olm-operator-groups]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
 [k8s-sample-controller]: https://github.com/kubernetes/sample-controller
+[starboard-install-olm]: https://aquasecurity.github.io/starboard/latest/operator/installation/olm
 [olm-testing-operators]: https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md
