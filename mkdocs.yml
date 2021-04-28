@@ -33,6 +33,7 @@ nav:
           - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
       - Configuration Checkers:
           - Overview: integrations/config-checkers/index.md
+          - Polaris: integrations/config-checkers/polaris.md
           - Conftest: integrations/config-checkers/conftest.md
       - Private Registries: integrations/private-registries.md
       - Managed Registries: integrations/managed-registries.md
@@ -59,6 +60,15 @@ markdown_extensions:
 # Requires pip install mike and pip install git+https://${GH_TOKEN}@github.com/squidfunk/mkdocs-material-insiders.git
 extra:
   generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/aquasecurity
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/channel/UCZd5NF4XJRaU-yfextsY-pw
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/AquaSecTeam
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/aquasecteam/
   version:
     provider: mike
   var:

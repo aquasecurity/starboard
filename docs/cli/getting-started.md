@@ -1,9 +1,21 @@
 # Getting Started
 
+## Before you Begin
+
+You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your
+cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
+of these Kubernetes playgrounds:
+
+* [Katacode](https://www.katacoda.com/courses/kubernetes/playground)
+* [Play with Kubernetes](http://labs.play-with-k8s.com/)
+
+You also need the `starboard` command to be installed, e.g. from the [binary releases](./installation/binary-releases.md).
+By default, it will use the same configuration as kubectl to communicate with the cluster.
+
 ## Scanning Workloads
 
-The easiest way to get started with Starboard is to use the `starboard` command, which allows scanning Kubernetes
-workloads deployed in your cluster.
+The easiest way to get started with Starboard is to use an imperative `starboard` command, which allows ad hoc scanning
+of Kubernetes workloads deployed in your cluster.
 
 To begin with, execute the following one-time setup command:
 
@@ -122,6 +134,8 @@ open nginx.deploy.html
 To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or
 [kube-hunter][aqua-kube-hunter], use `starboard help`.
 
+[minikube]: https://minikube.sigs.k8s.io/docs/
+[kind]: https://kind.sigs.k8s.io/docs/
 [polaris]: https://github.com/FairwindsOps/polaris
 [aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
 [aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter

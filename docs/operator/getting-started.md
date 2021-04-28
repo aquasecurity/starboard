@@ -1,5 +1,17 @@
 # Getting Started
 
+## Before you Begin
+
+You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your
+cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
+of these Kubernetes playgrounds:
+
+* [Katacode](https://www.katacoda.com/courses/kubernetes/playground)
+* [Play with Kubernetes](http://labs.play-with-k8s.com/)
+
+You also need the Starboard Operator to be installed in the `starboard-operator` namespace, e.g. with
+[static YAML manifests](./installation/kubectl.md).
+
 ## Workloads Scanning
 
 Assuming that you installed the operator in the `starboard-operator` namespace, and it's configured to discover
@@ -137,4 +149,6 @@ kube-system      └─Pod/kube-scheduler-kind-control-plane           True     
   and Polaris as [configuration checker](./../integrations/config-checkers/index.md), but you can choose other tools that
   are integrated with Starboard or even implement you own plugins.
 
+[minikube]: https://minikube.sigs.k8s.io/docs/
+[kind]: https://kind.sigs.k8s.io/docs/
 [tree]: https://github.com/ahmetb/kubectl-tree
