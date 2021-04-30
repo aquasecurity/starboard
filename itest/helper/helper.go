@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/utils/pointer"
 )
 
@@ -75,6 +76,10 @@ func NewDeployment() *DeploymentBuilder {
 func (b *DeploymentBuilder) WithName(name string) *DeploymentBuilder {
 	b.name = name
 	return b
+}
+
+func (b *DeploymentBuilder) WithRandomName(prefix string) *DeploymentBuilder {
+	return b.WithName(prefix + "-" + rand.String(5))
 }
 
 func (b *DeploymentBuilder) WithNamespace(namespace string) *DeploymentBuilder {

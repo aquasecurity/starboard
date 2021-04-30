@@ -6,6 +6,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -44,5 +45,5 @@ func run() error {
 
 	setupLog.Info("Starting operator", "buildInfo", buildInfo)
 
-	return operator.Run(buildInfo, operatorConfig)
+	return operator.Start(ctrl.SetupSignalHandler(), buildInfo, operatorConfig)
 }

@@ -20,7 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -71,7 +70,7 @@ var _ = Describe("Starboard Operator", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			deploy = helper.NewDeployment().
-				WithName(baseDeploymentName+"-"+rand.String(5)).
+				WithRandomName(baseDeploymentName).
 				WithNamespace(namespaceName).
 				WithContainer("wordpress", "wordpress:4.9").
 				Build()
@@ -105,7 +104,7 @@ var _ = Describe("Starboard Operator", func() {
 			By("Creating Deployment wordpress")
 			ctx = context.Background()
 			deploy = helper.NewDeployment().
-				WithName(baseDeploymentName+"-"+rand.String(5)).
+				WithRandomName(baseDeploymentName).
 				WithNamespace(namespaceName).
 				WithContainer("wordpress", "wordpress:4.9").
 				Build()
@@ -221,7 +220,7 @@ var _ = Describe("Starboard Operator", func() {
 			By("Creating Deployment wordpress")
 			ctx = context.Background()
 			deploy = helper.NewDeployment().
-				WithName(baseDeploymentName+"-"+rand.String(5)).
+				WithRandomName(baseDeploymentName).
 				WithNamespace(namespaceName).
 				WithContainer("wordpress", "wordpress:4.9").
 				Build()

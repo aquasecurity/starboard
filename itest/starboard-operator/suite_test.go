@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -21,7 +22,11 @@ import (
 )
 
 var (
-	buildInfo = starboard.BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	buildInfo = starboard.BuildInfo{
+		Version: "dev",
+		Commit:  "none",
+		Date:    "unknown",
+	}
 )
 
 var (
@@ -31,6 +36,8 @@ var (
 var (
 	scheme     *runtime.Scheme
 	kubeClient client.Client
+	startCtx   context.Context
+	stopFunc   context.CancelFunc
 )
 
 var (
@@ -45,11 +52,11 @@ func TestStarboardOperator(t *testing.T) {
 	RunSpecs(t, "Starboard Operator")
 }
 
-var _ = BeforeSuite(func(done Done) {
+var _ = BeforeSuite(func() {
 	operatorConfig, err := etc.GetOperatorConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(operatorConfig.LogDevMode)))
 
 	kubeConfig, err := ctrl.GetConfig()
 	Expect(err).ToNot(HaveOccurred())
@@ -68,20 +75,25 @@ var _ = BeforeSuite(func(done Done) {
 		CRDDirectoryPaths:  []string{filepath.Join("..", "..", "deploy", "crd")},
 	}
 
+	By("Starting Kubernetes test environment")
 	_, err = testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
 
+	startCtx, stopFunc = context.WithCancel(context.Background())
+
 	go func() {
 		defer GinkgoRecover()
-
-		err = operator.Run(buildInfo, operatorConfig)
+		By("Starting Starboard operator")
+		err = operator.Start(startCtx, buildInfo, operatorConfig)
 		Expect(err).ToNot(HaveOccurred())
 	}()
 
-	close(done)
-}, 60)
+})
 
 var _ = AfterSuite(func() {
+	By("Stopping Starboard operator")
+	stopFunc()
+	By("Stopping Kubernetes test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
