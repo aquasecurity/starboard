@@ -1007,10 +1007,29 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command scan ciskubebenchreports", func() {
 
+		It("scan wrong node name. It doesn't create CISKubeBenchReports", func() {
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"scan", "ciskubebenchreports", "notExistNode",
+				"-v", starboardCLILogLevel,
+			}, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+
+			var nodeList corev1.NodeList
+			err = kubeClient.List(context.TODO(), &nodeList)
+			Expect(err).ToNot(HaveOccurred())
+
+			for _, node := range nodeList.Items {
+				var report v1alpha1.CISKubeBenchReport
+				err := kubeClient.Get(context.TODO(), types.NamespacedName{Name: node.Name}, &report)
+				Expect(err).To(HaveOccurred(), "Not Expected CISKubeBenchReport for node %s but found", node.Name)
+			}
+		})
+
 		It("should create CISKubeBenchReports", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
-				"scan", "ciskubebenchreports",
+				"scan", "ciskubebenchreports", "kind-control-plane",
 				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
@@ -1095,6 +1114,7 @@ var _ = Describe("Starboard CLI", func() {
 			"cleanup",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
+		time.Sleep(4 * time.Second)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
