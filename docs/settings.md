@@ -56,7 +56,7 @@ The following tables list available configuration settings with their default va
     used if `vulnerabilityReports.scanner` is set to `Trivy`). Check
     [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
 
-| CONFIGMAP KEY                         | DEFAULT                                                                           | DESCRIPTION |
+| CONFIGMAP KEY                   | DEFAULT                                                | DESCRIPTION |
 | ------------------------------- | ------------------------------------------------------ | ----------- |
 | `vulnerabilityReports.scanner`  | `Trivy`                                                | The name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`. |
 | `configAuditReports.scanner`    | `Polaris`                                              | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
@@ -66,6 +66,10 @@ The following tables list available configuration settings with their default va
 | `trivy.severity`                | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
 | `trivy.imageRef`                | `docker.io/aquasec/trivy:0.16.0`                       | Trivy image reference |
 | `trivy.mode`                    | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
+| `trivy.ignoreUnfixed`           | N/A                                                    | Whether to show only fixed vulnerabilities in vulnerabilities reported by Trivy. Set to `"true"` to enable it. |
+| `trivy.skipFiles`               | N/A                                                    | A comma separated list of file paths for Trivy to skip traversal. |
+| `trivy.skipDirs`                | N/A                                                    | A comma separated list of directories for Trivy to skip traversal. |
+| `trivy.ignoreFile`              | N/A                                                    | It specifies the `.trivyignore` file which contains a list of vulnerability IDs to be ignored from vulnerabilities reported by Trivy. |
 | `trivy.serverURL`               | N/A                                                    | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
 | `trivy.serverTokenHeader`       | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
 | `trivy.insecureRegistry.<id>`   | N/A                                                    | The registry to which insecure connections are allowed. There can be multiple registries with different registry `<id>`. |
@@ -77,7 +81,7 @@ The following tables list available configuration settings with their default va
 | `polaris.imageRef`              | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
 | `polaris.config.yaml`           | [Check the default value here][default-polaris-config] | Polaris configuration file |
 | `conftest.imageRef`             | `docker.io/openpolicyagent/conftest:v0.25.0`           | Conftest image reference |
-| `scanJob.tolerations`           |                                                        | JSON representation of the [tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration) to be applied to the vulnerability scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'`|
+| `scanJob.tolerations`           | N/A                                                    | JSON representation of the [tolerations] to be applied to the vulnerability scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'`|
 
 | SECRET KEY                  | DESCRIPTION |
 | --------------------------- | ----------- |
@@ -97,3 +101,4 @@ The following tables list available configuration settings with their default va
     ```
 
 [default-polaris-config]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/05-starboard-operator.config.yaml
+[tolerations]: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration

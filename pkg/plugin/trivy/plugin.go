@@ -42,6 +42,7 @@ type Config interface {
 	GetTrivyMode() (starboard.TrivyMode, error)
 	GetTrivyServerURL() (string, error)
 	GetTrivyInsecureRegistries() map[string]bool
+	TrivyIgnoreFileExists() bool
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
@@ -88,7 +89,8 @@ func (s *scanner) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec
 }
 
 const (
-	sharedVolumeName = "data"
+	sharedVolumeName     = "data"
+	ignoreFileVolumeName = "ignorefile"
 )
 
 // In the starboard.Standalone mode there is the init container responsible for
@@ -193,6 +195,49 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 
 	var containers []corev1.Container
 
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      sharedVolumeName,
+			ReadOnly:  false,
+			MountPath: "/var/lib/trivy",
+		},
+	}
+	volumes := []corev1.Volume{
+		{
+			Name: sharedVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{
+					Medium: corev1.StorageMediumDefault,
+				},
+			},
+		},
+	}
+
+	if s.config.TrivyIgnoreFileExists() {
+		volumes = append(volumes, corev1.Volume{
+			Name: ignoreFileVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: starboard.ConfigMapName,
+					},
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "trivy.ignoreFile",
+							Path: ".trivyignore",
+						},
+					},
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      ignoreFileVolumeName,
+			MountPath: "/tmp/trivy/.trivyignore",
+			SubPath:   ".trivyignore",
+		})
+	}
+
 	for _, c := range spec.Containers {
 
 		env := []corev1.EnvVar{
@@ -204,6 +249,42 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 							Name: starboard.ConfigMapName,
 						},
 						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_IGNORE_UNFIXED",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.ignoreUnfixed",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_SKIP_FILES",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.skipFiles",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_SKIP_DIRS",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.skipDirs",
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -244,6 +325,13 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 					},
 				},
 			},
+		}
+
+		if s.config.TrivyIgnoreFileExists() {
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_IGNOREFILE",
+				Value: "/tmp/trivy/.trivyignore",
+			})
 		}
 
 		if _, ok := credentials[c.Name]; ok && secret != nil {
@@ -296,14 +384,8 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 				"json",
 				c.Image,
 			},
-			Resources: defaultResourceRequirements,
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      sharedVolumeName,
-					ReadOnly:  false,
-					MountPath: "/var/lib/trivy",
-				},
-			},
+			Resources:    defaultResourceRequirements,
+			VolumeMounts: volumeMounts,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               pointer.BoolPtr(false),
 				AllowPrivilegeEscalation: pointer.BoolPtr(false),
@@ -319,19 +401,10 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
-		Volumes: []corev1.Volume{
-			{
-				Name: sharedVolumeName,
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{
-						Medium: corev1.StorageMediumDefault,
-					},
-				},
-			},
-		},
-		InitContainers:  []corev1.Container{initContainer},
-		Containers:      containers,
-		SecurityContext: &corev1.PodSecurityContext{},
+		Volumes:                      volumes,
+		InitContainers:               []corev1.Container{initContainer},
+		Containers:                   containers,
+		SecurityContext:              &corev1.PodSecurityContext{},
 	}, secrets, nil
 }
 
@@ -345,6 +418,8 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
+	var volumeMounts []corev1.VolumeMount
+	var volumes []corev1.Volume
 
 	trivyImageRef, err := s.config.GetTrivyImageRef()
 	if err != nil {
@@ -410,6 +485,42 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 							Name: starboard.ConfigMapName,
 						},
 						Key:      "trivy.severity",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_IGNORE_UNFIXED",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.ignoreUnfixed",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_SKIP_FILES",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.skipFiles",
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_SKIP_DIRS",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: starboard.ConfigMapName,
+						},
+						Key:      "trivy.skipDirs",
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -484,6 +595,40 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 			return corev1.PodSpec{}, nil, err
 		}
 
+		if s.config.TrivyIgnoreFileExists() {
+			volumes = []corev1.Volume{
+				{
+					Name: ignoreFileVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: starboard.ConfigMapName,
+							},
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "trivy.ignoreFile",
+									Path: ".trivyignore",
+								},
+							},
+						},
+					},
+				},
+			}
+
+			volumeMounts = []corev1.VolumeMount{
+				{
+					Name:      ignoreFileVolumeName,
+					MountPath: "/tmp/trivy/.trivyignore",
+					SubPath:   ".trivyignore",
+				},
+			}
+
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_IGNOREFILE",
+				Value: "/tmp/trivy/.trivyignore",
+			})
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
 			Image:                    trivyImageRef,
@@ -502,7 +647,8 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 				trivyServerURL,
 				container.Image,
 			},
-			Resources: defaultResourceRequirements,
+			VolumeMounts: volumeMounts,
+			Resources:    defaultResourceRequirements,
 		})
 	}
 
@@ -510,6 +656,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Containers:                   containers,
+		Volumes:                      volumes,
 	}, secrets, nil
 }
 
