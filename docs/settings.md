@@ -68,6 +68,7 @@ The following tables list available configuration settings with their default va
 | `trivy.mode`                   | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
 | `trivy.serverURL`              | N/A                                                    | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
 | `trivy.serverTokenHeader`      | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
+| `trivy.insecureRegistry.<id>`  | N/A                                                    | The registry to which insecure connections are allowed. There can be multiple registries with different registry `<id>`. |
 | `aqua.imageRef`                | `docker.io/aquasec/scanner:5.3`                        | Aqua scanner image reference. The tag determines the version of the `scanner` binary executable and it must be compatible with version of Aqua console. |
 | `aqua.serverURL`               | N/A                                                    | The endpoint URL of Aqua management console |
 | `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.5.0`                   | kube-bench image reference |

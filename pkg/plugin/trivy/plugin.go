@@ -10,6 +10,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/google/go-containerregistry/pkg/name"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +41,7 @@ type Config interface {
 	GetTrivyImageRef() (string, error)
 	GetTrivyMode() (starboard.TrivyMode, error)
 	GetTrivyServerURL() (string, error)
+	GetTrivyInsecureRegistries() map[string]bool
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
@@ -271,6 +273,11 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 			})
 		}
 
+		env, err = s.appendTrivyInsecureEnv(c.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    trivyImageRef,
@@ -478,6 +485,11 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 			})
 		}
 
+		env, err = s.appendTrivyInsecureEnv(container.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
 			Image:                    trivyImageRef,
@@ -513,4 +525,21 @@ func (s *scanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.Re
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
 	return result, nil
+}
+
+func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+	ref, err := name.ParseReference(image)
+	if err != nil {
+		return nil, err
+	}
+
+	insecureRegistries := s.config.GetTrivyInsecureRegistries()
+	if insecureRegistries[ref.Context().RegistryStr()] {
+		env = append(env, corev1.EnvVar{
+			Name:  "TRIVY_INSECURE",
+			Value: "true",
+		})
+	}
+
+	return env, nil
 }

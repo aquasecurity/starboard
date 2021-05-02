@@ -3,6 +3,7 @@ package starboard
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -354,6 +355,17 @@ func (c ConfigData) GetTrivyMode() (TrivyMode, error) {
 
 func (c ConfigData) GetTrivyServerURL() (string, error) {
 	return c.getRequiredProperty(keyTrivyServerURL)
+}
+
+func (c ConfigData) GetTrivyInsecureRegistries() map[string]bool {
+	insecureRegistries := make(map[string]bool)
+	for key, val := range c {
+		if strings.HasPrefix(key, "trivy.insecureRegistry.") {
+			insecureRegistries[val] = true
+		}
+	}
+
+	return insecureRegistries
 }
 
 func (c ConfigData) GetAquaImageRef() (string, error) {
