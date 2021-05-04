@@ -1,11 +1,11 @@
 # Configuration Checkers
 
-Starboard relies on a configuration checker to run variety of checks  on discovered Pods and controllers to make sure
+Starboard relies on a configuration checker to run variety of tests on discovered workloads to make sure
 they are configured using best practices.
 
-You can choose a third party configuration checker, which is already integrated with Starboard, or implement your own
-plugin. The plugin mechanism is based on in-tree implementations of the [`configauditreport.Plugin`][plugin-interface]
-Go interface. For example, check the implementation of the [Polaris plugin].
+You can choose any of the included configuration checkers or implement your own plugin. The plugin mechanism is based
+on in-tree implementations of the [`configauditreport.Plugin`][plugin-interface] Go interface. For example, check the
+implementation of the [Polaris plugin].
 
 These are currently integrated configuration checkers:
 

@@ -1,6 +1,6 @@
 # Polaris
 
-[Polaris] is the default configuration check used by Starboard. It runs a variety of checks to ensure that Kubernetes
+[Polaris] is the default configuration checker used by Starboard. It runs a variety of checks to ensure that Kubernetes
 Pods and controllers are configured using best practices.
 
 The [default][config-default] Polaris [configuration] can be customized to do things like:
