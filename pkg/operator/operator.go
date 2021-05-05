@@ -25,7 +25,9 @@ var (
 	setupLog = log.Log.WithName("operator")
 )
 
-func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
+// Start starts all registered reconcilers and blocks until the context is cancelled.
+// Returns an error if there is an error starting any reconciler.
+func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	installMode, operatorNamespace, targetNamespaces, err := operatorConfig.ResolveInstallMode()
 	if err != nil {
 		return fmt.Errorf("resolving install mode: %w", err)
@@ -205,7 +207,7 @@ func Run(buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
 	}
 
 	setupLog.Info("Starting controllers manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("starting controllers manager: %w", err)
 	}
 

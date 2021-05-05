@@ -8,6 +8,7 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
+// Config defines parameters for running the operator.
 type Config struct {
 	Namespace                     string        `env:"OPERATOR_NAMESPACE"`
 	TargetNamespaces              string        `env:"OPERATOR_TARGET_NAMESPACES"`
@@ -27,6 +28,7 @@ type Config struct {
 	BatchDeleteDelay              time.Duration `env:"OPERATOR_BATCH_DELETE_DELAY" envDefault:"10s"`
 }
 
+// GetOperatorConfig loads Config from environment variables.
 func GetOperatorConfig() (Config, error) {
 	var config Config
 	err := env.Parse(&config)
