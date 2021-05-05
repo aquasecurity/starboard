@@ -77,12 +77,67 @@ itests-starboard: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
 	./itest/starboard
 
+.PHONY: itests-starboard-operator-trivy-standalone
+## Runs integration tests for Starboard Operator with code coverage enabled
+itests-starboard-operator-trivy-standalone: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
+	github.com/aquasecurity/starboard/pkg/plugin/trivy,\
+	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
+	./itest/starboard-operator/vulnerabilityreport/trivy-standalone
+
+.PHONY: itests-starboard-operator-polaris
+## Runs integration tests for Starboard Operator with code coverage enabled
+itests-starboard-operator-polaris: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
+	github.com/aquasecurity/starboard/pkg/plugin/polaris,\
+	github.com/aquasecurity/starboard/pkg/configauditreport \
+	./itest/starboard-operator/configauditreport/polaris
+
+.PHONY: itests-starboard-operator-conftest
+## Runs integration tests for Starboard Operator with code coverage enabled
+itests-starboard-operator-conftest: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
+	github.com/aquasecurity/starboard/pkg/plugin/conftest,\
+	github.com/aquasecurity/starboard/pkg/configauditreport \
+	./itest/starboard-operator/configauditreport/conftest
+
+.PHONY: itests-starboard-operator-kubebench
+## Runs integration tests for Starboard Operator with code coverage enabled
+itests-starboard-operator-kubebench: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
+	github.com/aquasecurity/starboard/pkg/kubebench \
+	./itest/starboard-operator/ciskubebenchreport
+
 .PHONY: itests-starboard-operator
 ## Runs integration tests for Starboard Operator with code coverage enabled
 itests-starboard-operator: check-env get-ginkgo
 	$(GOBIN)/ginkgo \
+	-r \
 	--progress \
-	--v \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
 	github.com/aquasecurity/starboard/pkg/operator/predicate,\

@@ -1,22 +1,20 @@
-package starboard_operator
+package ciskubebenchreport
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"context"
-	"path/filepath"
 	"testing"
+	"time"
 
-	"github.com/aquasecurity/starboard/pkg/kubebench"
+	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -30,26 +28,26 @@ var (
 )
 
 var (
-	testEnv *envtest.Environment
-)
-
-var (
 	scheme     *runtime.Scheme
 	kubeClient client.Client
 	startCtx   context.Context
 	stopFunc   context.CancelFunc
 )
 
-var (
-	kubeBenchReportReader kubebench.Reader
+const (
+	assertionTimeout = 3 * time.Minute
 )
 
-func TestStarboardOperator(t *testing.T) {
+var (
+	h *helper.Helper
+)
+
+func TestRunner(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test")
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Starboard Operator")
+	RunSpecs(t, "CISKubeBenchReport Reconciler")
 }
 
 var _ = BeforeSuite(func() {
@@ -67,19 +65,12 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	kubeBenchReportReader = kubebench.NewReadWriter(kubeClient)
-
-	testEnv = &envtest.Environment{
-		UseExistingCluster: pointer.BoolPtr(true),
-		Config:             kubeConfig,
-		CRDDirectoryPaths:  []string{filepath.Join("..", "..", "deploy", "crd")},
-	}
-
-	By("Starting Kubernetes test environment")
-	_, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
+	h = helper.NewHelper(scheme, kubeClient)
 
 	startCtx, stopFunc = context.WithCancel(context.Background())
+	operatorConfig.CISKubernetesBenchmarkEnabled = true
+	operatorConfig.VulnerabilityScannerEnabled = false
+	operatorConfig.ConfigAuditScannerEnabled = false
 
 	go func() {
 		defer GinkgoRecover()
@@ -93,7 +84,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("Stopping Starboard operator")
 	stopFunc()
-	By("Stopping Kubernetes test environment")
-	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
+
+	// TODO Delete CISKubeBenchReports
 })
