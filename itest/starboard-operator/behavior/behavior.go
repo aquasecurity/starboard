@@ -1,4 +1,4 @@
-package starboard_operator
+package behavior
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -17,18 +17,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SharedBehaviorInputs represents required inputs to shared behavior containers.
-type SharedBehaviorInputs struct {
+// Inputs represents required inputs to shared behavior containers.
+type Inputs struct {
 	AssertTimeout         time.Duration
 	PrimaryNamespace      string
 	PrimaryWorkloadPrefix string
+
 	client.Client
 	*helper.Helper
 }
 
 // VulnerabilityScannerBehavior returns the container of specs that describe behavior
 // of a vulnerability scanner with the given inputs.
-func VulnerabilityScannerBehavior(inputs *SharedBehaviorInputs) func() {
+func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 	return func() {
 
 		Context("When unmanaged Pod is created", func() {
@@ -204,7 +205,7 @@ func VulnerabilityScannerBehavior(inputs *SharedBehaviorInputs) func() {
 
 // ConfigurationCheckerBehavior returns the container of specs that describe behavior
 // of a configuration checker with the given inputs.
-func ConfigurationCheckerBehavior(inputs *SharedBehaviorInputs) func() {
+func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 	return func() {
 
 		Context("When unmanaged Pod is created", func() {
@@ -414,5 +415,26 @@ func ConfigurationCheckerBehavior(inputs *SharedBehaviorInputs) func() {
 		// TODO Add scenario for StatefulSet
 
 		// TODO Add scenario for DaemonSet
+	}
+}
+
+// CISKubernetesBenchmarkBehavior returns the container of specs that describe behavior
+// of a CIS Kubernetes Benchmark with the given inputs.
+func CISKubernetesBenchmarkBehavior(inputs *Inputs) func() {
+	return func() {
+
+		Context("When operator is started", func() {
+
+			It("Should create CISKubeBenchReports", func() {
+				var nodeList corev1.NodeList
+				err := inputs.List(context.Background(), &nodeList)
+				Expect(err).ToNot(HaveOccurred())
+				for _, node := range nodeList.Items {
+					Eventually(inputs.HasCISKubeBenchReportOwnedBy(node), inputs.AssertTimeout).Should(BeTrue())
+				}
+			})
+
+		})
+
 	}
 }

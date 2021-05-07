@@ -96,6 +96,20 @@ itests-starboard-operator: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/kubebench \
 	./itest/starboard-operator
 
+.PHONY: integration-operator-conftest
+integration-operator-conftest: check-env get-ginkgo
+	$(GOBIN)/ginkgo \
+	--progress \
+	--v \
+	-coverprofile=coverage.txt \
+	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
+	github.com/aquasecurity/starboard/pkg/operator/predicate,\
+	github.com/aquasecurity/starboard/pkg/operator/controller,\
+	github.com/aquasecurity/starboard/pkg/plugin,\
+	github.com/aquasecurity/starboard/pkg/plugin/conftest,\
+	github.com/aquasecurity/starboard/pkg/configauditreport \
+	./itest/starboard-operator/configauditreport/conftest
+
 check-env:
 ifndef KUBECONFIG
 	$(error Environment variable KUBECONFIG is not set)

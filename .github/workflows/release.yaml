@@ -81,12 +81,43 @@ jobs:
           OPERATOR_NAMESPACE: starboard-operator
           OPERATOR_SERVICE_ACCOUNT: starboard-operator
           OPERATOR_TARGET_NAMESPACES: default
+  integration-operator-conftest:
+    name: Integration / Operator / Conftest
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Kubernetes cluster (KIND)
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: ${{ env.KIND_VERSION }}
+          image: ${{ env.KIND_IMAGE }}
+      - name: Run integration tests
+        run: |
+          kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
+                 -f deploy/crd/configauditreports.crd.yaml \
+                 -f deploy/crd/ciskubebenchreports.crd.yaml
+          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+            -f deploy/static/02-starboard-operator.sa.yaml \
+            -f deploy/static/03-starboard-operator.clusterrole.yaml \
+            -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+          make integration-operator-conftest
+        env:
+          KUBECONFIG: /home/runner/.kube/config
+          OPERATOR_NAMESPACE: starboard-operator
+          OPERATOR_SERVICE_ACCOUNT: starboard-operator
+          OPERATOR_TARGET_NAMESPACES: default
   release:
     name: Release
     needs:
       - unit-tests
       - itest-starboard
       - itest-starboard-operator
+      - integration-operator-conftest
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go

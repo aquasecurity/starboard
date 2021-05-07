@@ -1,6 +1,11 @@
-package starboard_operator
+package conftest
 
 import (
+	_ "embed"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"context"
 	"testing"
 	"time"
@@ -10,9 +15,8 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,12 +43,20 @@ var (
 	inputs behavior.Inputs
 )
 
-func TestStarboardOperator(t *testing.T) {
+var (
+	starboardCM *corev1.ConfigMap
+	conftestCM  *corev1.ConfigMap
+
+	//go:embed testdata/run_as_root.rego
+	runAsRootPolicy string
+)
+
+func TestIntegrationOperatorWithConftest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test")
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Starboard Operator")
+	RunSpecs(t, "Conftest")
 }
 
 var _ = BeforeSuite(func() {
@@ -71,6 +83,35 @@ var _ = BeforeSuite(func() {
 		Helper: helper.NewHelper(scheme, kubeClient),
 	}
 
+	// We can disable vulnerability scanner and CIS benchmarks
+	operatorConfig.VulnerabilityScannerEnabled = false
+	operatorConfig.CISKubernetesBenchmarkEnabled = false
+
+	starboardCM = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: operatorConfig.Namespace,
+			Name:      starboard.ConfigMapName,
+		},
+		Data: map[string]string{
+			"configAuditReports.scanner": "Conftest",
+			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.23.0",
+		},
+	}
+	err = kubeClient.Create(context.Background(), starboardCM)
+	Expect(err).ToNot(HaveOccurred())
+
+	conftestCM = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: operatorConfig.Namespace,
+			Name:      starboard.GetPluginConfigMapName("Conftest"),
+		},
+		Data: map[string]string{
+			"conftest.policy.runs_as_root.rego": runAsRootPolicy,
+		},
+	}
+	err = kubeClient.Create(context.Background(), conftestCM)
+	Expect(err).ToNot(HaveOccurred())
+
 	startCtx, stopFunc = context.WithCancel(context.Background())
 
 	go func() {
@@ -85,4 +126,8 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("Stopping Starboard operator")
 	stopFunc()
+	err := kubeClient.Delete(context.Background(), starboardCM)
+	Expect(err).ToNot(HaveOccurred())
+	err = kubeClient.Delete(context.Background(), conftestCM)
+	Expect(err).ToNot(HaveOccurred())
 })
