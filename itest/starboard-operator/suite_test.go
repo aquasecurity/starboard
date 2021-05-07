@@ -5,7 +5,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"context"
-	"path/filepath"
 	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/kubebench"
@@ -13,10 +12,8 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -27,10 +24,6 @@ var (
 		Commit:  "none",
 		Date:    "unknown",
 	}
-)
-
-var (
-	testEnv *envtest.Environment
 )
 
 var (
@@ -69,16 +62,6 @@ var _ = BeforeSuite(func() {
 
 	kubeBenchReportReader = kubebench.NewReadWriter(kubeClient)
 
-	testEnv = &envtest.Environment{
-		UseExistingCluster: pointer.BoolPtr(true),
-		Config:             kubeConfig,
-		CRDDirectoryPaths:  []string{filepath.Join("..", "..", "deploy", "crd")},
-	}
-
-	By("Starting Kubernetes test environment")
-	_, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-
 	startCtx, stopFunc = context.WithCancel(context.Background())
 
 	go func() {
@@ -93,7 +76,4 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("Stopping Starboard operator")
 	stopFunc()
-	By("Stopping Kubernetes test environment")
-	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
 })
