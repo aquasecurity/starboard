@@ -152,7 +152,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 					// TODO Follow up with Conftest maintainers to allow returning 0 exit code in case of failures
 					Args: []string{
 						"-c",
-						"conftest test --output json --all-namespaces --policy /project/policy /project/workload.yaml || true",
+						"conftest test --no-fail --output json --all-namespaces --policy /project/policy /project/workload.yaml",
 					},
 					SecurityContext: &corev1.SecurityContext{
 						Privileged:               pointer.BoolPtr(false),

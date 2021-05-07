@@ -134,7 +134,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				}),
 				"Args": Equal([]string{
 					"-c",
-					"conftest test --output json --all-namespaces --policy /project/policy /project/workload.yaml || true",
+					"conftest test --no-fail --output json --all-namespaces --policy /project/policy /project/workload.yaml",
 				}),
 				"SecurityContext": Equal(&corev1.SecurityContext{
 					Privileged:               pointer.BoolPtr(false),

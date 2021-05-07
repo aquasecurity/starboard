@@ -75,7 +75,7 @@ The following tables list available configuration settings with their default va
 | `kube-hunter.quick`            | `"false"`                                              | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
 | `polaris.imageRef`             | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
 | `polaris.config.yaml`          | [Check the default value here][default-polaris-config] | Polaris configuration file |
-| `conftest.imageRef`            | `docker.io/openpolicyagent/conftest:v0.23.0`           | Conftest image reference |
+| `conftest.imageRef`            | `docker.io/openpolicyagent/conftest:v0.25.0`           | Conftest image reference |
 
 | SECRET KEY                  | DESCRIPTION |
 | --------------------------- | ----------- |

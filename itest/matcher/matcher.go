@@ -29,7 +29,7 @@ var (
 	conftestScanner = v1alpha1.Scanner{
 		Name:    "Conftest",
 		Vendor:  "Open Policy Agent",
-		Version: "v0.23.0",
+		Version: "v0.25.0",
 	}
 )
 

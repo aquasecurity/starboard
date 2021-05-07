@@ -94,7 +94,7 @@ var _ = BeforeSuite(func() {
 		},
 		Data: map[string]string{
 			"configAuditReports.scanner": "Conftest",
-			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.23.0",
+			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.25.0",
 		},
 	}
 	err = kubeClient.Create(context.Background(), starboardCM)

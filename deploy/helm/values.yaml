@@ -271,7 +271,7 @@ polaris:
 
 conftest:
   # imageRef the image reference
-  imageRef: docker.io/openpolicyagent/conftest:v0.23.0
+  imageRef: docker.io/openpolicyagent/conftest:v0.25.0
 
 rbac:
   create: true
