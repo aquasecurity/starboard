@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -33,147 +34,146 @@ const (
 
 var _ = Describe("Starboard Operator", func() {
 
-	Describe("When unmanaged Pod is created", func() {
+	// TODO Refactor to run this container in a separate test suite
+	Describe("Vulnerability Scanner", func() {
 
-		var ctx context.Context
-		var pod *corev1.Pod
+		Context("When unmanaged Pod is created", func() {
 
-		BeforeEach(func() {
-			ctx = context.Background()
-			pod = helper.NewPod().
-				WithName("unmanaged-nginx").
-				WithNamespace(corev1.NamespaceDefault).
-				WithContainer("nginx", "nginx:1.16").
-				Build()
+			var ctx context.Context
+			var pod *corev1.Pod
 
-			err := kubeClient.Create(ctx, pod)
-			Expect(err).ToNot(HaveOccurred())
+			BeforeEach(func() {
+				ctx = context.Background()
+				pod = helper.NewPod().
+					WithRandomName("unmanaged-nginx").
+					WithNamespace(corev1.NamespaceDefault).
+					WithContainer("nginx", "nginx:1.16").
+					Build()
+
+				err := kubeClient.Create(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("Should create VulnerabilityReport", func() {
+				Eventually(HasVulnerabilityReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
 		})
 
-		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
-			Eventually(HasConfigAuditReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
-			Eventually(HasVulnerabilityReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
+		Context("When Deployment is created", func() {
+
+			var ctx context.Context
+			var deploy *appsv1.Deployment
+
+			BeforeEach(func() {
+				ctx = context.Background()
+				deploy = helper.NewDeployment().
+					WithRandomName(baseDeploymentName).
+					WithNamespace(namespaceName).
+					WithContainer("wordpress", "wordpress:4.9").
+					Build()
+
+				err := kubeClient.Create(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+			})
+
+			It("Should create VulnerabilityReport", func() {
+				rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
-		AfterEach(func() {
-			err := kubeClient.Delete(ctx, pod)
-			Expect(err).ToNot(HaveOccurred())
+		Context("When Deployment is rolling updated", func() {
+
+			var ctx context.Context
+			var deploy *appsv1.Deployment
+
+			BeforeEach(func() {
+				By("Creating Deployment wordpress")
+				ctx = context.Background()
+				deploy = helper.NewDeployment().
+					WithRandomName(baseDeploymentName).
+					WithNamespace(namespaceName).
+					WithContainer("wordpress", "wordpress:4.9").
+					Build()
+
+				err := kubeClient.Create(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+			})
+
+			It("Should create VulnerabilityReport for new ReplicaSet", func() {
+				By("Getting current active ReplicaSet")
+				rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				By("Waiting for VulnerabilityReport")
+				Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+
+				By("Updating deployment image to wordpress:5")
+				err = UpdateDeploymentImage(namespaceName, deploy.Name) // TODO Helper
+				Expect(err).ToNot(HaveOccurred())
+
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+
+				By("Getting new active replicaset")
+				rs, err = GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				By("Waiting for new VulnerabilityReport")
+				Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
-	})
+		Context("When CronJob is created", func() {
 
-	Describe("When Deployment is created", func() {
+			var ctx context.Context
+			var cronJob *batchv1beta1.CronJob
 
-		var ctx context.Context
-		var deploy *appsv1.Deployment
-
-		BeforeEach(func() {
-			ctx = context.Background()
-			deploy = helper.NewDeployment().
-				WithRandomName(baseDeploymentName).
-				WithNamespace(namespaceName).
-				WithContainer("wordpress", "wordpress:4.9").
-				Build()
-
-			err := kubeClient.Create(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
-		})
-
-		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
-			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rs).ToNot(BeNil())
-
-			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-		})
-
-		AfterEach(func() {
-			err := kubeClient.Delete(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-
-	Describe("When Deployment is rolling updated", func() {
-
-		var ctx context.Context
-		var deploy *appsv1.Deployment
-
-		BeforeEach(func() {
-			By("Creating Deployment wordpress")
-			ctx = context.Background()
-			deploy = helper.NewDeployment().
-				WithRandomName(baseDeploymentName).
-				WithNamespace(namespaceName).
-				WithContainer("wordpress", "wordpress:4.9").
-				Build()
-
-			err := kubeClient.Create(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
-		})
-
-		It("Should create VulnerabilityReport and ConfigAuditReport for new ReplicaSet", func() {
-			By("Getting current active ReplicaSet")
-			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rs).ToNot(BeNil())
-
-			By("Waiting for ConfigAuditReport")
-			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-			By("Waiting for VulnerabilityReport")
-			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-
-			By("Updating deployment image to wordpress:5")
-			err = UpdateDeploymentImage(namespaceName, deploy.Name) // TODO Helper
-			Expect(err).ToNot(HaveOccurred())
-
-			Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
-
-			By("Getting new active replicaset")
-			rs, err = GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rs).ToNot(BeNil())
-
-			By("Waiting for new Config Audit Report")
-			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-
-			By("Waiting for new Vulnerability Report")
-			Eventually(HasVulnerabilityReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-		})
-
-		AfterEach(func() {
-			err := kubeClient.Delete(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-
-	Describe("When CronJob is created", func() {
-
-		var cronJob *batchv1beta1.CronJob
-
-		BeforeEach(func() {
-			cronJob = &batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: namespaceName,
-					Name:      "hello",
-				},
-				Spec: batchv1beta1.CronJobSpec{
-					Schedule: "*/1 * * * *",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
-						Spec: batchv1.JobSpec{
-							Template: corev1.PodTemplateSpec{
-								Spec: corev1.PodSpec{
-									RestartPolicy: corev1.RestartPolicyOnFailure,
-									Containers: []corev1.Container{
-										{
-											Name:  "hello",
-											Image: "busybox",
-											Command: []string{
-												"/bin/sh",
-												"-c",
-												"date; echo Hello from the Kubernetes cluster",
+			BeforeEach(func() {
+				ctx = context.Background()
+				cronJob = &batchv1beta1.CronJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "hello-" + rand.String(5),
+					},
+					Spec: batchv1beta1.CronJobSpec{
+						Schedule: "*/1 * * * *",
+						JobTemplate: batchv1beta1.JobTemplateSpec{
+							Spec: batchv1.JobSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										RestartPolicy: corev1.RestartPolicyOnFailure,
+										Containers: []corev1.Container{
+											{
+												Name:  "hello",
+												Image: "busybox",
+												Command: []string{
+													"/bin/sh",
+													"-c",
+													"date; echo Hello from the Kubernetes cluster",
+												},
 											},
 										},
 									},
@@ -181,76 +181,262 @@ var _ = Describe("Starboard Operator", func() {
 							},
 						},
 					},
-				},
-			}
-			err := kubeClient.Create(context.Background(), cronJob)
-			Expect(err).ToNot(HaveOccurred())
+				}
+				err := kubeClient.Create(ctx, cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("Should create VulnerabilityReport", func() {
+				Eventually(HasVulnerabilityReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
-		It("Should create VulnerabilityReport and ConfigAuditReport", func() {
-			Eventually(HasConfigAuditReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
-			Eventually(HasVulnerabilityReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
-		})
+		// TODO Add scenario to test that VulnerabilityReport is recreated
 
-		AfterEach(func() {
-			err := kubeClient.Delete(context.Background(), cronJob)
-			Expect(err).ToNot(HaveOccurred())
-		})
+		// TODO Add scenario for workload with multiple containers
+
+		// TODO Add scenario for ReplicaSet
+
+		// TODO Add scenario for StatefulSet
+
+		// TODO Add scenario for DaemonSet
 	})
 
-	Describe("When operator is started", func() {
+	// TODO Refactor to run this container in a separate test suite
+	Describe("Configuration Checker", func() {
 
-		It("Should create CISKubeBenchReports", func() {
-			var nodeList corev1.NodeList
-			err := kubeClient.List(context.Background(), &nodeList)
-			Expect(err).ToNot(HaveOccurred())
-			for _, node := range nodeList.Items {
-				Eventually(HasCISKubeBenchReportOwnedBy(node), assertionTimeout).Should(BeTrue())
-			}
+		Context("When unmanaged Pod is created", func() {
+
+			var ctx context.Context
+			var pod *corev1.Pod
+
+			BeforeEach(func() {
+				ctx = context.Background()
+				pod = helper.NewPod().
+					WithRandomName("unmanaged-nginx").
+					WithNamespace(corev1.NamespaceDefault).
+					WithContainer("nginx", "nginx:1.16").
+					Build()
+
+				err := kubeClient.Create(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("Should create ConfigAuditReport", func() {
+				Eventually(HasConfigAuditReportOwnedBy(pod), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
+
+		Context("When Deployment is created", func() {
+
+			var ctx context.Context
+			var deploy *appsv1.Deployment
+
+			BeforeEach(func() {
+				ctx = context.Background()
+				deploy = helper.NewDeployment().
+					WithRandomName(baseDeploymentName).
+					WithNamespace(namespaceName).
+					WithContainer("wordpress", "wordpress:4.9").
+					Build()
+
+				err := kubeClient.Create(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+			})
+
+			It("Should create ConfigAuditReport", func() {
+				rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("When Deployment is rolling updated", func() {
+
+			var ctx context.Context
+			var deploy *appsv1.Deployment
+
+			BeforeEach(func() {
+				By("Creating Deployment wordpress")
+				ctx = context.Background()
+				deploy = helper.NewDeployment().
+					WithRandomName(baseDeploymentName).
+					WithNamespace(namespaceName).
+					WithContainer("wordpress", "wordpress:4.9").
+					Build()
+
+				err := kubeClient.Create(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+			})
+
+			It("Should create ConfigAuditReport for new ReplicaSet", func() {
+				By("Getting current active ReplicaSet")
+				rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				By("Waiting for ConfigAuditReport")
+				Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+
+				By("Updating deployment image to wordpress:5")
+				err = UpdateDeploymentImage(namespaceName, deploy.Name) // TODO Helper
+				Expect(err).ToNot(HaveOccurred())
+
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+
+				By("Getting new active replicaset")
+				rs, err = GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				By("Waiting for new Config Audit Report")
+				Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("When CronJob is created", func() {
+
+			var ctx context.Context
+			var cronJob *batchv1beta1.CronJob
+
+			BeforeEach(func() {
+				ctx = context.Background()
+				cronJob = &batchv1beta1.CronJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "hello-" + rand.String(5),
+					},
+					Spec: batchv1beta1.CronJobSpec{
+						Schedule: "*/1 * * * *",
+						JobTemplate: batchv1beta1.JobTemplateSpec{
+							Spec: batchv1.JobSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										RestartPolicy: corev1.RestartPolicyOnFailure,
+										Containers: []corev1.Container{
+											{
+												Name:  "hello",
+												Image: "busybox",
+												Command: []string{
+													"/bin/sh",
+													"-c",
+													"date; echo Hello from the Kubernetes cluster",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				err := kubeClient.Create(ctx, cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("Should create ConfigAuditReport", func() {
+				Eventually(HasConfigAuditReportOwnedBy(cronJob), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, cronJob)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("When ConfigAuditReport is deleted", func() {
+
+			var ctx context.Context
+			var deploy *appsv1.Deployment
+
+			BeforeEach(func() {
+				By("Creating Deployment")
+				ctx = context.Background()
+				deploy = helper.NewDeployment().
+					WithRandomName(baseDeploymentName).
+					WithNamespace(namespaceName).
+					WithContainer("wordpress", "wordpress:4.9").
+					Build()
+
+				err := kubeClient.Create(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
+			})
+
+			It("Should rescan Deployment when ConfigAuditReport is deleted", func() {
+				By("Getting active ReplicaSet")
+				rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(rs).ToNot(BeNil())
+
+				By("Waiting for ConfigAuditReport")
+				Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+				By("Deleting ConfigAuditReport")
+				err = DeleteConfigAuditReportOwnedBy(rs)
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Waiting for new ConfigAuditReport")
+				Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		// TODO Add scenario for workload with multiple containers
+
+		// TODO Add scenario for ReplicaSet
+
+		// TODO Add scenario for StatefulSet
+
+		// TODO Add scenario for DaemonSet
+	})
+
+	// TODO Refactor to run this container in a separate test suite
+	Describe("CIS Kubernetes Benchmark", func() {
+
+		Context("When operator is started", func() {
+
+			It("Should create CISKubeBenchReports", func() {
+				var nodeList corev1.NodeList
+				err := kubeClient.List(context.Background(), &nodeList)
+				Expect(err).ToNot(HaveOccurred())
+				for _, node := range nodeList.Items {
+					Eventually(HasCISKubeBenchReportOwnedBy(node), assertionTimeout).Should(BeTrue())
+				}
+			})
+
 		})
 
 	})
 
-	Describe("When ConfigAuditReport is deleted", func() {
-
-		var ctx context.Context
-		var deploy *appsv1.Deployment
-
-		BeforeEach(func() {
-			By("Creating Deployment wordpress")
-			ctx = context.Background()
-			deploy = helper.NewDeployment().
-				WithRandomName(baseDeploymentName).
-				WithNamespace(namespaceName).
-				WithContainer("wordpress", "wordpress:4.9").
-				Build()
-
-			err := kubeClient.Create(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(HasActiveReplicaSet(namespaceName, deploy.Name), assertionTimeout).Should(BeTrue())
-		})
-
-		It("Should rescan the deployment when previous ConfigAuditReport is deleted", func() {
-			By("Getting active ReplicaSet")
-			rs, err := GetActiveReplicaSetForDeployment(namespaceName, deploy.Name)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(rs).ToNot(BeNil())
-
-			By("Waiting for ConfigAuditReport")
-			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-			By("Deleting ConfigAuditReport")
-			err = DeleteConfigAuditReportOwnedBy(rs)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Waiting for new ConfigAuditReport")
-			Eventually(HasConfigAuditReportOwnedBy(rs), assertionTimeout).Should(BeTrue())
-		})
-
-		AfterEach(func() {
-			err := kubeClient.Delete(ctx, deploy)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
 })
 
 func HasActiveReplicaSet(namespace, name string) func() (bool, error) {

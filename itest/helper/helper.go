@@ -30,6 +30,10 @@ func (b *PodBuilder) WithName(name string) *PodBuilder {
 	return b
 }
 
+func (b *PodBuilder) WithRandomName(prefix string) *PodBuilder {
+	return b.WithName(prefix + "-" + rand.String(5))
+}
+
 func (b *PodBuilder) WithNamespace(namespace string) *PodBuilder {
 	b.namespace = namespace
 	return b
