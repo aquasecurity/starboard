@@ -279,7 +279,7 @@ func GetDefaultConfig() ConfigData {
 
 		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
 
-		"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+		"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
 	}
 }
 
