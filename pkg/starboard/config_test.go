@@ -567,3 +567,38 @@ func TestConfigManager_Delete(t *testing.T) {
 		assert.True(t, errors.IsNotFound(err))
 	})
 }
+
+func TestConfigData_GetTrivyInsecureRegistries(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     starboard.ConfigData
+		expectedOutput map[string]bool
+	}{
+		{
+			name: "Should return nil map when there is no key with trivy.insecureRegistry. prefix",
+			configData: starboard.ConfigData{
+				"foo": "bar",
+			},
+			expectedOutput: make(map[string]bool),
+		},
+		{
+			name: "Should return insecure registries in map",
+			configData: starboard.ConfigData{
+				"foo":                                "bar",
+				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.insecureRegistry.qaRegistry":  "qa.registry.aquasec.com",
+			},
+			expectedOutput: map[string]bool{
+				"poc.myregistry.harbor.com.pl": true,
+				"qa.registry.aquasec.com":      true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			insecureRegistries := tc.configData.GetTrivyInsecureRegistries()
+			assert.Equal(t, tc.expectedOutput, insecureRegistries)
+		})
+	}
+}
