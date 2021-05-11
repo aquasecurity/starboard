@@ -13,6 +13,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -26,8 +28,10 @@ func NewScheme() *runtime.Scheme {
 	_ = appsv1.AddToScheme(scheme)
 	_ = batchv1.AddToScheme(scheme)
 	_ = batchv1beta1.AddToScheme(scheme)
+	_ = rbacv1.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 	_ = coordinationv1.AddToScheme(scheme)
+	_ = apiextensionsv1.AddToScheme(scheme)
 	return scheme
 }
 

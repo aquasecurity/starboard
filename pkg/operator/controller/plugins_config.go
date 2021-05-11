@@ -52,12 +52,12 @@ func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	configHash, err := r.Plugin.GetConfigHash(r.PluginContext)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("getting config hash: %w", err)
 	}
 
 	labelSelector, err := labels.Parse(fmt.Sprintf("%s != %s", starboard.LabelPluginConfigHash, configHash))
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("parsing label selector: %w", err)
 	}
 
 	var reportList v1alpha1.ConfigAuditReportList
@@ -70,20 +70,52 @@ func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	log.V(1).Info("Listing ConfigAuditReports",
 		"reportsCount", len(reportList.Items),
-		"batchDeleteLimit", r.Config.BatchDeleteLimit)
+		"batchDeleteLimit", r.Config.BatchDeleteLimit,
+		"labelSelector", labelSelector.String())
 
 	for i := 0; i < ext.MinInt(r.Config.BatchDeleteLimit, len(reportList.Items)); i++ {
 		report := reportList.Items[i]
 		log.V(1).Info("Deleting ConfigAuditReport", "report", report.Namespace+"/"+report.Name)
 		err := r.Client.Delete(ctx, &report)
 		if err != nil {
-			return ctrl.Result{}, err
+			if !errors.IsNotFound(err) {
+				return ctrl.Result{}, fmt.Errorf("deleting ConfigAuditReport: %w", err)
+			}
 		}
 	}
 	if len(reportList.Items)-r.Config.BatchDeleteLimit > 0 {
-		// TODO Calculate RequeueAfter based on average scan duration?
+		log.V(1).Info("Requeuing reconciliation key", "requeueAfter", r.Config.BatchDeleteDelay)
 		return ctrl.Result{RequeueAfter: r.Config.BatchDeleteDelay}, nil
 	}
 
+	var clusterReportList v1alpha1.ClusterConfigAuditReportList
+	err = r.Client.List(ctx, &clusterReportList,
+		client.Limit(r.Config.BatchDeleteLimit+1),
+		client.MatchingLabelsSelector{Selector: labelSelector})
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("listing reports: %w", err)
+	}
+
+	log.V(1).Info("Listing ClusterConfigAuditReports",
+		"reportsCount", len(clusterReportList.Items),
+		"batchDeleteLimit", r.Config.BatchDeleteLimit,
+		"labelSelector", labelSelector)
+
+	for i := 0; i < ext.MinInt(r.Config.BatchDeleteLimit, len(clusterReportList.Items)); i++ {
+		report := clusterReportList.Items[i]
+		log.V(1).Info("Deleting ClusterConfigAuditReport", "report", report.Name)
+		err := r.Client.Delete(ctx, &report)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return ctrl.Result{}, fmt.Errorf("deleting ClusterConfigAuditReport: %w", err)
+			}
+		}
+	}
+	if len(clusterReportList.Items)-r.Config.BatchDeleteLimit > 0 {
+		log.V(1).Info("Requeuing reconciliation key", "requeueAfter", r.Config.BatchDeleteDelay)
+		return ctrl.Result{RequeueAfter: r.Config.BatchDeleteDelay}, nil
+	}
+
+	log.V(1).Info("Finished reconciling key", "labelSelector", labelSelector)
 	return ctrl.Result{}, nil
 }

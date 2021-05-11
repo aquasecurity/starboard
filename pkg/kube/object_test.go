@@ -491,3 +491,162 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	})
 
 }
+
+func TestIsClusterScopedKind(t *testing.T) {
+	testCases := []struct {
+		kind string
+		want bool
+	}{
+		{
+			kind: "Role",
+			want: false,
+		},
+		{
+			kind: "RoleBinding",
+			want: false,
+		},
+		{
+			kind: "ClusterRole",
+			want: true,
+		},
+		{
+			kind: "ClusterRoleBinding",
+			want: true,
+		},
+		{
+			kind: "CustomResourceDefinition",
+			want: true,
+		},
+		{
+			kind: "Pod",
+			want: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tt.want, tt.kind), func(t *testing.T) {
+			assert.Equal(t, tt.want, kube.IsClusterScopedKind(tt.kind))
+		})
+	}
+}
+
+func TestPartialObjectFromObjectMetadata(t *testing.T) {
+	testCases := []struct {
+		name          string
+		object        metav1.ObjectMeta
+		expected      kube.Object
+		expectedError string
+	}{
+		{
+			name: "Test Role",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Role",
+					starboard.LabelResourceNamespace: "kube-system",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:admin"),
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:admin",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindRole, Name: "system:admin", Namespace: "kube-system"},
+		},
+		{
+			name: "Test RoleBinding",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "RoleBinding",
+					starboard.LabelResourceNamespace: "kube-system",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:admin:binding"),
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:admin:binding",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindRoleBinding, Name: "system:admin:binding", Namespace: "kube-system"},
+		},
+		{
+			name: "Kind ClusterRole",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceNamespace: "",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:netnode"),
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:netnode",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindClusterRole, Name: "system:netnode"},
+		},
+		{
+			name: "Kind ClusterRoleBinding",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "ClusterRoleBinding",
+					starboard.LabelResourceNamespace: "",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:netnode:binding"),
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:netnode:binding",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindClusterRoleBindings, Name: "system:netnode:binding"},
+		},
+		{
+			name: "Kind Pod",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Pod",
+					starboard.LabelResourceNamespace: "default",
+					starboard.LabelResourceName:      "nginx-pod",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindPod, Name: "nginx-pod", Namespace: "default"},
+		},
+		{
+			name: "Kind Deployment",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Deployment",
+					starboard.LabelResourceNamespace: "default",
+					starboard.LabelResourceName:      "nginx-deployment",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindDeployment, Name: "nginx-deployment", Namespace: "default"},
+		},
+		{
+			name: "Kind DaemonSet",
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "DaemonSet",
+					starboard.LabelResourceNamespace: "default",
+					starboard.LabelResourceName:      "nginx-ds",
+				},
+			},
+			expected: kube.Object{Kind: kube.KindDaemonSet, Name: "nginx-ds", Namespace: "default"},
+		},
+		{
+			name: fmt.Sprintf("Should return error when %s label is missing", starboard.LabelResourceKind),
+			object: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceName:      "nginx",
+					starboard.LabelResourceNamespace: "default",
+				},
+			},
+			expectedError: "required label does not exist: starboard.resource.kind",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := kube.PartialObjectFromObjectMetadata(tc.object)
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, actual)
+			} else {
+				require.EqualError(t, err, tc.expectedError)
+			}
+		})
+	}
+
+}

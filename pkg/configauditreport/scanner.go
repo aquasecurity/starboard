@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -46,20 +45,20 @@ func NewScanner(
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.ConfigAuditReport, error) {
-	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
+func (s *Scanner) Scan(ctx context.Context, obj kube.Object) (*ReportBuilder, error) {
+	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+
 	scanJobTolerations, err := s.config.GetScanJobTolerations()
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, err
+		return nil, fmt.Errorf("getting scan job tolerations: %w", err)
 	}
 
 	scanJobAnnotations, err := s.config.GetScanJobAnnotations()
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, err
-	}
-	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, workload)
-	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, err
+		return nil, fmt.Errorf("getting scan job annotations: %w", err)
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
@@ -69,15 +68,15 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		WithTimeout(s.opts.ScanJobTimeout).
 		WithObject(owner).
 		WithTolerations(scanJobTolerations).
-		WithScanJobAnnotations(scanJobAnnotations).
+		WithAnnotations(scanJobAnnotations).
 		Get()
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, err
+		return nil, fmt.Errorf("constructing scan job: %w", err)
 	}
 
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job, secrets...))
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("running scan job: %w", err)
+		return nil, fmt.Errorf("running scan job: %w", err)
 	}
 
 	defer func() {
@@ -94,11 +93,10 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 
 	containerName := s.plugin.GetContainerName()
 
-	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", containerName,
-		job.Namespace, job.Name)
+	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", containerName, job.Namespace, job.Name)
 	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, containerName)
 	if err != nil {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
+		return nil, fmt.Errorf("getting logs: %w", err)
 	}
 
 	result, err := s.plugin.ParseConfigAuditReportData(s.pluginContext, logsStream)
@@ -106,19 +104,18 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		_ = logsStream.Close()
 	}()
 
-	podSpecHash, ok := job.Labels[starboard.LabelPodSpecHash]
+	resourceSpecHash, ok := job.Labels[starboard.LabelResourceSpecHash]
 	if !ok {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("expected label %s not set", starboard.LabelPodSpecHash)
+		return nil, fmt.Errorf("expected label %s not set", starboard.LabelResourceSpecHash)
 	}
 	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
 	if !ok {
-		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
+		return nil, fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
 	return NewReportBuilder(s.scheme).
 		Controller(owner).
-		PodSpecHash(podSpecHash).
+		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
-		Data(result).
-		Get()
+		Data(result), nil
 }

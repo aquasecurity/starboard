@@ -6,7 +6,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/starboard"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -107,11 +106,9 @@ func (r *readWriter) WriteClusterReport(ctx context.Context, report v1alpha1.Clu
 func (r *readWriter) FindReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
 	var list v1alpha1.ConfigAuditReportList
 
-	err := r.List(ctx, &list, client.MatchingLabels{
-		starboard.LabelResourceKind:      string(owner.Kind),
-		starboard.LabelResourceNamespace: owner.Namespace,
-		starboard.LabelResourceName:      owner.Name,
-	}, client.InNamespace(owner.Namespace))
+	labels := client.MatchingLabels(kube.PartialObjectToLabels(owner))
+
+	err := r.List(ctx, &list, labels, client.InNamespace(owner.Namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -152,10 +149,9 @@ func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kub
 func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ClusterConfigAuditReport, error) {
 	var list v1alpha1.ClusterConfigAuditReportList
 
-	err := r.List(ctx, &list, client.MatchingLabels{
-		starboard.LabelResourceKind: string(owner.Kind),
-		starboard.LabelResourceName: owner.Name,
-	})
+	labels := client.MatchingLabels(kube.PartialObjectToLabels(owner))
+
+	err := r.List(ctx, &list, labels)
 	if err != nil {
 		return nil, err
 	}

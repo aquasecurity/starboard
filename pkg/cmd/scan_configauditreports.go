@@ -73,11 +73,11 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 			return err
 		}
 		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
-		report, err := scanner.Scan(ctx, workload)
+		reportBuilder, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
 		writer := configauditreport.NewReadWriter(kubeClient)
-		return writer.WriteReport(ctx, report)
+		return reportBuilder.Write(ctx, writer)
 	}
 }
