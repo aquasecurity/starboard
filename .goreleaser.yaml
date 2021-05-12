@@ -1,5 +1,6 @@
 release:
   draft: false
+  discussion_category_name: "Show and tell"
   prerelease: auto
 env:
   - GO111MODULE=on

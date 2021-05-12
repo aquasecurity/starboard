@@ -1,2 +1,2 @@
-// The polaris package provides primitives for working with Polaris.
+// Package polaris provides primitives for working with Polaris.
 package polaris
