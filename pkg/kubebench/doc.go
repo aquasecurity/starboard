@@ -1,2 +1,2 @@
-// This package provides primitives for working with CIS Kubernetes benchmarks.
+// Package kubebench provides primitives for working with CIS Kubernetes benchmarks.
 package kubebench

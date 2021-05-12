@@ -1,2 +1,2 @@
-// The trivy package provides primitives for working with Trivy.
+// Package trivy provides primitives for working with Trivy.
 package trivy
