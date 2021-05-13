@@ -72,14 +72,14 @@ default      └─VulnerabilityReport/replicaset-nginx-7ff78f74b9-nginx  -     
 Moving forward, let's update the container image of the `nginx` Deployment from `nginx:1.16` to `nginx:1.17`. This will
 trigger a rolling update of the Deployment and eventually create another ReplicaSet.
 
-```console
+```
 kubectl set image deployment nginx nginx=nginx:1.17
 ```
 
 Even this time the operator will pick up changes and rescan our Deployment with updated configuration:
 
 ```console
-kubectl tree deploy nginx
+$ kubectl tree deploy nginx
 NAMESPACE  NAME                                                       READY  REASON  AGE
 default    Deployment/nginx                                           -              6m36s
 default    ├─ReplicaSet/nginx-549f5fcb58                              -              2m47s
