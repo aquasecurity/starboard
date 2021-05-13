@@ -76,10 +76,10 @@ extra:
     tag_prev: "v0.10.1"
     build:
       version: "0.10.2"
-      commit: "21e893cb41c75144f9877735303bbf783c3f80bc"
-      date: "2021-04-21T19:48:38Z"
+      commit: "dfed9af2e3a706579bd11b1a0c8820d6e2173687"
+      date: "2021-05-13T10:26:26Z"
     chart:
-      version: 0.5.1
+      version: 0.5.2
 
 # Requires pip install mkdocs-macros-plugin
 plugins:
