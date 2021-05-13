@@ -30,7 +30,7 @@ Starboard can be run in two different modes:
   cluster - for example, initiating a vulnerability scan when a new pod is started.
 
 > **NOTE** Even though manual scanning through the command-line is useful, the fact that it's not automated makes it
-> less suitable with a large number of Kubernetes workloads. Therefore, the [operator] provides a better option
+> less suitable with numerous Kubernetes workloads. Therefore, the [operator] provides a better option
 > for these scenarios, constantly monitoring built-in Kubernetes resources, such as Deployments, and running appropriate
 > scanners against the underlying deployment descriptors.
 
