@@ -62,8 +62,8 @@ Kubernetes-native ways.
 * Join our [discussions][discussions].
 
 ---
-Starboard is an [Aqua Security](https://aquasec.com) open source project.
-Learn about our open source work and portfolio [here](https://www.aquasec.com/products/open-source-projects/).
+Starboard is an [Aqua Security](https://aquasec.com) open source project.  
+Learn about our open source work and portfolio [here](https://www.aquasec.com/products/open-source-projects/).  
 Contact us about any matter by opening a GitHub Discussion [here](https://github.com/aquasecurity/starboard/discussions).
 
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
