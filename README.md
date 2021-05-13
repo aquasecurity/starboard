@@ -61,6 +61,11 @@ Kubernetes-native ways.
 * See [ROADMAP.md](ROADMAP.md) for tentative features in a 1.0 release.
 * Join our [discussions][discussions].
 
+---
+Starboard is an [Aqua Security](https://aquasec.com) open source project.
+Learn about our open source work and portfolio [here](https://www.aquasec.com/products/open-source-projects/).
+Contact us about any matter by opening a GitHub Discussion [here](https://github.com/aquasecurity/starboard/discussions).
+
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
 [build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
