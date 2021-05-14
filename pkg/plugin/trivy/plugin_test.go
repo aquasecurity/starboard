@@ -227,13 +227,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 						},
 					},
 				},
-				SecurityContext: &corev1.PodSecurityContext{
-					RunAsUser:  pointer.Int64Ptr(1000),
-					RunAsGroup: pointer.Int64Ptr(1000),
-					SeccompProfile: &corev1.SeccompProfile{
-						Type: corev1.SeccompProfileTypeRuntimeDefault,
-					},
-				},
+				SecurityContext: &corev1.PodSecurityContext{},
 			},
 		},
 		{
@@ -443,13 +437,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 						},
 					},
 				},
-				SecurityContext: &corev1.PodSecurityContext{
-					RunAsUser:  pointer.Int64Ptr(1000),
-					RunAsGroup: pointer.Int64Ptr(1000),
-					SeccompProfile: &corev1.SeccompProfile{
-						Type: corev1.SeccompProfileTypeRuntimeDefault,
-					},
-				},
+				SecurityContext: &corev1.PodSecurityContext{},
 			},
 		},
 		{
