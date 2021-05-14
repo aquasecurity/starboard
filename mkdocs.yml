@@ -72,10 +72,10 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.10.2"
-    tag_prev: "v0.10.1"
+    tag: "v0.10.3"
+    tag_prev: "v0.10.2"
     build:
-      version: "0.10.2"
+      version: "0.10.3"
       commit: "dfed9af2e3a706579bd11b1a0c8820d6e2173687"
       date: "2021-05-13T10:26:26Z"
     chart:
