@@ -329,15 +329,9 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 				},
 			},
 		},
-		InitContainers: []corev1.Container{initContainer},
-		Containers:     containers,
-		SecurityContext: &corev1.PodSecurityContext{
-			RunAsUser:  pointer.Int64Ptr(1000),
-			RunAsGroup: pointer.Int64Ptr(1000),
-			SeccompProfile: &corev1.SeccompProfile{
-				Type: corev1.SeccompProfileTypeRuntimeDefault,
-			},
-		},
+		InitContainers:  []corev1.Container{initContainer},
+		Containers:      containers,
+		SecurityContext: &corev1.PodSecurityContext{},
 	}, secrets, nil
 }
 

@@ -62,10 +62,22 @@ func MapContainerNamesToDockerAuths(images ContainerImages, secrets []corev1.Sec
 func MapDockerRegistryServersToAuths(imagePullSecrets []corev1.Secret) (map[string]docker.Auth, error) {
 	auths := make(map[string]docker.Auth)
 	for _, secret := range imagePullSecrets {
+		// Skip a deprecated secret of type "kubernetes.io/dockercfg" which contains a dockercfg file
+		// that follows the same format rules as ~/.dockercfg
+		// See https://docs.docker.com/engine/deprecated/#support-for-legacy-dockercfg-configuration-files
+		if secret.Type != corev1.SecretTypeDockerConfigJson {
+			continue
+		}
+		data, hasRequiredData := secret.Data[corev1.DockerConfigJsonKey]
+		// Skip a secrets of type "kubernetes.io/dockerconfigjson" which does not contain
+		// the required ".dockerconfigjson" key.
+		if !hasRequiredData {
+			continue
+		}
 		dockerConfig := &docker.Config{}
-		err := dockerConfig.Read(secret.Data[corev1.DockerConfigJsonKey])
+		err := dockerConfig.Read(data)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reading content of %s: %w", corev1.DockerConfigJsonKey, err)
 		}
 		for authKey, auth := range dockerConfig.Auths {
 			server, err := docker.GetServerFromDockerAuthKey(authKey)
