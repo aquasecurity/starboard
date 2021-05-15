@@ -154,6 +154,67 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	}
 }
 
+// GetPodsUnderConsideration returns []corev1.Pod from the specified
+// client.Object. Returns error if the given client.Object
+// is not a Kubernetes workload or does not point to any pod.
+func (o *ObjectResolver) GetPodsUnderConsideration(ctx context.Context, obj client.Object) ([]corev1.Pod, error) {
+	var ownerName string
+	switch t := obj.(type) {
+	case *corev1.Pod:
+		var pod corev1.Pod
+		err := o.Client.Get(ctx, types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &pod)
+		if err != nil {
+			return []corev1.Pod{}, err
+		}
+		return []corev1.Pod{pod}, nil
+	case *appsv1.Deployment:
+		object := Object{
+			Kind:      KindDeployment,
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
+		}
+		var err error
+		ownerName, err = o.getActiveReplicaSetByDeployment(ctx, object)
+		if err != nil {
+			return []corev1.Pod{}, err
+		}
+	case *batchv1beta1.CronJob:
+		object := Object{
+			Kind:      KindDeployment,
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
+		}
+		var err error
+		ownerName, err = o.getAChildJobOfCronJob(ctx, object)
+		if err != nil {
+			return []corev1.Pod{}, err
+		}
+	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.Job:
+		ownerName = obj.GetName()
+	default:
+		return []corev1.Pod{}, fmt.Errorf("unsupported workload: %T", t)
+	}
+
+	var allPodsInNamespace corev1.PodList
+	err := o.Client.List(ctx, &allPodsInNamespace, client.InNamespace(obj.GetNamespace()))
+	if err != nil {
+		return []corev1.Pod{}, err
+	}
+	var podsUnderConsideration []corev1.Pod
+	for _, pod := range allPodsInNamespace.Items {
+		for _, owner := range pod.OwnerReferences {
+			if owner.Name == ownerName {
+				podsUnderConsideration = append(podsUnderConsideration, pod)
+				break
+			}
+		}
+	}
+	if len(podsUnderConsideration) == 0 {
+		return []corev1.Pod{}, fmt.Errorf("no pods found")
+	}
+	return podsUnderConsideration, nil
+}
+
 type ObjectResolver struct {
 	client.Client
 }
@@ -230,6 +291,31 @@ func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, ob
 		return rs.Name, nil
 	}
 	return "", fmt.Errorf("did not find an active replicaset associated with deployment %q", object.Name)
+}
+
+func (o *ObjectResolver) getAChildJobOfCronJob(ctx context.Context, object Object) (string, error) {
+	cronjob := &batchv1beta1.CronJob{}
+	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, cronjob)
+	if err != nil {
+		return "", fmt.Errorf("getting cronjob %q: %w", object.Namespace+"/"+object.Name, err)
+	}
+	var allJobs batchv1.JobList
+	err = o.Client.List(ctx, &allJobs, client.InNamespace(object.Namespace))
+	if err != nil {
+		return "", fmt.Errorf("listing job for cronjob %q: %w", object.Name, err)
+	}
+	if len(allJobs.Items) == 0 {
+		return "", fmt.Errorf("no jobs associated with cronjob %q", object.Name)
+	}
+
+	for _, job := range allJobs.Items {
+		jobNameSplitByDash := strings.Split(job.Name, "-")
+		jobNameWithoutCronJobHash := strings.Join(jobNameSplitByDash[:len(jobNameSplitByDash)-1], "-")
+		if jobNameWithoutCronJobHash == object.Name {
+			return job.Name, nil
+		}
+	}
+	return "", fmt.Errorf("did not find any job associated with cronjob %q", object.Name)
 }
 
 func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object Object) (string, error) {

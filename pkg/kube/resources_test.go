@@ -31,6 +31,32 @@ func TestGetContainerImagesFromPodSpec(t *testing.T) {
 	}, images)
 }
 
+func TestGetContainerImageDigestsFromPodStatus(t *testing.T) {
+	images := kube.GetContainerImageDigestsFromPodStatus(corev1.PodStatus{
+		InitContainerStatuses: []corev1.ContainerStatus{
+			{
+				Name:    "busybox",
+				ImageID: "docker.io/library/busybox@sha256:be4684e4004560b2cd1f12148b7120b0ea69c385bcc9b12a637537a2c60f97fb",
+			},
+		},
+		ContainerStatuses: []corev1.ContainerStatus{
+			{
+				Name:    "nginx",
+				ImageID: "docker.io/library/nginx@sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
+			},
+			{
+				Name:    "wordpress",
+				ImageID: "docker.io/library/wordpress@sha256:69607dc78dda010e6708c6ced72c80563ad55b180286c66198b319bf0ee74173",
+			},
+		},
+	})
+	assert.Equal(t, kube.ContainerImages{
+		"busybox":   "docker.io/library/busybox@sha256:be4684e4004560b2cd1f12148b7120b0ea69c385bcc9b12a637537a2c60f97fb",
+		"nginx":     "docker.io/library/nginx@sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
+		"wordpress": "docker.io/library/wordpress@sha256:69607dc78dda010e6708c6ced72c80563ad55b180286c66198b319bf0ee74173",
+	}, images)
+}
+
 func TestGetContainerImagesFromJob(t *testing.T) {
 
 	t.Run("Should return error when annotation is not set", func(t *testing.T) {

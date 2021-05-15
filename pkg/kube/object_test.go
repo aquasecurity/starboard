@@ -376,6 +376,286 @@ func TestGetPodSpec(t *testing.T) {
 	}
 }
 
+func TestGetPodsUnderConsideration(t *testing.T) {
+	testCases := []struct {
+		name          string
+		object        client.Object
+		expectedPods  []corev1.Pod
+		expectedError string
+	}{
+		{
+			name: "Should return the Pod itself for Pod",
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx-549f5fcb58-7cr5b",
+					Namespace: corev1.NamespaceDefault,
+					Labels: map[string]string{
+						"app":               "nginx",
+						"pod-hash-template": "549f5fcb58",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion:         "apps/v1",
+							Kind:               "ReplicaSet",
+							Name:               "nginx-549f5fcb58",
+							Controller:         pointer.BoolPtr(true),
+							BlockOwnerDeletion: pointer.BoolPtr(true),
+						},
+					},
+				},
+			},
+			expectedPods: []corev1.Pod{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Pod",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "nginx-549f5fcb58-7cr5b",
+						Namespace: corev1.NamespaceDefault,
+						Labels: map[string]string{
+							"app":               "nginx",
+							"pod-hash-template": "549f5fcb58",
+						},
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion:         "apps/v1",
+								Kind:               "ReplicaSet",
+								Name:               "nginx-549f5fcb58",
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Should return Pods for Deployment",
+			object: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: corev1.NamespaceDefault,
+					Labels: map[string]string{
+						"app": "nginx",
+					},
+					Annotations: map[string]string{
+						"deployment.kubernetes.io/revision": "2",
+					},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app": "nginx",
+						},
+					},
+				},
+			},
+			expectedPods: []corev1.Pod{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Pod",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "nginx-549f5fcb58-7cr5b",
+						Namespace: corev1.NamespaceDefault,
+						Labels: map[string]string{
+							"app":               "nginx",
+							"pod-hash-template": "549f5fcb58",
+						},
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion:         "apps/v1",
+								Kind:               "ReplicaSet",
+								Name:               "nginx-549f5fcb58",
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Should return Pods for ReplicaSet",
+			object: &appsv1.ReplicaSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx-549f5fcb58",
+					Namespace: corev1.NamespaceDefault,
+					Labels: map[string]string{
+						"app":               "nginx",
+						"pod-template-hash": "549f5fcb58",
+					},
+					Annotations: map[string]string{
+						"deployment.kubernetes.io/revision": "2",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion:         "apps/v1",
+							Kind:               "Deployment",
+							Name:               "nginx",
+							Controller:         pointer.BoolPtr(true),
+							BlockOwnerDeletion: pointer.BoolPtr(true),
+						},
+					},
+				},
+				Spec: appsv1.ReplicaSetSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app":               "nginx",
+							"pod-template-hash": "549f5fcb58",
+						},
+					},
+				},
+			},
+			expectedPods: []corev1.Pod{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Pod",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "nginx-549f5fcb58-7cr5b",
+						Namespace: corev1.NamespaceDefault,
+						Labels: map[string]string{
+							"app":               "nginx",
+							"pod-hash-template": "549f5fcb58",
+						},
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion:         "apps/v1",
+								Kind:               "ReplicaSet",
+								Name:               "nginx-549f5fcb58",
+								Controller:         pointer.BoolPtr(true),
+								BlockOwnerDeletion: pointer.BoolPtr(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:          "Should return error for Service",
+			object:        &corev1.Service{},
+			expectedError: "unsupported workload: *v1.Service",
+		},
+	}
+
+	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app": "nginx",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "2",
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app": "nginx",
+					},
+				},
+			},
+		},
+		&appsv1.ReplicaSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-7ff78f74b9",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "7ff78f74b9",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "1",
+				},
+			},
+			Spec: appsv1.ReplicaSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":               "nginx",
+						"pod-template-hash": "7ff78f74b9",
+					},
+				},
+			},
+		},
+		&appsv1.ReplicaSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-549f5fcb58",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "549f5fcb58",
+				},
+				Annotations: map[string]string{
+					"deployment.kubernetes.io/revision": "2",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "apps/v1",
+						Kind:               "Deployment",
+						Name:               "nginx",
+						Controller:         pointer.BoolPtr(true),
+						BlockOwnerDeletion: pointer.BoolPtr(true),
+					},
+				},
+			},
+			Spec: appsv1.ReplicaSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":               "nginx",
+						"pod-template-hash": "549f5fcb58",
+					},
+				},
+			},
+		},
+		&corev1.Pod{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Pod",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-549f5fcb58-7cr5b",
+				Namespace: corev1.NamespaceDefault,
+				Labels: map[string]string{
+					"app":               "nginx",
+					"pod-hash-template": "549f5fcb58",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion:         "apps/v1",
+						Kind:               "ReplicaSet",
+						Name:               "nginx-549f5fcb58",
+						Controller:         pointer.BoolPtr(true),
+						BlockOwnerDeletion: pointer.BoolPtr(true),
+					},
+				},
+			},
+		},
+	).Build()}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			podsUnderConsideration, err := instance.GetPodsUnderConsideration(context.Background(), tc.object)
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedPods, podsUnderConsideration)
+			}
+
+		})
+	}
+}
+
 func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 
 	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
@@ -441,6 +721,10 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 			},
 		},
 		&corev1.Pod{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Pod",
+				APIVersion: "v1",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "nginx-549f5fcb58-7cr5b",
 				Namespace: corev1.NamespaceDefault,

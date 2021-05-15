@@ -22,6 +22,22 @@ func GetContainerImagesFromPodSpec(spec corev1.PodSpec) ContainerImages {
 	return images
 }
 
+// GetContainerImageDigestsFromPodStatus returns a map of container names
+// to container images (image digests) from the specified v1.PodStatus's InitContainerStatuses, ContainerStatuses and EphemeralContainerStatuses.
+func GetContainerImageDigestsFromPodStatus(status corev1.PodStatus) ContainerImages {
+	images := ContainerImages{}
+	for _, container := range status.InitContainerStatuses {
+		images[container.Name] = container.ImageID
+	}
+	for _, container := range status.ContainerStatuses {
+		images[container.Name] = container.ImageID
+	}
+	for _, container := range status.EphemeralContainerStatuses {
+		images[container.Name] = container.ImageID
+	}
+	return images
+}
+
 // GetContainerImagesFromJob returns a map of container names
 // to container images from the specified v1.Job.
 // The mapping is encoded as JSON value of the AnnotationContainerImages
