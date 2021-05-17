@@ -54,10 +54,6 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		return nil, nil, err
 	}
 
-	// This is a temporary measure.  This toleration will break through any taint and allow the scan job to run.  Next step
-	// is to work out how to add the toleration dynamically based on the contents of the starboard ConfigMap.
-	jobSpec.Tolerations = append(jobSpec.Tolerations, corev1.Toleration{Operator: "Exists"})
-
 	podSpec, err := kube.GetPodSpec(s.object)
 	if err != nil {
 		return nil, nil, err

@@ -135,9 +135,7 @@ func TestScanJobBuilder(t *testing.T) {
 						starboard.LabelResourceNamespace:        "prod-ns",
 					},
 				},
-				Spec: corev1.PodSpec{
-					Tolerations: []corev1.Toleration{{Operator: "Exists"}},
-				},
+				Spec: corev1.PodSpec{},
 			},
 		},
 	}))

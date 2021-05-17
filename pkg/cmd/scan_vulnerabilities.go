@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -109,7 +108,7 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 			return err
 		}
 		scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, opts, plugin)
-		reports, err := scanner.Scan(ctx, workload)
+		reports, err := scanner.Scan(ctx, workload, starboardConfig)
 		if err != nil {
 			return err
 		}
