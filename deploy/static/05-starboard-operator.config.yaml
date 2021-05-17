@@ -5,7 +5,6 @@ metadata:
   name: starboard
   namespace: starboard-operator
 data:
-  scanJob.Tolerations: '[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'
   vulnerabilityReports.scanner: Trivy
   configAuditReports.scanner: Polaris
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL

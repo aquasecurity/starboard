@@ -6,7 +6,6 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  scanJob.Tolerations: '[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
   vulnerabilityReports.scanner: {{ .Values.operator.vulnerabilityReportsPlugin | quote }}
   {{- if eq .Values.operator.vulnerabilityReportsPlugin "Trivy" }}

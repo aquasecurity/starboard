@@ -57,27 +57,27 @@ The following tables list available configuration settings with their default va
     [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
 
 | CONFIGMAP KEY                         | DEFAULT                                                                           | DESCRIPTION |
-| ------------------------------------- | --------------------------------------------------------------------------------- | ----------- |
-| `vulnerabilityReports.scanner`  | `Trivy`                                                                           | The name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`. |
-| `configAuditReports.scanner`    | `Polaris`                                                                         | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
-| `trivy.httpProxy`               | N/A                                                                               | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. |
-| `trivy.httpsProxy`              | N/A                                                                               | The HTTPS proxy used by Trivy to download the vulnerabilities database from GitHub. |
-| `trivy.noProxy`                 | N/A                                                                               | A comma separated list of IPs and domain names that are not subject to proxy settings. |
-| `trivy.severity`                | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                                                | A comma separated list of severity levels reported by Trivy |
-| `trivy.imageRef`                | `docker.io/aquasec/trivy:0.16.0`                                                  | Trivy image reference |
-| `trivy.mode`                    | `Standalone`                                                                      | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
-| `trivy.serverURL`               | N/A                                                                               | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
-| `trivy.serverTokenHeader`       | `Trivy-Token`                                                                     | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
-| `trivy.insecureRegistry.<id>`   | N/A                                                                               | The registry to which insecure connections are allowed. There can be multiple registries with different registry `<id>`. |
-| `aqua.imageRef`                 | `docker.io/aquasec/scanner:5.3`                                                   | Aqua scanner image reference. The tag determines the version of the `scanner` binary executable and it must be compatible with version of Aqua console. |
-| `aqua.serverURL`                | N/A                                                                               | The endpoint URL of Aqua management console |
-| `kube-bench.imageRef`           | `docker.io/aquasec/kube-bench:0.5.0`                                              | kube-bench image reference |
-| `kube-hunter.imageRef`          | `docker.io/aquasec/kube-hunter:0.4.1`                                             | kube-hunter image reference |
-| `kube-hunter.quick`             | `"false"`                                                                         | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
-| `polaris.imageRef`              | `quay.io/fairwinds/polaris:3.2`                                                   | Polaris image reference |
-| `polaris.config.yaml`           | [Check the default value here][default-polaris-config]                            | Polaris configuration file |
-| `conftest.imageRef`             | `docker.io/openpolicyagent/conftest:v0.25.0`                                      | Conftest image reference |
-| `scanJob.Tolerations`           | `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'` | JSON representation of the [tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration) to be applied to the vulnerability scanner pods so that they can run on nodes with matching taints. |
+| ------------------------------- | ------------------------------------------------------ | ----------- |
+| `vulnerabilityReports.scanner`  | `Trivy`                                                | The name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`. |
+| `configAuditReports.scanner`    | `Polaris`                                              | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
+| `trivy.httpProxy`               | N/A                                                    | The HTTP proxy used by Trivy to download the vulnerabilities database from GitHub. |
+| `trivy.httpsProxy`              | N/A                                                    | The HTTPS proxy used by Trivy to download the vulnerabilities database from GitHub. |
+| `trivy.noProxy`                 | N/A                                                    | A comma separated list of IPs and domain names that are not subject to proxy settings. |
+| `trivy.severity`                | `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`                     | A comma separated list of severity levels reported by Trivy |
+| `trivy.imageRef`                | `docker.io/aquasec/trivy:0.16.0`                       | Trivy image reference |
+| `trivy.mode`                    | `Standalone`                                           | Trivy client mode. Either `Standalone` or `ClientServer`. Depending on the active mode other settings might be applicable or required. |
+| `trivy.serverURL`               | N/A                                                    | The endpoint URL of the Trivy server. Required in `ClientServer` mode. |
+| `trivy.serverTokenHeader`       | `Trivy-Token`                                          | The name of the HTTP header to send the authentication token to Trivy server. Only application in `ClientServer` mode when `trivy.serverToken` is specified. |
+| `trivy.insecureRegistry.<id>`   | N/A                                                    | The registry to which insecure connections are allowed. There can be multiple registries with different registry `<id>`. |
+| `aqua.imageRef`                 | `docker.io/aquasec/scanner:5.3`                        | Aqua scanner image reference. The tag determines the version of the `scanner` binary executable and it must be compatible with version of Aqua console. |
+| `aqua.serverURL`                | N/A                                                    | The endpoint URL of Aqua management console |
+| `kube-bench.imageRef`           | `docker.io/aquasec/kube-bench:0.5.0`                   | kube-bench image reference |
+| `kube-hunter.imageRef`          | `docker.io/aquasec/kube-hunter:0.4.1`                  | kube-hunter image reference |
+| `kube-hunter.quick`             | `"false"`                                              | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
+| `polaris.imageRef`              | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
+| `polaris.config.yaml`           | [Check the default value here][default-polaris-config] | Polaris configuration file |
+| `conftest.imageRef`             | `docker.io/openpolicyagent/conftest:v0.25.0`           | Conftest image reference |
+| `scanJob.Tolerations`           |                                                        | JSON representation of the [tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration) to be applied to the vulnerability scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'`|
 
 | SECRET KEY                  | DESCRIPTION |
 | --------------------------- | ----------- |
