@@ -2,6 +2,7 @@ package starboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -296,6 +297,13 @@ func GetDefaultPolarisConfig() map[string]string {
 // GetDefaultConftestConfig return the defautl Conftest configuration.
 func GetDefaultConftestConfig() map[string]string {
 	return map[string]string{}
+}
+
+func (c ConfigData) GetScanJobTolerations() ([]corev1.Toleration, error) {
+	scanJobTolerations := []corev1.Toleration{}
+	tolerationsJsonFromConfigMap := c["scanJob.tolerations"]
+	err := json.Unmarshal([]byte(tolerationsJsonFromConfigMap), &scanJobTolerations)
+	return scanJobTolerations, err
 }
 
 func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
