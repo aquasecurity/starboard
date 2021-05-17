@@ -266,7 +266,7 @@ type ConfigManager interface {
 // GetDefaultConfig returns the default configuration settings.
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
-		"vulnerabilityScanner.podTolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`,
+		"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`,
 
 		keyVulnerabilityReportsScanner: string(Trivy),
 		keyConfigAuditReportsScanner:   string(Polaris),
