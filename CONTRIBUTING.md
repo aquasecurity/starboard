@@ -232,7 +232,8 @@ started with a basic development workflow. For other install modes see [Operator
 1. Run the main method of the operator program:
 
    ```
-   $ OPERATOR_NAMESPACE=starboard-operator \
+   $ SCAN_JOB_TOLERATIONS="[{\"key\":\"key11\",\"operator\":\"Equal\",\"value\":\"value1\",\"effect\":\"NoSchedule\"}]" \
+     OPERATOR_NAMESPACE=starboard-operator \
      OPERATOR_TARGET_NAMESPACES=default \
      OPERATOR_LOG_DEV_MODE=true \
      OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED=true \
