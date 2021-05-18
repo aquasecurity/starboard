@@ -21,7 +21,6 @@ type Config struct {
 	LogDevMode                    bool          `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
 	CISKubernetesBenchmarkEnabled bool          `env:"OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED" envDefault:"true"`
 	VulnerabilityScannerEnabled   bool          `env:"OPERATOR_VULNERABILITY_SCANNER_ENABLED" envDefault:"true"`
-	ScanJobTolerations            string        `env:"SCAN_JOB_TOLERATIONS" envDefault:"[]"`
 	ConfigAuditScannerEnabled     bool          `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"true"`
 	LeaderElectionEnabled         bool          `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
 	LeaderElectionID              string        `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-operator"`
