@@ -611,10 +611,9 @@ func TestGetScanJobTolerations(t *testing.T) {
 		expectError string
 	}{
 		{
-			name:        "no scanJob.tolerations in ConfigData",
-			config:      starboard.ConfigData{},
-			expected:    []corev1.Toleration{},
-			expectError: "unexpected end of JSON input",
+			name:     "no scanJob.tolerations in ConfigData",
+			config:   starboard.ConfigData{},
+			expected: []corev1.Toleration{},
 		},
 		{
 			name:        "scanJob.tolerations value is not json",
@@ -663,9 +662,9 @@ func TestGetScanJobTolerations(t *testing.T) {
 	for _, tc := range testcases {
 		got, err := tc.config.GetScanJobTolerations()
 		if tc.expectError != "" {
-			assert.Error(t, err, "unexpected end of JSON input")
+			assert.Error(t, err, "unexpected end of JSON input", tc.name)
 		} else {
-			assert.NoError(t, err)
+			assert.NoError(t, err, tc.name)
 		}
 		assert.Equal(t, tc.expected, got, tc.name)
 	}
