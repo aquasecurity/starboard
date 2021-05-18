@@ -18,10 +18,11 @@ import (
 )
 
 type ScanJobBuilder struct {
-	plugin        Plugin
-	pluginContext starboard.PluginContext
-	timeout       time.Duration
-	object        client.Object
+	plugin            Plugin
+	pluginContext     starboard.PluginContext
+	timeout           time.Duration
+	object            client.Object
+	customAnnotations map[string]string
 }
 
 func NewScanJob() *ScanJobBuilder {
@@ -45,6 +46,11 @@ func (s *ScanJobBuilder) WithTimeout(timeout time.Duration) *ScanJobBuilder {
 
 func (s *ScanJobBuilder) WithObject(object client.Object) *ScanJobBuilder {
 	s.object = object
+	return s
+}
+
+func (s *ScanJobBuilder) WithCustomAnnotations(customAnnotations map[string]string) *ScanJobBuilder {
+	s.customAnnotations = customAnnotations
 	return s
 }
 
@@ -97,7 +103,8 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.timeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
+					Labels:      labels,
+					Annotations: s.customAnnotations,
 				},
 				Spec: jobSpec,
 			},

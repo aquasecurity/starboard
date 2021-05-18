@@ -463,7 +463,9 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("getting config: %w", err)
 		}
-
+		configData := GetDefaultConfig()
+		// TODO: the below annotations are supposed to be added dynamically via user-provided input
+		//configData[AnnotationCustomAnnotationsForScanJobPods] = getUserProvidedCustomAnnotations()
 		cm, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: c.namespace,
@@ -472,7 +474,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 					LabelK8SAppManagedBy: "starboard",
 				},
 			},
-			Data: GetDefaultConfig(),
+			Data: configData,
 		}, metav1.CreateOptions{})
 
 		if err != nil {

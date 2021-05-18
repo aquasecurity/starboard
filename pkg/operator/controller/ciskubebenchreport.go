@@ -111,7 +111,12 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		job, err = r.newScanJob(node)
+		customAnnotations, err := (&kube.ObjectResolver{Client: r.Client}).GetCustomAnnotationsFromConfig(context.TODO(), kube.ExecutionModeOperator)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("fetching the custom annotations for the ScanJob's pods to be annotated with: %w", err)
+		}
+
+		job, err = r.newScanJob(node, customAnnotations)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("preparing job: %w", err)
 		}
@@ -150,7 +155,7 @@ func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *cor
 	return true, job, nil
 }
 
-func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.Job, error) {
+func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node, customAnnotations map[string]string) (*batchv1.Job, error) {
 	templateSpec, err := r.Plugin.GetScanJobSpec(*node)
 	if err != nil {
 		return nil, err
@@ -181,6 +186,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 						starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
 						starboard.LabelKubeBenchReportScanner: "true",
 					},
+					Annotations: customAnnotations,
 				},
 				Spec: templateSpec,
 			},

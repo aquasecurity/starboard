@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -34,29 +35,35 @@ type Scanner struct {
 	config    Config
 	clientset kubernetes.Interface
 	ext.IDGenerator
-	opts       kube.ScannerOpts
-	logsReader kube.LogsReader
+	opts           kube.ScannerOpts
+	logsReader     kube.LogsReader
+	objectResolver *kube.ObjectResolver
 }
 
 func NewScanner(
-	scheme *runtime.Scheme,
-	config Config,
 	clientset kubernetes.Interface,
+	client client.Client,
 	opts kube.ScannerOpts,
+	config Config,
 ) *Scanner {
 	return &Scanner{
-		scheme:      scheme,
-		config:      config,
-		clientset:   clientset,
-		IDGenerator: ext.NewGoogleUUIDGenerator(),
-		opts:        opts,
-		logsReader:  kube.NewLogsReader(clientset),
+		scheme:         client.Scheme(),
+		config:         config,
+		clientset:      clientset,
+		IDGenerator:    ext.NewGoogleUUIDGenerator(),
+		opts:           opts,
+		logsReader:     kube.NewLogsReader(clientset),
+		objectResolver: &kube.ObjectResolver{Client: client},
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
+	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
+	if err != nil {
+		return v1alpha1.KubeHunterOutput{}, err
+	}
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
-	job, err := s.prepareKubeHunterJob()
+	job, err := s.prepareKubeHunterJob(customAnnotations)
 	if err != nil {
 		return v1alpha1.KubeHunterOutput{}, err
 	}
@@ -95,7 +102,7 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	return OutputFrom(s.config, logsStream)
 }
 
-func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
+func (s *Scanner) prepareKubeHunterJob(customAnnotations map[string]string) (*batchv1.Job, error) {
 	imageRef, err := s.config.GetKubeHunterImageRef()
 	if err != nil {
 		return nil, err
@@ -146,6 +153,9 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: customAnnotations,
+				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: starboard.ServiceAccountName,
 					RestartPolicy:      corev1.RestartPolicyNever,

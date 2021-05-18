@@ -160,11 +160,17 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
+		customAnnotations, err := (&kube.ObjectResolver{Client: r.Client}).GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeOperator)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
 		job, secrets, err := configauditreport.NewScanJob().
 			WithPlugin(r.Plugin).
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).
 			WithObject(workloadObj).
+			WithCustomAnnotations(customAnnotations).
 			Get()
 		if err != nil {
 			return ctrl.Result{}, err

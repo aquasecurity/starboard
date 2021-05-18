@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -42,6 +43,11 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
+		scheme := starboard.NewScheme()
+		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+		if err != nil {
+			return err
+		}
 		opts, err := getScannerOpts(cmd)
 		if err != nil {
 			return err
@@ -50,7 +56,7 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
-		report, err := kubehunter.NewScanner(starboard.NewScheme(), config, kubeClientset, opts).Scan(ctx)
+		report, err := kubehunter.NewScanner(kubeClientset, kubeClient, opts, config).Scan(ctx)
 		if err != nil {
 			return err
 		}

@@ -20,34 +20,41 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
-	scheme     *runtime.Scheme
-	opts       kube.ScannerOpts
-	clientset  kubernetes.Interface
-	logsReader kube.LogsReader
-	plugin     Plugin
+	scheme         *runtime.Scheme
+	opts           kube.ScannerOpts
+	clientset      kubernetes.Interface
+	logsReader     kube.LogsReader
+	plugin         Plugin
+	objectResolver *kube.ObjectResolver
 }
 
 func NewScanner(
-	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
+	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
 ) *Scanner {
 	return &Scanner{
-		scheme:     scheme,
-		opts:       opts,
-		clientset:  clientset,
-		logsReader: kube.NewLogsReader(clientset),
-		plugin:     plugin,
+		scheme:         client.Scheme(),
+		opts:           opts,
+		clientset:      clientset,
+		logsReader:     kube.NewLogsReader(clientset),
+		plugin:         plugin,
+		objectResolver: &kube.ObjectResolver{Client: client},
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeBenchReport, error) {
+	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
+	if err != nil {
+		return v1alpha1.CISKubeBenchReport{}, err
+	}
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job, err := s.prepareKubeBenchJob(node)
+	job, err := s.prepareKubeBenchJob(node, customAnnotations)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
@@ -100,7 +107,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	return report, nil
 }
 
-func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
+func (s *Scanner) prepareKubeBenchJob(node corev1.Node, customAnnotations map[string]string) (*batchv1.Job, error) {
 	templateSpec, err := s.plugin.GetScanJobSpec(node)
 	if err != nil {
 		return nil, err
@@ -125,6 +132,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: node.Name,
 					},
+					Annotations: customAnnotations,
 				},
 				Spec: templateSpec,
 			},

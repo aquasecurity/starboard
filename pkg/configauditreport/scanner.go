@@ -45,7 +45,10 @@ func NewScanner(
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-
+	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
+	if err != nil {
+		return v1alpha1.ConfigAuditReport{}, err
+	}
 	owner, err := s.objectResolver.GetObjectFromPartialObject(ctx, workload)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
@@ -57,6 +60,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		WithPluginContext(s.pluginContext).
 		WithTimeout(s.opts.ScanJobTimeout).
 		WithObject(owner).
+		WithCustomAnnotations(customAnnotations).
 		Get()
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
