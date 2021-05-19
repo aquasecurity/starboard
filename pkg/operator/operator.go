@@ -143,6 +143,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err = (&controller.VulnerabilityReportReconciler{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
 			Config:         operatorConfig,
+			ConfigData:     starboardConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
 			LimitChecker:   limitChecker,
