@@ -299,10 +299,10 @@ func GetDefaultConftestConfig() map[string]string {
 
 func (c ConfigData) GetScanJobTolerations() ([]corev1.Toleration, error) {
 	scanJobTolerations := []corev1.Toleration{}
-	if c["scanJob.Tolerations"] == "" {
+	if c["scanJob.tolerations"] == "" {
 		return scanJobTolerations, nil
 	}
-	err := json.Unmarshal([]byte(c["scanJob.Tolerations"]), &scanJobTolerations)
+	err := json.Unmarshal([]byte(c["scanJob.tolerations"]), &scanJobTolerations)
 
 	return scanJobTolerations, err
 }
