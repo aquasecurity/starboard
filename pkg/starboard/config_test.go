@@ -602,3 +602,70 @@ func TestConfigData_GetTrivyInsecureRegistries(t *testing.T) {
 		})
 	}
 }
+
+func TestGetScanJobTolerations(t *testing.T) {
+	testcases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    []corev1.Toleration
+		expectError string
+	}{
+		{
+			name:     "no scanJob.tolerations in ConfigData",
+			config:   starboard.ConfigData{},
+			expected: []corev1.Toleration{},
+		},
+		{
+			name:        "scanJob.tolerations value is not json",
+			config:      starboard.ConfigData{"scanJob.tolerations": `lolwut`},
+			expected:    []corev1.Toleration{},
+			expectError: "invalid character 'l' looking for beginning of value",
+		},
+		{
+			name:     "empty JSON array",
+			config:   starboard.ConfigData{"scanJob.tolerations": `[]`},
+			expected: []corev1.Toleration{},
+		},
+		{
+			name: "one valid toleration",
+			config: starboard.ConfigData{
+				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`},
+			expected: []corev1.Toleration{{
+				Key:      "key1",
+				Operator: "Equal",
+				Value:    "value1",
+				Effect:   "NoSchedule",
+			}},
+		},
+		{
+			name: "multiple valid tolerations",
+			config: starboard.ConfigData{
+				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"},
+					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`},
+			expected: []corev1.Toleration{
+				{
+					Key:      "key1",
+					Operator: "Equal",
+					Value:    "value1",
+					Effect:   "NoSchedule",
+				},
+				{
+					Key:      "key2",
+					Operator: "Equal",
+					Value:    "value2",
+					Effect:   "NoSchedule",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		got, err := tc.config.GetScanJobTolerations()
+		if tc.expectError != "" {
+			assert.Error(t, err, "unexpected end of JSON input", tc.name)
+		} else {
+			assert.NoError(t, err, tc.name)
+		}
+		assert.Equal(t, tc.expected, got, tc.name)
+	}
+}
