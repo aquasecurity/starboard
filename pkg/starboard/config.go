@@ -368,6 +368,12 @@ func (c ConfigData) GetTrivyServerURL() (string, error) {
 	return c.getRequiredProperty(keyTrivyServerURL)
 }
 
+func (c ConfigData) TrivyIgnoreFileExists() bool {
+	_, ok := c["trivy.ignoreFile"]
+
+	return ok
+}
+
 func (c ConfigData) GetTrivyInsecureRegistries() map[string]bool {
 	insecureRegistries := make(map[string]bool)
 	for key, val := range c {

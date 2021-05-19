@@ -669,3 +669,38 @@ func TestGetScanJobTolerations(t *testing.T) {
 		assert.Equal(t, tc.expected, got, tc.name)
 	}
 }
+
+func TestConfigData_TrivyIgnoreFileExists(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     starboard.ConfigData
+		expectedOutput bool
+	}{
+		{
+			name: "Should return false",
+			configData: starboard.ConfigData{
+				"foo": "bar",
+			},
+			expectedOutput: false,
+		},
+		{
+			name: "Should return true",
+			configData: starboard.ConfigData{
+				"foo": "bar",
+				"trivy.ignoreFile": `# Accept the risk
+CVE-2018-14618
+
+# No impact in our settings
+CVE-2019-1543`,
+			},
+			expectedOutput: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			exists := tc.configData.TrivyIgnoreFileExists()
+			assert.Equal(t, tc.expectedOutput, exists)
+		})
+	}
+}
