@@ -107,8 +107,8 @@ func ScanVulnerabilityReports(buildInfo starboard.BuildInfo, cf *genericclioptio
 		if err != nil {
 			return err
 		}
-		scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, opts, plugin)
-		reports, err := scanner.Scan(ctx, workload, starboardConfig)
+		scanner := vulnerabilityreport.NewScanner(starboardConfig, kubeClientset, kubeClient, opts, plugin)
+		reports, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
