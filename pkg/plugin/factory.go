@@ -66,7 +66,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, error) 
 	}
 	switch scanner {
 	case starboard.Trivy:
-		return trivy.NewPlugin(ext.NewGoogleUUIDGenerator(), r.config), nil
+		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.config), nil
 	case starboard.Aqua:
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo, r.config), nil
 	}
