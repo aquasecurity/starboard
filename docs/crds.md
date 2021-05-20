@@ -22,6 +22,63 @@ vulnerabilities grouped by severity. For multi-container workloads Starboard cre
 of VulnerabilityReports, which are stored in the same namespace and are owned by this workload. Each report follows the
 naming convention `<workload kind>-<workload name>-<container-name>`.
 
+```yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: VulnerabilityReport
+metadata:
+  name: replicaset-nginx-6d4cf56db6-nginx
+  namespace: default
+  labels:
+    starboard.container.name: nginx
+    starboard.resource.kind: ReplicaSet
+    starboard.resource.name: nginx-6d4cf56db6
+    starboard.resource.namespace: default
+    pod-spec-hash: 7cb64cb677
+  uid: 8aa1a7cb-a319-4b93-850d-5a67827dfbbf
+  ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: false
+      controller: true
+      kind: ReplicaSet
+      name: nginx-6d4cf56db6
+      uid: aa345200-cf24-443a-8f11-ddb438ff8659
+report:
+  artifact:
+    repository: library/nginx
+    tag: '1.16'
+  registry:
+    server: index.docker.io
+  scanner:
+    name: Trivy
+    vendor: Aqua Security
+    version: 0.16.0
+  summary:
+    criticalCount: 2
+    highCount: 0
+    lowCount: 0
+    mediumCount: 0
+    unknownCount: 0
+  vulnerabilities:
+    - fixedVersion: 0.9.1-2+deb10u1
+      installedVersion: 0.9.1-2
+      links: []
+      primaryLink: 'https://avd.aquasec.com/nvd/cve-2019-20367'
+      resource: libbsd0
+      score: 9.1
+      severity: CRITICAL
+      title: ''
+      vulnerabilityID: CVE-2019-20367
+    - fixedVersion: ''
+      installedVersion: 0.6.1-2
+      links: []
+      primaryLink: 'https://avd.aquasec.com/nvd/cve-2018-25009'
+      resource: libwebp6
+      score: 9.1
+      severity: CRITICAL
+      title: 'libwebp: out-of-bounds read in WebPMuxCreateInternal'
+      vulnerabilityID: CVE-2018-25009
+```
+
 !!! note
     For various reasons we'll probably change the naming convention to name VulnerabilityReports by image digest (see [#288][issue-288]).
 
@@ -37,6 +94,66 @@ likely we'll extend this model to cater for other Kubernetes objects such as Ser
 
 Each report owned by the underlying Kubernetes workload and is stored in the same namespace, following the
 `<workload-kind>-<workload-name>` naming convention.
+
+```yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ConfigAuditReport
+metadata:
+  name: replicaset-nginx-6d4cf56db6
+  namespace: default
+  labels:
+    starboard.resource.kind: ReplicaSet
+    starboard.resource.name: nginx-6d4cf56db6
+    starboard.resource.namespace: default
+    plugin-config-hash: 7f65d98b75
+    pod-spec-hash: 7cb64cb677
+  uid: d5cf8847-c96d-4534-beb9-514a34230302
+  ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: false
+      controller: true
+      kind: ReplicaSet
+      name: nginx-6d4cf56db6
+      uid: aa345200-cf24-443a-8f11-ddb438ff8659
+report:
+  updateTimestamp: '2021-05-20T12:38:10Z'
+  scanner:
+    name: Polaris
+    vendor: Fairwinds Ops
+    version: '3.2'
+  summary:
+    dangerCount: 0
+    passCount: 3
+    warningCount: 2
+  podChecks:
+    - category: Security
+      checkID: hostNetworkSet
+      message: Host network is not configured
+      severity: warning
+      success: true
+  containerChecks:
+    nginx:
+      - category: Security
+        checkID: dangerousCapabilities
+        message: Container does not have any dangerous capabilities
+        severity: danger
+        success: true
+      - category: Security
+        checkID: hostPortSet
+        message: Host port is not configured
+        severity: warning
+        success: true
+      - category: Security
+        checkID: insecureCapabilities
+        message: Container should not have insecure capabilities
+        severity: warning
+        success: false
+      - category: Security
+        checkID: notReadOnlyRootFilesystem
+        message: Filesystem should be read only
+        severity: warning
+        success: false
+```
 
 Third party Kubernetes configuration checkers, linters, and sanitizers that are compliant with the ConfigAuditReport
 schema can be integrated with Starboard.
@@ -54,12 +171,119 @@ of running CIS Kubernetes Benchmark tests on that node. It's named after a corre
 We do not anticipate many (at all) kube-bench alike tools, hence the schema of this report is currently the same as
 the output of [kube-bench].
 
+```yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: CISKubeBenchReport
+metadata:
+  name: kind-control-plane
+  labels:
+    starboard.resource.kind: Node
+    starboard.resource.name: kind-control-plane
+  uid: 4aec0c8e-c98d-4b53-8727-1e22cacdb772
+  ownerReferences:
+    - apiVersion: v1
+      blockOwnerDeletion: false
+      controller: true
+      kind: Node
+      name: kind-control-plane
+      uid: 6941ddfd-65be-4960-8cda-a4d11e53cbe9
+report:
+  updateTimestamp: '2021-05-20T11:53:58Z'
+  scanner:
+    name: kube-bench
+    vendor: Aqua Security
+    version: 0.5.0
+  sections:
+    - id: '1'
+      node_type: master
+      tests:
+        - desc: Master Node Configuration Files
+          fail: 1
+          info: 0
+          pass: 18
+          results:
+            - remediation: >
+                Run the below command (based on the file location on your
+                system) on the
+
+                master node.
+
+                For example, chmod 644
+                /etc/kubernetes/manifests/kube-apiserver.yaml
+              scored: true
+              status: PASS
+              test_desc: >-
+                Ensure that the API server pod specification file permissions
+                are set to 644 or more restrictive (Automated)
+              test_number: 1.1.1
+            - remediation: >
+                Run the below command (based on the file location on your
+                system) on the master node.
+
+                For example,
+
+                chown root:root /etc/kubernetes/manifests/kube-apiserver.yaml
+              scored: true
+              status: PASS
+              test_desc: >-
+                Ensure that the API server pod specification file ownership is
+                set to root:root (Automated)
+              test_number: 1.1.2
+          section: '1.1'
+          warn: 2
+      text: Master Node Security Configuration
+      total_fail: 10
+      total_info: 0
+      total_pass: 45
+      total_warn: 10
+      version: '1.6'
+  summary:
+    failCount: 11
+    infoCount: 0
+    passCount: 71
+    warnCount: 40
+```
+
 ## KubeHunterReport
 
 The KubeHunterReport is a cluster scoped resource which represents the outcome of running pen tests against your cluster.
 Currently the data model is the same as [kube-hunter]'s output, but we can make it more generic to onboard third
 party pen testing tools. There's zero to one instances of KubeHunterReports with hardcoded name `cluster` without any
 owner reference being set as there's no built-in Kubernetes resource that represents a cluster.
+
+```yaml
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: KubeHunterReport
+metadata:
+  name: cluster
+  labels:
+    starboard.resource.kind: Cluster
+    starboard.resource.name: cluster
+  uid: 958ca06b-6393-4e44-a6a6-11ce823c94fe
+report:
+  scanner:
+    name: kube-hunter
+    vendor: Aqua Security
+    version: 0.4.1
+  summary:
+    highCount: 0
+    lowCount: 1
+    mediumCount: 0
+    unknownCount: 0
+  vulnerabilities:
+  - avd_reference: https://avd.aquasec.com/kube-hunter/none/
+    category: Access Risk
+    description: |-
+      CAP_NET_RAW is enabled by default for pods.
+          If an attacker manages to compromise a pod,
+          they could potentially take advantage of this capability to perform network
+          attacks on other pods running on the same node
+    evidence: ""
+    location: Local to Pod (cf63974f-26a4-43f7-9409-44102fc75900-sl7vq)
+    severity: low
+    vid: None
+    vulnerability: CAP_NET_RAW Enabled
+```
 
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 
