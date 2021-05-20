@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	starboardOperator "github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -49,13 +48,6 @@ const (
 	KindDaemonSet             Kind = "DaemonSet"
 	KindCronJob               Kind = "CronJob"
 	KindJob                   Kind = "Job"
-)
-
-type ExecutionMode string
-
-const (
-	ExecutionModeCLI      ExecutionMode = "CLI"
-	ExecutionModeOperator ExecutionMode = "Operator"
 )
 
 // IsBuiltInWorkload returns true if the specified v1.OwnerReference
@@ -160,45 +152,6 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	default:
 		return corev1.PodSpec{}, fmt.Errorf("unsupported workload: %T", t)
 	}
-}
-
-func (o *ObjectResolver) GetCustomAnnotationsFromConfig(ctx context.Context, executionMode ExecutionMode) (map[string]string, error) {
-	var configMapName, configMapNamespace, customAnnotationsKey string
-	switch executionMode {
-	case ExecutionModeCLI:
-		configMapName = starboard.ConfigMapName
-		configMapNamespace = starboard.NamespaceName
-		customAnnotationsKey = starboard.AnnotationCustomAnnotationsForScanJobPods
-	case ExecutionModeOperator:
-		configMapName = starboardOperator.ConfigMapName
-		configMapNamespace = starboardOperator.NamespaceName
-		customAnnotationsKey = starboardOperator.AnnotationCustomAnnotationsForScanJobPods
-	default:
-		return map[string]string{}, fmt.Errorf("unsupported execution mode provided: %s", executionMode)
-	}
-
-	configMap := &corev1.ConfigMap{}
-	err := o.Client.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: configMapName}, configMap)
-	if err != nil {
-		return map[string]string{}, err
-	}
-
-	customAnnotationsStr, found := configMap.Data[customAnnotationsKey]
-	if !found || strings.TrimSpace(customAnnotationsStr) == "" {
-		return map[string]string{}, nil
-	}
-
-	customAnnotationsMap := map[string]string{}
-	for _, annotation := range strings.Split(customAnnotationsStr, ",") {
-		sepByEqual := strings.Split(annotation, "=")
-		if len(sepByEqual) != 2 {
-			return map[string]string{}, fmt.Errorf("custom annotations found to be wrongfully provided: %s", customAnnotationsStr)
-		}
-		key, value := sepByEqual[0], sepByEqual[1]
-		customAnnotationsMap[key] = value
-	}
-
-	return customAnnotationsMap, nil
 }
 
 type ObjectResolver struct {

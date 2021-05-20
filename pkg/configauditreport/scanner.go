@@ -16,13 +16,14 @@ import (
 )
 
 type Scanner struct {
-	scheme         *runtime.Scheme
-	clientset      kubernetes.Interface
-	opts           kube.ScannerOpts
-	objectResolver *kube.ObjectResolver
-	logsReader     kube.LogsReader
-	plugin         Plugin
-	pluginContext  starboard.PluginContext
+	scheme          *runtime.Scheme
+	clientset       kubernetes.Interface
+	opts            kube.ScannerOpts
+	objectResolver  *kube.ObjectResolver
+	logsReader      kube.LogsReader
+	plugin          Plugin
+	pluginContext   starboard.PluginContext
+	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
@@ -31,21 +32,23 @@ func NewScanner(
 	opts kube.ScannerOpts,
 	plugin Plugin,
 	pluginContext starboard.PluginContext,
+	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:         client.Scheme(),
-		clientset:      clientset,
-		opts:           opts,
-		plugin:         plugin,
-		pluginContext:  pluginContext,
-		objectResolver: &kube.ObjectResolver{Client: client},
-		logsReader:     kube.NewLogsReader(clientset),
+		scheme:          client.Scheme(),
+		clientset:       clientset,
+		opts:            opts,
+		plugin:          plugin,
+		pluginContext:   pluginContext,
+		objectResolver:  &kube.ObjectResolver{Client: client},
+		logsReader:      kube.NewLogsReader(clientset),
+		starboardConfig: starboardConfig,
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
+	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
@@ -60,7 +63,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		WithPluginContext(s.pluginContext).
 		WithTimeout(s.opts.ScanJobTimeout).
 		WithObject(owner).
-		WithCustomAnnotations(customAnnotations).
+		WithScanJobAnnotations(scanJobAnnotations).
 		Get()
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err

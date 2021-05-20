@@ -704,3 +704,53 @@ CVE-2019-1543`,
 		})
 	}
 }
+func TestGetScanJobAnnotations(t *testing.T) {
+	testcases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    map[string]string
+		expectError string
+	}{
+		{
+			name: "scan job annotations can be fetched successfully",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "a.b=c.d/e,foo=bar",
+			},
+			expected: map[string]string{
+				"foo": "bar",
+				"a.b": "c.d/e",
+			},
+		},
+		{
+			name:     "gracefully deal with unprovided annotations",
+			config:   starboard.ConfigData{},
+			expected: map[string]string{},
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "foo",
+			},
+			expected:    map[string]string{},
+			expectError: "custom annotations found to be wrongfully provided: foo",
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "foo=bar,a=b=c",
+			},
+			expected:    map[string]string{},
+			expectError: "custom annotations found to be wrongfully provided: foo=bar,a=b=c",
+		},
+	}
+
+	for _, tc := range testcases {
+		scanJobAnnotations, err := tc.config.GetScanJobAnnotations()
+		if tc.expectError != "" {
+			assert.Error(t, err, tc.expectError, tc.name)
+		} else {
+			assert.NoError(t, err, tc.name)
+		}
+		assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
+	}
+}

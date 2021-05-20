@@ -171,6 +171,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err = (&controller.ConfigAuditReportReconciler{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
 			Config:         operatorConfig,
+			ConfigData:     starboardConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
 			LimitChecker:   limitChecker,
@@ -197,6 +198,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err = (&controller.CISKubeBenchReportReconciler{
 			Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
 			Config:       operatorConfig,
+			ConfigData:   starboardConfig,
 			Client:       mgr.GetClient(),
 			LogsReader:   logsReader,
 			LimitChecker: limitChecker,

@@ -52,11 +52,11 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
-		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+		starboardConfig, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		report, err := kubehunter.NewScanner(kubeClientset, kubeClient, opts, config).Scan(ctx)
+		report, err := kubehunter.NewScanner(kubeClientset, kubeClient, opts, starboardConfig).Scan(ctx)
 		if err != nil {
 			return err
 		}

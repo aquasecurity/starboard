@@ -1,1 +1,0 @@
-package etc_test

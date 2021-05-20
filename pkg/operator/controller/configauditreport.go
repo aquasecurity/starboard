@@ -28,6 +28,7 @@ import (
 type ConfigAuditReportReconciler struct {
 	logr.Logger
 	etc.Config
+	starboard.ConfigData
 	client.Client
 	kube.ObjectResolver
 	LimitChecker
@@ -160,7 +161,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		customAnnotations, err := (&kube.ObjectResolver{Client: r.Client}).GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeOperator)
+		scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -170,7 +171,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).
 			WithObject(workloadObj).
-			WithCustomAnnotations(customAnnotations).
+			WithScanJobAnnotations(scanJobAnnotations).
 			Get()
 		if err != nil {
 			return ctrl.Result{}, err

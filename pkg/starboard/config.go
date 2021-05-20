@@ -364,6 +364,25 @@ func (c ConfigData) GetTrivyMode() (TrivyMode, error) {
 		value, keyTrivyMode, Standalone, ClientServer)
 }
 
+func (c ConfigData) GetScanJobAnnotations() (map[string]string, error) {
+	scanJobAnnotationsStr, found := c[AnnotationScanJobAnnotations]
+	if !found || strings.TrimSpace(scanJobAnnotationsStr) == "" {
+		return map[string]string{}, nil
+	}
+
+	scanJobAnnotationsMap := map[string]string{}
+	for _, annotation := range strings.Split(scanJobAnnotationsStr, ",") {
+		sepByEqual := strings.Split(annotation, "=")
+		if len(sepByEqual) != 2 {
+			return map[string]string{}, fmt.Errorf("custom annotations found to be wrongfully provided: %s", scanJobAnnotationsStr)
+		}
+		key, value := sepByEqual[0], sepByEqual[1]
+		scanJobAnnotationsMap[key] = value
+	}
+
+	return scanJobAnnotationsMap, nil
+}
+
 func (c ConfigData) GetTrivyServerURL() (string, error) {
 	return c.getRequiredProperty(keyTrivyServerURL)
 }
@@ -463,9 +482,6 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("getting config: %w", err)
 		}
-		configData := GetDefaultConfig()
-		// TODO: the below annotations are supposed to be added dynamically via user-provided input
-		//configData[AnnotationCustomAnnotationsForScanJobPods] = getUserProvidedCustomAnnotations()
 		cm, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: c.namespace,
@@ -474,7 +490,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 					LabelK8SAppManagedBy: "starboard",
 				},
 			},
-			Data: configData,
+			Data: GetDefaultConfig(),
 		}, metav1.CreateOptions{})
 
 		if err != nil {

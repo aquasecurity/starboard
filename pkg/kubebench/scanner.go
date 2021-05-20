@@ -24,12 +24,13 @@ import (
 )
 
 type Scanner struct {
-	scheme         *runtime.Scheme
-	opts           kube.ScannerOpts
-	clientset      kubernetes.Interface
-	logsReader     kube.LogsReader
-	plugin         Plugin
-	objectResolver *kube.ObjectResolver
+	scheme          *runtime.Scheme
+	opts            kube.ScannerOpts
+	clientset       kubernetes.Interface
+	logsReader      kube.LogsReader
+	plugin          Plugin
+	objectResolver  *kube.ObjectResolver
+	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
@@ -37,24 +38,22 @@ func NewScanner(
 	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
+	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:         client.Scheme(),
-		opts:           opts,
-		clientset:      clientset,
-		logsReader:     kube.NewLogsReader(clientset),
-		plugin:         plugin,
-		objectResolver: &kube.ObjectResolver{Client: client},
+		scheme:          client.Scheme(),
+		opts:            opts,
+		clientset:       clientset,
+		logsReader:      kube.NewLogsReader(clientset),
+		plugin:          plugin,
+		objectResolver:  &kube.ObjectResolver{Client: client},
+		starboardConfig: starboardConfig,
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeBenchReport, error) {
-	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
-	if err != nil {
-		return v1alpha1.CISKubeBenchReport{}, err
-	}
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-bench
-	job, err := s.prepareKubeBenchJob(node, customAnnotations)
+	job, err := s.prepareKubeBenchJob(node)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
@@ -107,8 +106,13 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	return report, nil
 }
 
-func (s *Scanner) prepareKubeBenchJob(node corev1.Node, customAnnotations map[string]string) (*batchv1.Job, error) {
+func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 	templateSpec, err := s.plugin.GetScanJobSpec(node)
+	if err != nil {
+		return nil, err
+	}
+
+	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +136,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node, customAnnotations map[st
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: node.Name,
 					},
-					Annotations: customAnnotations,
+					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,
 			},

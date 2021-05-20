@@ -58,12 +58,8 @@ func NewScanner(
 }
 
 func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
-	customAnnotations, err := s.objectResolver.GetCustomAnnotationsFromConfig(ctx, kube.ExecutionModeCLI)
-	if err != nil {
-		return v1alpha1.KubeHunterOutput{}, err
-	}
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
-	job, err := s.prepareKubeHunterJob(customAnnotations)
+	job, err := s.prepareKubeHunterJob()
 	if err != nil {
 		return v1alpha1.KubeHunterOutput{}, err
 	}
@@ -102,7 +98,7 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	return OutputFrom(s.config, logsStream)
 }
 
-func (s *Scanner) prepareKubeHunterJob(customAnnotations map[string]string) (*batchv1.Job, error) {
+func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	imageRef, err := s.config.GetKubeHunterImageRef()
 	if err != nil {
 		return nil, err
@@ -114,6 +110,11 @@ func (s *Scanner) prepareKubeHunterJob(customAnnotations map[string]string) (*ba
 	}
 	if quick {
 		kubeHunterArgs = append(kubeHunterArgs, "--quick")
+	}
+
+	scanJobAnnotations, err := s.config.(starboard.ConfigData).GetScanJobAnnotations()
+	if err != nil {
+		return nil, err
 	}
 
 	var (
@@ -154,7 +155,7 @@ func (s *Scanner) prepareKubeHunterJob(customAnnotations map[string]string) (*ba
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: customAnnotations,
+					Annotations: scanJobAnnotations,
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: starboard.ServiceAccountName,

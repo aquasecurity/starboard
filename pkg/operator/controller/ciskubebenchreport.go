@@ -42,6 +42,7 @@ type CISKubeBenchReportReconciler struct {
 	LimitChecker
 	kubebench.ReadWriter
 	kubebench.Plugin
+	starboard.ConfigData
 }
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -111,12 +112,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		customAnnotations, err := (&kube.ObjectResolver{Client: r.Client}).GetCustomAnnotationsFromConfig(context.TODO(), kube.ExecutionModeOperator)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("fetching the custom annotations for the ScanJob's pods to be annotated with: %w", err)
-		}
-
-		job, err = r.newScanJob(node, customAnnotations)
+		job, err = r.newScanJob(node)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("preparing job: %w", err)
 		}
@@ -155,13 +151,18 @@ func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *cor
 	return true, job, nil
 }
 
-func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node, customAnnotations map[string]string) (*batchv1.Job, error) {
+func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.Job, error) {
 	templateSpec, err := r.Plugin.GetScanJobSpec(*node)
 	if err != nil {
 		return nil, err
 	}
 
 	templateSpec.ServiceAccountName = r.Config.ServiceAccount
+
+	scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
+	if err != nil {
+		return nil, err
+	}
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -186,7 +187,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node, customAnnot
 						starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
 						starboard.LabelKubeBenchReportScanner: "true",
 					},
-					Annotations: customAnnotations,
+					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,
 			},

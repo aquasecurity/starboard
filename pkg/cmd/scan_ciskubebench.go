@@ -67,7 +67,7 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			return err
 		}
 
-		scanner := kubebench.NewScanner(kubeClientset, kubeClient, opts, plugin)
+		scanner := kubebench.NewScanner(kubeClientset, kubeClient, opts, plugin, config)
 
 		writer := kubebench.NewReadWriter(kubeClient)
 
