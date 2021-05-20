@@ -77,12 +77,6 @@ starboard get vulnerabilities deployment/nginx -o yaml
 
 To read more about custom resources and label selectors check [custom resource definitions][crds].
 
-[comment]: <> (The [Starboard Octant plugin][starboard-octant-plugin] displays the same vulnerability reports in Octant's UI.)
-[comment]: <> (<p align="center">)
-[comment]: <> (  <img src="docs/images/getting-started/deployment_vulnerabilities.png">)
-[comment]: <> (</p>)
-[comment]: <> (Check the plugin's repository for installation instructions.)
-
 [trivy]: https://github.com/aquasecurity/trivy
 [crds]: ./../crds.md
 
@@ -90,7 +84,8 @@ Moving forward, let's take the same `nginx` Deployment and audit its Kubernetes 
 created it with the `kubectl create deployment` command which applies the default settings to the deployment descriptors.
 However, we also know that in Kubernetes the defaults are usually the least secure.
 
-Run the scanner to audit the configuration using [Polaris][polaris]:
+Run the scanner to audit the configuration using [Polaris](./../integrations/config-checkers/polaris.md), which is the
+default configuration checker:
 
 ```
 starboard scan configauditreports deployment/nginx

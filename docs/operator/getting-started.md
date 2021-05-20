@@ -59,11 +59,11 @@ VulnerabilityReport and ConfigAuditReport objects are controlled by the active R
 ```console
 $ kubectl tree deploy nginx
 NAMESPACE  NAME                                                       READY  REASON  AGE
-default    Deployment/nginx                                           -              104s
-default    └─ReplicaSet/nginx-7ff78f74b9                              -              104s
-default      ├─Pod/nginx-7ff78f74b9-6bkmn                             True           104s
-default      ├─ConfigAuditReport/replicaset-nginx-7ff78f74b9          -              102s
-default      └─VulnerabilityReport/replicaset-nginx-7ff78f74b9-nginx  -              90s
+default    Deployment/nginx                                           -              51s
+default    └─ReplicaSet/nginx-6d4cf56db6                              -              51s
+default      ├─ConfigAuditReport/replicaset-nginx-6d4cf56db6          -              46s
+default      ├─VulnerabilityReport/replicaset-nginx-6d4cf56db6-nginx  -              31s
+default      └─Pod/nginx-6d4cf56db6-fhbm9                             True           51s
 ```
 
 !!! note
@@ -81,29 +81,66 @@ Even this time the operator will pick up changes and rescan our Deployment with 
 ```console
 $ kubectl tree deploy nginx
 NAMESPACE  NAME                                                       READY  REASON  AGE
-default    Deployment/nginx                                           -              6m36s
-default    ├─ReplicaSet/nginx-549f5fcb58                              -              2m47s
-default    │ ├─Pod/nginx-549f5fcb58-l8dhc                             True           2m47s
-default    │ ├─ConfigAuditReport/replicaset-nginx-549f5fcb58          -              2m45s
-default    │ └─VulnerabilityReport/replicaset-nginx-549f5fcb58-nginx  -              2m37s
-default    └─ReplicaSet/nginx-7ff78f74b9                              -              6m36s
-default      ├─ConfigAuditReport/replicaset-nginx-7ff78f74b9          -              6m34s
-default      └─VulnerabilityReport/replicaset-nginx-7ff78f74b9-nginx  -              6m22s
+default    Deployment/nginx                                           -              86s
+default    ├─ReplicaSet/nginx-6d4cf56db6                              -              86s
+default    │ ├─ConfigAuditReport/replicaset-nginx-6d4cf56db6          -              81s
+default    │ └─VulnerabilityReport/replicaset-nginx-6d4cf56db6-nginx  -              66s
+default    └─ReplicaSet/nginx-db749865c                               -              19s
+default      ├─ConfigAuditReport/replicaset-nginx-db749865c           -              17s
+default      ├─VulnerabilityReport/replicaset-nginx-db749865c-nginx   -              9s
+default      └─Pod/nginx-db749865c-lfcp5                              True           19s
 ```
 
 By following this guide you could realize that the operator knows how to attach VulnerabilityReport and
 ConfigAuditReport objects to build-in Kubernetes objects so that looking them up is easy. What's more, in this
 approach where a custom resource inherits a life cycle of the built-in resource we could leverage Kubernetes garbage
-collection. For example, when the previous ReplicaSet named `nginx-7ff78f74b9` is deleted the VulnerabilityReport named
-`replicaset-nginx-7ff78f74b9-nginx` as well as the ConfigAuditReport named `replicaset-nginx-7ff78f74b9` are
+collection. For example, when the previous ReplicaSet named `nginx-6d4cf56db6` is deleted the VulnerabilityReport named
+`replicaset-nginx-6d4cf56db6-nginx` as well as the ConfigAuditReport named `replicaset-nginx-6d4cf56db6` are
 automatically garbage collected.
 
 !!! tip
     You can get and describe `vulnerabilityreports` and `configauditreports` as built-in Kubernetes objects:
     ```
-    kubectl get vulnerabilityreport replicaset-nginx-7ff78f74b9-nginx -o json
-    kubectl describe configauditreport replicaset-nginx-7ff78f74b9
+    kubectl get vulnerabilityreport replicaset-nginx-db749865c-nginx -o json
+    kubectl describe configauditreport replicaset-nginx-db749865c
     ```
+
+Notice that scaling up the `nginx` Deployment will not schedule new scan Jobs because all replica Pods refer to the
+same Pod templated defined by the `nginx-db749865c` ReplicaSet.
+
+```
+kubectl scale deploy nginx --replicas 3
+```
+
+```console
+$ kubectl tree deploy nginx
+NAMESPACE  NAME                                                       READY  REASON  AGE
+default    Deployment/nginx                                           -              2m22s
+default    ├─ReplicaSet/nginx-6d4cf56db6                              -              2m22s
+default    │ ├─ConfigAuditReport/replicaset-nginx-6d4cf56db6          -              2m17s
+default    │ └─VulnerabilityReport/replicaset-nginx-6d4cf56db6-nginx  -              2m2s
+default    └─ReplicaSet/nginx-db749865c                               -              75s
+default      ├─ConfigAuditReport/replicaset-nginx-db749865c           -              73s
+default      ├─VulnerabilityReport/replicaset-nginx-db749865c-nginx   -              65s
+default      ├─Pod/nginx-db749865c-lfcp5                              True           75s
+default      ├─Pod/nginx-db749865c-tn5k7                              True           12s
+default      └─Pod/nginx-db749865c-vjlr9                              True           12s
+```
+
+Finally, when you delete the `nginx` Deployment, orphaned security reports will be deleted in the background by the
+Kubernetes garbage collection controller.
+
+```
+kubectl delete deploy nginx
+```
+
+```console
+$ kubectl get vuln,configaudit
+No resources found in default namespace.
+```
+
+!!! Tip
+    Use `vuln` and `configaudit` as short names for `vulnerabilityreports` and `configauditreports` resources.
 
 ## Infrastructure Scanning
 
