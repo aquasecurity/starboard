@@ -693,13 +693,14 @@ var _ = Describe("Starboard CLI", func() {
 				var report *v1alpha1.VulnerabilityReport
 
 				BeforeEach(func() {
-					deploy = helper.NewDeployment().WithName("nginx").
+					deploy = helper.NewDeployment().WithRandomName("nginx").
 						WithNamespace(testNamespace.Name).
 						WithContainer("nginx", "nginx:1.16").
 						Build()
 					err := kubeClient.Create(context.TODO(), deploy)
 					Expect(err).ToNot(HaveOccurred())
 
+					replicasetName = ""
 					for i := 0; i < 10; i++ {
 						var rsList appsv1.ReplicaSetList
 						err := kubeClient.List(context.TODO(), &rsList)
@@ -720,6 +721,7 @@ var _ = Describe("Starboard CLI", func() {
 					}
 					Expect(replicasetName).ToNot(BeEmpty())
 
+					podName = ""
 					for i := 0; i < 10; i++ {
 						var podList corev1.PodList
 						err := kubeClient.List(context.TODO(), &podList)
