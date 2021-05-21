@@ -18,7 +18,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -32,28 +31,26 @@ type Config interface {
 
 type Scanner struct {
 	scheme    *runtime.Scheme
-	config    Config
 	clientset kubernetes.Interface
 	ext.IDGenerator
-	opts           kube.ScannerOpts
-	logsReader     kube.LogsReader
-	objectResolver *kube.ObjectResolver
+	opts            kube.ScannerOpts
+	logsReader      kube.LogsReader
+	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
+	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	client client.Client,
 	opts kube.ScannerOpts,
-	config Config,
+	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:         client.Scheme(),
-		config:         config,
-		clientset:      clientset,
-		IDGenerator:    ext.NewGoogleUUIDGenerator(),
-		opts:           opts,
-		logsReader:     kube.NewLogsReader(clientset),
-		objectResolver: &kube.ObjectResolver{Client: client},
+		scheme:          scheme,
+		clientset:       clientset,
+		IDGenerator:     ext.NewGoogleUUIDGenerator(),
+		opts:            opts,
+		logsReader:      kube.NewLogsReader(clientset),
+		starboardConfig: starboardConfig,
 	}
 }
 
@@ -95,16 +92,16 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	return OutputFrom(s.config, logsStream)
+	return OutputFrom(s.starboardConfig, logsStream)
 }
 
 func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
-	imageRef, err := s.config.GetKubeHunterImageRef()
+	imageRef, err := s.starboardConfig.GetKubeHunterImageRef()
 	if err != nil {
 		return nil, err
 	}
 	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "warn"}
-	quick, err := s.config.GetKubeHunterQuick()
+	quick, err := s.starboardConfig.GetKubeHunterQuick()
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +109,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 		kubeHunterArgs = append(kubeHunterArgs, "--quick")
 	}
 
-	scanJobAnnotations, err := s.config.(starboard.ConfigData).GetScanJobAnnotations()
+	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
@@ -29,24 +28,22 @@ type Scanner struct {
 	clientset       kubernetes.Interface
 	logsReader      kube.LogsReader
 	plugin          Plugin
-	objectResolver  *kube.ObjectResolver
 	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
+	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	client client.Client,
 	opts kube.ScannerOpts,
 	plugin Plugin,
 	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:          client.Scheme(),
+		scheme:          scheme,
 		opts:            opts,
 		clientset:       clientset,
 		logsReader:      kube.NewLogsReader(clientset),
 		plugin:          plugin,
-		objectResolver:  &kube.ObjectResolver{Client: client},
 		starboardConfig: starboardConfig,
 	}
 }
