@@ -31,26 +31,26 @@ type Config interface {
 
 type Scanner struct {
 	scheme    *runtime.Scheme
-	config    Config
 	clientset kubernetes.Interface
 	ext.IDGenerator
-	opts       kube.ScannerOpts
-	logsReader kube.LogsReader
+	opts            kube.ScannerOpts
+	logsReader      kube.LogsReader
+	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
-	config Config,
 	clientset kubernetes.Interface,
 	opts kube.ScannerOpts,
+	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:      scheme,
-		config:      config,
-		clientset:   clientset,
-		IDGenerator: ext.NewGoogleUUIDGenerator(),
-		opts:        opts,
-		logsReader:  kube.NewLogsReader(clientset),
+		scheme:          scheme,
+		clientset:       clientset,
+		IDGenerator:     ext.NewGoogleUUIDGenerator(),
+		opts:            opts,
+		logsReader:      kube.NewLogsReader(clientset),
+		starboardConfig: starboardConfig,
 	}
 }
 
@@ -92,21 +92,26 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	return OutputFrom(s.config, logsStream)
+	return OutputFrom(s.starboardConfig, logsStream)
 }
 
 func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
-	imageRef, err := s.config.GetKubeHunterImageRef()
+	imageRef, err := s.starboardConfig.GetKubeHunterImageRef()
 	if err != nil {
 		return nil, err
 	}
 	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "warn"}
-	quick, err := s.config.GetKubeHunterQuick()
+	quick, err := s.starboardConfig.GetKubeHunterQuick()
 	if err != nil {
 		return nil, err
 	}
 	if quick {
 		kubeHunterArgs = append(kubeHunterArgs, "--quick")
+	}
+
+	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
+	if err != nil {
+		return nil, err
 	}
 
 	var (
@@ -146,6 +151,9 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 			Completions:           pointer.Int32Ptr(1),
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: scanJobAnnotations,
+				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: starboard.ServiceAccountName,
 					RestartPolicy:      corev1.RestartPolicyNever,

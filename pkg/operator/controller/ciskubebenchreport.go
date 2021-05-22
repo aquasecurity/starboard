@@ -42,6 +42,7 @@ type CISKubeBenchReportReconciler struct {
 	LimitChecker
 	kubebench.ReadWriter
 	kubebench.Plugin
+	starboard.ConfigData
 }
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -158,6 +159,11 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 
 	templateSpec.ServiceAccountName = r.Config.ServiceAccount
 
+	scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
+	if err != nil {
+		return nil, err
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.getScanJobName(node),
@@ -181,6 +187,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 						starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
 						starboard.LabelKubeBenchReportScanner: "true",
 					},
+					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,
 			},

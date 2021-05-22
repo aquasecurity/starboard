@@ -23,11 +23,12 @@ import (
 )
 
 type Scanner struct {
-	scheme     *runtime.Scheme
-	opts       kube.ScannerOpts
-	clientset  kubernetes.Interface
-	logsReader kube.LogsReader
-	plugin     Plugin
+	scheme          *runtime.Scheme
+	opts            kube.ScannerOpts
+	clientset       kubernetes.Interface
+	logsReader      kube.LogsReader
+	plugin          Plugin
+	starboardConfig starboard.ConfigData
 }
 
 func NewScanner(
@@ -35,13 +36,15 @@ func NewScanner(
 	clientset kubernetes.Interface,
 	opts kube.ScannerOpts,
 	plugin Plugin,
+	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:     scheme,
-		opts:       opts,
-		clientset:  clientset,
-		logsReader: kube.NewLogsReader(clientset),
-		plugin:     plugin,
+		scheme:          scheme,
+		opts:            opts,
+		clientset:       clientset,
+		logsReader:      kube.NewLogsReader(clientset),
+		plugin:          plugin,
+		starboardConfig: starboardConfig,
 	}
 }
 
@@ -106,6 +109,11 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		return nil, err
 	}
 
+	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
+	if err != nil {
+		return nil, err
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "scan-cisbenchmark-" + kube.ComputeHash(node.Name),
@@ -125,6 +133,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: node.Name,
 					},
+					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,
 			},

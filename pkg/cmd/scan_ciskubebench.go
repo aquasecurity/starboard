@@ -59,7 +59,7 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 
 		scheme := starboard.NewScheme()
 		plugin := kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), config)
-		scanner := kubebench.NewScanner(scheme, kubeClientset, opts, plugin)
+		scanner := kubebench.NewScanner(scheme, kubeClientset, opts, plugin, config)
 
 		kubeClient, err := client.New(kubeConfig, client.Options{
 			Scheme: scheme,
