@@ -22,6 +22,7 @@ type ScanJobBuilder struct {
 	pluginContext      starboard.PluginContext
 	timeout            time.Duration
 	object             client.Object
+	tolerations        []corev1.Toleration
 	scanJobAnnotations map[string]string
 }
 
@@ -49,6 +50,11 @@ func (s *ScanJobBuilder) WithObject(object client.Object) *ScanJobBuilder {
 	return s
 }
 
+func (s *ScanJobBuilder) WithTolerations(tolerations []corev1.Toleration) *ScanJobBuilder {
+	s.tolerations = tolerations
+	return s
+}
+
 func (s *ScanJobBuilder) WithScanJobAnnotations(scanJobAnnotations map[string]string) *ScanJobBuilder {
 	s.scanJobAnnotations = scanJobAnnotations
 	return s
@@ -64,6 +70,8 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	podSpec.Tolerations = append(podSpec.Tolerations, s.tolerations...)
 
 	podSpecHash := kube.ComputeHash(podSpec)
 

@@ -81,8 +81,8 @@ The following tables list available configuration settings with their default va
 | `polaris.imageRef`              | `quay.io/fairwinds/polaris:3.2`                        | Polaris image reference |
 | `polaris.config.yaml`           | [Check the default value here][default-polaris-config] | Polaris configuration file |
 | `conftest.imageRef`             | `docker.io/openpolicyagent/conftest:v0.25.0`           | Conftest image reference |
-| `scanJob.tolerations`           | N/A                                                    | JSON representation of the [tolerations] to be applied to the vulnerability scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'`|
-| `scanJob.annotations`           | N/A                                                    | One-line comma-separated representation of the annotations which the user wants the scan job's pods to be annotated with. Example: `foo=bar,env=stage` will annotate the scan job's pods with the annotations `foo: bar` and `env: stage`|
+| `scanJob.tolerations`           | N/A                                                    | JSON representation of the [tolerations] to be applied to the scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'` |
+| `scanJob.annotations`           | N/A                                                    | One-line comma-separated representation of the annotations which the user wants the scan job's pods to be annotated with. Example: `foo=bar,env=stage` will annotate the scan job's pods with the annotations `foo: bar` and `env: stage` |
 
 | SECRET KEY                  | DESCRIPTION |
 | --------------------------- | ----------- |

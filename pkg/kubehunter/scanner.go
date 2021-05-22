@@ -33,24 +33,24 @@ type Scanner struct {
 	scheme    *runtime.Scheme
 	clientset kubernetes.Interface
 	ext.IDGenerator
-	opts            kube.ScannerOpts
-	logsReader      kube.LogsReader
-	starboardConfig starboard.ConfigData
+	opts       kube.ScannerOpts
+	logsReader kube.LogsReader
+	config     starboard.ConfigData
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
+	config starboard.ConfigData,
 	opts kube.ScannerOpts,
-	starboardConfig starboard.ConfigData,
 ) *Scanner {
 	return &Scanner{
-		scheme:          scheme,
-		clientset:       clientset,
-		IDGenerator:     ext.NewGoogleUUIDGenerator(),
-		opts:            opts,
-		logsReader:      kube.NewLogsReader(clientset),
-		starboardConfig: starboardConfig,
+		scheme:      scheme,
+		clientset:   clientset,
+		IDGenerator: ext.NewGoogleUUIDGenerator(),
+		logsReader:  kube.NewLogsReader(clientset),
+		config:      config,
+		opts:        opts,
 	}
 }
 
@@ -92,16 +92,16 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 	}()
 
 	// 4. Parse the KubeHuberOutput from the logs Reader
-	return OutputFrom(s.starboardConfig, logsStream)
+	return OutputFrom(s.config, logsStream)
 }
 
 func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
-	imageRef, err := s.starboardConfig.GetKubeHunterImageRef()
+	imageRef, err := s.config.GetKubeHunterImageRef()
 	if err != nil {
 		return nil, err
 	}
 	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "warn"}
-	quick, err := s.starboardConfig.GetKubeHunterQuick()
+	quick, err := s.config.GetKubeHunterQuick()
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,12 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 		kubeHunterArgs = append(kubeHunterArgs, "--quick")
 	}
 
-	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
+	scanJobTolerations, err := s.config.GetScanJobTolerations()
+	if err != nil {
+		return nil, err
+	}
+
+	scanJobAnnotations, err := s.config.GetScanJobAnnotations()
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +164,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 					RestartPolicy:      corev1.RestartPolicyNever,
 					HostPID:            true,
 					Affinity:           starboard.LinuxNodeAffinity(),
+					Tolerations:        scanJobTolerations,
 					SecurityContext:    podSecurityContext,
 					Containers: []corev1.Container{
 						{

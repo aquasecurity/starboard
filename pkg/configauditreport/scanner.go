@@ -16,39 +16,44 @@ import (
 )
 
 type Scanner struct {
-	scheme          *runtime.Scheme
-	clientset       kubernetes.Interface
-	opts            kube.ScannerOpts
-	objectResolver  *kube.ObjectResolver
-	logsReader      kube.LogsReader
-	plugin          Plugin
-	pluginContext   starboard.PluginContext
-	starboardConfig starboard.ConfigData
+	scheme         *runtime.Scheme
+	clientset      kubernetes.Interface
+	opts           kube.ScannerOpts
+	objectResolver *kube.ObjectResolver
+	logsReader     kube.LogsReader
+	plugin         Plugin
+	pluginContext  starboard.PluginContext
+	config         starboard.ConfigData
 }
 
 func NewScanner(
 	clientset kubernetes.Interface,
 	client client.Client,
-	opts kube.ScannerOpts,
 	plugin Plugin,
 	pluginContext starboard.PluginContext,
-	starboardConfig starboard.ConfigData,
+	config starboard.ConfigData,
+	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
-		scheme:          client.Scheme(),
-		clientset:       clientset,
-		opts:            opts,
-		plugin:          plugin,
-		pluginContext:   pluginContext,
-		objectResolver:  &kube.ObjectResolver{Client: client},
-		logsReader:      kube.NewLogsReader(clientset),
-		starboardConfig: starboardConfig,
+		scheme:         client.Scheme(),
+		clientset:      clientset,
+		opts:           opts,
+		plugin:         plugin,
+		pluginContext:  pluginContext,
+		objectResolver: &kube.ObjectResolver{Client: client},
+		logsReader:     kube.NewLogsReader(clientset),
+		config:         config,
 	}
 }
 
 func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.ConfigAuditReport, error) {
 	klog.V(3).Infof("Getting Pod template for workload: %v", workload)
-	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
+	scanJobTolerations, err := s.config.GetScanJobTolerations()
+	if err != nil {
+		return v1alpha1.ConfigAuditReport{}, err
+	}
+
+	scanJobAnnotations, err := s.config.GetScanJobAnnotations()
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}
@@ -63,6 +68,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		WithPluginContext(s.pluginContext).
 		WithTimeout(s.opts.ScanJobTimeout).
 		WithObject(owner).
+		WithTolerations(scanJobTolerations).
 		WithScanJobAnnotations(scanJobAnnotations).
 		Get()
 	if err != nil {
