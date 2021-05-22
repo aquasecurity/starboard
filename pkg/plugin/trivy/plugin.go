@@ -1,6 +1,7 @@
 package trivy
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -30,10 +31,11 @@ var (
 	}
 )
 
+// TODO Rename scanner struct to plugin.
 type scanner struct {
+	clock       ext.Clock
 	idGenerator ext.IDGenerator
 	config      Config
-	converter   Converter
 }
 
 // Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
@@ -53,11 +55,11 @@ type Config interface {
 //
 // The starboard.ClientServer mode is usually more performant, however it
 // requires a Trivy server accessible at the configurable URL.
-func NewPlugin(idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
+func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
 	return &scanner{
+		clock:       clock,
 		idGenerator: idGenerator,
 		config:      config,
-		converter:   NewConverter(config),
 	}
 }
 
@@ -660,14 +662,6 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 	}, secrets, nil
 }
 
-func (s *scanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	result, err := s.converter.Convert(imageRef, logsReader)
-	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
-	}
-	return result, nil
-}
-
 func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
 	ref, err := name.ParseReference(image)
 	if err != nil {
@@ -683,4 +677,115 @@ func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]c
 	}
 
 	return env, nil
+}
+
+func (s *scanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+	var reports []ScanReport
+	err := json.NewDecoder(logsReader).Decode(&reports)
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+	vulnerabilities := make([]v1alpha1.Vulnerability, 0)
+
+	for _, report := range reports {
+		for _, sr := range report.Vulnerabilities {
+			vulnerabilities = append(vulnerabilities, v1alpha1.Vulnerability{
+				VulnerabilityID:  sr.VulnerabilityID,
+				Resource:         sr.PkgName,
+				InstalledVersion: sr.InstalledVersion,
+				FixedVersion:     sr.FixedVersion,
+				Severity:         sr.Severity,
+				Title:            sr.Title,
+				PrimaryLink:      sr.PrimaryURL,
+				Links:            []string{},
+				Score:            GetScoreFromCVSS(sr.Cvss),
+			})
+		}
+	}
+
+	registry, artifact, err := s.parseImageRef(imageRef)
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+
+	trivyImageRef, err := s.config.GetTrivyImageRef()
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+
+	version, err := starboard.GetVersionFromImageRef(trivyImageRef)
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+
+	return v1alpha1.VulnerabilityScanResult{
+		UpdateTimestamp: metav1.NewTime(s.clock.Now()),
+		Scanner: v1alpha1.Scanner{
+			Name:    "Trivy",
+			Vendor:  "Aqua Security",
+			Version: version,
+		},
+		Registry:        registry,
+		Artifact:        artifact,
+		Summary:         s.toSummary(vulnerabilities),
+		Vulnerabilities: vulnerabilities,
+	}, nil
+}
+
+func (s *scanner) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alpha1.VulnerabilitySummary) {
+	for _, v := range vulnerabilities {
+		switch v.Severity {
+		case v1alpha1.SeverityCritical:
+			vs.CriticalCount++
+		case v1alpha1.SeverityHigh:
+			vs.HighCount++
+		case v1alpha1.SeverityMedium:
+			vs.MediumCount++
+		case v1alpha1.SeverityLow:
+			vs.LowCount++
+		default:
+			vs.UnknownCount++
+		}
+	}
+	return
+}
+
+// TODO check if it works if both tag and digest are specified
+func (s *scanner) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
+	ref, err := name.ParseReference(imageRef)
+	if err != nil {
+		return v1alpha1.Registry{}, v1alpha1.Artifact{}, err
+	}
+	registry := v1alpha1.Registry{
+		Server: ref.Context().RegistryStr(),
+	}
+	artifact := v1alpha1.Artifact{
+		Repository: ref.Context().RepositoryStr(),
+	}
+	switch t := ref.(type) {
+	case name.Tag:
+		artifact.Tag = t.TagStr()
+	case name.Digest:
+		artifact.Digest = t.DigestStr()
+	}
+
+	return registry, artifact, nil
+}
+
+func GetScoreFromCVSS(CVSSs map[string]*CVSS) *float64 {
+	var nvdScore, vendorScore *float64
+
+	for name, cvss := range CVSSs {
+		if name == "nvd" {
+			nvdScore = cvss.V3Score
+		} else {
+			vendorScore = cvss.V3Score
+		}
+	}
+
+	if vendorScore != nil {
+		return vendorScore
+	}
+
+	return nvdScore
 }
