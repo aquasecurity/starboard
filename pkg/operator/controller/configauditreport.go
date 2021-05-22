@@ -161,6 +161,11 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
+		scanJobTolerations, err := r.ConfigData.GetScanJobTolerations()
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
 		scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
 		if err != nil {
 			return ctrl.Result{}, err
@@ -171,6 +176,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).
 			WithObject(workloadObj).
+			WithTolerations(scanJobTolerations).
 			WithScanJobAnnotations(scanJobAnnotations).
 			Get()
 		if err != nil {

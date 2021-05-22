@@ -23,28 +23,28 @@ import (
 )
 
 type Scanner struct {
-	scheme          *runtime.Scheme
-	opts            kube.ScannerOpts
-	clientset       kubernetes.Interface
-	logsReader      kube.LogsReader
-	plugin          Plugin
-	starboardConfig starboard.ConfigData
+	scheme     *runtime.Scheme
+	clientset  kubernetes.Interface
+	logsReader kube.LogsReader
+	plugin     Plugin
+	config     starboard.ConfigData
+	opts       kube.ScannerOpts
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	opts kube.ScannerOpts,
 	plugin Plugin,
-	starboardConfig starboard.ConfigData,
+	config starboard.ConfigData,
+	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
-		scheme:          scheme,
-		opts:            opts,
-		clientset:       clientset,
-		logsReader:      kube.NewLogsReader(clientset),
-		plugin:          plugin,
-		starboardConfig: starboardConfig,
+		scheme:     scheme,
+		clientset:  clientset,
+		logsReader: kube.NewLogsReader(clientset),
+		plugin:     plugin,
+		config:     config,
+		opts:       opts,
 	}
 }
 
@@ -109,7 +109,13 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		return nil, err
 	}
 
-	scanJobAnnotations, err := s.starboardConfig.GetScanJobAnnotations()
+	scanJobTolerations, err := s.config.GetScanJobTolerations()
+	if err != nil {
+		return nil, err
+	}
+	templateSpec.Tolerations = append(templateSpec.Tolerations, scanJobTolerations...)
+
+	scanJobAnnotations, err := s.config.GetScanJobAnnotations()
 	if err != nil {
 		return nil, err
 	}

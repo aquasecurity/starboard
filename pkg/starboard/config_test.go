@@ -604,7 +604,7 @@ func TestConfigData_GetTrivyInsecureRegistries(t *testing.T) {
 }
 
 func TestGetScanJobTolerations(t *testing.T) {
-	testcases := []struct {
+	testCases := []struct {
 		name        string
 		config      starboard.ConfigData
 		expected    []corev1.Toleration
@@ -659,14 +659,16 @@ func TestGetScanJobTolerations(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testcases {
-		got, err := tc.config.GetScanJobTolerations()
-		if tc.expectError != "" {
-			assert.Error(t, err, "unexpected end of JSON input", tc.name)
-		} else {
-			assert.NoError(t, err, tc.name)
-		}
-		assert.Equal(t, tc.expected, got, tc.name)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := tc.config.GetScanJobTolerations()
+			if tc.expectError != "" {
+				assert.Error(t, err, "unexpected end of JSON input", tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+			assert.Equal(t, tc.expected, got, tc.name)
+		})
 	}
 }
 
@@ -704,8 +706,9 @@ CVE-2019-1543`,
 		})
 	}
 }
+
 func TestGetScanJobAnnotations(t *testing.T) {
-	testcases := []struct {
+	testCases := []struct {
 		name        string
 		config      starboard.ConfigData
 		expected    map[string]string
@@ -744,13 +747,15 @@ func TestGetScanJobAnnotations(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testcases {
-		scanJobAnnotations, err := tc.config.GetScanJobAnnotations()
-		if tc.expectError != "" {
-			assert.Error(t, err, tc.expectError, tc.name)
-		} else {
-			assert.NoError(t, err, tc.name)
-		}
-		assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanJobAnnotations, err := tc.config.GetScanJobAnnotations()
+			if tc.expectError != "" {
+				assert.Error(t, err, tc.expectError, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+			assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
+		})
 	}
 }

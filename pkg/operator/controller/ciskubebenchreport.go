@@ -159,6 +159,12 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 
 	templateSpec.ServiceAccountName = r.Config.ServiceAccount
 
+	scanJobTolerations, err := r.ConfigData.GetScanJobTolerations()
+	if err != nil {
+		return nil, err
+	}
+	templateSpec.Tolerations = append(templateSpec.Tolerations, scanJobTolerations...)
+
 	scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
 	if err != nil {
 		return nil, err
