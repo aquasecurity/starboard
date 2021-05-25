@@ -129,7 +129,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	secretsReader := kube.NewSecretsReader(mgr.GetClient())
 
 	if operatorConfig.VulnerabilityScannerEnabled {
-		plugin, err := plugin.NewResolver().
+		plugin, pluginContext, err := plugin.NewResolver().
 			WithBuildInfo(buildInfo).
 			WithNamespace(operatorNamespace).
 			WithServiceAccountName(operatorConfig.ServiceAccount).
@@ -150,6 +150,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			LogsReader:     logsReader,
 			SecretsReader:  secretsReader,
 			Plugin:         plugin,
+			PluginContext:  pluginContext,
 			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)

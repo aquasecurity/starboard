@@ -63,7 +63,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config Config) vuln
 	}
 }
 
-func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	mode, err := s.config.GetTrivyMode()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -679,7 +679,7 @@ func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]c
 	return env, nil
 }
 
-func (s *scanner) ParseVulnerabilityScanResult(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *scanner) ParseVulnerabilityReportData(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	var reports []ScanReport
 	err := json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
