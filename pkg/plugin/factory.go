@@ -55,22 +55,30 @@ func (r *Resolver) WithClient(client client.Client) *Resolver {
 // vulnerabilityreport.Plugin for the specified starboard.ConfigData.
 //
 // Starboard currently supports Trivy scanner in Standalone and ClientServer
-// mode, and Aqua enterprise scanner.
+// mode, and Aqua Enterprise scanner.
 //
 // You could add your own scanner by implementing the
 // vulnerabilityreport.Plugin interface.
-func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, error) {
+func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboard.PluginContext, error) {
 	scanner, err := r.config.GetVulnerabilityReportsScanner()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	pluginContext := starboard.NewPluginContext().
+		WithName(string(scanner)).
+		WithNamespace(r.namespace).
+		WithServiceAccountName(r.serviceAccountName).
+		WithClient(r.client).
+		Get()
+
 	switch scanner {
 	case starboard.Trivy:
-		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.config), nil
+		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.config), pluginContext, nil
 	case starboard.Aqua:
-		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo, r.config), nil
+		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo, r.config), pluginContext, nil
 	}
-	return nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
+	return nil, nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
 }
 
 // GetConfigAuditPlugin is a factory method that instantiates the

@@ -1357,8 +1357,13 @@ CVE-2019-1543`,
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			pluginContext := starboard.NewPluginContext().
+				WithName(string(starboard.Trivy)).
+				WithNamespace("starboard-ns").
+				WithServiceAccountName("starboard-sa").
+				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), tc.config)
-			jobSpec, secrets, err := instance.GetScanJobSpec(tc.workloadSpec, nil)
+			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
 			assert.Equal(t, tc.expectedJobSpec, jobSpec)
@@ -1446,7 +1451,7 @@ var (
 	}
 )
 
-func TestScanner_ParseVulnerabilityScanResult(t *testing.T) {
+func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
 	config := starboard.ConfigData{
 		"trivy.imageRef": "aquasec/trivy:0.9.1",
 	}
@@ -1506,7 +1511,7 @@ func TestScanner_ParseVulnerabilityScanResult(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), config)
-			report, err := instance.ParseVulnerabilityScanResult(tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
+			report, err := instance.ParseVulnerabilityReportData(tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)

@@ -40,7 +40,7 @@ func NewPlugin(
 	}
 }
 
-func (s *scanner) GetScanJobSpec(spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
 	aquaImageRef, err := s.config.GetAquaImageRef()
@@ -183,7 +183,7 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 	}, nil
 }
 
-func (s *scanner) ParseVulnerabilityScanResult(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *scanner) ParseVulnerabilityReportData(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	var report v1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
