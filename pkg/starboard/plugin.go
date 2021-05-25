@@ -17,6 +17,15 @@ type PluginConfig struct {
 	SecretData map[string][]byte
 }
 
+func (c PluginConfig) GetRequiredData(key string) (string, error) {
+	var ok bool
+	var value string
+	if value, ok = c.Data[key]; !ok {
+		return "", fmt.Errorf("property %s not set", key)
+	}
+	return value, nil
+}
+
 // PluginContext is plugin's execution context within the Starboard toolkit.
 // The context is used to grant access to other methods so that this plugin
 // can interact with the toolkit.

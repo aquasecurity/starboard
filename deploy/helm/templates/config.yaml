@@ -25,12 +25,6 @@ data:
   {{- end }}
   {{- if .Values.operator.configAuditScannerEnabled }}
   configAuditReports.scanner: {{ .Values.operator.configAuditReportsPlugin | quote }}
-  {{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
-  polaris.imageRef: "{{ .Values.polaris.imageRef }}"
-  {{- end }}
-  {{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
-  conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
-  {{- end }}
   {{- end }}
 {{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
 ---
@@ -40,6 +34,8 @@ metadata:
   name: starboard-conftest-config
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
 {{- end }}
 {{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
 ---
@@ -50,6 +46,7 @@ metadata:
   labels:
   {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
+  polaris.imageRef: "{{ .Values.polaris.imageRef }}"
   polaris.config.yaml: |
   {{- toYaml .Values.polaris.config | nindent 4 }}
 {{- end }}

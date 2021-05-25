@@ -278,23 +278,22 @@ func GetDefaultConfig() ConfigData {
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
-
-		"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
-
-		"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
 	}
 }
 
 // GetDefaultPolarisConfig returns the default Polaris configuration.
 func GetDefaultPolarisConfig() map[string]string {
 	return map[string]string{
+		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.2",
 		"polaris.config.yaml": polarisConfigYAML,
 	}
 }
 
-// GetDefaultConftestConfig return the defautl Conftest configuration.
+// GetDefaultConftestConfig return the default Conftest configuration.
 func GetDefaultConftestConfig() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+	}
 }
 
 func (c ConfigData) GetScanJobTolerations() ([]corev1.Toleration, error) {
@@ -425,14 +424,6 @@ func (c ConfigData) GetKubeHunterQuick() (bool, error) {
 		return false, fmt.Errorf("property kube-hunter.quick must be either \"false\" or \"true\", got %q", val)
 	}
 	return val == "true", nil
-}
-
-func (c ConfigData) GetPolarisImageRef() (string, error) {
-	return c.getRequiredProperty("polaris.imageRef")
-}
-
-func (c ConfigData) GetConftestImageRef() (string, error) {
-	return c.getRequiredProperty("conftest.imageRef")
 }
 
 func (c ConfigData) getRequiredProperty(key string) (string, error) {

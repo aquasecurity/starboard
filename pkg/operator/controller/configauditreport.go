@@ -327,7 +327,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := r.Plugin.ParseConfigAuditReportData(logsStream)
+	result, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()

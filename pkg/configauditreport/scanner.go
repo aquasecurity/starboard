@@ -101,7 +101,7 @@ func (s *Scanner) Scan(ctx context.Context, workload kube.Object) (v1alpha1.Conf
 		return v1alpha1.ConfigAuditReport{}, fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := s.plugin.ParseConfigAuditReportData(logsStream)
+	result, err := s.plugin.ParseConfigAuditReportData(s.pluginContext, logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
