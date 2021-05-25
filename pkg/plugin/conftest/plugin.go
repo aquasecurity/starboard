@@ -174,10 +174,10 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		}}, nil
 }
 
-func (p *plugin) getPolicies(cm *corev1.ConfigMap) map[string]string {
+func (p *plugin) getPolicies(config starboard.PluginConfig) map[string]string {
 	policies := make(map[string]string)
 
-	for key, value := range cm.Data {
+	for key, value := range config.Data {
 		if !strings.HasPrefix(key, policyPrefix) {
 			continue
 		}
