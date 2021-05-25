@@ -64,7 +64,7 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-			"Labels": MatchAllKeys(Keys{
+			"Labels": MatchKeys(IgnoreExtras, Keys{
 				starboard.LabelContainerName:     Equal(m.containerName),
 				starboard.LabelResourceKind:      Equal(gvk.Kind),
 				starboard.LabelResourceName:      Equal(m.owner.GetName()),
