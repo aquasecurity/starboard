@@ -6,9 +6,16 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// PluginConfig holds plugin configuration settings.
+type PluginConfig struct {
+	Data       map[string]string
+	SecretData map[string][]byte
+}
 
 // PluginContext is plugin's execution context within the Starboard toolkit.
 // The context is used to grant access to other methods so that this plugin
@@ -16,8 +23,8 @@ import (
 type PluginContext interface {
 	// GetName returns the name of the plugin.
 	GetName() string
-	// GetConfig returns the v1.ConfigMap object that holds configuration settings of the plugin.
-	GetConfig() (*corev1.ConfigMap, error)
+	// GetConfig returns the PluginConfig object that holds configuration settings of the plugin.
+	GetConfig() (PluginConfig, error)
 	// GetNamespace return the name of the K8s Namespace where Starboard creates Jobs
 	// and other helper objects.
 	GetNamespace() string
@@ -43,13 +50,36 @@ func (p *pluginContext) GetName() string {
 	return p.name
 }
 
-func (p *pluginContext) GetConfig() (*corev1.ConfigMap, error) {
+func (p *pluginContext) GetConfig() (PluginConfig, error) {
 	cm := &corev1.ConfigMap{}
+	secret := &corev1.Secret{}
+
 	err := p.client.Get(context.Background(), types.NamespacedName{
 		Namespace: p.namespace,
 		Name:      fmt.Sprintf("starboard-%s-config", strings.ToLower(p.GetName())),
 	}, cm)
-	return cm.DeepCopy(), err
+	if err != nil {
+		return PluginConfig{}, err
+	}
+
+	err = p.client.Get(context.Background(), types.NamespacedName{
+		Namespace: p.namespace,
+		Name:      fmt.Sprintf("starboard-%s-config", strings.ToLower(p.GetName())),
+	}, secret)
+
+	var secretData map[string][]byte
+	if err == nil {
+		secretData = secret.DeepCopy().Data
+	}
+
+	if err != nil && !errors.IsNotFound(err) {
+		return PluginConfig{}, err
+	}
+
+	return PluginConfig{
+		Data:       cm.DeepCopy().Data,
+		SecretData: secretData,
+	}, nil
 }
 
 func (p *pluginContext) GetNamespace() string {
