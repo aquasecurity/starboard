@@ -273,7 +273,6 @@ func GetDefaultConfig() ConfigData {
 		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 		"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
 		keyTrivyMode:     string(Standalone),
-		"aqua.imageRef":  "docker.io/aquasec/scanner:5.3",
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
@@ -401,10 +400,6 @@ func (c ConfigData) GetTrivyInsecureRegistries() map[string]bool {
 	}
 
 	return insecureRegistries
-}
-
-func (c ConfigData) GetAquaImageRef() (string, error) {
-	return c.getRequiredProperty("aqua.imageRef")
 }
 
 func (c ConfigData) GetKubeBenchImageRef() (string, error) {
