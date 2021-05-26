@@ -6,9 +6,11 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
+  scanJob.tolerations: {{ .Values.starboard.scanJobTolerations | toJson | quote }}
+  scanJob.annotations: {{ .Values.starboard.scanJobAnnotations | quote }}
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
-  vulnerabilityReports.scanner: {{ .Values.operator.vulnerabilityReportsPlugin | quote }}
-  {{- if eq .Values.operator.vulnerabilityReportsPlugin "Trivy" }}
+  vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
+  {{- if eq .Values.starboard.vulnerabilityReportsPlugin "Trivy" }}
   trivy.imageRef: "{{ .Values.trivy.imageRef }}"
   trivy.mode: "{{ .Values.trivy.mode }}"
   {{- if eq .Values.trivy.mode "ClientServer" }}
@@ -24,9 +26,9 @@ data:
   kube-bench.imageRef: "{{ .Values.kubeBench.imageRef }}"
   {{- end }}
   {{- if .Values.operator.configAuditScannerEnabled }}
-  configAuditReports.scanner: {{ .Values.operator.configAuditReportsPlugin | quote }}
+  configAuditReports.scanner: {{ .Values.starboard.configAuditReportsPlugin | quote }}
   {{- end }}
-{{- if eq .Values.operator.configAuditReportsPlugin "Conftest" }}
+{{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -37,7 +39,7 @@ metadata:
 data:
   conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
 {{- end }}
-{{- if eq .Values.operator.configAuditReportsPlugin "Polaris" }}
+{{- if eq .Values.starboard.configAuditReportsPlugin "Polaris" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -50,7 +52,7 @@ data:
   polaris.config.yaml: |
   {{- toYaml .Values.polaris.config | nindent 4 }}
 {{- end }}
-{{- if eq .Values.operator.vulnerabilityReportsPlugin "Aqua" }}
+{{- if eq .Values.starboard.vulnerabilityReportsPlugin "Aqua" }}
 ---
 apiVersion: v1
 kind: ConfigMap

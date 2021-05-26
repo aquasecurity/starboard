@@ -21,10 +21,6 @@ operator:
   configAuditScannerEnabled: true
   # kubernetesBenchmarkEnabled the flag to enable CIS Kubernetes Benchmark scanner
   kubernetesBenchmarkEnabled: true
-  # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
-  vulnerabilityReportsPlugin: "Trivy"
-  # configAuditReportsPlugin the name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`.
-  configAuditReportsPlugin: "Polaris"
   # batchDeleteLimit the maximum number of config audit reports deleted by the operator when the plugin's config has changed.
   batchDeleteLimit: 10
   # batchDeleteDelay the duration to wait before deleting another batch of config audit reports.
@@ -70,6 +66,24 @@ envSecret:
   stringData:
     OPERATOR_LOG_DEV_MODE: "false"
 
+starboard:
+  # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
+  vulnerabilityReportsPlugin: "Trivy"
+  # configAuditReportsPlugin the name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`.
+  configAuditReportsPlugin: "Polaris"
+
+  # scanJobTolerations tolerations to be applied to the scanner pods so that they can run on nodes with matching taints
+  scanJobTolerations: []
+  # If you do want to specify tolerations, uncomment the following lines, adjust them as necessary, and remove the
+  # square brackets after 'scanJobTolerations:'.
+  # - key: "key1"
+  #   operator: "Equal"
+  #   value: "value1"
+  #   effect: "NoSchedule"
+
+  # scanJobAnnotations comma-separated representation of the annotations which the user wants the scanner pods to be
+  # annotated with. Example: `foo=bar,env=stage` will annotate the scanner pods with the annotations `foo: bar` and `env: stage`
+  scanJobAnnotations: ""
 trivy:
   imageRef: docker.io/aquasec/trivy:0.16.0
   mode: Standalone
@@ -274,13 +288,14 @@ conftest:
   imageRef: docker.io/openpolicyagent/conftest:v0.25.0
 
 aqua:
-  # imageRef Aqua scanner image reference. The tag determines the version of the scanner binary executable and it must be compatible with version of Aqua server.
+  # imageRef Aqua scanner image reference. The tag determines the version of the scanner binary executable and it must
+  # be compatible with version of Aqua server.
   imageRef: docker.io/aquasec/scanner:5.3
-  # serverURL The endpoint URL of Aqua management console
+  # serverURL the endpoint URL of Aqua management console
   serverURL:
-  # username Aqua management console username
+  # username the Aqua management console username
   username:
-  # password Aqua management console password
+  # password the Aqua management console password
   password:
 
 rbac:
