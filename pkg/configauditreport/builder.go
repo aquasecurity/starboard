@@ -71,7 +71,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		return nil, nil, err
 	}
 
-	podSpec.Tolerations = append(podSpec.Tolerations, s.tolerations...)
+	jobSpec.Tolerations = append(podSpec.Tolerations, s.tolerations...)
 
 	podSpecHash := kube.ComputeHash(podSpec)
 
