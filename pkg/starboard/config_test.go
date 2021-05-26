@@ -517,7 +517,9 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
 			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Conftest)), metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(pluginConfig.Data).To(gomega.BeEmpty())
+		g.Expect(pluginConfig.Data).To(gomega.Equal(map[string]string{
+			"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+		}))
 
 		_, err = clientset.CoreV1().ConfigMaps(namespace).
 			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})

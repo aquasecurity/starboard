@@ -28,9 +28,6 @@ var (
 func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g := NewGomegaWithT(t)
 	sequence := ext.NewSimpleIDGenerator()
-	config := starboard.ConfigData{
-		"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
-	}
 	pluginContext := starboard.NewPluginContext().
 		WithName(string(starboard.Conftest)).
 		WithNamespace("starboard-ns").
@@ -41,18 +38,21 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+
 				"conftest.policy.libkubernetes.rego":      "<REGO>",
 				"conftest.policy.libutil.rego":            "<REGO>",
 				"conftest.policy.access_to_host_pid.rego": "<REGO>",
 				"conftest.policy.cpu_not_limited.rego":    "<REGO>",
-				"foo":                                     "bar",    // This one should be skipped (no conftest.policy. prefix)
 				"conftest.policy.privileged":              "<REGO>", // This one should be skipped (no .rego suffix)
+
+				"foo": "bar", // This one should be skipped (no conftest.policy. prefix)
 			},
 		}).Build()).Get()
 
-	plugin := conftest.NewPlugin(sequence, fixedClock, config)
+	instance := conftest.NewPlugin(sequence, fixedClock)
 
-	jobSpec, secrets, err := plugin.GetScanJobSpec(pluginContext, &corev1.Pod{
+	jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nginx",
 			Namespace: "default",
@@ -202,10 +202,7 @@ status: {}
 
 func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	g := NewGomegaWithT(t)
-	config := starboard.ConfigData{
-		"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
-	}
-	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, config)
+	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 	logsReader := ioutil.NopCloser(strings.NewReader(`[
   {
     "filename": "/project/workload.yaml",
@@ -273,7 +270,22 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
   }
 ]`))
 
-	data, err := plugin.ParseConfigAuditReportData(logsReader)
+	pluginContext := starboard.NewPluginContext().
+		WithName(string(starboard.Conftest)).
+		WithNamespace("starboard-ns").
+		WithServiceAccountName("starboard-sa").
+		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "starboard-conftest-config",
+				Namespace: "starboard-ns",
+			},
+			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+			},
+		}).Build()).
+		Get()
+
+	data, err := plugin.ParseConfigAuditReportData(pluginContext, logsReader)
 
 	// When Conftest plugin is used with https://github.com/aquasecurity/appshield
 	// Rego scripts the Check.ID is not unique. For example, for a Pod with multiple
@@ -289,7 +301,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		"Scanner": Equal(v1alpha1.Scanner{
 			Name:    "Conftest",
 			Vendor:  "Open Policy Agent",
-			Version: "v0.23.0",
+			Version: "v0.25.0",
 		}),
 		"Summary": Equal(v1alpha1.ConfigAuditSummary{
 			DangerCount:  6,
@@ -379,7 +391,7 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 			"foo":   "baz",
 		})
 
-		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, starboard.ConfigData{})
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.GetConfigHash(pluginContext1)
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -400,7 +412,7 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 			"foo":   "bar",
 		})
 
-		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, starboard.ConfigData{})
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.GetConfigHash(pluginContext1)
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -413,6 +425,6 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 func TestPlugin_GetContainerName(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock, starboard.ConfigData{})
+	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 	g.Expect(plugin.GetContainerName()).To(Equal("conftest"))
 }

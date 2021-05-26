@@ -26,23 +26,17 @@ const (
 	defaultCheckCategory  = "Security"
 )
 
-type Config interface {
-	GetConftestImageRef() (string, error)
-}
-
 type plugin struct {
 	idGenerator ext.IDGenerator
 	clock       ext.Clock
-	config      Config
 }
 
 // NewPlugin constructs a new configauditreport.Plugin, which is using
 // the upstream Conftest container image to audit K8s workloads.
-func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock, config Config) configauditreport.Plugin {
+func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.Plugin {
 	return &plugin{
 		idGenerator: idGenerator,
 		clock:       clock,
-		config:      config,
 	}
 }
 
@@ -55,7 +49,7 @@ func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
-	imageRef, err := p.config.GetConftestImageRef()
+	imageRef, err := p.getImageRef(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, fmt.Errorf("getting image reference: %w", err)
 	}
@@ -194,7 +188,7 @@ func (p *plugin) GetContainerName() string {
 	return conftestContainerName
 }
 
-func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
 	var checkResults []CheckResult
 	err := json.NewDecoder(logsReader).Decode(&checkResults)
 
@@ -229,7 +223,7 @@ func (p *plugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.
 		}
 	}
 
-	imageRef, err := p.config.GetConftestImageRef()
+	imageRef, err := p.getImageRef(ctx)
 	if err != nil {
 		return v1alpha1.ConfigAuditResult{}, err
 	}
@@ -262,4 +256,12 @@ func (p *plugin) getPolicyTitleFromResult(result Result) string {
 	}
 	// Fallback to a unique identifier
 	return p.idGenerator.GenerateID()
+}
+
+func (p *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
+	config, err := ctx.GetConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.GetRequiredData("conftest.imageRef")
 }

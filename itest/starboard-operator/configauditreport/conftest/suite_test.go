@@ -106,6 +106,8 @@ var _ = BeforeSuite(func() {
 			Name:      starboard.GetPluginConfigMapName("Conftest"),
 		},
 		Data: map[string]string{
+			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.25.0",
+
 			"conftest.policy.runs_as_root.rego": runAsRootPolicy,
 		},
 	}

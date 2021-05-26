@@ -68,7 +68,7 @@ func (p *testPlugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Obje
 	return corev1.PodSpec{}, nil, nil
 }
 
-func (p *testPlugin) ParseConfigAuditReportData(logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *testPlugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
 	return v1alpha1.ConfigAuditResult{}, nil
 }
 

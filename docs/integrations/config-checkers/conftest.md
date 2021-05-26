@@ -58,6 +58,7 @@ As an example, let's create the `starboard-conftest-config` ConfigMap with [file
 
 ```
 kubectl create configmap starboard-conftest-config -n <starboard_namespace> \
+  --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.25.0 \
   --from-file=conftest.policy.kubernetes.rego=kubernetes/lib/kubernetes.rego \
   --from-file=conftest.policy.utils.rego=kubernetes/lib/utils.rego \
   --from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
