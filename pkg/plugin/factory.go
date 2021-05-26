@@ -74,7 +74,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 	case starboard.Trivy:
 		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.config), pluginContext, nil
 	case starboard.Aqua:
-		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo, r.config), pluginContext, nil
+		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo), pluginContext, nil
 	}
 	return nil, nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
 }

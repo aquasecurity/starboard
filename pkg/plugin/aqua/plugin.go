@@ -15,15 +15,9 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-// Config defines configuration settings for the Aqua vulnerabilityreport.Plugin.
-type Config interface {
-	GetAquaImageRef() (string, error)
-}
-
-type scanner struct {
+type plugin struct {
 	idGenerator ext.IDGenerator
 	buildInfo   starboard.BuildInfo
-	config      Config
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using
@@ -31,19 +25,17 @@ type scanner struct {
 func NewPlugin(
 	idGenerator ext.IDGenerator,
 	buildInfo starboard.BuildInfo,
-	config Config,
 ) vulnerabilityreport.Plugin {
-	return &scanner{
+	return &plugin{
 		idGenerator: idGenerator,
 		buildInfo:   buildInfo,
-		config:      config,
 	}
 }
 
-func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
-	aquaImageRef, err := s.config.GetAquaImageRef()
+	aquaImageRef, err := s.getImageRef(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -51,7 +43,7 @@ func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec,
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
 	for i, container := range spec.Containers {
 		var err error
-		scanJobContainers[i], err = s.newScanJobContainer(container)
+		scanJobContainers[i], err = s.newScanJobContainer(ctx, container)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -98,8 +90,8 @@ func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec,
 	}, nil, nil
 }
 
-func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Container, error) {
-	aquaImageRef, err := s.config.GetAquaImageRef()
+func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer corev1.Container) (corev1.Container, error) {
+	aquaImageRef, err := s.getImageRef(ctx)
 	if err != nil {
 		return corev1.Container{}, err
 	}
@@ -130,7 +122,7 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: starboard.GetPluginConfigMapName("Aqua"),
 						},
 						Key: "aqua.serverURL",
 					},
@@ -141,7 +133,7 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: starboard.GetPluginConfigMapName("Aqua"),
 						},
 						Key: "aqua.username",
 					},
@@ -152,7 +144,7 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: starboard.GetPluginConfigMapName("Aqua"),
 						},
 						Key: "aqua.password",
 					},
@@ -183,8 +175,16 @@ func (s *scanner) newScanJobContainer(podContainer corev1.Container) (corev1.Con
 	}, nil
 }
 
-func (s *scanner) ParseVulnerabilityReportData(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *plugin) ParseVulnerabilityReportData(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	var report v1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
+}
+
+func (s *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
+	config, err := ctx.GetConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.GetRequiredData("aqua.imageRef")
 }

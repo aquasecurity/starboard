@@ -273,6 +273,16 @@ conftest:
   # imageRef the image reference
   imageRef: docker.io/openpolicyagent/conftest:v0.25.0
 
+aqua:
+  # imageRef Aqua scanner image reference. The tag determines the version of the scanner binary executable and it must be compatible with version of Aqua server.
+  imageRef: docker.io/aquasec/scanner:5.3
+  # serverURL The endpoint URL of Aqua management console
+  serverURL:
+  # username Aqua management console username
+  username:
+  # password Aqua management console password
+  password:
+
 rbac:
   create: true
 serviceAccount:

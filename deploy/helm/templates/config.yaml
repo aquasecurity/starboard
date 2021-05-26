@@ -44,9 +44,31 @@ kind: ConfigMap
 metadata:
   name: starboard-polaris-config
   labels:
-  {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
   polaris.imageRef: "{{ .Values.polaris.imageRef }}"
   polaris.config.yaml: |
   {{- toYaml .Values.polaris.config | nindent 4 }}
 {{- end }}
+{{- if eq .Values.operator.vulnerabilityReportsPlugin "Aqua" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-aqua-config
+  labels:
+     {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  aqua.imageRef: {{ required ".Values.aqua.imageRef is required!" .Values.aqua.imageRef | quote }}
+  aqua.serverURL: {{ required ".Values.aqua.serverURL is required!" .Values.aqua.serverURL | quote }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard-aqua-config
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  aqua.username: {{ required ".Values.aqua.username is required!" .Values.aqua.username | b64enc | quote }}
+  aqua.password: {{ required ".Values.aqua.password is required!" .Values.aqua.password | b64enc | quote }}
+{{- end}}
