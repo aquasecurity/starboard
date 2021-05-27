@@ -49,40 +49,6 @@ func TestGetVersionFromImageRef(t *testing.T) {
 	}
 }
 
-func TestConfigData_GetTrivyImageRef(t *testing.T) {
-	testCases := []struct {
-		name             string
-		configData       starboard.ConfigData
-		expectedError    string
-		expectedImageRef string
-	}{
-		{
-			name:          "Should return error",
-			configData:    starboard.ConfigData{},
-			expectedError: "property trivy.imageRef not set",
-		},
-		{
-			name: "Should return image reference from config data",
-			configData: starboard.ConfigData{
-				"trivy.imageRef": "gcr.io/aquasecurity/trivy:0.8.0",
-			},
-			expectedImageRef: "gcr.io/aquasecurity/trivy:0.8.0",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			imageRef, err := tc.configData.GetTrivyImageRef()
-			if tc.expectedError != "" {
-				require.EqualError(t, err, tc.expectedError)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedImageRef, imageRef)
-			}
-		})
-	}
-}
-
 func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -239,53 +205,6 @@ func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedScanner, scanner)
-			}
-		})
-	}
-}
-
-func TestConfigData_GetTrivyMode(t *testing.T) {
-	testCases := []struct {
-		name          string
-		configData    starboard.ConfigData
-		expectedError string
-		expectedMode  starboard.TrivyMode
-	}{
-		{
-			name: "Should return Standalone",
-			configData: starboard.ConfigData{
-				"trivy.mode": "Standalone",
-			},
-			expectedMode: starboard.Standalone,
-		},
-		{
-			name: "Should return ClientServer",
-			configData: starboard.ConfigData{
-				"trivy.mode": "ClientServer",
-			},
-			expectedMode: starboard.ClientServer,
-		},
-		{
-			name:          "Should return error when value is not set",
-			configData:    starboard.ConfigData{},
-			expectedError: "property trivy.mode not set",
-		},
-		{
-			name: "Should return error when value is not allowed",
-			configData: starboard.ConfigData{
-				"trivy.mode": "P2P",
-			},
-			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer)",
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			mode, err := tc.configData.GetTrivyMode()
-			if tc.expectedError != "" {
-				require.EqualError(t, err, tc.expectedError)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedMode, mode)
 			}
 		})
 	}
@@ -570,41 +489,6 @@ func TestConfigManager_Delete(t *testing.T) {
 	})
 }
 
-func TestConfigData_GetTrivyInsecureRegistries(t *testing.T) {
-	testCases := []struct {
-		name           string
-		configData     starboard.ConfigData
-		expectedOutput map[string]bool
-	}{
-		{
-			name: "Should return nil map when there is no key with trivy.insecureRegistry. prefix",
-			configData: starboard.ConfigData{
-				"foo": "bar",
-			},
-			expectedOutput: make(map[string]bool),
-		},
-		{
-			name: "Should return insecure registries in map",
-			configData: starboard.ConfigData{
-				"foo":                                "bar",
-				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
-				"trivy.insecureRegistry.qaRegistry":  "qa.registry.aquasec.com",
-			},
-			expectedOutput: map[string]bool{
-				"poc.myregistry.harbor.com.pl": true,
-				"qa.registry.aquasec.com":      true,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			insecureRegistries := tc.configData.GetTrivyInsecureRegistries()
-			assert.Equal(t, tc.expectedOutput, insecureRegistries)
-		})
-	}
-}
-
 func TestGetScanJobTolerations(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -670,41 +554,6 @@ func TestGetScanJobTolerations(t *testing.T) {
 				assert.NoError(t, err, tc.name)
 			}
 			assert.Equal(t, tc.expected, got, tc.name)
-		})
-	}
-}
-
-func TestConfigData_TrivyIgnoreFileExists(t *testing.T) {
-	testCases := []struct {
-		name           string
-		configData     starboard.ConfigData
-		expectedOutput bool
-	}{
-		{
-			name: "Should return false",
-			configData: starboard.ConfigData{
-				"foo": "bar",
-			},
-			expectedOutput: false,
-		},
-		{
-			name: "Should return true",
-			configData: starboard.ConfigData{
-				"foo": "bar",
-				"trivy.ignoreFile": `# Accept the risk
-CVE-2018-14618
-
-# No impact in our settings
-CVE-2019-1543`,
-			},
-			expectedOutput: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			exists := tc.configData.TrivyIgnoreFileExists()
-			assert.Equal(t, tc.expectedOutput, exists)
 		})
 	}
 }

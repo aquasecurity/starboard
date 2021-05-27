@@ -237,20 +237,9 @@ const (
 	Conftest Scanner = "Conftest"
 )
 
-// TrivyMode describes mode in which Trivy client operates.
-type TrivyMode string
-
-const (
-	Standalone   TrivyMode = "Standalone"
-	ClientServer TrivyMode = "ClientServer"
-)
-
 const (
 	keyVulnerabilityReportsScanner = "vulnerabilityReports.scanner"
 	keyConfigAuditReportsScanner   = "configAuditReports.scanner"
-
-	keyTrivyMode      = "trivy.mode"
-	keyTrivyServerURL = "trivy.serverURL"
 )
 
 // ConfigData holds Starboard configuration settings as a set
@@ -272,7 +261,7 @@ func GetDefaultConfig() ConfigData {
 
 		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 		"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
-		keyTrivyMode:     string(Standalone),
+		"trivy.mode":     "Standalone",
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
@@ -340,28 +329,6 @@ func (c ConfigData) GetConfigAuditReportsScanner() (Scanner, error) {
 		value, keyConfigAuditReportsScanner, Polaris, Conftest)
 }
 
-func (c ConfigData) GetTrivyImageRef() (string, error) {
-	return c.getRequiredProperty("trivy.imageRef")
-}
-
-func (c ConfigData) GetTrivyMode() (TrivyMode, error) {
-	var ok bool
-	var value string
-	if value, ok = c[keyTrivyMode]; !ok {
-		return "", fmt.Errorf("property %s not set", keyTrivyMode)
-	}
-
-	switch TrivyMode(value) {
-	case Standalone:
-		return Standalone, nil
-	case ClientServer:
-		return ClientServer, nil
-	}
-
-	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
-		value, keyTrivyMode, Standalone, ClientServer)
-}
-
 func (c ConfigData) GetScanJobAnnotations() (map[string]string, error) {
 	scanJobAnnotationsStr, found := c[AnnotationScanJobAnnotations]
 	if !found || strings.TrimSpace(scanJobAnnotationsStr) == "" {
@@ -381,33 +348,12 @@ func (c ConfigData) GetScanJobAnnotations() (map[string]string, error) {
 	return scanJobAnnotationsMap, nil
 }
 
-func (c ConfigData) GetTrivyServerURL() (string, error) {
-	return c.getRequiredProperty(keyTrivyServerURL)
-}
-
-func (c ConfigData) TrivyIgnoreFileExists() bool {
-	_, ok := c["trivy.ignoreFile"]
-
-	return ok
-}
-
-func (c ConfigData) GetTrivyInsecureRegistries() map[string]bool {
-	insecureRegistries := make(map[string]bool)
-	for key, val := range c {
-		if strings.HasPrefix(key, "trivy.insecureRegistry.") {
-			insecureRegistries[val] = true
-		}
-	}
-
-	return insecureRegistries
-}
-
 func (c ConfigData) GetKubeBenchImageRef() (string, error) {
-	return c.getRequiredProperty("kube-bench.imageRef")
+	return c.GetRequiredData("kube-bench.imageRef")
 }
 
 func (c ConfigData) GetKubeHunterImageRef() (string, error) {
-	return c.getRequiredProperty("kube-hunter.imageRef")
+	return c.GetRequiredData("kube-hunter.imageRef")
 }
 
 func (c ConfigData) GetKubeHunterQuick() (bool, error) {
@@ -421,7 +367,7 @@ func (c ConfigData) GetKubeHunterQuick() (bool, error) {
 	return val == "true", nil
 }
 
-func (c ConfigData) getRequiredProperty(key string) (string, error) {
+func (c ConfigData) GetRequiredData(key string) (string, error) {
 	var ok bool
 	var value string
 	if value, ok = c[key]; !ok {

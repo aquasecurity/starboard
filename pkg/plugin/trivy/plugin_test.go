@@ -24,6 +24,157 @@ var (
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
 
+func TestConfig_GetImageRef(t *testing.T) {
+	testCases := []struct {
+		name             string
+		configData       trivy.Config
+		expectedError    string
+		expectedImageRef string
+	}{
+		{
+			name:          "Should return error",
+			configData:    trivy.Config{starboard.ConfigData{}},
+			expectedError: "property trivy.imageRef not set",
+		},
+		{
+			name: "Should return image reference from config data",
+			configData: trivy.Config{starboard.ConfigData{
+				"trivy.imageRef": "gcr.io/aquasecurity/trivy:0.8.0",
+			}},
+			expectedImageRef: "gcr.io/aquasecurity/trivy:0.8.0",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			imageRef, err := tc.configData.GetImageRef()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedImageRef, imageRef)
+			}
+		})
+	}
+}
+
+func TestConfig_GetMode(t *testing.T) {
+	testCases := []struct {
+		name          string
+		configData    trivy.Config
+		expectedError string
+		expectedMode  trivy.Mode
+	}{
+		{
+			name: "Should return Standalone",
+			configData: trivy.Config{starboard.ConfigData{
+				"trivy.mode": "Standalone",
+			}},
+			expectedMode: trivy.Standalone,
+		},
+		{
+			name: "Should return ClientServer",
+			configData: trivy.Config{starboard.ConfigData{
+				"trivy.mode": "ClientServer",
+			}},
+			expectedMode: trivy.ClientServer,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    trivy.Config{starboard.ConfigData{}},
+			expectedError: "property trivy.mode not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: trivy.Config{starboard.ConfigData{
+				"trivy.mode": "P2P",
+			}},
+			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mode, err := tc.configData.GetMode()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedMode, mode)
+			}
+		})
+	}
+}
+
+func TestConfig_IgnoreFileExists(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     trivy.Config
+		expectedOutput bool
+	}{
+		{
+			name: "Should return false",
+			configData: trivy.Config{starboard.ConfigData{
+				"foo": "bar",
+			}},
+			expectedOutput: false,
+		},
+		{
+			name: "Should return true",
+			configData: trivy.Config{starboard.ConfigData{
+				"foo": "bar",
+				"trivy.ignoreFile": `# Accept the risk
+CVE-2018-14618
+
+# No impact in our settings
+CVE-2019-1543`,
+			}},
+			expectedOutput: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			exists := tc.configData.IgnoreFileExists()
+			assert.Equal(t, tc.expectedOutput, exists)
+		})
+	}
+}
+
+func TestConfig_GetInsecureRegistries(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     trivy.Config
+		expectedOutput map[string]bool
+	}{
+		{
+			name: "Should return nil map when there is no key with trivy.insecureRegistry. prefix",
+			configData: trivy.Config{starboard.ConfigData{
+				"foo": "bar",
+			}},
+			expectedOutput: make(map[string]bool),
+		},
+		{
+			name: "Should return insecure registries in map",
+			configData: trivy.Config{starboard.ConfigData{
+				"foo":                                "bar",
+				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.insecureRegistry.qaRegistry":  "qa.registry.aquasec.com",
+			}},
+			expectedOutput: map[string]bool{
+				"poc.myregistry.harbor.com.pl": true,
+				"qa.registry.aquasec.com":      true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			insecureRegistries := tc.configData.GetInsecureRegistries()
+			assert.Equal(t, tc.expectedOutput, insecureRegistries)
+		})
+	}
+}
+
 func TestScanner_GetScanJobSpec(t *testing.T) {
 
 	testCases := []struct {
@@ -39,7 +190,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 			name: "Standalone mode without insecure registry",
 			config: starboard.ConfigData{
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":     string(starboard.Standalone),
+				"trivy.mode":     string(trivy.Standalone),
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -282,7 +433,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 			name: "Standalone mode with insecure registry",
 			config: starboard.ConfigData{
 				"trivy.imageRef":                     "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":                         string(starboard.Standalone),
+				"trivy.mode":                         string(trivy.Standalone),
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
 			},
 			workloadSpec: corev1.PodSpec{
@@ -529,7 +680,7 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 			name: "Standalone mode with trivyignore file",
 			config: starboard.ConfigData{
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":     string(starboard.Standalone),
+				"trivy.mode":     string(trivy.Standalone),
 				"trivy.ignoreFile": `# Accept the risk
 CVE-2018-14618
 
@@ -802,7 +953,7 @@ CVE-2019-1543`,
 			name: "ClientServer mode without insecure registry",
 			config: starboard.ConfigData{
 				"trivy.imageRef":  "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":      string(starboard.ClientServer),
+				"trivy.mode":      string(trivy.ClientServer),
 				"trivy.serverURL": "http://trivy.trivy:4954",
 			},
 			workloadSpec: corev1.PodSpec{
@@ -974,7 +1125,7 @@ CVE-2019-1543`,
 			name: "ClientServer mode with insecure registry",
 			config: starboard.ConfigData{
 				"trivy.imageRef":                     "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":                         string(starboard.ClientServer),
+				"trivy.mode":                         string(trivy.ClientServer),
 				"trivy.serverURL":                    "http://trivy.trivy:4954",
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
 			},
@@ -1151,7 +1302,7 @@ CVE-2019-1543`,
 			name: "ClientServer mode with trivyignore file",
 			config: starboard.ConfigData{
 				"trivy.imageRef":  "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":      string(starboard.ClientServer),
+				"trivy.mode":      string(trivy.ClientServer),
 				"trivy.serverURL": "http://trivy.trivy:4954",
 				"trivy.ignoreFile": `# Accept the risk
 CVE-2018-14618
