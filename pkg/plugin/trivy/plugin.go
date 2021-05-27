@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/docker"
@@ -37,13 +38,64 @@ type plugin struct {
 	config      Config
 }
 
+const (
+	keyTrivyMode      = "trivy.mode"
+	keyTrivyServerURL = "trivy.serverURL"
+)
+
+// Mode describes mode in which Trivy client operates.
+type Mode string
+
+const (
+	Standalone   Mode = "Standalone"
+	ClientServer Mode = "ClientServer"
+)
+
 // Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
-type Config interface {
-	GetTrivyImageRef() (string, error)
-	GetTrivyMode() (starboard.TrivyMode, error)
-	GetTrivyServerURL() (string, error)
-	GetTrivyInsecureRegistries() map[string]bool
-	TrivyIgnoreFileExists() bool
+type Config struct {
+	starboard.ConfigData
+}
+
+func (c Config) GetImageRef() (string, error) {
+	return c.GetRequiredData("trivy.imageRef")
+}
+
+func (c Config) GetMode() (Mode, error) {
+	var ok bool
+	var value string
+	if value, ok = c.ConfigData[keyTrivyMode]; !ok {
+		return "", fmt.Errorf("property %s not set", keyTrivyMode)
+	}
+
+	switch Mode(value) {
+	case Standalone:
+		return Standalone, nil
+	case ClientServer:
+		return ClientServer, nil
+	}
+
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyTrivyMode, Standalone, ClientServer)
+}
+
+func (c Config) GetServerURL() (string, error) {
+	return c.ConfigData.GetRequiredData(keyTrivyServerURL)
+}
+
+func (c Config) IgnoreFileExists() bool {
+	_, ok := c.ConfigData["trivy.ignoreFile"]
+	return ok
+}
+
+func (c Config) GetInsecureRegistries() map[string]bool {
+	insecureRegistries := make(map[string]bool)
+	for key, val := range c.ConfigData {
+		if strings.HasPrefix(key, "trivy.insecureRegistry.") {
+			insecureRegistries[val] = true
+		}
+	}
+
+	return insecureRegistries
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
@@ -54,23 +106,23 @@ type Config interface {
 //
 // The starboard.ClientServer mode is usually more performant, however it
 // requires a Trivy server accessible at the configurable URL.
-func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
+func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config starboard.ConfigData) vulnerabilityreport.Plugin {
 	return &plugin{
 		clock:       clock,
 		idGenerator: idGenerator,
-		config:      config,
+		config:      Config{ConfigData: config},
 	}
 }
 
 func (s *plugin) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
-	mode, err := s.config.GetTrivyMode()
+	mode, err := s.config.GetMode()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
 	switch mode {
-	case starboard.Standalone:
+	case Standalone:
 		return s.getPodSpecForStandaloneMode(spec, credentials)
-	case starboard.ClientServer:
+	case ClientServer:
 		return s.getPodSpecForClientServerMode(spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
@@ -116,7 +168,7 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 		secrets = append(secrets, secret)
 	}
 
-	trivyImageRef, err := s.config.GetTrivyImageRef()
+	trivyImageRef, err := s.config.GetImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -214,7 +266,7 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 		},
 	}
 
-	if s.config.TrivyIgnoreFileExists() {
+	if s.config.IgnoreFileExists() {
 		volumes = append(volumes, corev1.Volume{
 			Name: ignoreFileVolumeName,
 			VolumeSource: corev1.VolumeSource{
@@ -328,7 +380,7 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 			},
 		}
 
-		if s.config.TrivyIgnoreFileExists() {
+		if s.config.IgnoreFileExists() {
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_IGNOREFILE",
 				Value: "/tmp/trivy/.trivyignore",
@@ -422,12 +474,12 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
 
-	trivyImageRef, err := s.config.GetTrivyImageRef()
+	trivyImageRef, err := s.config.GetImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
 
-	trivyServerURL, err := s.config.GetTrivyServerURL()
+	trivyServerURL, err := s.config.GetServerURL()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -596,7 +648,7 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 			return corev1.PodSpec{}, nil, err
 		}
 
-		if s.config.TrivyIgnoreFileExists() {
+		if s.config.IgnoreFileExists() {
 			volumes = []corev1.Volume{
 				{
 					Name: ignoreFileVolumeName,
@@ -667,7 +719,7 @@ func (s *plugin) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]co
 		return nil, err
 	}
 
-	insecureRegistries := s.config.GetTrivyInsecureRegistries()
+	insecureRegistries := s.config.GetInsecureRegistries()
 	if insecureRegistries[ref.Context().RegistryStr()] {
 		env = append(env, corev1.EnvVar{
 			Name:  "TRIVY_INSECURE",
@@ -707,7 +759,7 @@ func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, imageRe
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
 
-	trivyImageRef, err := s.config.GetTrivyImageRef()
+	trivyImageRef, err := s.config.GetImageRef()
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
