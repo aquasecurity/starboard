@@ -47,7 +47,7 @@ type CISKubeBenchReportReconciler struct {
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Node{}).
+		For(&corev1.Node{}, builder.WithPredicates(IsLinuxNode)).
 		Owns(&v1alpha1.CISKubeBenchReport{}).
 		Complete(r.reconcileNodes())
 	if err != nil {
