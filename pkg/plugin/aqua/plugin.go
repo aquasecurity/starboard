@@ -175,7 +175,7 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer c
 	}, nil
 }
 
-func (s *plugin) ParseVulnerabilityReportData(_ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, _ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	var report v1alpha1.VulnerabilityScanResult
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err

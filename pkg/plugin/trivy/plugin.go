@@ -31,8 +31,7 @@ var (
 	}
 )
 
-// TODO Rename scanner struct to plugin.
-type scanner struct {
+type plugin struct {
 	clock       ext.Clock
 	idGenerator ext.IDGenerator
 	config      Config
@@ -56,14 +55,14 @@ type Config interface {
 // The starboard.ClientServer mode is usually more performant, however it
 // requires a Trivy server accessible at the configurable URL.
 func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config Config) vulnerabilityreport.Plugin {
-	return &scanner{
+	return &plugin{
 		clock:       clock,
 		idGenerator: idGenerator,
 		config:      config,
 	}
 }
 
-func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	mode, err := s.config.GetTrivyMode()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -78,7 +77,7 @@ func (s *scanner) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec,
 	}
 }
 
-func (s *scanner) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
+func (s *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
 	containerImages := kube.GetContainerImagesFromPodSpec(spec)
 	secretData := kube.AggregateImagePullSecretsData(containerImages, credentials)
 
@@ -108,7 +107,7 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -417,7 +416,7 @@ func (s *scanner) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials m
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
@@ -662,7 +661,7 @@ func (s *scanner) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials
 	}, secrets, nil
 }
 
-func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+func (s *plugin) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
 	ref, err := name.ParseReference(image)
 	if err != nil {
 		return nil, err
@@ -679,7 +678,7 @@ func (s *scanner) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]c
 	return env, nil
 }
 
-func (s *scanner) ParseVulnerabilityReportData(imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
 	var reports []ScanReport
 	err := json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
@@ -732,7 +731,7 @@ func (s *scanner) ParseVulnerabilityReportData(imageRef string, logsReader io.Re
 	}, nil
 }
 
-func (s *scanner) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alpha1.VulnerabilitySummary) {
+func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alpha1.VulnerabilitySummary) {
 	for _, v := range vulnerabilities {
 		switch v.Severity {
 		case v1alpha1.SeverityCritical:
@@ -751,7 +750,7 @@ func (s *scanner) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alph
 }
 
 // TODO check if it works if both tag and digest are specified
-func (s *scanner) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
+func (s *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
 		return v1alpha1.Registry{}, v1alpha1.Artifact{}, err

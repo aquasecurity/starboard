@@ -1510,8 +1510,9 @@ func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := starboard.NewPluginContext().Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), config)
-			report, err := instance.ParseVulnerabilityReportData(tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
+			report, err := instance.ParseVulnerabilityReportData(ctx, tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
 			switch {
 			case tc.expectedError == nil:
 				require.NoError(t, err)
