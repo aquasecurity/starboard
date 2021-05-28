@@ -20,193 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const (
-	polarisConfigYAML = `checks:
-  # reliability
-  multipleReplicasForDeployment: ignore
-  priorityClassNotSet: ignore
-  # resources
-  cpuRequestsMissing: warning
-  cpuLimitsMissing: warning
-  memoryRequestsMissing: warning
-  memoryLimitsMissing: warning
-  # images
-  tagNotSpecified: danger
-  pullPolicyNotAlways: ignore
-  # healthChecks
-  readinessProbeMissing: warning
-  livenessProbeMissing: warning
-  # networking
-  hostNetworkSet: warning
-  hostPortSet: warning
-  # security
-  hostIPCSet: danger
-  hostPIDSet: danger
-  notReadOnlyRootFilesystem: warning
-  privilegeEscalationAllowed: danger
-  runAsRootAllowed: warning
-  runAsPrivileged: danger
-  dangerousCapabilities: danger
-  insecureCapabilities: warning
-exemptions:
-  - controllerNames:
-    - kube-apiserver
-    - kube-proxy
-    - kube-scheduler
-    - etcd-manager-events
-    - kube-controller-manager
-    - kube-dns
-    - etcd-manager-main
-    rules:
-    - hostPortSet
-    - hostNetworkSet
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - cpuRequestsMissing
-    - cpuLimitsMissing
-    - memoryRequestsMissing
-    - memoryLimitsMissing
-    - runAsRootAllowed
-    - runAsPrivileged
-    - notReadOnlyRootFilesystem
-    - hostPIDSet
-  - controllerNames:
-    - kube-flannel-ds
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - notReadOnlyRootFilesystem
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - cpuLimitsMissing
-  - controllerNames:
-    - cert-manager
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-  - controllerNames:
-    - cluster-autoscaler
-    rules:
-    - notReadOnlyRootFilesystem
-    - runAsRootAllowed
-    - readinessProbeMissing
-  - controllerNames:
-    - vpa
-    rules:
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - datadog
-    rules:
-    - runAsRootAllowed
-    - readinessProbeMissing
-    - livenessProbeMissing
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - nginx-ingress-controller
-    rules:
-    - privilegeEscalationAllowed
-    - insecureCapabilities
-    - runAsRootAllowed
-  - controllerNames:
-    - dns-controller
-    - datadog-datadog
-    - kube-flannel-ds
-    - kube2iam
-    - aws-iam-authenticator
-    - datadog
-    - kube2iam
-    rules:
-    - hostNetworkSet
-  - controllerNames:
-    - aws-iam-authenticator
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - dnsmasq
-    - autoscaler
-    - kubernetes-dashboard
-    - install-cni
-    - kube2iam
-    rules:
-    - readinessProbeMissing
-    - livenessProbeMissing
-  - controllerNames:
-    - aws-iam-authenticator
-    - nginx-ingress-default-backend
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - tiller
-    - kube2iam
-    rules:
-    - runAsRootAllowed
-  - controllerNames:
-    - aws-iam-authenticator
-    - nginx-ingress-controller
-    - nginx-ingress-default-backend
-    - aws-cluster-autoscaler
-    - kube-state-metrics
-    - dns-controller
-    - external-dns
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - tiller
-    - kube2iam
-    rules:
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - cert-manager
-    - dns-controller
-    - kubedns
-    - dnsmasq
-    - autoscaler
-    - insights-agent-goldilocks-vpa-install
-    - datadog
-    rules:
-    - cpuRequestsMissing
-    - cpuLimitsMissing
-    - memoryRequestsMissing
-    - memoryLimitsMissing
-  - controllerNames:
-    - kube2iam
-    - kube-flannel-ds
-    rules:
-    - runAsPrivileged
-  - controllerNames:
-    - kube-hunter
-    rules:
-    - hostPIDSet
-  - controllerNames:
-    - polaris
-    - kube-hunter
-    - goldilocks
-    - insights-agent-goldilocks-vpa-install
-    rules:
-    - notReadOnlyRootFilesystem
-  - controllerNames:
-    - insights-agent-goldilocks-controller
-    rules:
-    - livenessProbeMissing
-    - readinessProbeMissing
-  - controllerNames:
-    - insights-agent-goldilocks-vpa-install
-    - kube-hunter
-    rules:
-    - runAsRootAllowed
-`
-)
-
 func NewScheme() *runtime.Scheme {
 	scheme := runtime.NewScheme()
 	_ = corev1.AddToScheme(scheme)
@@ -266,21 +79,6 @@ func GetDefaultConfig() ConfigData {
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
-	}
-}
-
-// GetDefaultPolarisConfig returns the default Polaris configuration.
-func GetDefaultPolarisConfig() map[string]string {
-	return map[string]string{
-		"polaris.imageRef":    "quay.io/fairwinds/polaris:3.2",
-		"polaris.config.yaml": polarisConfigYAML,
-	}
-}
-
-// GetDefaultConftestConfig return the default Conftest configuration.
-func GetDefaultConftestConfig() map[string]string {
-	return map[string]string{
-		"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
 	}
 }
 
@@ -409,12 +207,12 @@ type configManager struct {
 }
 
 func (c *configManager) EnsureDefault(ctx context.Context) error {
-	cm, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, ConfigMapName, metav1.GetOptions{})
+	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, ConfigMapName, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("getting config: %w", err)
 		}
-		cm, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
+		_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: c.namespace,
 				Name:      ConfigMapName,
@@ -440,34 +238,6 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		},
 	}
 	_, err = c.client.CoreV1().Secrets(c.namespace).Create(ctx, secret, metav1.CreateOptions{})
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return err
-	}
-
-	scanner, err := ConfigData(cm.Data).GetConfigAuditReportsScanner()
-	if err != nil {
-		return fmt.Errorf("getting scanner: %w", err)
-	}
-
-	var pluginConfigData map[string]string
-	switch scanner {
-	case Polaris:
-		pluginConfigData = GetDefaultPolarisConfig()
-	case Conftest:
-		pluginConfigData = GetDefaultConftestConfig()
-	}
-
-	pluginConfig := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: c.namespace,
-			Name:      GetPluginConfigMapName(string(scanner)),
-			Labels: labels.Set{
-				LabelK8SAppManagedBy: "starboard",
-			},
-		},
-		Data: pluginConfigData,
-	}
-	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, pluginConfig, metav1.CreateOptions{})
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}

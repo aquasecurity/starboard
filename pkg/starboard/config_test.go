@@ -262,15 +262,6 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(secret.Data).To(gomega.BeEmpty())
-
-		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(pluginConfig.Data).To(gomega.Equal(starboard.GetDefaultPolarisConfig()))
-
-		_, err = clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Conftest)), metav1.GetOptions{})
-		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-conftest-config" not found`))
 	})
 
 	t.Run("Should not modify ConfigMaps nor Secret", func(t *testing.T) {
@@ -337,113 +328,6 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-polaris-config" not found`))
 	})
 
-	t.Run("Should create ConfigMap for Polaris", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t)
-		namespace := "starboard-ns"
-		clientset := fake.NewSimpleClientset(
-			&corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: namespace,
-					Name:      starboard.ConfigMapName,
-				},
-				Data: map[string]string{
-					"foo":                        "bar",
-					"configAuditReports.scanner": string(starboard.Polaris),
-				},
-			},
-			&corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: namespace,
-					Name:      starboard.SecretName,
-				},
-				Data: map[string][]byte{
-					"baz": []byte("s3cret"),
-				},
-			},
-		)
-
-		err := starboard.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-
-		cm, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(cm.Data).To(gomega.Equal(map[string]string{
-			"foo":                        "bar",
-			"configAuditReports.scanner": "Polaris",
-		}))
-
-		secret, err := clientset.CoreV1().Secrets(namespace).
-			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(secret.Data).To(gomega.Equal(map[string][]byte{
-			"baz": []byte("s3cret"),
-		}))
-
-		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(pluginConfig.Data).To(gomega.Equal(starboard.GetDefaultPolarisConfig()))
-
-		_, err = clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Conftest)), metav1.GetOptions{})
-		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-conftest-config" not found`))
-	})
-
-	t.Run("Should create ConfigMap for Conftest", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t)
-		namespace := "starboard-ns"
-		clientset := fake.NewSimpleClientset(
-			&corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: namespace,
-					Name:      starboard.ConfigMapName,
-				},
-				Data: map[string]string{
-					"foo":                        "bar",
-					"configAuditReports.scanner": string(starboard.Conftest),
-				},
-			},
-			&corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: namespace,
-					Name:      starboard.SecretName,
-				},
-				Data: map[string][]byte{
-					"baz": []byte("s3cret"),
-				},
-			},
-		)
-
-		err := starboard.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-
-		cm, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(cm.Data).To(gomega.Equal(map[string]string{
-			"foo":                        "bar",
-			"configAuditReports.scanner": "Conftest",
-		}))
-
-		secret, err := clientset.CoreV1().Secrets(namespace).
-			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(secret.Data).To(gomega.Equal(map[string][]byte{
-			"baz": []byte("s3cret"),
-		}))
-
-		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Conftest)), metav1.GetOptions{})
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(pluginConfig.Data).To(gomega.Equal(map[string]string{
-			"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
-		}))
-
-		_, err = clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})
-		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-polaris-config" not found`))
-	})
 }
 
 func TestConfigManager_Delete(t *testing.T) {

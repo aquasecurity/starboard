@@ -1,6 +1,9 @@
 package polaris_test
 
 import (
+	. "github.com/onsi/gomega"
+
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -9,11 +12,11 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -23,6 +26,55 @@ var (
 	fixedTime  = time.Now()
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
+
+func TestPlugin_Init(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "starboard-polaris-config",
+			Namespace: "starboard-ns",
+		},
+		Data: map[string]string{
+			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
+			"polaris.config.yaml": `checks:
+  cpuRequestsMissing: warning`,
+		},
+	}).Build()
+
+	pluginContext := starboard.NewPluginContext().
+		WithName(string(starboard.Polaris)).
+		WithNamespace("starboard-ns").
+		WithServiceAccountName("starboard-sa").
+		WithClient(client).
+		Get()
+
+	instance := polaris.NewPlugin(fixedClock)
+	err := instance.Init(pluginContext)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	var cm corev1.ConfigMap
+	err = client.Get(context.Background(), types.NamespacedName{
+		Namespace: "starboard-ns",
+		Name:      "starboard-polaris-config",
+	}, &cm)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(cm).To(Equal(corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "starboard-polaris-config",
+			Namespace: "starboard-ns",
+		},
+		Data: map[string]string{
+			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
+			"polaris.config.yaml": `checks:
+  cpuRequestsMissing: warning`,
+		},
+	}))
+}
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
 	testCases := []struct {
@@ -109,7 +161,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := gomega.NewGomegaWithT(t)
+			g := NewGomegaWithT(t)
 
 			pluginContext := starboard.NewPluginContext().
 				WithName(string(starboard.Polaris)).
@@ -126,24 +178,24 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			instance := polaris.NewPlugin(fixedClock)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.obj)
 
-			g.Expect(err).ToNot(gomega.HaveOccurred())
-			g.Expect(secrets).To(gomega.BeNil())
-			g.Expect(jobSpec).To(gomega.Equal(tc.expectedJobSpec))
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(secrets).To(BeNil())
+			g.Expect(jobSpec).To(Equal(tc.expectedJobSpec))
 		})
 	}
 
 }
 
 func TestPlugin_GetContainerName(t *testing.T) {
-	g := gomega.NewGomegaWithT(t)
+	g := NewGomegaWithT(t)
 	plugin := polaris.NewPlugin(fixedClock)
-	g.Expect(plugin.GetContainerName()).To(gomega.Equal("polaris"))
+	g.Expect(plugin.GetContainerName()).To(Equal("polaris"))
 }
 
 func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
-	g := gomega.NewGomegaWithT(t)
+	g := NewGomegaWithT(t)
 	testReport, err := os.Open("testdata/polaris-report.json")
-	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(err).ToNot(HaveOccurred())
 	defer func() {
 		_ = testReport.Close()
 	}()
@@ -165,19 +217,19 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 
 	plugin := polaris.NewPlugin(fixedClock)
 	result, err := plugin.ParseConfigAuditReportData(pluginContext, testReport)
-	g.Expect(err).ToNot(gomega.HaveOccurred())
-	g.Expect(result.UpdateTimestamp).To(gomega.Equal(metav1.NewTime(fixedTime)))
-	g.Expect(result.Scanner).To(gomega.Equal(v1alpha1.Scanner{
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result.UpdateTimestamp).To(Equal(metav1.NewTime(fixedTime)))
+	g.Expect(result.Scanner).To(Equal(v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
 		Version: "3.2",
 	}))
-	g.Expect(result.Summary).To(gomega.Equal(v1alpha1.ConfigAuditSummary{
+	g.Expect(result.Summary).To(Equal(v1alpha1.ConfigAuditSummary{
 		PassCount:    2,
 		DangerCount:  1,
 		WarningCount: 1,
 	}))
-	g.Expect(result.PodChecks).To(gomega.ConsistOf(v1alpha1.Check{
+	g.Expect(result.PodChecks).To(ConsistOf(v1alpha1.Check{
 		ID:       "hostIPCSet",
 		Message:  "Host IPC is not configured",
 		Success:  false,
@@ -190,8 +242,8 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Severity: "warning",
 		Category: "Networking",
 	}))
-	g.Expect(result.ContainerChecks).To(gomega.HaveLen(1))
-	g.Expect(result.ContainerChecks["db"]).To(gomega.ConsistOf(v1alpha1.Check{
+	g.Expect(result.ContainerChecks).To(HaveLen(1))
+	g.Expect(result.ContainerChecks["db"]).To(ConsistOf(v1alpha1.Check{
 		ID:       "cpuLimitsMissing",
 		Message:  "CPU limits are set",
 		Success:  false,
@@ -225,7 +277,7 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 	}
 
 	t.Run("Should return different hash for different config data", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t)
+		g := NewGomegaWithT(t)
 
 		pluginContext1 := newPluginContextWithConfigData(map[string]string{
 			"foo":   "bar",
@@ -238,15 +290,15 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 
 		plugin := polaris.NewPlugin(fixedClock)
 		hash1, err := plugin.GetConfigHash(pluginContext1)
-		g.Expect(err).ToNot(gomega.HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		hash2, err := plugin.GetConfigHash(pluginContext2)
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(hash1).ToNot(gomega.Equal(hash2))
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(hash1).ToNot(Equal(hash2))
 	})
 
 	t.Run("Should return the same hash for the same config data", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t)
+		g := NewGomegaWithT(t)
 
 		pluginContext1 := newPluginContextWithConfigData(map[string]string{
 			"foo":   "bar",
@@ -259,10 +311,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 
 		plugin := polaris.NewPlugin(fixedClock)
 		hash1, err := plugin.GetConfigHash(pluginContext1)
-		g.Expect(err).ToNot(gomega.HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		hash2, err := plugin.GetConfigHash(pluginContext2)
-		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(hash1).To(gomega.Equal(hash2))
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(hash1).To(Equal(hash2))
 	})
 }
