@@ -1,2 +1,2 @@
-// This docker package provides primitives for working with Docker.
+// Package docker provides primitives for working with Docker.
 package docker

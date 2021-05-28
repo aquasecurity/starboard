@@ -1,4 +1,4 @@
-package kube
+package cmd
 
 import (
 	"context"
@@ -118,26 +118,26 @@ var (
 	}
 )
 
-type CRManager struct {
+type Installer struct {
 	clientset     kubernetes.Interface
 	clientsetext  extapi.ApiextensionsV1Interface
 	configManager starboard.ConfigManager
 }
 
-// NewCRManager constructs a CRManager with the given starboard.ConfigManager and kubernetes.Interface.
-func NewCRManager(
+// NewInstaller constructs an Installer with the given starboard.ConfigManager and kubernetes.Interface.
+func NewInstaller(
 	clientset kubernetes.Interface,
 	clientsetext extapi.ApiextensionsV1Interface,
 	configManager starboard.ConfigManager,
-) *CRManager {
-	return &CRManager{
+) *Installer {
+	return &Installer{
 		configManager: configManager,
 		clientset:     clientset,
 		clientsetext:  clientsetext,
 	}
 }
 
-func (m *CRManager) Init(ctx context.Context) error {
+func (m *Installer) Install(ctx context.Context) error {
 	vulnerabilityReportsCRD, err := embedded.GetVulnerabilityReportsCRD()
 	if err != nil {
 		return err
@@ -188,7 +188,7 @@ func (m *CRManager) Init(ctx context.Context) error {
 	return m.initRBAC(ctx)
 }
 
-func (m *CRManager) initRBAC(ctx context.Context) (err error) {
+func (m *Installer) initRBAC(ctx context.Context) (err error) {
 	err = m.createServiceAccountIfNotFound(ctx, serviceAccount)
 	if err != nil {
 		return
@@ -204,7 +204,7 @@ func (m *CRManager) initRBAC(ctx context.Context) (err error) {
 	return
 }
 
-func (m *CRManager) cleanupRBAC(ctx context.Context) (err error) {
+func (m *Installer) cleanupRBAC(ctx context.Context) (err error) {
 	klog.V(3).Infof("Deleting ClusterRoleBinding %q", clusterRoleBindingStarboard)
 	err = m.clientset.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingStarboard, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -228,7 +228,7 @@ var (
 	cleanupTimeout         = 30 * time.Second
 )
 
-func (m *CRManager) cleanupNamespace(ctx context.Context) error {
+func (m *Installer) cleanupNamespace(ctx context.Context) error {
 	klog.V(3).Infof("Deleting Namespace %q", starboard.NamespaceName)
 	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -250,7 +250,7 @@ func (m *CRManager) cleanupNamespace(ctx context.Context) error {
 	}
 }
 
-func (m *CRManager) createNamespaceIfNotFound(ctx context.Context, ns *corev1.Namespace) (err error) {
+func (m *Installer) createNamespaceIfNotFound(ctx context.Context, ns *corev1.Namespace) (err error) {
 	_, err = m.clientset.CoreV1().Namespaces().Get(ctx, ns.Name, metav1.GetOptions{})
 	switch {
 	case err == nil:
@@ -264,7 +264,7 @@ func (m *CRManager) createNamespaceIfNotFound(ctx context.Context, ns *corev1.Na
 	return
 }
 
-func (m *CRManager) createServiceAccountIfNotFound(ctx context.Context, sa *corev1.ServiceAccount) (err error) {
+func (m *Installer) createServiceAccountIfNotFound(ctx context.Context, sa *corev1.ServiceAccount) (err error) {
 	name := sa.Name
 	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, metav1.GetOptions{})
 	switch {
@@ -279,7 +279,7 @@ func (m *CRManager) createServiceAccountIfNotFound(ctx context.Context, sa *core
 	return
 }
 
-func (m *CRManager) createOrUpdateClusterRole(ctx context.Context, cr *rbacv1.ClusterRole) (err error) {
+func (m *Installer) createOrUpdateClusterRole(ctx context.Context, cr *rbacv1.ClusterRole) (err error) {
 	existingRole, err := m.clientset.RbacV1().ClusterRoles().Get(ctx, cr.GetName(), metav1.GetOptions{})
 	switch {
 	case err == nil:
@@ -296,7 +296,7 @@ func (m *CRManager) createOrUpdateClusterRole(ctx context.Context, cr *rbacv1.Cl
 	return
 }
 
-func (m *CRManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbacv1.ClusterRoleBinding) (err error) {
+func (m *Installer) createOrUpdateClusterRoleBinding(ctx context.Context, crb *rbacv1.ClusterRoleBinding) (err error) {
 	existingBinding, err := m.clientset.RbacV1().ClusterRoleBindings().Get(ctx, crb.Name, metav1.GetOptions{})
 	switch {
 	case err == nil:
@@ -314,7 +314,7 @@ func (m *CRManager) createOrUpdateClusterRoleBinding(ctx context.Context, crb *r
 	return
 }
 
-func (m *CRManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResourceDefinition) (err error) {
+func (m *Installer) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResourceDefinition) (err error) {
 	existingCRD, err := m.clientsetext.CustomResourceDefinitions().Get(ctx, crd.Name, metav1.GetOptions{})
 
 	switch {
@@ -332,7 +332,7 @@ func (m *CRManager) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 	return
 }
 
-func (m *CRManager) deleteCRD(ctx context.Context, name string) (err error) {
+func (m *Installer) deleteCRD(ctx context.Context, name string) (err error) {
 	klog.V(3).Infof("Deleting CRD %q", name)
 	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && errors.IsNotFound(err) {
@@ -341,7 +341,7 @@ func (m *CRManager) deleteCRD(ctx context.Context, name string) (err error) {
 	return
 }
 
-func (m *CRManager) Cleanup(ctx context.Context) (err error) {
+func (m *Installer) Uninstall(ctx context.Context) (err error) {
 	err = m.deleteCRD(ctx, v1alpha1.VulnerabilityReportsCRName)
 	if err != nil {
 		return

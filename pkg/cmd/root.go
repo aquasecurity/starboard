@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"flag"
+	"fmt"
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -10,12 +11,40 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+const (
+	shortMessage = "Kubernetes-native security toolkit"
+	longMessage  = `Kubernetes-native security toolkit
+
+Starboard CLI can be used to find risks, such as vulnerabilities or insecure
+pod descriptors, in Kubernetes workloads. By default, the risk assessment
+reports are stored as custom resources.
+
+To get started execute the following one-time init command:
+
+$ %[1]s init
+
+As an example let's run in the current namespace an old version of nginx that
+we know has vulnerabilities:
+
+$ kubectl create deployment nginx --image nginx:1.16
+
+Run the vulnerability scanner to generate vulnerability reports:
+
+$ %[1]s scan vulnerabilityreports deployment/nginx
+
+Once this has been done, you can retrieve the vulnerability report:
+
+$ %[1]s get vulnerabilities deployment/nginx -o yaml
+`
+)
+
 func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
 	var cf *genericclioptions.ConfigFlags
 
 	rootCmd := &cobra.Command{
 		Use:           "starboard",
-		Short:         "Kubernetes-native security toolkit",
+		Short:         shortMessage,
+		Long:          fmt.Sprintf(longMessage, buildInfo.Executable),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
