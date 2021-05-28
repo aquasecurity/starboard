@@ -5,6 +5,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -101,6 +102,13 @@ var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object
 
 var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok {
+		return true
+	}
+	return false
+})
+
+var IsLinuxNode = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if os, exists := obj.GetLabels()[corev1.LabelOSStable]; exists && os == "linux" {
 		return true
 	}
 	return false
