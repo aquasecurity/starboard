@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -29,8 +28,8 @@ func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 				return err
 			}
 			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
-			return kube.NewCRManager(kubeClientset, apiExtensionsClientset, configManager).
-				Cleanup(context.TODO())
+			installer := NewInstaller(kubeClientset, apiExtensionsClientset, configManager)
+			return installer.Uninstall(context.Background())
 		},
 	}
 	return cmd
