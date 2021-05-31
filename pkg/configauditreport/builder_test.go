@@ -64,11 +64,15 @@ type testPlugin struct {
 	configHash string
 }
 
-func (p *testPlugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *testPlugin) Init(_ starboard.PluginContext) error {
+	return nil
+}
+
+func (p *testPlugin) GetScanJobSpec(_ starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	return corev1.PodSpec{}, nil, nil
 }
 
-func (p *testPlugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *testPlugin) ParseConfigAuditReportData(_ starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
 	return v1alpha1.ConfigAuditResult{}, nil
 }
 
@@ -76,7 +80,7 @@ func (p *testPlugin) GetContainerName() string {
 	return ""
 }
 
-func (p *testPlugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
+func (p *testPlugin) GetConfigHash(_ starboard.PluginContext) (string, error) {
 	return p.configHash, nil
 }
 

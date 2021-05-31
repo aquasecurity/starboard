@@ -40,6 +40,14 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 	}
 }
 
+func (p *plugin) Init(ctx starboard.PluginContext) error {
+	return ctx.EnsureConfig(starboard.PluginConfig{
+		Data: map[string]string{
+			"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+		},
+	})
+}
+
 func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
 	cm, err := ctx.GetConfig()
 	if err != nil {

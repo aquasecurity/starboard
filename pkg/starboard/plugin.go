@@ -3,6 +3,8 @@ package starboard
 import (
 	"context"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -34,6 +36,8 @@ type PluginContext interface {
 	GetName() string
 	// GetConfig returns the PluginConfig object that holds configuration settings of the plugin.
 	GetConfig() (PluginConfig, error)
+	// EnsureConfig ensures the PluginConfig, typically when a plugin is initialized.
+	EnsureConfig(config PluginConfig) error
 	// GetNamespace return the name of the K8s Namespace where Starboard creates Jobs
 	// and other helper objects.
 	GetNamespace() string
@@ -57,6 +61,23 @@ type pluginContext struct {
 
 func (p *pluginContext) GetName() string {
 	return p.name
+}
+
+func (p *pluginContext) EnsureConfig(config PluginConfig) error {
+	err := p.client.Create(context.Background(), &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: p.namespace,
+			Name:      GetPluginConfigMapName(p.name),
+			Labels: labels.Set{
+				LabelK8SAppManagedBy: "starboard",
+			},
+		},
+		Data: config.Data,
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
 }
 
 func (p *pluginContext) GetConfig() (PluginConfig, error) {

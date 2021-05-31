@@ -15,6 +15,10 @@ import (
 // implementation details.
 type Plugin interface {
 
+	// Init is a callback to initialize this plugin, e.g. ensure the default
+	// configuration.
+	Init(ctx starboard.PluginContext) error
+
 	// GetScanJobSpec describes the pod that will be created by Starboard when
 	// it schedules a Kubernetes job to scan the specified workload client.Object.
 	// The plugin might return zero to many v1.Secret objects which will be
