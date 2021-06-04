@@ -140,6 +140,11 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			return err
 		}
 
+		err = plugin.Init(pluginContext)
+		if err != nil {
+			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
+		}
+
 		if err = (&controller.VulnerabilityReportReconciler{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
 			Config:         operatorConfig,

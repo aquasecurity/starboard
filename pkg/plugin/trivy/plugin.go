@@ -32,15 +32,34 @@ var (
 	}
 )
 
+const (
+	// Plugin the name of this plugin.
+	Plugin = "Trivy"
+)
+
 type plugin struct {
 	clock       ext.Clock
 	idGenerator ext.IDGenerator
-	config      Config
 }
 
 const (
-	keyTrivyMode      = "trivy.mode"
-	keyTrivyServerURL = "trivy.serverURL"
+	keyTrivyImageRef               = "trivy.imageRef"
+	keyTrivyMode                   = "trivy.mode"
+	keyTrivySeverity               = "trivy.severity"
+	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
+	keyTrivyIgnoreFile             = "trivy.ignoreFile"
+	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
+	keyTrivyHTTPProxy              = "trivy.httpProxy"
+	keyTrivyHTTPSProxy             = "trivy.httpsProxy"
+	keyTrivyNoProxy                = "trivy.noProxy"
+	keyTrivyGitHubToken            = "trivy.githubToken"
+	keyTrivySkipFiles              = "trivy.skipFiles"
+	keyTrivySkipDirs               = "trivy.skipDirs"
+
+	keyTrivyServerURL           = "trivy.serverURL"
+	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
+	keyTrivyServerToken         = "trivy.serverToken"
+	keyTrivyServerCustomHeaders = "trivy.serverCustomHeaders"
 )
 
 // Mode describes mode in which Trivy client operates.
@@ -53,17 +72,17 @@ const (
 
 // Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
 type Config struct {
-	starboard.ConfigData
+	starboard.PluginConfig
 }
 
 func (c Config) GetImageRef() (string, error) {
-	return c.GetRequiredData("trivy.imageRef")
+	return c.GetRequiredData(keyTrivyImageRef)
 }
 
 func (c Config) GetMode() (Mode, error) {
 	var ok bool
 	var value string
-	if value, ok = c.ConfigData[keyTrivyMode]; !ok {
+	if value, ok = c.Data[keyTrivyMode]; !ok {
 		return "", fmt.Errorf("property %s not set", keyTrivyMode)
 	}
 
@@ -79,18 +98,18 @@ func (c Config) GetMode() (Mode, error) {
 }
 
 func (c Config) GetServerURL() (string, error) {
-	return c.ConfigData.GetRequiredData(keyTrivyServerURL)
+	return c.GetRequiredData(keyTrivyServerURL)
 }
 
 func (c Config) IgnoreFileExists() bool {
-	_, ok := c.ConfigData["trivy.ignoreFile"]
+	_, ok := c.Data[keyTrivyIgnoreFile]
 	return ok
 }
 
 func (c Config) GetInsecureRegistries() map[string]bool {
 	insecureRegistries := make(map[string]bool)
-	for key, val := range c.ConfigData {
-		if strings.HasPrefix(key, "trivy.insecureRegistry.") {
+	for key, val := range c.Data {
+		if strings.HasPrefix(key, keyTrivyInsecureRegistryPrefix) {
 			insecureRegistries[val] = true
 		}
 	}
@@ -99,31 +118,46 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
-// official Trivy container image to scan Kubernetes workloads.
+// upstream Trivy container image to scan Kubernetes workloads.
 //
-// This Plugin supports both starboard.Standalone and starboard.ClientServer
-// client modes depending on the active mode returned by Config.GetTrivyMode.
+// This Plugin supports both Standalone and ClientServer modes depending on
+// the settings returned by Config.GetMode.
 //
-// The starboard.ClientServer mode is usually more performant, however it
-// requires a Trivy server accessible at the configurable URL.
-func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, config starboard.ConfigData) vulnerabilityreport.Plugin {
+// The ClientServer mode is usually more performant, however it
+// requires a Trivy server accessible at the configurable Config.GetServerURL.
+func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator) vulnerabilityreport.Plugin {
 	return &plugin{
 		clock:       clock,
 		idGenerator: idGenerator,
-		config:      Config{ConfigData: config},
 	}
 }
 
-func (s *plugin) GetScanJobSpec(_ starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
-	mode, err := s.config.GetMode()
+// Init ensures the default Config required by this plugin.
+func (s *plugin) Init(ctx starboard.PluginContext) error {
+	return ctx.EnsureConfig(starboard.PluginConfig{
+		Data: map[string]string{
+			keyTrivyImageRef: "docker.io/aquasec/trivy:0.16.0",
+			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+			keyTrivyMode:     string(Standalone),
+		},
+	})
+}
+
+func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	config, err := s.newConfigFrom(ctx)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	mode, err := config.GetMode()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
 	switch mode {
 	case Standalone:
-		return s.getPodSpecForStandaloneMode(spec, credentials)
+		return s.getPodSpecForStandaloneMode(config, spec, credentials)
 	case ClientServer:
-		return s.getPodSpecForClientServerMode(spec, credentials)
+		return s.getPodSpecForClientServerMode(config, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
@@ -135,6 +169,7 @@ func (s *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec,
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
+			// TODO Use deterministic names for secrets that hold image pull credentials, e.g. scan-vulnerabilityreport-<workload hash>-registry-creds
 			Name: s.idGenerator.GenerateID(),
 		},
 		Data: secretData,
@@ -146,7 +181,7 @@ const (
 	ignoreFileVolumeName = "ignorefile"
 )
 
-// In the starboard.Standalone mode there is the init container responsible for
+// In the Standalone mode there is the init container responsible for
 // downloading the latest Trivy DB file from GitHub and storing it to the empty
 // volume shared with main containers. In other words, the init container runs
 // the following Trivy command:
@@ -159,7 +194,7 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -168,10 +203,12 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 		secrets = append(secrets, secret)
 	}
 
-	trivyImageRef, err := s.config.GetImageRef()
+	trivyImageRef, err := config.GetImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
+
+	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
 
 	initContainer := corev1.Container{
 		Name:                     s.idGenerator.GenerateID(),
@@ -184,9 +221,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpProxy",
+						Key:      keyTrivyHTTPProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -196,9 +233,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpsProxy",
+						Key:      keyTrivyHTTPSProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -208,9 +245,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.noProxy",
+						Key:      keyTrivyNoProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -220,9 +257,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.githubToken",
+						Key:      keyTrivyGitHubToken,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -266,17 +303,17 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 		},
 	}
 
-	if s.config.IgnoreFileExists() {
+	if config.IgnoreFileExists() {
 		volumes = append(volumes, corev1.Volume{
 			Name: ignoreFileVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: starboard.ConfigMapName,
+						Name: trivyConfigName,
 					},
 					Items: []corev1.KeyToPath{
 						{
-							Key:  "trivy.ignoreFile",
+							Key:  keyTrivyIgnoreFile,
 							Path: ".trivyignore",
 						},
 					},
@@ -299,9 +336,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.severity",
+						Key:      keyTrivySeverity,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -311,9 +348,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.ignoreUnfixed",
+						Key:      keyTrivyIgnoreUnfixed,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -323,9 +360,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.skipFiles",
+						Key:      keyTrivySkipFiles,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -335,9 +372,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.skipDirs",
+						Key:      keyTrivySkipDirs,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -347,9 +384,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpProxy",
+						Key:      keyTrivyHTTPProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -359,9 +396,9 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpsProxy",
+						Key:      keyTrivyHTTPSProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -371,16 +408,16 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.noProxy",
+						Key:      keyTrivyNoProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
 			},
 		}
 
-		if s.config.IgnoreFileExists() {
+		if config.IgnoreFileExists() {
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_IGNOREFILE",
 				Value: "/tmp/trivy/.trivyignore",
@@ -414,7 +451,7 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 			})
 		}
 
-		env, err = s.appendTrivyInsecureEnv(c.Image, env)
+		env, err = s.appendTrivyInsecureEnv(config, c.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -461,25 +498,25 @@ func (s *plugin) getPodSpecForStandaloneMode(spec corev1.PodSpec, credentials ma
 	}, secrets, nil
 }
 
-// In the starboard.ClientServer mode the number of containers of the pod
+// In the ClientServer mode the number of containers of the pod
 // created by the scan job equals the number of containers defined for the
 // scanned workload. Each container runs Trivy image scan command and refers
-// to Trivy server URL returned by Config.GetTrivyServerURL:
+// to Trivy server URL returned by Config.GetServerURL:
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
 
-	trivyImageRef, err := s.config.GetImageRef()
+	trivyImageRef, err := config.GetImageRef()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
 
-	trivyServerURL, err := s.config.GetServerURL()
+	trivyServerURL, err := config.GetServerURL()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -491,6 +528,8 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 
 	var containers []corev1.Container
 
+	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
+
 	for _, container := range spec.Containers {
 
 		env := []corev1.EnvVar{
@@ -499,9 +538,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpProxy",
+						Key:      keyTrivyHTTPProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -511,9 +550,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.httpsProxy",
+						Key:      keyTrivyHTTPSProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -523,9 +562,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.noProxy",
+						Key:      keyTrivyNoProxy,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -535,9 +574,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.severity",
+						Key:      keyTrivySeverity,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -547,9 +586,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.ignoreUnfixed",
+						Key:      keyTrivyIgnoreUnfixed,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -559,9 +598,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.skipFiles",
+						Key:      keyTrivySkipFiles,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -571,9 +610,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.ConfigMapName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.skipDirs",
+						Key:      keyTrivySkipDirs,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -583,9 +622,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.serverTokenHeader",
+						Key:      keyTrivyServerTokenHeader,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -595,9 +634,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.serverToken",
+						Key:      keyTrivyServerToken,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -607,9 +646,9 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.SecretName,
+							Name: trivyConfigName,
 						},
-						Key:      "trivy.serverCustomHeaders",
+						Key:      keyTrivyServerCustomHeaders,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -643,23 +682,23 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 			})
 		}
 
-		env, err = s.appendTrivyInsecureEnv(container.Image, env)
+		env, err = s.appendTrivyInsecureEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
 
-		if s.config.IgnoreFileExists() {
+		if config.IgnoreFileExists() {
 			volumes = []corev1.Volume{
 				{
 					Name: ignoreFileVolumeName,
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: starboard.ConfigMapName,
+								Name: trivyConfigName,
 							},
 							Items: []corev1.KeyToPath{
 								{
-									Key:  "trivy.ignoreFile",
+									Key:  keyTrivyIgnoreFile,
 									Path: ".trivyignore",
 								},
 							},
@@ -713,13 +752,13 @@ func (s *plugin) getPodSpecForClientServerMode(spec corev1.PodSpec, credentials 
 	}, secrets, nil
 }
 
-func (s *plugin) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+func (s *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
 	ref, err := name.ParseReference(image)
 	if err != nil {
 		return nil, err
 	}
 
-	insecureRegistries := s.config.GetInsecureRegistries()
+	insecureRegistries := config.GetInsecureRegistries()
 	if insecureRegistries[ref.Context().RegistryStr()] {
 		env = append(env, corev1.EnvVar{
 			Name:  "TRIVY_INSECURE",
@@ -730,9 +769,14 @@ func (s *plugin) appendTrivyInsecureEnv(image string, env []corev1.EnvVar) ([]co
 	return env, nil
 }
 
-func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+	config, err := s.newConfigFrom(ctx)
+	if err != nil {
+		return v1alpha1.VulnerabilityScanResult{}, err
+	}
+
 	var reports []ScanReport
-	err := json.NewDecoder(logsReader).Decode(&reports)
+	err = json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
@@ -759,7 +803,7 @@ func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, imageRe
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
 
-	trivyImageRef, err := s.config.GetImageRef()
+	trivyImageRef, err := config.GetImageRef()
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
@@ -783,7 +827,16 @@ func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, imageRe
 	}, nil
 }
 
-func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alpha1.VulnerabilitySummary) {
+func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+	pluginConfig, err := ctx.GetConfig()
+	if err != nil {
+		return Config{}, err
+	}
+	return Config{PluginConfig: pluginConfig}, nil
+}
+
+func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) v1alpha1.VulnerabilitySummary {
+	var vs v1alpha1.VulnerabilitySummary
 	for _, v := range vulnerabilities {
 		switch v.Severity {
 		case v1alpha1.SeverityCritical:
@@ -798,11 +851,11 @@ func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) (vs v1alpha
 			vs.UnknownCount++
 		}
 	}
-	return
+	return vs
 }
 
 // TODO check if it works if both tag and digest are specified
-func (s *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
+func (p *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
 		return v1alpha1.Registry{}, v1alpha1.Artifact{}, err

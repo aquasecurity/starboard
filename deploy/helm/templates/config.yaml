@@ -10,17 +10,6 @@ data:
   scanJob.annotations: {{ .Values.starboard.scanJobAnnotations | quote }}
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
   vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
-  {{- if eq .Values.starboard.vulnerabilityReportsPlugin "Trivy" }}
-  trivy.imageRef: "{{ .Values.trivy.imageRef }}"
-  trivy.mode: "{{ .Values.trivy.mode }}"
-  {{- if eq .Values.trivy.mode "ClientServer" }}
-  trivy.serverURL: "{{ .Values.trivy.serverURL }}"
-  {{- end }}
-  trivy.httpProxy: "{{ .Values.trivy.httpProxy }}"
-  trivy.httpsProxy: "{{ .Values.trivy.httpsProxy }}"
-  trivy.noProxy: "{{ .Values.trivy.noProxy }}"
-  trivy.severity: "{{ .Values.trivy.severity }}"
-  {{- end }}
   {{- end }}
   {{- if .Values.operator.kubernetesBenchmarkEnabled }}
   kube-bench.imageRef: "{{ .Values.kubeBench.imageRef }}"
@@ -28,6 +17,32 @@ data:
   {{- if .Values.operator.configAuditScannerEnabled }}
   configAuditReports.scanner: {{ .Values.starboard.configAuditReportsPlugin | quote }}
   {{- end }}
+{{- if eq .Values.starboard.vulnerabilityReportsPlugin "Trivy" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-trivy-config
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  trivy.imageRef: {{ .Values.trivy.imageRef | quote }}
+  trivy.mode: {{ .Values.trivy.mode | quote }}
+  trivy.httpProxy: "{{ .Values.trivy.httpProxy }}"
+  trivy.httpsProxy: "{{ .Values.trivy.httpsProxy }}"
+  trivy.noProxy: "{{ .Values.trivy.noProxy }}"
+  trivy.severity: "{{ .Values.trivy.severity }}"
+  {{- if eq .Values.trivy.mode "ClientServer" }}
+  trivy.serverURL: "{{ .Values.trivy.serverURL }}"
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard-trivy-config
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+{{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
 ---
 apiVersion: v1

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/plugin"
@@ -72,10 +71,6 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 			GetConfigAuditPlugin()
 		if err != nil {
 			return err
-		}
-		err = plugin.Init(pluginContext)
-		if err != nil {
-			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
 		}
 		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
 		report, err := scanner.Scan(ctx, workload)

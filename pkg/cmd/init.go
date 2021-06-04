@@ -8,9 +8,10 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewInitCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewInitCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Create Kubernetes resources used by Starboard",
@@ -49,8 +50,13 @@ the "cleanup" command.`,
 			if err != nil {
 				return err
 			}
+			scheme := starboard.NewScheme()
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+			if err != nil {
+				return err
+			}
 			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
-			installer := NewInstaller(kubeClientset, apiExtensionsClientset, configManager)
+			installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
 			return installer.Install(context.Background())
 		},
 	}

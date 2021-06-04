@@ -7,11 +7,17 @@ metadata:
 data:
   vulnerabilityReports.scanner: Trivy
   configAuditReports.scanner: Polaris
+  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-trivy-config
+  namespace: starboard-operator
+data:
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.imageRef: docker.io/aquasec/trivy:0.16.0
   trivy.mode: Standalone
-  trivy.serverURL: http://trivy-server.trivy-server:4954
-  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.5.0
 ---
 apiVersion: v1
 kind: ConfigMap

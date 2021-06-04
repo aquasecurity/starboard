@@ -8,9 +8,10 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewCleanupCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup",
 		Short: "Delete Kubernetes resources created by Starboard",
@@ -27,8 +28,13 @@ func NewCleanupCmd(cf *genericclioptions.ConfigFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			scheme := starboard.NewScheme()
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+			if err != nil {
+				return err
+			}
 			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
-			installer := NewInstaller(kubeClientset, apiExtensionsClientset, configManager)
+			installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
 			return installer.Uninstall(context.Background())
 		},
 	}

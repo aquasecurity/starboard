@@ -52,10 +52,10 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 	cf = genericclioptions.NewConfigFlags(true)
 
 	rootCmd.AddCommand(NewVersionCmd(buildInfo, outWriter))
-	rootCmd.AddCommand(NewInitCmd(cf))
+	rootCmd.AddCommand(NewInitCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewScanCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewGetCmd(buildInfo, cf, outWriter))
-	rootCmd.AddCommand(NewCleanupCmd(cf))
+	rootCmd.AddCommand(NewCleanupCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 
 	SetGlobalFlags(cf, rootCmd)
