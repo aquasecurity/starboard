@@ -83,7 +83,8 @@ func TestReadWriter(t *testing.T) {
 			WithScheme(kubernetesScheme).
 			WithObjects(&v1alpha1.CISKubeBenchReport{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "control-plane",
+					Name:            "control-plane",
+					ResourceVersion: "0",
 					Labels: map[string]string{
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: "control-plane",
@@ -167,7 +168,8 @@ func TestReadWriter(t *testing.T) {
 			WithScheme(kubernetesScheme).
 			WithObjects(&v1alpha1.CISKubeBenchReport{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "control-plane",
+					Name:            "control-plane",
+					ResourceVersion: "1",
 					Labels: map[string]string{
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: "control-plane",
@@ -188,7 +190,8 @@ func TestReadWriter(t *testing.T) {
 				},
 			}, &v1alpha1.CISKubeBenchReport{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "worker",
+					Name:            "worker",
+					ResourceVersion: "1",
 					Labels: map[string]string{
 						starboard.LabelResourceKind: string(kube.KindNode),
 						starboard.LabelResourceName: "worker",
@@ -220,7 +223,8 @@ func TestReadWriter(t *testing.T) {
 				Kind:       "CISKubeBenchReport",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "worker",
+				Name:            "worker",
+				ResourceVersion: "1",
 				Labels: map[string]string{
 					starboard.LabelResourceKind: string(kube.KindNode),
 					starboard.LabelResourceName: "worker",

@@ -62,7 +62,7 @@ func (r *PluginsConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	var reportList v1alpha1.ConfigAuditReportList
 	err = r.Client.List(ctx, &reportList,
-		client.Limit(r.Config.BatchDeleteLimit+1), // TODO The limit is not respected https://github.com/kubernetes-sigs/controller-runtime/issues/1422
+		client.Limit(r.Config.BatchDeleteLimit+1),
 		client.MatchingLabelsSelector{Selector: labelSelector})
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("listing reports: %w", err)
