@@ -72,8 +72,9 @@ func TestReadWriter(t *testing.T) {
 	t.Run("Should update ConfigAuditReport", func(t *testing.T) {
 		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "deployment-app",
-				Namespace: "qa",
+				Name:            "deployment-app",
+				Namespace:       "qa",
+				ResourceVersion: "0",
 				Labels: map[string]string{
 					"starboard.resource.kind":      "Deployment",
 					"starboard.resource.name":      "app",
@@ -141,8 +142,9 @@ func TestReadWriter(t *testing.T) {
 	t.Run("Should find ConfigAuditReport", func(t *testing.T) {
 		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "my-namespace",
-				Name:      "deployment-my-deploy-my",
+				Namespace:       "my-namespace",
+				Name:            "deployment-my-deploy-my",
+				ResourceVersion: "0",
 				Labels: map[string]string{
 					starboard.LabelResourceKind:      string(kube.KindDeployment),
 					starboard.LabelResourceName:      "my-deploy",
@@ -172,8 +174,9 @@ func TestReadWriter(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, &v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "my-namespace",
-				Name:      "deployment-my-deploy-my",
+				Namespace:       "my-namespace",
+				Name:            "deployment-my-deploy-my",
+				ResourceVersion: "0",
 				Labels: map[string]string{
 					starboard.LabelResourceKind:      string(kube.KindDeployment),
 					starboard.LabelResourceName:      "my-deploy",

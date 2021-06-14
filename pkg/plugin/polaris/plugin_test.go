@@ -32,8 +32,9 @@ func TestPlugin_Init(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "starboard-polaris-config",
-			Namespace: "starboard-ns",
+			Name:            "starboard-polaris-config",
+			Namespace:       "starboard-ns",
+			ResourceVersion: "0",
 		},
 		Data: map[string]string{
 			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
@@ -65,8 +66,9 @@ func TestPlugin_Init(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "starboard-polaris-config",
-			Namespace: "starboard-ns",
+			Name:            "starboard-polaris-config",
+			Namespace:       "starboard-ns",
+			ResourceVersion: "0",
 		},
 		Data: map[string]string{
 			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
