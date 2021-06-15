@@ -4,6 +4,8 @@ package v1alpha1
 
 type CISKubeBenchReportExpansion interface{}
 
+type ClusterConfigAuditReportExpansion interface{}
+
 type ConfigAuditReportExpansion interface{}
 
 type KubeHunterReportExpansion interface{}

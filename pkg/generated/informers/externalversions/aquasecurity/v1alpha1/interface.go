@@ -10,6 +10,8 @@ import (
 type Interface interface {
 	// CISKubeBenchReports returns a CISKubeBenchReportInformer.
 	CISKubeBenchReports() CISKubeBenchReportInformer
+	// ClusterConfigAuditReports returns a ClusterConfigAuditReportInformer.
+	ClusterConfigAuditReports() ClusterConfigAuditReportInformer
 	// ConfigAuditReports returns a ConfigAuditReportInformer.
 	ConfigAuditReports() ConfigAuditReportInformer
 	// KubeHunterReports returns a KubeHunterReportInformer.
@@ -32,6 +34,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // CISKubeBenchReports returns a CISKubeBenchReportInformer.
 func (v *version) CISKubeBenchReports() CISKubeBenchReportInformer {
 	return &cISKubeBenchReportInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ClusterConfigAuditReports returns a ClusterConfigAuditReportInformer.
+func (v *version) ClusterConfigAuditReports() ClusterConfigAuditReportInformer {
+	return &clusterConfigAuditReportInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ConfigAuditReports returns a ConfigAuditReportInformer.

@@ -16,6 +16,10 @@ func (c *FakeAquasecurityV1alpha1) CISKubeBenchReports() v1alpha1.CISKubeBenchRe
 	return &FakeCISKubeBenchReports{c}
 }
 
+func (c *FakeAquasecurityV1alpha1) ClusterConfigAuditReports() v1alpha1.ClusterConfigAuditReportInterface {
+	return &FakeClusterConfigAuditReports{c}
+}
+
 func (c *FakeAquasecurityV1alpha1) ConfigAuditReports(namespace string) v1alpha1.ConfigAuditReportInterface {
 	return &FakeConfigAuditReports{c, namespace}
 }

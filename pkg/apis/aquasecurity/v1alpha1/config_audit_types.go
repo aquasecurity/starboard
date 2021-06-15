@@ -43,6 +43,29 @@ type ConfigAuditReportList struct {
 	Items []ConfigAuditReport `json:"items"`
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterConfigAuditReport is a specification for the ClusterConfigAuditReport resource.
+type ClusterConfigAuditReport struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Report ConfigAuditResult `json:"report"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterConfigAuditReportList is a list of ClusterConfigAuditReport resources.
+type ClusterConfigAuditReportList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []ClusterConfigAuditReport `json:"items"`
+}
+
+// TODO Rename to ConfigAuditReportData
 type ConfigAuditResult struct {
 	UpdateTimestamp metav1.Time        `json:"updateTimestamp"`
 	Scanner         Scanner            `json:"scanner"`
