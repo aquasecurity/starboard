@@ -133,7 +133,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator) vulnerabilityreport
 }
 
 // Init ensures the default Config required by this plugin.
-func (s *plugin) Init(ctx starboard.PluginContext) error {
+func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
 			keyTrivyImageRef: "docker.io/aquasec/trivy:0.16.0",
@@ -143,8 +143,8 @@ func (s *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
-	config, err := s.newConfigFrom(ctx)
+func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -155,22 +155,22 @@ func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec
 	}
 	switch mode {
 	case Standalone:
-		return s.getPodSpecForStandaloneMode(config, spec, credentials)
+		return p.getPodSpecForStandaloneMode(config, spec, credentials)
 	case ClientServer:
-		return s.getPodSpecForClientServerMode(config, spec, credentials)
+		return p.getPodSpecForClientServerMode(config, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
 }
 
-func (s *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
+func (p *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
 	containerImages := kube.GetContainerImagesFromPodSpec(spec)
 	secretData := kube.AggregateImagePullSecretsData(containerImages, credentials)
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			// TODO Use deterministic names for secrets that hold image pull credentials, e.g. scan-vulnerabilityreport-<workload hash>-registry-creds
-			Name: s.idGenerator.GenerateID(),
+			Name: p.idGenerator.GenerateID(),
 		},
 		Data: secretData,
 	}
@@ -194,12 +194,12 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (s *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
 	if len(credentials) > 0 {
-		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secret = p.newSecretWithAggregateImagePullCredentials(spec, credentials)
 		secrets = append(secrets, secret)
 	}
 
@@ -211,7 +211,7 @@ func (s *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
 
 	initContainer := corev1.Container{
-		Name:                     s.idGenerator.GenerateID(),
+		Name:                     p.idGenerator.GenerateID(),
 		Image:                    trivyImageRef,
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
@@ -451,7 +451,7 @@ func (s *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			})
 		}
 
-		env, err = s.appendTrivyInsecureEnv(config, c.Image, env)
+		env, err = p.appendTrivyInsecureEnv(config, c.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -505,7 +505,7 @@ func (s *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (s *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
@@ -522,7 +522,7 @@ func (s *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 	}
 
 	if len(credentials) > 0 {
-		secret = s.newSecretWithAggregateImagePullCredentials(spec, credentials)
+		secret = p.newSecretWithAggregateImagePullCredentials(spec, credentials)
 		secrets = append(secrets, secret)
 	}
 
@@ -682,7 +682,7 @@ func (s *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			})
 		}
 
-		env, err = s.appendTrivyInsecureEnv(config, container.Image, env)
+		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -752,7 +752,7 @@ func (s *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 	}, secrets, nil
 }
 
-func (s *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+func (p *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
 	ref, err := name.ParseReference(image)
 	if err != nil {
 		return nil, err
@@ -769,8 +769,8 @@ func (s *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev
 	return env, nil
 }
 
-func (s *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
-	config, err := s.newConfigFrom(ctx)
+func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
@@ -798,7 +798,7 @@ func (s *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 		}
 	}
 
-	registry, artifact, err := s.parseImageRef(imageRef)
+	registry, artifact, err := p.parseImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.VulnerabilityScanResult{}, err
 	}
@@ -814,7 +814,7 @@ func (s *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 	}
 
 	return v1alpha1.VulnerabilityScanResult{
-		UpdateTimestamp: metav1.NewTime(s.clock.Now()),
+		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Trivy",
 			Vendor:  "Aqua Security",
@@ -822,12 +822,12 @@ func (s *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 		},
 		Registry:        registry,
 		Artifact:        artifact,
-		Summary:         s.toSummary(vulnerabilities),
+		Summary:         p.toSummary(vulnerabilities),
 		Vulnerabilities: vulnerabilities,
 	}, nil
 }
 
-func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
 		return Config{}, err
@@ -835,7 +835,7 @@ func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
 	return Config{PluginConfig: pluginConfig}, nil
 }
 
-func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) v1alpha1.VulnerabilitySummary {
+func (p *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) v1alpha1.VulnerabilitySummary {
 	var vs v1alpha1.VulnerabilitySummary
 	for _, v := range vulnerabilities {
 		switch v.Severity {
@@ -854,7 +854,6 @@ func (s *plugin) toSummary(vulnerabilities []v1alpha1.Vulnerability) v1alpha1.Vu
 	return vs
 }
 
-// TODO check if it works if both tag and digest are specified
 func (p *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Artifact, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
@@ -872,7 +871,6 @@ func (p *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Art
 	case name.Digest:
 		artifact.Digest = t.DigestStr()
 	}
-
 	return registry, artifact, nil
 }
 
