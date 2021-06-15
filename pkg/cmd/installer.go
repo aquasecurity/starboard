@@ -7,6 +7,7 @@ import (
 
 	embedded "github.com/aquasecurity/starboard"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -119,6 +121,8 @@ var (
 )
 
 type Installer struct {
+	buildInfo     starboard.BuildInfo
+	client        client.Client
 	clientset     kubernetes.Interface
 	clientsetext  extapi.ApiextensionsV1Interface
 	configManager starboard.ConfigManager
@@ -126,14 +130,19 @@ type Installer struct {
 
 // NewInstaller constructs an Installer with the given starboard.ConfigManager and kubernetes.Interface.
 func NewInstaller(
+	buildInfo starboard.BuildInfo,
+	// TODO Get rid of kubernetes.Interface and ApiextensionsV1Interface and use just client.Client
 	clientset kubernetes.Interface,
 	clientsetext extapi.ApiextensionsV1Interface,
+	client client.Client,
 	configManager starboard.ConfigManager,
 ) *Installer {
 	return &Installer{
-		configManager: configManager,
+		buildInfo:     buildInfo,
 		clientset:     clientset,
 		clientsetext:  clientsetext,
+		client:        client,
+		configManager: configManager,
 	}
 }
 
@@ -183,6 +192,37 @@ func (m *Installer) Install(ctx context.Context) error {
 	err = m.configManager.EnsureDefault(ctx)
 	if err != nil {
 		return err
+	}
+
+	config, err := m.configManager.Read(ctx)
+	if err != nil {
+		return err
+	}
+
+	pluginResolver := plugin.NewResolver().
+		WithBuildInfo(m.buildInfo).
+		WithNamespace(starboard.NamespaceName).
+		WithServiceAccountName(starboard.ServiceAccountName).
+		WithConfig(config).
+		WithClient(m.client)
+
+	vulnerabilityPlugin, pluginContext, err := pluginResolver.GetVulnerabilityPlugin()
+	if err != nil {
+		return err
+	}
+
+	err = vulnerabilityPlugin.Init(pluginContext)
+	if err != nil {
+		return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
+	}
+
+	configAuditPlugin, pluginContext, err := pluginResolver.GetConfigAuditPlugin()
+	if err != nil {
+		return err
+	}
+	err = configAuditPlugin.Init(pluginContext)
+	if err != nil {
+		return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
 	}
 
 	return m.initRBAC(ctx)

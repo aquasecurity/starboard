@@ -3,9 +3,10 @@ package starboard
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -48,6 +49,7 @@ type PluginContext interface {
 
 // GetPluginConfigMapName returns the name of a ConfigMap used to configure a plugin
 // with the given name.
+// TODO Rename to GetPluginConfigObjectName as this method is used to determine the name of ConfigMaps and Secrets.
 func GetPluginConfigMapName(pluginName string) string {
 	return "starboard-" + strings.ToLower(pluginName) + "-config"
 }

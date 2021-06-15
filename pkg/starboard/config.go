@@ -72,10 +72,6 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: string(Trivy),
 		keyConfigAuditReportsScanner:   string(Polaris),
 
-		"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-		"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
-		"trivy.mode":     "Standalone",
-
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:0.5.0",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.4.1",
 		"kube-hunter.quick":    "false",
