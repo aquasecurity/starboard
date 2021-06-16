@@ -133,7 +133,7 @@ type ReportBuilder struct {
 	controller       metav1.Object
 	podSpecHash      string
 	pluginConfigHash string
-	result           v1alpha1.ConfigAuditResult
+	data             v1alpha1.ConfigAuditReportData
 }
 
 func NewReportBuilder(scheme *runtime.Scheme) *ReportBuilder {
@@ -157,8 +157,8 @@ func (b *ReportBuilder) PluginConfigHash(hash string) *ReportBuilder {
 	return b
 }
 
-func (b *ReportBuilder) Data(result v1alpha1.ConfigAuditResult) *ReportBuilder {
-	b.result = result
+func (b *ReportBuilder) Data(data v1alpha1.ConfigAuditReportData) *ReportBuilder {
+	b.data = data
 	return b
 }
 
@@ -202,7 +202,7 @@ func (b *ReportBuilder) Get() (v1alpha1.ConfigAuditReport, error) {
 			Namespace: b.controller.GetNamespace(),
 			Labels:    labels,
 		},
-		Report: b.result,
+		Report: b.data,
 	}
 	err = controllerutil.SetControllerReference(b.controller, &report, b.scheme)
 	if err != nil {

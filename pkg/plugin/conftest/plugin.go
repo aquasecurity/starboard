@@ -196,7 +196,7 @@ func (p *plugin) GetContainerName() string {
 	return conftestContainerName
 }
 
-func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
 	var checkResults []CheckResult
 	err := json.NewDecoder(logsReader).Decode(&checkResults)
 
@@ -233,15 +233,15 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 
 	imageRef, err := p.getImageRef(ctx)
 	if err != nil {
-		return v1alpha1.ConfigAuditResult{}, err
+		return v1alpha1.ConfigAuditReportData{}, err
 	}
 
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.ConfigAuditResult{}, err
+		return v1alpha1.ConfigAuditReportData{}, err
 	}
 
-	return v1alpha1.ConfigAuditResult{
+	return v1alpha1.ConfigAuditReportData{
 		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Conftest",

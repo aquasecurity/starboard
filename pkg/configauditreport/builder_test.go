@@ -31,7 +31,7 @@ func TestReportBuilder(t *testing.T) {
 		}).
 		PodSpecHash("xyz").
 		PluginConfigHash("nop").
-		Data(v1alpha1.ConfigAuditResult{}).
+		Data(v1alpha1.ConfigAuditReportData{}).
 		Get()
 
 	g.Expect(err).ToNot(HaveOccurred())
@@ -56,7 +56,7 @@ func TestReportBuilder(t *testing.T) {
 				starboard.LabelPluginConfigHash:  "nop",
 			},
 		},
-		Report: v1alpha1.ConfigAuditResult{},
+		Report: v1alpha1.ConfigAuditReportData{},
 	}))
 }
 
@@ -72,8 +72,8 @@ func (p *testPlugin) GetScanJobSpec(_ starboard.PluginContext, obj client.Object
 	return corev1.PodSpec{}, nil, nil
 }
 
-func (p *testPlugin) ParseConfigAuditReportData(_ starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
-	return v1alpha1.ConfigAuditResult{}, nil
+func (p *testPlugin) ParseConfigAuditReportData(_ starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+	return v1alpha1.ConfigAuditReportData{}, nil
 }
 
 func (p *testPlugin) GetContainerName() string {

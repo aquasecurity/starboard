@@ -32,7 +32,7 @@ func TestReadWriter(t *testing.T) {
 					"starboard.resource.namespace": "qa",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
 					WarningCount: 8,
 					DangerCount:  3,
@@ -60,7 +60,7 @@ func TestReadWriter(t *testing.T) {
 				},
 				ResourceVersion: "1",
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
 					WarningCount: 8,
 					DangerCount:  3,
@@ -82,7 +82,7 @@ func TestReadWriter(t *testing.T) {
 					"pod-spec-hash":                "h1",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
 					WarningCount: 8,
 					DangerCount:  3,
@@ -101,7 +101,7 @@ func TestReadWriter(t *testing.T) {
 					"pod-spec-hash":                "h2",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
 					WarningCount: 9,
 					DangerCount:  2,
@@ -130,7 +130,7 @@ func TestReadWriter(t *testing.T) {
 				},
 				ResourceVersion: "1",
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
 					WarningCount: 9,
 					DangerCount:  2,
@@ -151,7 +151,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceNamespace: "my-namespace",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{},
+			Report: v1alpha1.ConfigAuditReportData{},
 		}, &v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "my-namespace",
@@ -162,7 +162,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceNamespace: "my-namespace",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{},
+			Report: v1alpha1.ConfigAuditReportData{},
 		}).Build()
 
 		readWriter := configauditreport.NewReadWriter(client)
@@ -183,7 +183,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceNamespace: "my-namespace",
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{},
+			Report: v1alpha1.ConfigAuditReportData{},
 		}, found)
 	})
 }

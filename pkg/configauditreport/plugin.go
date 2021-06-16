@@ -26,8 +26,8 @@ type Plugin interface {
 	GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error)
 
 	// ParseConfigAuditReportData is a callback to parse and convert logs of
-	// the container in a pod controlled by the scan job to v1alpha1.ConfigAuditResult.
-	ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error)
+	// the container in a pod controlled by the scan job to v1alpha1.ConfigAuditReportData.
+	ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error)
 
 	// GetContainerName returns the name of the container in a pod created by a scan job
 	// to read logs from.
