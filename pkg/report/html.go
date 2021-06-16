@@ -43,7 +43,7 @@ func (h *workloadReporter) RetrieveData(workload kube.Object) (templates.Workloa
 		return templates.WorkloadReport{}, err
 	}
 
-	vulnsReports := map[string]v1alpha1.VulnerabilityScanResult{}
+	vulnsReports := map[string]v1alpha1.VulnerabilityReportData{}
 	for _, vulnerabilityReport := range vulnerabilityReports {
 		containerName, ok := vulnerabilityReport.Labels[starboard.LabelContainerName]
 		if !ok {

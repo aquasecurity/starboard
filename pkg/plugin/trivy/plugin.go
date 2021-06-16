@@ -769,16 +769,16 @@ func (p *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev
 	return env, nil
 }
 
-func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityScanResult, error) {
+func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	var reports []ScanReport
 	err = json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 	vulnerabilities := make([]v1alpha1.Vulnerability, 0)
 
@@ -800,20 +800,20 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 
 	registry, artifact, err := p.parseImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	trivyImageRef, err := config.GetImageRef()
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	version, err := starboard.GetVersionFromImageRef(trivyImageRef)
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
-	return v1alpha1.VulnerabilityScanResult{
+	return v1alpha1.VulnerabilityReportData{
 		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Trivy",

@@ -14,7 +14,7 @@ type WorkloadReport struct {
 	GeneratedAt time.Time
 
 	// FIXME Do not use map as the order of iteration is unpredictable.
-	VulnsReports      map[string]v1alpha1.VulnerabilityScanResult
+	VulnsReports      map[string]v1alpha1.VulnerabilityReportData
 	ConfigAuditReport *v1alpha1.ConfigAuditReport
 }
 

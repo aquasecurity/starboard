@@ -53,7 +53,7 @@ func TestVulnerabilityReportMatcher(t *testing.T) {
 					},
 				},
 			},
-			Report: v1alpha1.VulnerabilityScanResult{
+			Report: v1alpha1.VulnerabilityReportData{
 				Scanner: v1alpha1.Scanner{
 					Name:    "Trivy",
 					Vendor:  "Aqua Security",

@@ -186,7 +186,7 @@ func (b *VulnerabilityReportBuilder) Build() *v1alpha1.VulnerabilityReport {
 				starboard.LabelResourceNamespace: b.namespace,
 			},
 		},
-		Report: v1alpha1.VulnerabilityScanResult{
+		Report: v1alpha1.VulnerabilityReportData{
 			UpdateTimestamp: metav1.NewTime(time.Now()),
 			Scanner:         trivyScanner,
 			Registry: v1alpha1.Registry{
