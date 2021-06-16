@@ -26,10 +26,10 @@ func NewScanner(version string, clientset client.Clientset) *Scanner {
 	}
 }
 
-func (s *Scanner) Scan(imageRef string) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *Scanner) Scan(imageRef string) (v1alpha1.VulnerabilityReportData, error) {
 	registries, err := s.clientset.Registries().List()
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	var registryName string
@@ -49,18 +49,18 @@ func (s *Scanner) Scan(imageRef string) (v1alpha1.VulnerabilityScanResult, error
 
 	reference, err := name.ParseReference(imageRef)
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	vulnerabilities, err := s.clientset.Images().Vulnerabilities(registryName, reference.Context().RepositoryStr(), reference.Identifier())
 	if err != nil {
-		return v1alpha1.VulnerabilityScanResult{}, err
+		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
 	return s.convert(reference, vulnerabilities)
 }
 
-func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesResponse) (v1alpha1.VulnerabilityScanResult, error) {
+func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesResponse) (v1alpha1.VulnerabilityReportData, error) {
 	items := make([]v1alpha1.Vulnerability, 0)
 
 	for _, result := range response.Results {
@@ -85,7 +85,7 @@ func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesRes
 		artifact.Digest = t.DigestStr()
 	}
 
-	return v1alpha1.VulnerabilityScanResult{
+	return v1alpha1.VulnerabilityReportData{
 		UpdateTimestamp: metav1.NewTime(time.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",

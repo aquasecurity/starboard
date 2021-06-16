@@ -28,7 +28,7 @@ func NewScanner(version string, baseURL string, credentials client.UsernameAndPa
 	}
 }
 
-func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityScanResult, err error) {
+func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityReportData, err error) {
 	args := []string{
 		"scan",
 		"--checkonly",
@@ -57,7 +57,7 @@ func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityScanResult
 	return s.convert(imageRef, aquaReport)
 }
 
-func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alpha1.VulnerabilityScanResult, err error) {
+func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alpha1.VulnerabilityReportData, err error) {
 	items := make([]v1alpha1.Vulnerability, 0)
 
 	for _, resourceScan := range aquaReport.Resources {
@@ -98,7 +98,7 @@ func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alph
 		artifact.Digest = t.DigestStr()
 	}
 
-	report = v1alpha1.VulnerabilityScanResult{
+	report = v1alpha1.VulnerabilityReportData{
 		UpdateTimestamp: metav1.NewTime(time.Now()),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",

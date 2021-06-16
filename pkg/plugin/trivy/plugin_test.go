@@ -1582,7 +1582,7 @@ var (
 		]
 	}]`
 
-	sampleReport = v1alpha1.VulnerabilityScanResult{
+	sampleReport = v1alpha1.VulnerabilityReportData{
 		UpdateTimestamp: metav1.NewTime(fixedTime),
 		Scanner: v1alpha1.Scanner{
 			Name:    "Trivy",
@@ -1644,7 +1644,7 @@ func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
 		imageRef       string
 		input          string
 		expectedError  error
-		expectedReport v1alpha1.VulnerabilityScanResult
+		expectedReport v1alpha1.VulnerabilityReportData
 	}{
 		{
 			name:           "Should convert vulnerability report in JSON format when input is quiet",
@@ -1658,7 +1658,7 @@ func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
 			imageRef:      "core.harbor.domain/library/nginx@sha256:d20aa6d1cae56fd17cd458f4807e0de462caf2336f0b70b5eeb69fcaaf30dd9c",
 			input:         `null`,
 			expectedError: nil,
-			expectedReport: v1alpha1.VulnerabilityScanResult{
+			expectedReport: v1alpha1.VulnerabilityReportData{
 				UpdateTimestamp: metav1.NewTime(fixedTime),
 				Scanner: v1alpha1.Scanner{
 					Name:    "Trivy",

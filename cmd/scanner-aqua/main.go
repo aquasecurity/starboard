@@ -64,7 +64,7 @@ func run() error {
 
 // scan scans the specified image reference. Firstly, attempt to download a vulnerability
 // report with Aqua REST API call. If the report is not found, execute the `scannercli scan` command.
-func scan(opt options, imageRef string) (report v1alpha1.VulnerabilityScanResult, err error) {
+func scan(opt options, imageRef string) (report v1alpha1.VulnerabilityReportData, err error) {
 	clientset := client.NewClient(opt.baseURL, client.Authorization{
 		Basic: &opt.credentials,
 	})

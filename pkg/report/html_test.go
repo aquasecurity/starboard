@@ -19,7 +19,7 @@ func Test_topNVulnerabilitiesByScore(t *testing.T) {
 			name: "Should return top 5 vulnerabilities with count",
 			reports: []v1alpha1.VulnerabilityReport{
 				{
-					Report: v1alpha1.VulnerabilityScanResult{
+					Report: v1alpha1.VulnerabilityReportData{
 						Vulnerabilities: []v1alpha1.Vulnerability{
 							{
 								VulnerabilityID: "CVE-2019-1549",
@@ -43,7 +43,7 @@ func Test_topNVulnerabilitiesByScore(t *testing.T) {
 					},
 				},
 				{
-					Report: v1alpha1.VulnerabilityScanResult{
+					Report: v1alpha1.VulnerabilityReportData{
 						Vulnerabilities: []v1alpha1.Vulnerability{
 							{
 								VulnerabilityID: "CVE-2019-1548",
@@ -131,7 +131,7 @@ func Test_topNVulnerabilitiesByScore(t *testing.T) {
 			name: "Should return 2 vulnerabilities with count when some input has nil scores",
 			reports: []v1alpha1.VulnerabilityReport{
 				{
-					Report: v1alpha1.VulnerabilityScanResult{
+					Report: v1alpha1.VulnerabilityReportData{
 						Vulnerabilities: []v1alpha1.Vulnerability{
 							{
 								VulnerabilityID: "CVE-2019-1549",
@@ -155,7 +155,7 @@ func Test_topNVulnerabilitiesByScore(t *testing.T) {
 					},
 				},
 				{
-					Report: v1alpha1.VulnerabilityScanResult{
+					Report: v1alpha1.VulnerabilityReportData{
 						Vulnerabilities: []v1alpha1.Vulnerability{
 							{
 								VulnerabilityID: "CVE-2019-1548",
