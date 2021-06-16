@@ -105,7 +105,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 					},
 				},
 			},
-			Report: v1alpha1.ConfigAuditResult{
+			Report: v1alpha1.ConfigAuditReportData{
 				Scanner: v1alpha1.Scanner{
 					Name:    "Polaris",
 					Vendor:  "Fairwinds Ops",

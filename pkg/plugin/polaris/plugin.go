@@ -315,13 +315,13 @@ func (p *plugin) GetContainerName() string {
 	return polarisContainerName
 }
 
-func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditResult, error) {
+func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
 	var report Report
 	err := json.NewDecoder(logsReader).Decode(&report)
 	if err != nil {
-		return v1alpha1.ConfigAuditResult{}, err
+		return v1alpha1.ConfigAuditReportData{}, err
 	}
-	return p.configAuditResultFrom(ctx, report.Results[0])
+	return p.configAuditReportDataFrom(ctx, report.Results[0])
 }
 
 func (p *plugin) sourceNameFrom(obj client.Object) string {
@@ -339,7 +339,7 @@ func (p *plugin) sourceNameFrom(obj client.Object) string {
 	)
 }
 
-func (p *plugin) configAuditResultFrom(ctx starboard.PluginContext, result Result) (v1alpha1.ConfigAuditResult, error) {
+func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result Result) (v1alpha1.ConfigAuditReportData, error) {
 	var podChecks []v1alpha1.Check
 	containerChecks := make(map[string][]v1alpha1.Check)
 
@@ -370,15 +370,15 @@ func (p *plugin) configAuditResultFrom(ctx starboard.PluginContext, result Resul
 
 	imageRef, err := p.getImageRef(ctx)
 	if err != nil {
-		return v1alpha1.ConfigAuditResult{}, err
+		return v1alpha1.ConfigAuditReportData{}, err
 	}
 
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.ConfigAuditResult{}, err
+		return v1alpha1.ConfigAuditReportData{}, err
 	}
 
-	return v1alpha1.ConfigAuditResult{
+	return v1alpha1.ConfigAuditReportData{
 		Scanner: v1alpha1.Scanner{
 			Name:    "Polaris",
 			Vendor:  "Fairwinds Ops",

@@ -30,7 +30,7 @@ type ConfigAuditReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report ConfigAuditResult `json:"report"`
+	Report ConfigAuditReportData `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -52,7 +52,7 @@ type ClusterConfigAuditReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report ConfigAuditResult `json:"report"`
+	Report ConfigAuditReportData `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -65,8 +65,7 @@ type ClusterConfigAuditReportList struct {
 	Items []ClusterConfigAuditReport `json:"items"`
 }
 
-// TODO Rename to ConfigAuditReportData
-type ConfigAuditResult struct {
+type ConfigAuditReportData struct {
 	UpdateTimestamp metav1.Time        `json:"updateTimestamp"`
 	Scanner         Scanner            `json:"scanner"`
 	Summary         ConfigAuditSummary `json:"summary"`
