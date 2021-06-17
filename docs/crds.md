@@ -126,34 +126,44 @@ report:
     dangerCount: 0
     passCount: 3
     warningCount: 2
-  podChecks:
+  checks:
     - category: Security
       checkID: hostNetworkSet
       message: Host network is not configured
       severity: warning
       success: true
-  containerChecks:
-    nginx:
-      - category: Security
-        checkID: dangerousCapabilities
-        message: Container does not have any dangerous capabilities
-        severity: danger
-        success: true
-      - category: Security
-        checkID: hostPortSet
-        message: Host port is not configured
-        severity: warning
-        success: true
-      - category: Security
-        checkID: insecureCapabilities
-        message: Container should not have insecure capabilities
-        severity: warning
-        success: false
-      - category: Security
-        checkID: notReadOnlyRootFilesystem
-        message: Filesystem should be read only
-        severity: warning
-        success: false
+    - category: Security
+      checkID: dangerousCapabilities
+      message: Container does not have any dangerous capabilities
+      severity: danger
+      success: true
+      scope:
+        type: Container
+        value: nginx
+    - category: Security
+      checkID: hostPortSet
+      message: Host port is not configured
+      severity: warning
+      success: true
+      scope:
+        type: Container
+        value: nginx
+    - category: Security
+      checkID: insecureCapabilities
+      message: Container should not have insecure capabilities
+      severity: warning
+      success: false
+      scope:
+        type: Container
+        value: nginx
+    - category: Security
+      checkID: notReadOnlyRootFilesystem
+      message: Filesystem should be read only
+      severity: warning
+      success: false
+      scope:
+        type: Container
+        value: nginx
 ```
 
 Third party Kubernetes configuration checkers, linters, and sanitizers that are compliant with the ConfigAuditReport
