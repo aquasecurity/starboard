@@ -351,6 +351,53 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 			WarningCount: 0,
 			PassCount:    2,
 		}),
+		"Checks": MatchAllElements(groupChecksByMessage, Elements{
+			"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "Default capabilities: some containers do not drop all",
+				Message:  "container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "Default capabilities: some containers do not drop all",
+				Message:  "container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+			"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "Default capabilities: some containers do not drop all",
+				Message:  "container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "Default capabilities: some containers do not drop all",
+				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true": Equal(v1alpha1.Check{
+				ID:       "Root file system is not read-only",
+				Message:  "container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu": Equal(v1alpha1.Check{
+				// If the author of a Rego script does not provide the title property
+				// in the rule's response, which is then returned as metadata.type
+				// in Conftest output, the parser will fallback to a unique identifier.
+				ID:       "00000000-0000-0000-0000-000000000001",
+				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu",
+				Success:  false,
+				Severity: "danger",
+				Category: "Security",
+			}),
+		}),
 		// Most Rego scripts do not return structured response object to indicate
 		// container name. Therefore, the ContainerChecks map is empty.
 		"ContainerChecks": Equal(map[string][]v1alpha1.Check{}),

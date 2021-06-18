@@ -251,12 +251,20 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Success:  false,
 		Severity: "warning",
 		Category: "Resources",
+		Scope: &v1alpha1.CheckScope{
+			Type:  "Container",
+			Value: "db",
+		},
 	}, v1alpha1.Check{
 		ID:       "cpuRequestsMissing",
 		Message:  "CPU requests are set",
 		Success:  true,
 		Severity: "warning",
 		Category: "Resources",
+		Scope: &v1alpha1.CheckScope{
+			Type:  "Container",
+			Value: "db",
+		},
 	}))
 }
 

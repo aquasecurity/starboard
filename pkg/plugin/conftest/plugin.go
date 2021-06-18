@@ -253,6 +253,8 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			WarningCount: warningCount,
 			DangerCount:  dangerCount,
 		},
+		Checks: checks,
+		// TODO Deprecate PodChecks and ContainerChecks in 0.12+
 		PodChecks:       checks,
 		ContainerChecks: map[string][]v1alpha1.Check{},
 	}, nil

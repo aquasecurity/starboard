@@ -340,32 +340,40 @@ func (p *plugin) sourceNameFrom(obj client.Object) string {
 }
 
 func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result Result) (v1alpha1.ConfigAuditReportData, error) {
+	var checks []v1alpha1.Check
 	var podChecks []v1alpha1.Check
-	containerChecks := make(map[string][]v1alpha1.Check)
+	containerNameToChecks := make(map[string][]v1alpha1.Check)
 
 	for _, pr := range result.PodResult.Results {
-		podChecks = append(podChecks, v1alpha1.Check{
+		check := v1alpha1.Check{
 			ID:       pr.ID,
 			Message:  pr.Message,
 			Success:  pr.Success,
 			Severity: pr.Severity,
 			Category: pr.Category,
-		})
+		}
+		checks = append(checks, check)
+		podChecks = append(podChecks, check)
 	}
 
 	for _, cr := range result.PodResult.ContainerResults {
-		var checks []v1alpha1.Check
+		var containerChecks []v1alpha1.Check
 		for _, crr := range cr.Results {
-			checks = append(checks, v1alpha1.Check{
+			containerChecks = append(containerChecks, v1alpha1.Check{
 				ID:       crr.ID,
 				Message:  crr.Message,
 				Success:  crr.Success,
 				Severity: crr.Severity,
 				Category: crr.Category,
+				Scope: &v1alpha1.CheckScope{
+					Type:  "Container",
+					Value: cr.Name,
+				},
 			})
 
 		}
-		containerChecks[cr.Name] = checks
+		checks = append(checks, containerChecks...)
+		containerNameToChecks[cr.Name] = containerChecks
 	}
 
 	imageRef, err := p.getImageRef(ctx)
@@ -384,10 +392,12 @@ func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result R
 			Vendor:  "Fairwinds Ops",
 			Version: version,
 		},
-		Summary:         p.configAuditSummaryFrom(podChecks, containerChecks),
+		Summary:         p.configAuditSummaryFrom(podChecks, containerNameToChecks),
 		UpdateTimestamp: metav1.NewTime(p.clock.Now()),
+		Checks:          checks,
+		// TODO Deprecate PodChecks and ContainerChecks in 0.12+
 		PodChecks:       podChecks,
-		ContainerChecks: containerChecks,
+		ContainerChecks: containerNameToChecks,
 	}, nil
 }
 
