@@ -70,17 +70,21 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 
 		writer := kubebench.NewReadWriter(kubeClient)
 		argsMap := make(map[string]string)
-		for _, s := range args {
-			argsMap[s] = s
+		for _, nodeName := range args {
+			argsMap[nodeName] = nodeName
 		}
 
 		// TODO Move this logic to scanner.ScanAll() method. We should not mix discovery / scanning logic with the CLI.
 		var wg sync.WaitGroup
 
-		for _, node := range nodeList.Items {
+		for index, node := range nodeList.Items {
 			_, found := argsMap[node.Name]
-			if !found && len(args) > 0 {
+			if !found && len(args) > 0 && index < len(args) {
 				klog.V(3).Infof("Node not found. Skipping the scan ciskubenchreports")
+				continue
+			}
+			if !found && len(args) > 0 && index >= len(args) {
+				// skip the other nodes when we use node args
 				continue
 			}
 
