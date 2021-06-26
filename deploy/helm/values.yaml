@@ -94,7 +94,7 @@ trivy:
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
 kubeBench:
-  imageRef: docker.io/aquasec/kube-bench:0.5.0
+  imageRef: docker.io/aquasec/kube-bench:0.6.3
 
 polaris:
   imageRef: quay.io/fairwinds/polaris:3.2
