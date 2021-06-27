@@ -1030,7 +1030,7 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(3).To(Equal(countCISKubeBenchReport))
 		})
 
-		It("should create one CISKubeBenchReports", func() {
+		It("should create specific CISKubeBenchReports", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
 				"scan", "ciskubebenchreports", "kind-control-plane",
@@ -1067,7 +1067,7 @@ var _ = Describe("Starboard CLI", func() {
 							"Scanner": Equal(v1alpha1.Scanner{
 								Name:    "kube-bench",
 								Vendor:  "Aqua Security",
-								Version: "0.5.0",
+								Version: "0.6.3",
 							}),
 						}),
 					}))
@@ -1127,4 +1127,3 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 })
-
