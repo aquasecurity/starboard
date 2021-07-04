@@ -22,7 +22,7 @@ func TestBuilder(t *testing.T) {
 				Name: "control-plane",
 			},
 		}).
-		Data(v1alpha1.CISKubeBenchOutput{}).Get()
+		Data(v1alpha1.CISKubeBenchReportData{}).Get()
 
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(report).To(gomega.Equal(v1alpha1.CISKubeBenchReport{
@@ -42,6 +42,6 @@ func TestBuilder(t *testing.T) {
 				starboard.LabelResourceName: "control-plane",
 			},
 		},
-		Report: v1alpha1.CISKubeBenchOutput{},
+		Report: v1alpha1.CISKubeBenchReportData{},
 	}))
 }

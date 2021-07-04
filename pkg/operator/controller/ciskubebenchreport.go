@@ -278,7 +278,7 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
-	output, err := r.Plugin.ParseCISKubeBenchOutput(logsStream)
+	output, err := r.Plugin.ParseCISKubeBenchReportData(logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
