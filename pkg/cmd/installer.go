@@ -283,7 +283,6 @@ func (m *Installer) cleanupNamespace(ctx context.Context) error {
 				klog.V(3).Infof("Deleted Namespace %q", starboard.NamespaceName)
 				return nil
 			}
-			return err
 		// This case caters for polling timeout
 		case <-time.After(cleanupTimeout):
 			return fmt.Errorf("deleting namespace timed out")

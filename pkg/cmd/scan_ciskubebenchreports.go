@@ -101,7 +101,7 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 	}
 }
 
-// GetNodes returns nodes by names. If the list of name is empty it returns all nodes.
+// GetNodes returns nodes by names. If the list of names is empty it returns all nodes.
 func GetNodes(ctx context.Context, clientset kubernetes.Interface, names ...string) ([]corev1.Node, error) {
 	if len(names) > 0 {
 		var nodes []corev1.Node
