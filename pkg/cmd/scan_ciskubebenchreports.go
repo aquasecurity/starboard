@@ -48,19 +48,11 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		if err != nil {
 			return err
 		}
-		nodeList, err := kubeClientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return fmt.Errorf("listing nodes: %w", err)
-		}
 		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-
 		scheme := starboard.NewScheme()
-		plugin := kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), config)
-		scanner := kubebench.NewScanner(scheme, kubeClientset, plugin, config, opts)
-
 		kubeClient, err := client.New(kubeConfig, client.Options{
 			Scheme: scheme,
 		})
@@ -68,14 +60,20 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			return err
 		}
 
+		plugin := kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), config)
+		scanner := kubebench.NewScanner(scheme, kubeClientset, plugin, config, opts)
 		writer := kubebench.NewReadWriter(kubeClient)
+
+		nodes, err := GetNodes(ctx, kubeClientset, args...)
+		if err != nil {
+			return fmt.Errorf("getting nodes: %w", err)
+		}
 
 		// TODO Move this logic to scanner.ScanAll() method. We should not mix discovery / scanning logic with the CLI.
 		var wg sync.WaitGroup
 
-		for _, node := range nodeList.Items {
-
-			nodeValueLabel, exist := node.GetObjectMeta().GetLabels()["kubernetes.io/os"]
+		for _, node := range nodes {
+			nodeValueLabel, exist := node.GetObjectMeta().GetLabels()[corev1.LabelOSStable]
 			if exist && nodeValueLabel != "linux" {
 				klog.V(3).Infof("Skipping non linux node: %v %v", node.Name, node.Labels)
 				continue
@@ -84,7 +82,6 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			wg.Add(1)
 			go func(node corev1.Node) {
 				defer wg.Done()
-
 				report, err := scanner.Scan(ctx, node)
 
 				if err != nil {
@@ -102,4 +99,25 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		wg.Wait()
 		return nil
 	}
+}
+
+// GetNodes returns nodes by names. If the list of names is empty it returns all nodes.
+func GetNodes(ctx context.Context, clientset kubernetes.Interface, names ...string) ([]corev1.Node, error) {
+	if len(names) > 0 {
+		var nodes []corev1.Node
+		for _, name := range names {
+			node, err := clientset.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			nodes = append(nodes, *node)
+		}
+		return nodes, nil
+	}
+
+	nodeList, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return nodeList.Items, nil
 }
