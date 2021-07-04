@@ -12,39 +12,33 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-type Builder interface {
-	Controller(controller metav1.Object) Builder
-	Data(data v1alpha1.CISKubeBenchOutput) Builder
-	Get() (v1alpha1.CISKubeBenchReport, error)
-}
-
-func NewBuilder(scheme *runtime.Scheme) Builder {
-	return &builder{
+func NewBuilder(scheme *runtime.Scheme) *Builder {
+	return &Builder{
 		scheme: scheme,
 	}
 }
 
-type builder struct {
+type Builder struct {
 	scheme     *runtime.Scheme
 	controller metav1.Object
-	data       v1alpha1.CISKubeBenchOutput
+	data       v1alpha1.CISKubeBenchReportData
 }
 
-func (b *builder) Controller(controller metav1.Object) Builder {
+func (b *Builder) Controller(controller metav1.Object) *Builder {
 	b.controller = controller
 	return b
 }
 
-func (b *builder) Data(data v1alpha1.CISKubeBenchOutput) Builder {
+func (b *Builder) Data(data v1alpha1.CISKubeBenchReportData) *Builder {
 	b.data = data
 	return b
 }
 
-func (b *builder) reportName() string {
+func (b *Builder) reportName() string {
 	return b.controller.GetName()
 }
 
-func (b *builder) Get() (v1alpha1.CISKubeBenchReport, error) {
+func (b *Builder) Get() (v1alpha1.CISKubeBenchReport, error) {
 	kind, err := kube.KindForObject(b.controller, b.scheme)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, fmt.Errorf("getting kind for object: %w", err)

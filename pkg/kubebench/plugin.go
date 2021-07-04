@@ -16,9 +16,9 @@ type Plugin interface {
 	// node.
 	GetScanJobSpec(node corev1.Node) (corev1.PodSpec, error)
 
-	// ParseCISKubeBenchOutput is a callback to parse and convert logs of
-	// the pod controlled by the scan job to v1alpha1.CISKubeBenchOutput.
-	ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchOutput, error)
+	// ParseCISKubeBenchReportData is a callback to parse and convert logs of
+	// the pod controlled by the scan job to v1alpha1.CISKubeBenchReportData.
+	ParseCISKubeBenchReportData(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchReportData, error)
 
 	GetContainerName() string
 }

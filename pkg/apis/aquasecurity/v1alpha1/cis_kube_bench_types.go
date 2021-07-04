@@ -20,7 +20,7 @@ type CISKubeBenchReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report CISKubeBenchOutput `json:"report"`
+	Report CISKubeBenchReportData `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -33,7 +33,7 @@ type CISKubeBenchReportList struct {
 	Items []CISKubeBenchReport `json:"items"`
 }
 
-type CISKubeBenchOutput struct {
+type CISKubeBenchReportData struct {
 	UpdateTimestamp metav1.Time           `json:"updateTimestamp"`
 	Scanner         Scanner               `json:"scanner"`
 	Summary         CISKubeBenchSummary   `json:"summary"`

@@ -29,7 +29,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceName: "control-plane",
 				},
 			},
-			Report: v1alpha1.CISKubeBenchOutput{
+			Report: v1alpha1.CISKubeBenchReportData{
 				Scanner: v1alpha1.Scanner{
 					Vendor:  "Aqua Security",
 					Name:    "kube-bench",
@@ -62,7 +62,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceName: "control-plane",
 				},
 			},
-			Report: v1alpha1.CISKubeBenchOutput{
+			Report: v1alpha1.CISKubeBenchReportData{
 				Scanner: v1alpha1.Scanner{
 					Vendor:  "Aqua Security",
 					Name:    "kube-bench",
@@ -90,7 +90,7 @@ func TestReadWriter(t *testing.T) {
 						starboard.LabelResourceName: "control-plane",
 					},
 				},
-				Report: v1alpha1.CISKubeBenchOutput{
+				Report: v1alpha1.CISKubeBenchReportData{
 					Scanner: v1alpha1.Scanner{
 						Vendor:  "Aqua Security",
 						Name:    "kube-bench",
@@ -114,7 +114,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceName: "control-plane",
 				},
 			},
-			Report: v1alpha1.CISKubeBenchOutput{
+			Report: v1alpha1.CISKubeBenchReportData{
 				Scanner: v1alpha1.Scanner{
 					Vendor:  "Aqua Security",
 					Name:    "kube-bench",
@@ -147,7 +147,7 @@ func TestReadWriter(t *testing.T) {
 				},
 				ResourceVersion: "1",
 			},
-			Report: v1alpha1.CISKubeBenchOutput{
+			Report: v1alpha1.CISKubeBenchReportData{
 				Scanner: v1alpha1.Scanner{
 					Vendor:  "Aqua Security",
 					Name:    "kube-bench",
@@ -175,7 +175,7 @@ func TestReadWriter(t *testing.T) {
 						starboard.LabelResourceName: "control-plane",
 					},
 				},
-				Report: v1alpha1.CISKubeBenchOutput{
+				Report: v1alpha1.CISKubeBenchReportData{
 					Scanner: v1alpha1.Scanner{
 						Vendor:  "Aqua Security",
 						Name:    "kube-bench",
@@ -197,7 +197,7 @@ func TestReadWriter(t *testing.T) {
 						starboard.LabelResourceName: "worker",
 					},
 				},
-				Report: v1alpha1.CISKubeBenchOutput{
+				Report: v1alpha1.CISKubeBenchReportData{
 					Scanner: v1alpha1.Scanner{
 						Vendor:  "Aqua Security",
 						Name:    "kube-bench",
@@ -230,7 +230,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceName: "worker",
 				},
 			},
-			Report: v1alpha1.CISKubeBenchOutput{
+			Report: v1alpha1.CISKubeBenchReportData{
 				Scanner: v1alpha1.Scanner{
 					Vendor:  "Aqua Security",
 					Name:    "kube-bench",

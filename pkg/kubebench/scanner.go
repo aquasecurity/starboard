@@ -87,7 +87,7 @@ func (s *Scanner) Scan(ctx context.Context, node corev1.Node) (v1alpha1.CISKubeB
 	}()
 
 	// 4. Parse the CISBenchmarkReport from the logs Reader
-	output, err := s.plugin.ParseCISKubeBenchOutput(logsStream)
+	output, err := s.plugin.ParseCISKubeBenchReportData(logsStream)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReport{}, err
 	}
@@ -287,7 +287,7 @@ func (k *kubeBenchPlugin) GetScanJobSpec(node corev1.Node) (corev1.PodSpec, erro
 	}, nil
 }
 
-func (k *kubeBenchPlugin) ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchOutput, error) {
+func (k *kubeBenchPlugin) ParseCISKubeBenchReportData(logsStream io.ReadCloser) (v1alpha1.CISKubeBenchReportData, error) {
 	output := &struct {
 		Controls []v1alpha1.CISKubeBenchSection `json:"Controls"`
 	}{}
@@ -295,19 +295,19 @@ func (k *kubeBenchPlugin) ParseCISKubeBenchOutput(logsStream io.ReadCloser) (v1a
 	decoder := json.NewDecoder(logsStream)
 	err := decoder.Decode(output)
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, err
+		return v1alpha1.CISKubeBenchReportData{}, err
 	}
 
 	imageRef, err := k.config.GetKubeBenchImageRef()
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, err
+		return v1alpha1.CISKubeBenchReportData{}, err
 	}
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.CISKubeBenchOutput{}, err
+		return v1alpha1.CISKubeBenchReportData{}, err
 	}
 
-	return v1alpha1.CISKubeBenchOutput{
+	return v1alpha1.CISKubeBenchReportData{
 		Scanner: v1alpha1.Scanner{
 			Name:    "kube-bench",
 			Vendor:  "Aqua Security",

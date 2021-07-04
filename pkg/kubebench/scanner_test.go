@@ -189,7 +189,7 @@ func TestKubeBenchPlugin_ParseCISKubeBenchOutput(t *testing.T) {
 			}()
 
 			instance := kubebench.NewKubeBenchPlugin(fixedClock, config)
-			output, err := instance.ParseCISKubeBenchOutput(inFile)
+			output, err := instance.ParseCISKubeBenchReportData(inFile)
 
 			switch {
 			case tc.err == nil:
@@ -203,14 +203,14 @@ func TestKubeBenchPlugin_ParseCISKubeBenchOutput(t *testing.T) {
 	}
 }
 
-func expectedOutputFrom(t *testing.T, fileName string) v1alpha1.CISKubeBenchOutput {
+func expectedOutputFrom(t *testing.T, fileName string) v1alpha1.CISKubeBenchReportData {
 	t.Helper()
 
 	file, err := os.Open(fileName)
 	require.NoError(t, err)
 	defer file.Close()
 
-	var expectedOutput v1alpha1.CISKubeBenchOutput
+	var expectedOutput v1alpha1.CISKubeBenchReportData
 	err = json.NewDecoder(file).Decode(&expectedOutput)
 	require.NoError(t, err)
 
