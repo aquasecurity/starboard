@@ -66,14 +66,12 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		return nil, nil, err
 	}
 
-	podSpec, err := kube.GetPodSpec(s.object)
+	podSpecHash, err := kube.ComputeSpecHash(s.object)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	jobSpec.Tolerations = append(jobSpec.Tolerations, s.tolerations...)
-
-	podSpecHash := kube.ComputeHash(podSpec)
 
 	pluginConfigHash, err := s.plugin.GetConfigHash(s.pluginContext)
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -56,6 +57,10 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		{kind: kube.KindDaemonSet, forObject: &appsv1.DaemonSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindCronJob, forObject: &batchv1beta1.CronJob{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindJob, forObject: &batchv1.Job{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindService, forObject: &corev1.Service{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindConfigMap, forObject: &corev1.ConfigMap{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindRole, forObject: &rbacv1.Role{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindRoleBinding, forObject: &rbacv1.RoleBinding{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 	}
 
 	for _, workload := range workloads {
@@ -116,11 +121,11 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 			}
 		}
 
-		podSpec, err := kube.GetPodSpec(workloadObj)
+		podSpecHash, err := kube.ComputeSpecHash(workloadObj)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		podSpecHash := kube.ComputeHash(podSpec)
+
 		pluginConfigHash, err := r.Plugin.GetConfigHash(r.PluginContext)
 		if err != nil {
 			return ctrl.Result{}, err

@@ -11,6 +11,7 @@ rules:
       - pods
       - pods/log
       - replicationcontrollers
+      - services
     verbs:
       - get
       - list
@@ -53,6 +54,15 @@ rules:
       - replicasets
       - statefulsets
       - daemonsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - rolebindings
     verbs:
       - get
       - list

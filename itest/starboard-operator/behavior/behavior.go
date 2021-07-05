@@ -13,6 +13,7 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -415,6 +416,45 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 		// TODO Add scenario for StatefulSet
 
 		// TODO Add scenario for DaemonSet
+
+		Context("When Service is created", func() {
+			var ctx context.Context
+			var svc *corev1.Service
+
+			BeforeEach(func() {
+				ctx = context.Background()
+				svc = &corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: inputs.PrimaryNamespace,
+						Name:      "nginx-" + rand.String(5),
+					},
+					Spec: corev1.ServiceSpec{
+						Selector: map[string]string{
+							"app": "nginx",
+						},
+						Ports: []corev1.ServicePort{
+							{
+								Port:       80,
+								TargetPort: intstr.FromInt(80),
+								Protocol:   corev1.ProtocolTCP,
+							},
+						},
+					},
+				}
+				err := inputs.Create(ctx, svc)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("Should create ConfigAuditReport", func() {
+				Eventually(inputs.HasConfigAuditReportOwnedBy(svc), inputs.AssertTimeout).Should(BeTrue())
+			})
+
+			AfterEach(func() {
+				err := inputs.Delete(ctx, svc)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
 	}
 }
 

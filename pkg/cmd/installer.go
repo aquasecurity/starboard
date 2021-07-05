@@ -61,6 +61,7 @@ var (
 					"nodes",
 					"namespaces",
 					"pods",
+					"services",
 				},
 				Verbs: []string{
 					"list",
