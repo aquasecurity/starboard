@@ -92,6 +92,14 @@ trivy:
   httpsProxy:
   noProxy:
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+  #k8s CPU request for the trivy pod
+  requestCPU:
+  #k8s memory request for the trivy pod
+  requestMemory:
+  #k8s CPU limit for the trivy pod
+  limitCPU:
+  #k8s memory limit for the trivy pod
+  limitMemory:
 
 kubeBench:
   imageRef: docker.io/aquasec/kube-bench:0.6.3

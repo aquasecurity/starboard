@@ -19,19 +19,6 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-var (
-	defaultResourceRequirements = corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("100M"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("500M"),
-		},
-	}
-)
-
 const (
 	// Plugin the name of this plugin.
 	Plugin = "Trivy"
@@ -60,6 +47,11 @@ const (
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
 	keyTrivyServerToken         = "trivy.serverToken"
 	keyTrivyServerCustomHeaders = "trivy.serverCustomHeaders"
+
+	keyTrivyRequestsCPU    = "trivy.requestCPU"
+	keyTrivyRequestsMemory = "trivy.requestMemory"
+	keyTrivyLimitCPU       = "trivy.limitCPU"
+	keyTrivyLimitMemory    = "trivy.limitMemory"
 )
 
 // Mode describes mode in which Trivy client operates.
@@ -117,6 +109,34 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
+func (c Config) GetResourceRequirements() corev1.ResourceRequirements {
+	defaultResourceRequirements := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("100m"),
+			corev1.ResourceMemory: resource.MustParse("100M"),
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("500m"),
+			corev1.ResourceMemory: resource.MustParse("500M"),
+		},
+	}
+
+	if requestCpu, found := c.Data[keyTrivyRequestsCPU]; found {
+		defaultResourceRequirements.Requests[corev1.ResourceCPU] = resource.MustParse(requestCpu)
+	}
+	if requestMemory, found := c.Data[keyTrivyRequestsMemory]; found {
+		defaultResourceRequirements.Requests[corev1.ResourceMemory] = resource.MustParse(requestMemory)
+	}
+
+	if limitCPU, found := c.Data[keyTrivyLimitCPU]; found {
+		defaultResourceRequirements.Limits[corev1.ResourceCPU] = resource.MustParse(limitCPU)
+	}
+	if limitMemory, found := c.Data[keyTrivyLimitMemory]; found {
+		defaultResourceRequirements.Limits[corev1.ResourceMemory] = resource.MustParse(limitMemory)
+	}
+
+	return defaultResourceRequirements
+}
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
 // upstream Trivy container image to scan Kubernetes workloads.
 //
@@ -273,7 +293,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			"--cache-dir",
 			"/var/lib/trivy",
 		},
-		Resources: defaultResourceRequirements,
+		Resources: config.GetResourceRequirements(),
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      sharedVolumeName,
@@ -474,7 +494,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 				"json",
 				c.Image,
 			},
-			Resources:    defaultResourceRequirements,
+			Resources:    config.GetResourceRequirements(),
 			VolumeMounts: volumeMounts,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               pointer.BoolPtr(false),
@@ -740,7 +760,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 				container.Image,
 			},
 			VolumeMounts: volumeMounts,
-			Resources:    defaultResourceRequirements,
+			Resources:    config.GetResourceRequirements(),
 		})
 	}
 

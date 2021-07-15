@@ -114,6 +114,75 @@ func TestConfig_GetMode(t *testing.T) {
 	}
 }
 
+func TestConfig_GetResourceResourceRequirements(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		configData           trivy.Config
+		expectedRequirements corev1.ResourceRequirements
+	}{
+		{
+			name:       "Should return default requirements",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+					corev1.ResourceMemory: resource.MustParse("100M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("500m"),
+					corev1.ResourceMemory: resource.MustParse("500M"),
+				},
+			},
+		},
+		{
+			name: "Should return configured resource requirement",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"trivy.requestCPU":    "800m",
+					"trivy.requestMemory": "200M",
+					"trivy.limitCPU":      "600m",
+					"trivy.limitMemory":   "700M",
+				},
+			}},
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("800m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("600m"),
+					corev1.ResourceMemory: resource.MustParse("700M"),
+				},
+			},
+		},
+		{
+			name: "Should return default limits or configured if set",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"trivy.requestMemory": "200M",
+				},
+			}},
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("500m"),
+					corev1.ResourceMemory: resource.MustParse("500M"),
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resourceRequirement := tc.configData.GetResourceRequirements()
+			assert.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+
+		})
+	}
+}
+
 func TestConfig_IgnoreFileExists(t *testing.T) {
 	testCases := []struct {
 		name           string
