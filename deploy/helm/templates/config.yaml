@@ -35,18 +35,25 @@ data:
   {{- if eq .Values.trivy.mode "ClientServer" }}
   trivy.serverURL: "{{ .Values.trivy.serverURL }}"
   {{- end }}
-  {{- if .Values.trivy.requestCPU }}
-  trivy.requestCPU: "{{ .Values.trivy.requestCPU }}"
+  {{- with .Values.trivy.resources }}
+    {{- with .request }}
+      {{- if .cpu }}
+  trivy.resources.request.cpu: {{ .cpu }}
+      {{- end }}
+      {{- if hasKey . "memory" }}
+  trivy.resources.request.memory: {{ .memory }}
+      {{- end }}
+    {{- end }}
+    {{- with .limit }}
+      {{- if .cpu }}
+  trivy.resources.limit.cpu: {{ .cpu }}
+      {{- end }}
+      {{- if .memory }}
+  trivy.resources.limit.memory: {{ .memory }}
+      {{- end }}
+    {{- end }}
   {{- end }}
-  {{- if .Values.trivy.requestMemory }}
-  trivy.requestMemory: "{{ .Values.trivy.requestMemory }}"
-  {{- end }}
-  {{- if .Values.trivy.limitCPU }}
-  trivy.limitCPU: "{{ .Values.trivy.limitCPU }}"
-  {{- end }}
-  {{- if .Values.trivy.limitCPU }}
-  trivy.limitMemory: "{{ .Values.trivy.limitMemory }}"
-  {{- end }}
+
 ---
 apiVersion: v1
 kind: Secret

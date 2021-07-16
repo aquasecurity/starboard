@@ -18,6 +18,10 @@ data:
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.imageRef: docker.io/aquasec/trivy:0.16.0
   trivy.mode: Standalone
+  trivy.resources.request.cpu: 100m
+  trivy.resources.request.memory: 100M
+  trivy.resources.limit.cpu: 500M
+  trivy.resources.limit.memory: 500M
 ---
 apiVersion: v1
 kind: ConfigMap

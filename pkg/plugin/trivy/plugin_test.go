@@ -121,27 +121,21 @@ func TestConfig_GetResourceResourceRequirements(t *testing.T) {
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
-			name:       "Should return default requirements",
+			name:       "Should return empty requirements by default",
 			configData: trivy.Config{PluginConfig: starboard.PluginConfig{}},
 			expectedRequirements: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("100M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("500m"),
-					corev1.ResourceMemory: resource.MustParse("500M"),
-				},
+				Requests: corev1.ResourceList{},
+				Limits:   corev1.ResourceList{},
 			},
 		},
 		{
 			name: "Should return configured resource requirement",
 			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"trivy.requestCPU":    "800m",
-					"trivy.requestMemory": "200M",
-					"trivy.limitCPU":      "600m",
-					"trivy.limitMemory":   "700M",
+					"trivy.resources.request.cpu":    "800m",
+					"trivy.resources.request.memory": "200M",
+					"trivy.resources.limit.cpu":      "600m",
+					"trivy.resources.limit.memory":   "700M",
 				},
 			}},
 			expectedRequirements: corev1.ResourceRequirements{
@@ -152,24 +146,6 @@ func TestConfig_GetResourceResourceRequirements(t *testing.T) {
 				Limits: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("600m"),
 					corev1.ResourceMemory: resource.MustParse("700M"),
-				},
-			},
-		},
-		{
-			name: "Should return default limits or configured if set",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
-				Data: map[string]string{
-					"trivy.requestMemory": "200M",
-				},
-			}},
-			expectedRequirements: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("200M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("500m"),
-					corev1.ResourceMemory: resource.MustParse("500M"),
 				},
 			},
 		},

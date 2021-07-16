@@ -48,10 +48,10 @@ const (
 	keyTrivyServerToken         = "trivy.serverToken"
 	keyTrivyServerCustomHeaders = "trivy.serverCustomHeaders"
 
-	keyTrivyRequestsCPU    = "trivy.requestCPU"
-	keyTrivyRequestsMemory = "trivy.requestMemory"
-	keyTrivyLimitCPU       = "trivy.limitCPU"
-	keyTrivyLimitMemory    = "trivy.limitMemory"
+	keyTrivyResourcesRequestsCPU    = "trivy.resources.request.cpu"
+	keyTrivyResourcesRequestsMemory = "trivy.resources.request.memory"
+	keyTrivyResourcesLimitCPU       = "trivy.resources.limit.cpu"
+	keyTrivyResourcesLimitMemory    = "trivy.resources.limit.memory"
 )
 
 // Mode describes mode in which Trivy client operates.
@@ -109,34 +109,27 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
+//GetResourceRequirements creates k8s requires/limit fragments from the config
 func (c Config) GetResourceRequirements() corev1.ResourceRequirements {
 	defaultResourceRequirements := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("100m"),
-			corev1.ResourceMemory: resource.MustParse("100M"),
-		},
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("500m"),
-			corev1.ResourceMemory: resource.MustParse("500M"),
-		},
+		Requests: corev1.ResourceList{},
+		Limits:   corev1.ResourceList{},
 	}
 
-	if requestCpu, found := c.Data[keyTrivyRequestsCPU]; found {
-		defaultResourceRequirements.Requests[corev1.ResourceCPU] = resource.MustParse(requestCpu)
-	}
-	if requestMemory, found := c.Data[keyTrivyRequestsMemory]; found {
-		defaultResourceRequirements.Requests[corev1.ResourceMemory] = resource.MustParse(requestMemory)
-	}
-
-	if limitCPU, found := c.Data[keyTrivyLimitCPU]; found {
-		defaultResourceRequirements.Limits[corev1.ResourceCPU] = resource.MustParse(limitCPU)
-	}
-	if limitMemory, found := c.Data[keyTrivyLimitMemory]; found {
-		defaultResourceRequirements.Limits[corev1.ResourceMemory] = resource.MustParse(limitMemory)
-	}
+	c.setResourceLimit(keyTrivyResourcesRequestsCPU, &defaultResourceRequirements.Requests, corev1.ResourceCPU)
+	c.setResourceLimit(keyTrivyResourcesRequestsMemory, &defaultResourceRequirements.Requests, corev1.ResourceMemory)
+	c.setResourceLimit(keyTrivyResourcesLimitCPU, &defaultResourceRequirements.Limits, corev1.ResourceCPU)
+	c.setResourceLimit(keyTrivyResourcesLimitMemory, &defaultResourceRequirements.Limits, corev1.ResourceMemory)
 
 	return defaultResourceRequirements
 }
+
+func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) {
+	if value, found := c.Data[configKey]; found {
+		(*k8sResourceList)[k8sResourceName] = resource.MustParse(value)
+	}
+}
+
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
 // upstream Trivy container image to scan Kubernetes workloads.
 //
