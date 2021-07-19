@@ -152,6 +152,11 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyTrivyImageRef: "docker.io/aquasec/trivy:0.16.0",
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
+
+			keyTrivyResourcesRequestsCPU:    "100m",
+			keyTrivyResourcesRequestsMemory: "100M",
+			keyTrivyResourcesLimitMemory:    "500m",
+			keyTrivyResourcesLimitCPU:       "500M",
 		},
 	})
 }
