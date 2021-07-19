@@ -253,6 +253,11 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 			config: map[string]string{
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":     string(trivy.Standalone),
+
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -497,6 +502,11 @@ func TestScanner_GetScanJobSpec(t *testing.T) {
 				"trivy.imageRef":                     "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                         string(trivy.Standalone),
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -748,6 +758,10 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1017,6 +1031,10 @@ CVE-2019-1543`,
 				"trivy.imageRef":  "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":      string(trivy.ClientServer),
 				"trivy.serverURL": "http://trivy.trivy:4954",
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1190,6 +1208,10 @@ CVE-2019-1543`,
 				"trivy.mode":                         string(trivy.ClientServer),
 				"trivy.serverURL":                    "http://trivy.trivy:4954",
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1371,6 +1393,10 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
