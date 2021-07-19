@@ -118,11 +118,13 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		configData           trivy.Config
+		expectedError        string
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
-			name:       "Should return empty requirements by default",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			name:          "Should return empty requirements by default",
+			configData:    trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
 				Limits:   corev1.ResourceList{},
@@ -138,6 +140,29 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 					"trivy.resources.limit.memory":   "700M",
 				},
 			}},
+			expectedError: "",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("800m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("600m"),
+					corev1.ResourceMemory: resource.MustParse("700M"),
+				},
+			},
+		},
+		{
+			name: "Should return error if resource is not parseable",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"trivy.resources.request.cpu":    "roughly 100",
+					"trivy.resources.request.memory": "200M",
+					"trivy.resources.limit.cpu":      "600m",
+					"trivy.resources.limit.memory":   "700M",
+				},
+			}},
+			expectedError: "Couldn't parse resource definition trivy.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("800m"),
@@ -152,8 +177,13 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resourceRequirement := tc.configData.GetResourceRequirements()
-			assert.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+			resourceRequirement, err := tc.configData.GetResourceRequirements()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+			}
 
 		})
 	}

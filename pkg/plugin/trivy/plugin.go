@@ -110,24 +110,45 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 }
 
 //GetResourceRequirements creates k8s requires/limit fragments from the config
-func (c Config) GetResourceRequirements() corev1.ResourceRequirements {
+func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
 	defaultResourceRequirements := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{},
 		Limits:   corev1.ResourceList{},
 	}
 
-	c.setResourceLimit(keyTrivyResourcesRequestsCPU, &defaultResourceRequirements.Requests, corev1.ResourceCPU)
-	c.setResourceLimit(keyTrivyResourcesRequestsMemory, &defaultResourceRequirements.Requests, corev1.ResourceMemory)
-	c.setResourceLimit(keyTrivyResourcesLimitCPU, &defaultResourceRequirements.Limits, corev1.ResourceCPU)
-	c.setResourceLimit(keyTrivyResourcesLimitMemory, &defaultResourceRequirements.Limits, corev1.ResourceMemory)
+	err := c.setResourceLimit(keyTrivyResourcesRequestsCPU, &defaultResourceRequirements.Requests, corev1.ResourceCPU)
+	if err != nil {
+		return defaultResourceRequirements, err
+	}
 
-	return defaultResourceRequirements
+	err = c.setResourceLimit(keyTrivyResourcesRequestsMemory, &defaultResourceRequirements.Requests, corev1.ResourceMemory)
+	if err != nil {
+		return defaultResourceRequirements, err
+	}
+
+	err = c.setResourceLimit(keyTrivyResourcesLimitCPU, &defaultResourceRequirements.Limits, corev1.ResourceCPU)
+	if err != nil {
+		return defaultResourceRequirements, err
+	}
+
+	err = c.setResourceLimit(keyTrivyResourcesLimitMemory, &defaultResourceRequirements.Limits, corev1.ResourceMemory)
+	if err != nil {
+		return defaultResourceRequirements, err
+	}
+
+	return defaultResourceRequirements, nil
 }
 
-func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) {
+func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) error {
 	if value, found := c.Data[configKey]; found {
-		(*k8sResourceList)[k8sResourceName] = resource.MustParse(value)
+		quantity, err := resource.ParseQuantity(value)
+		if err != nil {
+			return fmt.Errorf("Couldn't parse resource definition %s: %s %v", configKey, value, err)
+		}
+
+		(*k8sResourceList)[k8sResourceName] = quantity
 	}
+	return nil
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
@@ -155,8 +176,8 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 
 			keyTrivyResourcesRequestsCPU:    "100m",
 			keyTrivyResourcesRequestsMemory: "100M",
-			keyTrivyResourcesLimitMemory:    "500m",
-			keyTrivyResourcesLimitCPU:       "500M",
+			keyTrivyResourcesLimitCPU:       "500m",
+			keyTrivyResourcesLimitMemory:    "500M",
 		},
 	})
 }
@@ -228,6 +249,11 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 
 	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
 
+	requirements, err := config.GetResourceRequirements()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
 	initContainer := corev1.Container{
 		Name:                     p.idGenerator.GenerateID(),
 		Image:                    trivyImageRef,
@@ -291,7 +317,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			"--cache-dir",
 			"/var/lib/trivy",
 		},
-		Resources: config.GetResourceRequirements(),
+		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      sharedVolumeName,
@@ -474,6 +500,11 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			return corev1.PodSpec{}, nil, err
 		}
 
+		resourceRequirements, err := config.GetResourceRequirements()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    trivyImageRef,
@@ -492,7 +523,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 				"json",
 				c.Image,
 			},
-			Resources:    config.GetResourceRequirements(),
+			Resources:    resourceRequirements,
 			VolumeMounts: volumeMounts,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               pointer.BoolPtr(false),
@@ -739,6 +770,11 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			})
 		}
 
+		requirements, err := config.GetResourceRequirements()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
 			Image:                    trivyImageRef,
@@ -758,7 +794,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 				container.Image,
 			},
 			VolumeMounts: volumeMounts,
-			Resources:    config.GetResourceRequirements(),
+			Resources:    requirements,
 		})
 	}
 
