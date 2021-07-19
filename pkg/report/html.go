@@ -34,7 +34,7 @@ func NewWorkloadReporter(clock ext.Clock, client client.Client) WorkloadReporter
 
 func (h *workloadReporter) RetrieveData(workload kube.Object) (templates.WorkloadReport, error) {
 	ctx := context.Background()
-	configAuditReport, err := h.configAuditReportsReader.FindByOwnerInHierarchy(ctx, workload)
+	configAuditReport, err := h.configAuditReportsReader.FindReportByOwnerInHierarchy(ctx, workload)
 	if err != nil {
 		return templates.WorkloadReport{}, err
 	}
