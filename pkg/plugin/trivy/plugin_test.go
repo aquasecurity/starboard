@@ -192,7 +192,7 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 	}
 }
 
-func TestScanner_GetScanJobSpec(t *testing.T) {
+func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	testCases := []struct {
 		name string
@@ -1628,7 +1628,7 @@ var (
 	}
 )
 
-func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
+func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "starboard-trivy-config",
