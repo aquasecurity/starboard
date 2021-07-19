@@ -114,7 +114,7 @@ func TestConfig_GetMode(t *testing.T) {
 	}
 }
 
-func TestConfig_GetResourceResourceRequirements(t *testing.T) {
+func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		configData           trivy.Config
