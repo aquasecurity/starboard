@@ -20,7 +20,7 @@ data:
   trivy.mode: Standalone
   trivy.resources.request.cpu: 100m
   trivy.resources.request.memory: 100M
-  trivy.resources.limit.cpu: 500M
+  trivy.resources.limit.cpu: 500m
   trivy.resources.limit.memory: 500M
 ---
 apiVersion: v1
