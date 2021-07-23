@@ -162,7 +162,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 					"trivy.resources.limit.memory":   "700M",
 				},
 			}},
-			expectedError: "Couldn't parse resource definition trivy.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
+			expectedError: "parsing resource definition trivy.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("800m"),
