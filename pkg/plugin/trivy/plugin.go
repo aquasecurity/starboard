@@ -109,34 +109,34 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
-//GetResourceRequirements creates k8s requires/limit fragments from the config
+// GetResourceRequirements creates v1.ResourceRequirements from the Config.
 func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
-	defaultResourceRequirements := corev1.ResourceRequirements{
+	requirements := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{},
 		Limits:   corev1.ResourceList{},
 	}
 
-	err := c.setResourceLimit(keyTrivyResourcesRequestsCPU, &defaultResourceRequirements.Requests, corev1.ResourceCPU)
+	err := c.setResourceLimit(keyTrivyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
 	if err != nil {
-		return defaultResourceRequirements, err
+		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesRequestsMemory, &defaultResourceRequirements.Requests, corev1.ResourceMemory)
+	err = c.setResourceLimit(keyTrivyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
 	if err != nil {
-		return defaultResourceRequirements, err
+		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesLimitCPU, &defaultResourceRequirements.Limits, corev1.ResourceCPU)
+	err = c.setResourceLimit(keyTrivyResourcesLimitCPU, &requirements.Limits, corev1.ResourceCPU)
 	if err != nil {
-		return defaultResourceRequirements, err
+		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesLimitMemory, &defaultResourceRequirements.Limits, corev1.ResourceMemory)
+	err = c.setResourceLimit(keyTrivyResourcesLimitMemory, &requirements.Limits, corev1.ResourceMemory)
 	if err != nil {
-		return defaultResourceRequirements, err
+		return requirements, err
 	}
 
-	return defaultResourceRequirements, nil
+	return requirements, nil
 }
 
 func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) error {
