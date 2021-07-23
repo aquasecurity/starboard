@@ -57,7 +57,7 @@ NAME is the name of a particular Kubernetes workload.
 				return err
 			}
 			reader := configauditreport.NewReadWriter(kubeClient)
-			report, err := reader.FindByOwnerInHierarchy(ctx, workload)
+			report, err := reader.FindReportByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return nil
 			}
