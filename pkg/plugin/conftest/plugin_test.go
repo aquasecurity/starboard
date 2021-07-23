@@ -28,44 +28,48 @@ var (
 )
 
 func TestPlugin_Init(t *testing.T) {
-	g := NewGomegaWithT(t)
 
-	client := fake.NewClientBuilder().WithObjects().Build()
+	t.Run("Should create the default config", func(t *testing.T) {
 
-	instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		g := NewGomegaWithT(t)
 
-	pluginContext := starboard.NewPluginContext().
-		WithName(string(starboard.Conftest)).
-		WithNamespace("starboard-ns").
-		WithServiceAccountName("starboard-sa").
-		WithClient(client).
-		Get()
-	err := instance.Init(pluginContext)
-	g.Expect(err).ToNot(HaveOccurred())
+		client := fake.NewClientBuilder().WithObjects().Build()
 
-	var cm corev1.ConfigMap
-	err = client.Get(context.Background(), types.NamespacedName{
-		Namespace: "starboard-ns",
-		Name:      "starboard-conftest-config",
-	}, &cm)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(cm).To(Equal(corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "starboard-conftest-config",
+		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(string(starboard.Conftest)).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+		err := instance.Init(pluginContext)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
 			Namespace: "starboard-ns",
-			Labels: map[string]string{
-				"app.kubernetes.io/managed-by": "starboard",
+			Name:      "starboard-conftest-config",
+		}, &cm)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(cm).To(Equal(corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
 			},
-			ResourceVersion: "1",
-		},
-		Data: map[string]string{
-			"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
-		},
-	}))
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "starboard-conftest-config",
+				Namespace: "starboard-ns",
+				Labels: map[string]string{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
+				ResourceVersion: "1",
+			},
+			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+			},
+		}))
+	})
 }
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {

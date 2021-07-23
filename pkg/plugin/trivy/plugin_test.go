@@ -1,6 +1,7 @@
 package trivy_test
 
 import (
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -267,7 +269,56 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 	}
 }
 
-func TestScanner_GetScanJobSpec(t *testing.T) {
+func TestPlugin_Init(t *testing.T) {
+
+	t.Run("Should create the default config", func(t *testing.T) {
+		client := fake.NewClientBuilder().WithObjects().Build()
+
+		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator())
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(trivy.Plugin).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+		err := instance.Init(pluginContext)
+		require.NoError(t, err)
+
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
+			Namespace: "starboard-ns",
+			Name:      "starboard-trivy-config",
+		}, &cm)
+		require.NoError(t, err)
+		assert.Equal(t, corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "starboard-trivy-config",
+				Namespace: "starboard-ns",
+				Labels: map[string]string{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
+				ResourceVersion: "1",
+			},
+			Data: map[string]string{
+				"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
+				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+				"trivy.mode":     "Standalone",
+
+				"trivy.resources.request.cpu":    "100m",
+				"trivy.resources.request.memory": "100M",
+				"trivy.resources.limit.cpu":      "500m",
+				"trivy.resources.limit.memory":   "500M",
+			},
+		}, cm)
+	})
+}
+
+func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	testCases := []struct {
 		name string
@@ -1058,9 +1109,9 @@ CVE-2019-1543`,
 		{
 			name: "ClientServer mode without insecure registry",
 			config: map[string]string{
-				"trivy.imageRef":  "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":      string(trivy.ClientServer),
-				"trivy.serverURL": "http://trivy.trivy:4954",
+				"trivy.imageRef":                 "docker.io/aquasec/trivy:0.14.0",
+				"trivy.mode":                     string(trivy.ClientServer),
+				"trivy.serverURL":                "http://trivy.trivy:4954",
 				"trivy.resources.request.cpu":    "100m",
 				"trivy.resources.request.memory": "100M",
 				"trivy.resources.limit.cpu":      "500m",
@@ -1238,10 +1289,10 @@ CVE-2019-1543`,
 				"trivy.mode":                         string(trivy.ClientServer),
 				"trivy.serverURL":                    "http://trivy.trivy:4954",
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.request.cpu":        "100m",
+				"trivy.resources.request.memory":     "100M",
+				"trivy.resources.limit.cpu":          "500m",
+				"trivy.resources.limit.memory":       "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1627,7 +1678,7 @@ CVE-2019-1543`,
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			pluginContext := starboard.NewPluginContext().
-				WithName("Trivy").
+				WithName(trivy.Plugin).
 				WithNamespace("starboard-ns").
 				WithServiceAccountName("starboard-sa").
 				WithClient(fake.NewClientBuilder().WithObjects(
@@ -1729,7 +1780,7 @@ var (
 	}
 )
 
-func TestScanner_ParseVulnerabilityReportData(t *testing.T) {
+func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "starboard-trivy-config",
