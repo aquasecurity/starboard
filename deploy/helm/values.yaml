@@ -92,6 +92,14 @@ trivy:
   httpsProxy:
   noProxy:
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+#k8s resource requests and limits
+  resources:
+    request:
+      cpu: 100m
+      memory: 100M
+    limit:
+      cpu: 500m
+      memory: 500M
 
 kubeBench:
   imageRef: docker.io/aquasec/kube-bench:0.6.3
