@@ -222,7 +222,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 
 func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
 	// TODO FindByOwner should accept optional label selector to further narrow down search results
-	report, err := r.ReadWriter.FindByOwner(ctx, owner)
+	report, err := r.ReadWriter.FindReportByOwner(ctx, owner)
 	if err != nil {
 		return false, err
 	}
@@ -342,7 +342,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return err
 	}
 
-	err = r.ReadWriter.Write(ctx, report)
+	err = r.ReadWriter.WriteReport(ctx, report)
 	if err != nil {
 		return err
 	}

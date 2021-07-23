@@ -12,25 +12,35 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Writer is the interface that wraps the basic Write method.
-//
-// Write creates or updates the given v1alpha1.ConfigAuditReport instance.
+// Writer is the interface for saving v1alpha1.ClusterConfigAuditReport
+// and v1alpha1.ConfigAuditReport instances.
 type Writer interface {
-	Write(ctx context.Context, report v1alpha1.ConfigAuditReport) error
+
+	// WriteReport creates or updates the given v1alpha1.ConfigAuditReport instance.
+	WriteReport(ctx context.Context, report v1alpha1.ConfigAuditReport) error
+
+	// WriteClusterReport creates or updates the given v1alpha1.ClusterConfigAuditReport instance.
+	WriteClusterReport(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error
 }
 
-// Reader is the interface that wraps methods for finding v1alpha1.ConfigAuditReport objects.
-//
-// FindByOwner returns a v1alpha1.ConfigAuditReport owned by the given
-// kube.Object or nil if the report is not found.
-//
-// FindByOwnerInHierarchy is similar to FindByOwner except that it tries to lookup
-// a v1alpha1.ConfigAuditReport object owned by related Kubernetes objects.
-// For example, if the given owner is a Deployment, but a report is owned by the
-// active ReplicaSet (current revision) this method will return the report.
+// Reader is the interface that wraps methods for finding v1alpha1.ConfigAuditReport
+// and v1alpha1.ClusterConfigAuditReport objects.
+// TODO(danielpacak): Consider returning starboard.ResourceNotFound error instead of returning nil.
 type Reader interface {
-	FindByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
-	FindByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
+
+	// FindReportByOwner returns a v1alpha1.ConfigAuditReport owned by the given
+	// kube.Object or nil if the report is not found.
+	FindReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
+
+	// FindReportByOwnerInHierarchy is similar to FindReportByOwner except that it tries to lookup
+	// a v1alpha1.ConfigAuditReport object owned by related Kubernetes objects.
+	// For example, if the given owner is a Deployment, but a report is owned by the
+	// active ReplicaSet (current revision) this method will return the report.
+	FindReportByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
+
+	// FindClusterReportByOwner returns a v1alpha1.ClusterConfigAuditReport owned by the given
+	// kube.Object or nil if the report is not found.
+	FindClusterReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ClusterConfigAuditReport, error)
 }
 
 type ReadWriter interface {
@@ -51,7 +61,7 @@ func NewReadWriter(client client.Client) ReadWriter {
 	}
 }
 
-func (r *readWriter) Write(ctx context.Context, report v1alpha1.ConfigAuditReport) error {
+func (r *readWriter) WriteReport(ctx context.Context, report v1alpha1.ConfigAuditReport) error {
 	var existing v1alpha1.ConfigAuditReport
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      report.Name,
@@ -73,7 +83,28 @@ func (r *readWriter) Write(ctx context.Context, report v1alpha1.ConfigAuditRepor
 	return err
 }
 
-func (r *readWriter) FindByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
+func (r *readWriter) WriteClusterReport(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error {
+	var existing v1alpha1.ClusterConfigAuditReport
+	err := r.Get(ctx, types.NamespacedName{
+		Name: report.Name,
+	}, &existing)
+
+	if err == nil {
+		copied := existing.DeepCopy()
+		copied.Labels = report.Labels
+		copied.Report = report.Report
+
+		return r.Update(ctx, copied)
+	}
+
+	if errors.IsNotFound(err) {
+		return r.Create(ctx, &report)
+	}
+
+	return err
+}
+
+func (r *readWriter) FindReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
 	var list v1alpha1.ConfigAuditReportList
 
 	err := r.List(ctx, &list, client.MatchingLabels{
@@ -92,8 +123,8 @@ func (r *readWriter) FindByOwner(ctx context.Context, owner kube.Object) (*v1alp
 	return nil, nil
 }
 
-func (r *readWriter) FindByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
-	report, err := r.FindByOwner(ctx, owner)
+func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
+	report, err := r.FindReportByOwner(ctx, owner)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +135,7 @@ func (r *readWriter) FindByOwnerInHierarchy(ctx context.Context, owner kube.Obje
 		if err != nil {
 			return nil, fmt.Errorf("getting replicaset related to %s/%s: %w", owner.Kind, owner.Name, err)
 		}
-		report, err = r.FindByOwner(ctx, kube.Object{
+		report, err = r.FindReportByOwner(ctx, kube.Object{
 			Kind:      kube.KindReplicaSet,
 			Name:      rsName,
 			Namespace: owner.Namespace,
@@ -114,6 +145,24 @@ func (r *readWriter) FindByOwnerInHierarchy(ctx context.Context, owner kube.Obje
 
 	if report != nil {
 		return report.DeepCopy(), nil
+	}
+	return nil, nil
+}
+
+func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ClusterConfigAuditReport, error) {
+	var list v1alpha1.ClusterConfigAuditReportList
+
+	err := r.List(ctx, &list, client.MatchingLabels{
+		starboard.LabelResourceKind: string(owner.Kind),
+		starboard.LabelResourceName: owner.Name,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Only one config audit per specific workload exists on the cluster
+	if len(list.Items) > 0 {
+		return &list.DeepCopy().Items[0], nil
 	}
 	return nil, nil
 }
