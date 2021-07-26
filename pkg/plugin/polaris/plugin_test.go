@@ -12,6 +12,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -27,55 +28,180 @@ var (
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
 
+func TestConfig_GetResourceRequirements(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		configData           polaris.Config
+		expectedError        string
+		expectedRequirements corev1.ResourceRequirements
+	}{
+		{
+			name:          "Should return empty requirements by default",
+			configData:    polaris.Config{PluginConfig: starboard.PluginConfig{}},
+			expectedError: "",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{},
+				Limits:   corev1.ResourceList{},
+			},
+		},
+		{
+			name: "Should return configured resource requirement",
+			configData: polaris.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"polaris.resources.request.cpu":    "800m",
+					"polaris.resources.request.memory": "200M",
+					"polaris.resources.limit.cpu":      "600m",
+					"polaris.resources.limit.memory":   "700M",
+				},
+			}},
+			expectedError: "",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("800m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("600m"),
+					corev1.ResourceMemory: resource.MustParse("700M"),
+				},
+			},
+		},
+		{
+			name: "Should return error if resource is not parseable",
+			configData: polaris.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"polaris.resources.request.cpu":    "roughly 100",
+					"polaris.resources.request.memory": "200M",
+					"polaris.resources.limit.cpu":      "600m",
+					"polaris.resources.limit.memory":   "700M",
+				},
+			}},
+			expectedError: "parsing resource definition polaris.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("800m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("600m"),
+					corev1.ResourceMemory: resource.MustParse("700M"),
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resourceRequirement, err := tc.configData.GetResourceRequirements()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+			}
+
+		})
+	}
+}
+
 func TestPlugin_Init(t *testing.T) {
-	g := NewGomegaWithT(t)
 
-	client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "starboard-polaris-config",
-			Namespace:       "starboard-ns",
-			ResourceVersion: "0",
-		},
-		Data: map[string]string{
-			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
-			"polaris.config.yaml": `checks:
+	t.Run("Should create the default config", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		client := fake.NewClientBuilder().Build()
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(string(starboard.Polaris)).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+
+		instance := polaris.NewPlugin(fixedClock)
+		err := instance.Init(pluginContext)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
+			Namespace: "starboard-ns",
+			Name:      "starboard-polaris-config",
+		}, &cm)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(cm).To(Equal(corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "starboard-polaris-config",
+				Namespace: "starboard-ns",
+				Labels: map[string]string{
+					"app.kubernetes.io/managed-by": "starboard",
+				},
+				ResourceVersion: "1",
+			},
+			Data: map[string]string{
+				"polaris.imageRef":                 "quay.io/fairwinds/polaris:3.2",
+				"polaris.config.yaml":              polaris.DefaultConfigYAML,
+				"polaris.resources.request.cpu":    "50m",
+				"polaris.resources.request.memory": "50M",
+				"polaris.resources.limit.cpu":      "300m",
+				"polaris.resources.limit.memory":   "300M",
+			},
+		}))
+	})
+
+	t.Run("Should not overwrite existing config", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "starboard-polaris-config",
+				Namespace:       "starboard-ns",
+				ResourceVersion: "0",
+			},
+			Data: map[string]string{
+				"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
+				"polaris.config.yaml": `checks:
   cpuRequestsMissing: warning`,
-		},
-	}).Build()
+			},
+		}).Build()
 
-	pluginContext := starboard.NewPluginContext().
-		WithName(string(starboard.Polaris)).
-		WithNamespace("starboard-ns").
-		WithServiceAccountName("starboard-sa").
-		WithClient(client).
-		Get()
+		pluginContext := starboard.NewPluginContext().
+			WithName(string(starboard.Polaris)).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
 
-	instance := polaris.NewPlugin(fixedClock)
-	err := instance.Init(pluginContext)
-	g.Expect(err).ToNot(HaveOccurred())
+		instance := polaris.NewPlugin(fixedClock)
+		err := instance.Init(pluginContext)
+		g.Expect(err).ToNot(HaveOccurred())
 
-	var cm corev1.ConfigMap
-	err = client.Get(context.Background(), types.NamespacedName{
-		Namespace: "starboard-ns",
-		Name:      "starboard-polaris-config",
-	}, &cm)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(cm).To(Equal(corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "starboard-polaris-config",
-			Namespace:       "starboard-ns",
-			ResourceVersion: "0",
-		},
-		Data: map[string]string{
-			"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
-			"polaris.config.yaml": `checks:
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
+			Namespace: "starboard-ns",
+			Name:      "starboard-polaris-config",
+		}, &cm)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(cm).To(Equal(corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "starboard-polaris-config",
+				Namespace:       "starboard-ns",
+				ResourceVersion: "0",
+			},
+			Data: map[string]string{
+				"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
+				"polaris.config.yaml": `checks:
   cpuRequestsMissing: warning`,
-		},
-	}))
+			},
+		}))
+	})
+
 }
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
@@ -90,7 +216,11 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		{
 			name: "Should return job spec for Deployment",
 			config: map[string]string{
-				"polaris.imageRef": "quay.io/fairwinds/polaris:3.2",
+				"polaris.imageRef":                 "quay.io/fairwinds/polaris:3.2",
+				"polaris.resources.request.cpu":    "50m",
+				"polaris.resources.request.memory": "50M",
+				"polaris.resources.limit.cpu":      "300m",
+				"polaris.resources.limit.memory":   "300M",
 			},
 			obj: &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
@@ -317,6 +447,27 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		pluginContext2 := newPluginContextWithConfigData(map[string]string{
 			"brown": "fox",
 			"foo":   "bar",
+		})
+
+		plugin := polaris.NewPlugin(fixedClock)
+		hash1, err := plugin.GetConfigHash(pluginContext1)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		hash2, err := plugin.GetConfigHash(pluginContext2)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(hash1).To(Equal(hash2))
+	})
+
+	t.Run("Should exclude resource requirements from calculating hash", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		pluginContext1 := newPluginContextWithConfigData(map[string]string{
+			"foo":                           "bar",
+			"polaris.resources.request.cpu": "50m",
+		})
+		pluginContext2 := newPluginContextWithConfigData(map[string]string{
+			"foo":                           "bar",
+			"polaris.resources.request.cpu": "60m",
 		})
 
 		plugin := polaris.NewPlugin(fixedClock)

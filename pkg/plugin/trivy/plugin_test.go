@@ -316,6 +316,60 @@ func TestPlugin_Init(t *testing.T) {
 			},
 		}, cm)
 	})
+
+	t.Run("Should not overwrite existing config", func(t *testing.T) {
+		client := fake.NewClientBuilder().WithObjects(
+			&corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ConfigMap",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "starboard-trivy-config",
+					Namespace:       "starboard-ns",
+					ResourceVersion: "1",
+				},
+				Data: map[string]string{
+					"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
+					"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+					"trivy.mode":     "Standalone",
+				},
+			}).Build()
+
+		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator())
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(trivy.Plugin).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+		err := instance.Init(pluginContext)
+		require.NoError(t, err)
+
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
+			Namespace: "starboard-ns",
+			Name:      "starboard-trivy-config",
+		}, &cm)
+		require.NoError(t, err)
+		assert.Equal(t, corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "starboard-trivy-config",
+				Namespace:       "starboard-ns",
+				ResourceVersion: "1",
+			},
+			Data: map[string]string{
+				"trivy.imageRef": "docker.io/aquasec/trivy:0.16.0",
+				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+				"trivy.mode":     "Standalone",
+			},
+		}, cm)
+	})
 }
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
