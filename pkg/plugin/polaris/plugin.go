@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -23,7 +24,17 @@ const (
 )
 
 const (
-	polarisConfigYAML = `checks:
+	keyImageRef                = "polaris.imageRef"
+	keyConfigYaml              = "polaris.config.yaml"
+	keyResourcesRequestsCPU    = "polaris.resources.request.cpu"
+	keyResourcesRequestsMemory = "polaris.resources.request.memory"
+	keyResourcesLimitCPU       = "polaris.resources.limit.cpu"
+	keyResourcesLimitMemory    = "polaris.resources.limit.memory"
+)
+
+const (
+	// DefaultConfigYAML the default Polaris config YAML as string literal.
+	DefaultConfigYAML = `checks:
   # reliability
   multipleReplicasForDeployment: ignore
   priorityClassNotSet: ignore
@@ -209,23 +220,80 @@ exemptions:
 `
 )
 
+// Config defines configuration params for this plugin.
+type Config struct {
+	starboard.PluginConfig
+}
+
+// GetImageRef returns upstream Polaris container image reference.
+func (c Config) GetImageRef() (string, error) {
+	return c.GetRequiredData(keyImageRef)
+}
+
+// GetResourceRequirements constructs ResourceRequirements from the Config.
+func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
+	requirements := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{},
+		Limits:   corev1.ResourceList{},
+	}
+
+	err := c.setResourceLimit(keyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitCPU, &requirements.Limits, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitMemory, &requirements.Limits, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	return requirements, nil
+}
+
+func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) error {
+	if value, found := c.Data[configKey]; found {
+		quantity, err := resource.ParseQuantity(value)
+		if err != nil {
+			return fmt.Errorf("parsing resource definition %s: %s %v", configKey, value, err)
+		}
+
+		(*k8sResourceList)[k8sResourceName] = quantity
+	}
+	return nil
+}
+
 type plugin struct {
 	clock ext.Clock
 }
 
 // NewPlugin constructs a new configauditreport.Plugin, which is using an
-// official Polaris container image to audit Kubernetes workloads.
+// upstream Polaris container image to audit configuration of Kubernetes workloads.
 func NewPlugin(clock ext.Clock) configauditreport.Plugin {
 	return &plugin{
 		clock: clock,
 	}
 }
 
+// Init ensures the default Config required by this plugin.
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			"polaris.imageRef":    "quay.io/fairwinds/polaris:3.2",
-			"polaris.config.yaml": polarisConfigYAML,
+			keyImageRef:                "quay.io/fairwinds/polaris:3.2",
+			keyConfigYaml:              DefaultConfigYAML,
+			keyResourcesRequestsCPU:    "50m",
+			keyResourcesRequestsMemory: "50M",
+			keyResourcesLimitCPU:       "300m",
+			keyResourcesLimitMemory:    "300M",
 		},
 	})
 }
@@ -235,21 +303,36 @@ func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return kube.ComputeHash(cm.Data), nil
+	data := make(map[string]string)
+	for key, value := range cm.Data {
+		if strings.HasPrefix(key, "polaris.resources.") {
+			continue
+		}
+		data[key] = value
+	}
+	return kube.ComputeHash(data), nil
 }
 
-func (p *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
-	config, err := ctx.GetConfig()
+func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
-		return "", err
+		return Config{}, fmt.Errorf("getting config: %w", err)
 	}
-	return config.GetRequiredData("polaris.imageRef")
+	return Config{PluginConfig: pluginConfig}, nil
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
-	imageRef, err := p.getImageRef(ctx)
+	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return corev1.PodSpec{}, nil, err
+		return corev1.PodSpec{}, nil, fmt.Errorf("constructing config from plugin context: %w", err)
+	}
+	imageRef, err := config.GetImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting image ref: %w", err)
+	}
+	requirements, err := config.GetResourceRequirements()
+	if err != nil {
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting resource requirements: %w", err)
 	}
 	sourceName := p.sourceNameFrom(obj)
 
@@ -276,16 +359,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 				Image:                    imageRef,
 				ImagePullPolicy:          corev1.PullIfNotPresent,
 				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("300m"),
-						corev1.ResourceMemory: resource.MustParse("300M"),
-					},
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("50m"),
-						corev1.ResourceMemory: resource.MustParse("50M"),
-					},
-				},
+				Resources:                requirements,
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name:      configVolume,
@@ -316,35 +390,24 @@ func (p *plugin) GetContainerName() string {
 }
 
 func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+	config, err := p.newConfigFrom(ctx)
+	if err != nil {
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("constructing config from plugin context: %w", err)
+	}
 	var report Report
-	err := json.NewDecoder(logsReader).Decode(&report)
+	err = json.NewDecoder(logsReader).Decode(&report)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, err
 	}
-	return p.configAuditReportDataFrom(ctx, report.Results[0])
-}
 
-func (p *plugin) sourceNameFrom(obj client.Object) string {
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	group := gvk.Group
-	if len(group) > 0 {
-		group = "." + group
-	}
-	return fmt.Sprintf("%s/%s%s/%s/%s",
-		obj.GetNamespace(),
-		gvk.Kind,
-		group,
-		gvk.Version,
-		obj.GetName(),
-	)
-}
-
-func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result Result) (v1alpha1.ConfigAuditReportData, error) {
 	var checks []v1alpha1.Check
 	var podChecks []v1alpha1.Check
 	containerNameToChecks := make(map[string][]v1alpha1.Check)
 
-	for _, pr := range result.PodResult.Results {
+	if len(report.Results) != 1 {
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("unexpected report results count, got: %d, want: %d", len(report.Results), 1)
+	}
+	for _, pr := range report.Results[0].PodResult.Results {
 		check := v1alpha1.Check{
 			ID:       pr.ID,
 			Message:  pr.Message,
@@ -356,7 +419,7 @@ func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result R
 		podChecks = append(podChecks, check)
 	}
 
-	for _, cr := range result.PodResult.ContainerResults {
+	for _, cr := range report.Results[0].PodResult.ContainerResults {
 		var containerChecks []v1alpha1.Check
 		for _, crr := range cr.Results {
 			containerChecks = append(containerChecks, v1alpha1.Check{
@@ -376,14 +439,14 @@ func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result R
 		containerNameToChecks[cr.Name] = containerChecks
 	}
 
-	imageRef, err := p.getImageRef(ctx)
+	imageRef, err := config.GetImageRef()
 	if err != nil {
-		return v1alpha1.ConfigAuditReportData{}, err
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting image ref: %w", err)
 	}
 
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.ConfigAuditReportData{}, err
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting version from image ref: %w", err)
 	}
 
 	return v1alpha1.ConfigAuditReportData{
@@ -399,6 +462,21 @@ func (p *plugin) configAuditReportDataFrom(ctx starboard.PluginContext, result R
 		PodChecks:       podChecks,
 		ContainerChecks: containerNameToChecks,
 	}, nil
+}
+
+func (p *plugin) sourceNameFrom(obj client.Object) string {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	group := gvk.Group
+	if len(group) > 0 {
+		group = "." + group
+	}
+	return fmt.Sprintf("%s/%s%s/%s/%s",
+		obj.GetNamespace(),
+		gvk.Kind,
+		group,
+		gvk.Version,
+		obj.GetName(),
+	)
 }
 
 func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChecks map[string][]v1alpha1.Check) v1alpha1.ConfigAuditSummary {

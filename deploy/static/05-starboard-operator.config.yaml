@@ -4,19 +4,31 @@ kind: ConfigMap
 metadata:
   name: starboard
   namespace: starboard-operator
+  labels:
+    "app.kubernetes.io/managed-by": "starboard"
 data:
   vulnerabilityReports.scanner: Trivy
   configAuditReports.scanner: Polaris
   kube-bench.imageRef: docker.io/aquasec/kube-bench:0.6.3
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard
+  namespace: starboard-operator
+  labels:
+    "app.kubernetes.io/managed-by": "starboard"
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-trivy-config
   namespace: starboard-operator
+  labels:
+    "app.kubernetes.io/managed-by": "starboard"
 data:
-  trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.imageRef: docker.io/aquasec/trivy:0.16.0
+  trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.mode: Standalone
   trivy.resources.request.cpu: 100m
   trivy.resources.request.memory: 100M
@@ -28,8 +40,14 @@ kind: ConfigMap
 metadata:
   name: starboard-polaris-config
   namespace: starboard-operator
+  labels:
+    "app.kubernetes.io/managed-by": "starboard"
 data:
   polaris.imageRef: quay.io/fairwinds/polaris:3.2
+  polaris.resources.request.cpu: "50m"
+  polaris.resources.request.memory: "50M"
+  polaris.resources.limit.cpu: "300m"
+  polaris.resources.limit.memory: "300M"
   polaris.config.yaml: |
     checks:
       # reliability
@@ -214,9 +232,3 @@ data:
         - kube-hunter
         rules:
         - runAsRootAllowed
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: starboard
-  namespace: starboard-operator

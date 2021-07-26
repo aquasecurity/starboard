@@ -24,11 +24,6 @@ const (
 	Plugin = "Trivy"
 )
 
-type plugin struct {
-	clock       ext.Clock
-	idGenerator ext.IDGenerator
-}
-
 const (
 	keyTrivyImageRef               = "trivy.imageRef"
 	keyTrivyMode                   = "trivy.mode"
@@ -62,11 +57,12 @@ const (
 	ClientServer Mode = "ClientServer"
 )
 
-// Config defines configuration params for the Trivy vulnerabilityreport.Plugin.
+// Config defines configuration params for this plugin.
 type Config struct {
 	starboard.PluginConfig
 }
 
+// GetImageRef returns upstream Trivy container image reference.
 func (c Config) GetImageRef() (string, error) {
 	return c.GetRequiredData(keyTrivyImageRef)
 }
@@ -109,7 +105,7 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
-// GetResourceRequirements creates v1.ResourceRequirements from the Config.
+// GetResourceRequirements creates ResourceRequirements from the Config.
 func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
 	requirements := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{},
@@ -149,6 +145,11 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 		(*k8sResourceList)[k8sResourceName] = quantity
 	}
 	return nil
+}
+
+type plugin struct {
+	clock       ext.Clock
+	idGenerator ext.IDGenerator
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
