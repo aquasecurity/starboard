@@ -113,6 +113,17 @@ $ kubectl get configauditreport deployment-nginx -o jsonpath='{.report}' | jq
     The steps for configuring Conftest with Starboard CLI and Starboard Operator are the same except the namespace
     in which the `starboard-conftest-config` ConfigMap is created.
 
+## Settings
+
+| CONFIGMAP KEY                        | DEFAULT                                      | DESCRIPTION |
+| ------------------------------------ | -------------------------------------------- | ----------- |
+| `conftest.imageRef`                  | `docker.io/openpolicyagent/conftest:v0.25.0` | Conftest image reference |
+| `conftest.resources.requests.cpu`    | `50m`                                        | The minimum amount of CPU required to run Conftest scanner pod. |
+| `conftest.resources.requests.memory` | `50M`                                        | The minimum amount of memory required to run Conftest scanner pod. |
+| `conftest.resources.limits.cpu`      | `300m`                                       | The maximum amount of CPU allowed to run Conftest scanner pod. |
+| `conftest.resources.limits.memory`   | `300M`                                       | The maximum amount of memory allowed to run Conftest scanner pod. |
+
+
 [OPA]: https://www.openpolicyagent.org
 [Conftest]: https://github.com/open-policy-agent/conftest
 [AppShield]: https://github.com/aquasecurity/appshield
