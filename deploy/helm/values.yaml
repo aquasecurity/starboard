@@ -92,12 +92,12 @@ trivy:
   httpsProxy:
   noProxy:
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-#k8s resource requests and limits
+  # resources resource requests and limits
   resources:
-    request:
+    requests:
       cpu: 100m
       memory: 100M
-    limit:
+    limits:
       cpu: 500m
       memory: 500M
 
