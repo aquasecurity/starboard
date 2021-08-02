@@ -119,13 +119,15 @@ func TestConfig_GetMode(t *testing.T) {
 func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		configData           trivy.Config
+		config               trivy.Config
 		expectedError        string
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
-			name:          "Should return empty requirements by default",
-			configData:    trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			name: "Should return empty requirements by default",
+			config: trivy.Config{
+				PluginConfig: starboard.PluginConfig{},
+			},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -134,14 +136,16 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
-				Data: map[string]string{
-					"trivy.resources.request.cpu":    "800m",
-					"trivy.resources.request.memory": "200M",
-					"trivy.resources.limit.cpu":      "600m",
-					"trivy.resources.limit.memory":   "700M",
+			config: trivy.Config{
+				PluginConfig: starboard.PluginConfig{
+					Data: map[string]string{
+						"trivy.resources.requests.cpu":    "800m",
+						"trivy.resources.requests.memory": "200M",
+						"trivy.resources.limits.cpu":      "600m",
+						"trivy.resources.limits.memory":   "700M",
+					},
 				},
-			}},
+			},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
@@ -156,37 +160,25 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
-				Data: map[string]string{
-					"trivy.resources.request.cpu":    "roughly 100",
-					"trivy.resources.request.memory": "200M",
-					"trivy.resources.limit.cpu":      "600m",
-					"trivy.resources.limit.memory":   "700M",
-				},
-			}},
-			expectedError: "parsing resource definition trivy.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
-			expectedRequirements: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("800m"),
-					corev1.ResourceMemory: resource.MustParse("200M"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("600m"),
-					corev1.ResourceMemory: resource.MustParse("700M"),
+			config: trivy.Config{
+				PluginConfig: starboard.PluginConfig{
+					Data: map[string]string{
+						"trivy.resources.requests.cpu": "roughly 100",
+					},
 				},
 			},
+			expectedError: "parsing resource definition trivy.resources.requests.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resourceRequirement, err := tc.configData.GetResourceRequirements()
+			resourceRequirement, err := tc.config.GetResourceRequirements()
 			if tc.expectedError != "" {
 				require.EqualError(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+				assert.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
 			}
-
 		})
 	}
 }
@@ -309,10 +301,10 @@ func TestPlugin_Init(t *testing.T) {
 				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 				"trivy.mode":     "Standalone",
 
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 		}, cm)
 	})
@@ -389,10 +381,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":     string(trivy.Standalone),
 
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -638,10 +630,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.mode":                         string(trivy.Standalone),
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
 
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -893,10 +885,10 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1166,10 +1158,10 @@ CVE-2019-1543`,
 				"trivy.imageRef":                 "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                     string(trivy.ClientServer),
 				"trivy.serverURL":                "http://trivy.trivy:4954",
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1343,10 +1335,10 @@ CVE-2019-1543`,
 				"trivy.mode":                         string(trivy.ClientServer),
 				"trivy.serverURL":                    "http://trivy.trivy:4954",
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
-				"trivy.resources.request.cpu":        "100m",
-				"trivy.resources.request.memory":     "100M",
-				"trivy.resources.limit.cpu":          "500m",
-				"trivy.resources.limit.memory":       "500M",
+				"trivy.resources.requests.cpu":        "100m",
+				"trivy.resources.requests.memory":     "100M",
+				"trivy.resources.limits.cpu":          "500m",
+				"trivy.resources.limits.memory":       "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1528,10 +1520,10 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
-				"trivy.resources.request.cpu":    "100m",
-				"trivy.resources.request.memory": "100M",
-				"trivy.resources.limit.cpu":      "500m",
-				"trivy.resources.limit.memory":   "500M",
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{

@@ -43,10 +43,10 @@ const (
 	keyTrivyServerToken         = "trivy.serverToken"
 	keyTrivyServerCustomHeaders = "trivy.serverCustomHeaders"
 
-	keyTrivyResourcesRequestsCPU    = "trivy.resources.request.cpu"
-	keyTrivyResourcesRequestsMemory = "trivy.resources.request.memory"
-	keyTrivyResourcesLimitCPU       = "trivy.resources.limit.cpu"
-	keyTrivyResourcesLimitMemory    = "trivy.resources.limit.memory"
+	keyResourcesRequestsCPU    = "trivy.resources.requests.cpu"
+	keyResourcesRequestsMemory = "trivy.resources.requests.memory"
+	keyResourcesLimitsCPU      = "trivy.resources.limits.cpu"
+	keyResourcesLimitsMemory   = "trivy.resources.limits.memory"
 )
 
 // Mode describes mode in which Trivy client operates.
@@ -112,22 +112,22 @@ func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
 		Limits:   corev1.ResourceList{},
 	}
 
-	err := c.setResourceLimit(keyTrivyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
+	err := c.setResourceLimit(keyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
 	if err != nil {
 		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
+	err = c.setResourceLimit(keyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
 	if err != nil {
 		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesLimitCPU, &requirements.Limits, corev1.ResourceCPU)
+	err = c.setResourceLimit(keyResourcesLimitsCPU, &requirements.Limits, corev1.ResourceCPU)
 	if err != nil {
 		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyTrivyResourcesLimitMemory, &requirements.Limits, corev1.ResourceMemory)
+	err = c.setResourceLimit(keyResourcesLimitsMemory, &requirements.Limits, corev1.ResourceMemory)
 	if err != nil {
 		return requirements, err
 	}
@@ -175,10 +175,10 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 
-			keyTrivyResourcesRequestsCPU:    "100m",
-			keyTrivyResourcesRequestsMemory: "100M",
-			keyTrivyResourcesLimitCPU:       "500m",
-			keyTrivyResourcesLimitMemory:    "500M",
+			keyResourcesRequestsCPU:    "100m",
+			keyResourcesRequestsMemory: "100M",
+			keyResourcesLimitsCPU:      "500m",
+			keyResourcesLimitsMemory:   "500M",
 		},
 	})
 }
