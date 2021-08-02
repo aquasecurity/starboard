@@ -28,21 +28,6 @@ env:
   KIND_VERSION: "v0.11.1"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
 jobs:
-  release-snapshot:
-    name: Release unversioned snapshot
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Setup Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Release snapshot
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: v0.164.0
-          args: release --snapshot --skip-publish --rm-dist
   unit-tests:
     name: Run unit tests
     runs-on: ubuntu-18.04
@@ -59,6 +44,23 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           files: ./coverage.txt
+  release-snapshot:
+    name: Release unversioned snapshot
+    needs:
+      - unit-tests
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Release snapshot
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: v0.164.0
+          args: release --snapshot --skip-publish --rm-dist
   itest-starboard:
     name: Run integration tests / Starboard CLI
     needs:
