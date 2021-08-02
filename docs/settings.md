@@ -1,25 +1,21 @@
 # Starboard Settings
 
-The Starboard CLI and Starboard Operator both read their configuration settings
-from a ConfigMap, as well as a secret that holds confidential settings (such as
-a GitHub token).
+The Starboard CLI and Starboard Operator read configuration settings from ConfigMaps, as well as Secrets that holds
+confidential settings (such as a GitHub token). Starboard plugins read configuration and secret data from ConfigMaps
+and Secrets named after the plugin. For example, Trivy configuration is stored in the ConfigMap and Secret named
+`starboard-trivy-config`.
 
-The `starboard init` command creates the `starboard` ConfigMap and the
-`starboard` secret in the `starboard` namespace with default settings.
+The `starboard init` command ensures the `starboard` ConfigMap and the `starboard` Secret in the `starboard` namespace
+with default settings. Similarly, the operator ensures the `starboard` ConfigMap and the `starboard` Secret in the
+`OPERATOR_NAMESPACE`.
 
-Similarly, the operator ensures the `starboard` ConfigMap and the `starboard`
-secret in the `OPERATOR_NAMESPACE`.
-
-You can change the default settings with `kubectl patch` or `kubectl edit`
-commands.
-
-For example, by default Trivy displays vulnerabilities with all severity levels
-(`UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`). However, you can opt in to display only
-`HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value
-in the `starboard` ConfigMap:
+You can change the default settings with `kubectl patch` or `kubectl edit` commands. For example, by default Trivy
+displays vulnerabilities with all severity levels (`UNKNOWN`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). However, you can
+display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value in the `starboard-trivy-config`
+ConfigMap:
 
 ```
-kubectl patch cm starboard -n <starboard_operator> \
+kubectl patch cm starboard-trivy-config -n <starboard_operator> \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -31,13 +27,12 @@ EOF
 )"
 ```
 
-To set the GitHub token used by Trivy in `Standalone` mode add the
-`trivy.githubToken` value to the `starboard` secret instead:
+To set the GitHub token used by Trivy add the `trivy.githubToken` value to the `starboard-trivy-config` Secret:
 
 ```
 GITHUB_TOKEN=<your token>
 
-kubectl patch secret starboard -n <starboard_operator> \
+kubectl patch secret starboard-trivy-config -n <starboard_operator> \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -49,12 +44,10 @@ EOF
 )"
 ```
 
-The following tables list available configuration settings with their default values.
-
-!!! tip
-    You only need to configure the settings for the scanner you are using (i.e. `trivy.*` parameters are
-    used if `vulnerabilityReports.scanner` is set to `Trivy`). Check
-    [integrations](./integrations/vulnerability-scanners/index.md) page to see example configuration settings for common use cases.
+The following table lists available settings with their default values. Check plugins' documentation to see
+configuration settings for common use cases. For example, switch Trivy from
+[`Standalone`](./integrations/vulnerability-scanners/trivy.md#standalone) to
+[`ClientServer`](./integrations/vulnerability-scanners/trivy.md#clientserver) mode.
 
 | CONFIGMAP KEY                  | DEFAULT                               | DESCRIPTION |
 | ------------------------------ | ------------------------------------- | ----------- |
@@ -65,19 +58,12 @@ The following tables list available configuration settings with their default va
 | `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.6.3`  | kube-bench image reference |
 | `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.4.1` | kube-hunter image reference |
 | `kube-hunter.quick`            | `"false"`                             | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
-| `aqua.imageRef`                | `docker.io/aquasec/scanner:5.3`       | Aqua scanner image reference. The tag determines the version of the `scanner` binary executable and it must be compatible with version of Aqua console. |
-| `aqua.serverURL`               | N/A                                   | The endpoint URL of Aqua management console |
-
-| SECRET KEY                  | DESCRIPTION |
-| --------------------------- | ----------- |
-| `aqua.username`             | Aqua management console username |
-| `aqua.password`             | Aqua management console password |
 
 !!! tip
-    You can find it handy to delete a configuration key, which was not created by default by the
-    `starboard init` command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
+    You can find it handy to delete a configuration key, which was not created by default by the `starboard init`
+    command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
     ```
-    kubectl patch cm starboard -n <starboard_operator> \
+    kubectl patch cm starboard-trivy-config -n <starboard_operator> \
       --type json \
       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
     ```
