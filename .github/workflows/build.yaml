@@ -61,6 +61,8 @@ jobs:
           files: ./coverage.txt
   itest-starboard:
     name: Run integration tests / Starboard CLI
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -90,6 +92,8 @@ jobs:
           files: ./itest/starboard/coverage.txt
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -128,6 +132,8 @@ jobs:
           files: ./itest/starboard-operator/coverage.txt
   integration-operator-conftest:
     name: Integration / Operator / Conftest
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
