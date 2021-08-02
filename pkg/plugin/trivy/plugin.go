@@ -171,7 +171,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator) vulnerabilityreport
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyTrivyImageRef: "docker.io/aquasec/trivy:0.16.0",
+			keyTrivyImageRef: "docker.io/aquasec/trivy:0.19.2",
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 
