@@ -31,13 +31,13 @@ var (
 func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		configData           polaris.Config
+		config               polaris.Config
 		expectedError        string
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
 			name:          "Should return empty requirements by default",
-			configData:    polaris.Config{PluginConfig: starboard.PluginConfig{}},
+			config:        polaris.Config{PluginConfig: starboard.PluginConfig{}},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -46,12 +46,12 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			configData: polaris.Config{PluginConfig: starboard.PluginConfig{
+			config: polaris.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"polaris.resources.request.cpu":    "800m",
-					"polaris.resources.request.memory": "200M",
-					"polaris.resources.limit.cpu":      "600m",
-					"polaris.resources.limit.memory":   "700M",
+					"polaris.resources.requests.cpu":    "800m",
+					"polaris.resources.requests.memory": "200M",
+					"polaris.resources.limits.cpu":      "600m",
+					"polaris.resources.limits.memory":   "700M",
 				},
 			}},
 			expectedError: "",
@@ -68,15 +68,12 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			configData: polaris.Config{PluginConfig: starboard.PluginConfig{
+			config: polaris.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"polaris.resources.request.cpu":    "roughly 100",
-					"polaris.resources.request.memory": "200M",
-					"polaris.resources.limit.cpu":      "600m",
-					"polaris.resources.limit.memory":   "700M",
+					"polaris.resources.requests.cpu": "roughly 100",
 				},
 			}},
-			expectedError: "parsing resource definition polaris.resources.request.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
+			expectedError: "parsing resource definition polaris.resources.requests.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse("800m"),
@@ -91,7 +88,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resourceRequirement, err := tc.configData.GetResourceRequirements()
+			resourceRequirement, err := tc.config.GetResourceRequirements()
 			if tc.expectedError != "" {
 				require.EqualError(t, err, tc.expectedError)
 			} else {
@@ -141,12 +138,12 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"polaris.imageRef":                 "quay.io/fairwinds/polaris:3.2",
-				"polaris.config.yaml":              polaris.DefaultConfigYAML,
-				"polaris.resources.request.cpu":    "50m",
-				"polaris.resources.request.memory": "50M",
-				"polaris.resources.limit.cpu":      "300m",
-				"polaris.resources.limit.memory":   "300M",
+				"polaris.imageRef":                  "quay.io/fairwinds/polaris:3.2",
+				"polaris.config.yaml":               polaris.DefaultConfigYAML,
+				"polaris.resources.requests.cpu":    "50m",
+				"polaris.resources.requests.memory": "50M",
+				"polaris.resources.limits.cpu":      "300m",
+				"polaris.resources.limits.memory":   "300M",
 			},
 		}))
 	})
@@ -216,11 +213,11 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		{
 			name: "Should return job spec for Deployment",
 			config: map[string]string{
-				"polaris.imageRef":                 "quay.io/fairwinds/polaris:3.2",
-				"polaris.resources.request.cpu":    "50m",
-				"polaris.resources.request.memory": "50M",
-				"polaris.resources.limit.cpu":      "300m",
-				"polaris.resources.limit.memory":   "300M",
+				"polaris.imageRef":                  "quay.io/fairwinds/polaris:3.2",
+				"polaris.resources.requests.cpu":    "50m",
+				"polaris.resources.requests.memory": "50M",
+				"polaris.resources.limits.cpu":      "300m",
+				"polaris.resources.limits.memory":   "300M",
 			},
 			obj: &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
