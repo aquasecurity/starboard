@@ -288,7 +288,7 @@ func NewPlugin(clock ext.Clock) configauditreport.Plugin {
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyImageRef:                "quay.io/fairwinds/polaris:3.2",
+			keyImageRef:                "quay.io/fairwinds/polaris:4.0",
 			keyConfigYaml:              DefaultConfigYAML,
 			keyResourcesRequestsCPU:    "50m",
 			keyResourcesRequestsMemory: "50M",

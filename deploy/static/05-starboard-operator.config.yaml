@@ -43,7 +43,7 @@ metadata:
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 data:
-  polaris.imageRef: quay.io/fairwinds/polaris:3.2
+  polaris.imageRef: quay.io/fairwinds/polaris:4.0
   polaris.resources.requests.cpu: "50m"
   polaris.resources.requests.memory: "50M"
   polaris.resources.limits.cpu: "300m"

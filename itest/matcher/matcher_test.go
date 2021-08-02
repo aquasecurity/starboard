@@ -109,7 +109,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 				Scanner: v1alpha1.Scanner{
 					Name:    "Polaris",
 					Vendor:  "Fairwinds Ops",
-					Version: "3.2",
+					Version: "4.0",
 				},
 			},
 		})
