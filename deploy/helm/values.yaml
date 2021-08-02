@@ -85,7 +85,7 @@ starboard:
   # annotated with. Example: `foo=bar,env=stage` will annotate the scanner pods with the annotations `foo: bar` and `env: stage`
   scanJobAnnotations: ""
 trivy:
-  imageRef: docker.io/aquasec/trivy:0.16.0
+  imageRef: docker.io/aquasec/trivy:0.19.2
   mode: Standalone
   serverURL:
   httpProxy:
