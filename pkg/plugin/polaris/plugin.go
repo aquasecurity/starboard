@@ -26,10 +26,10 @@ const (
 const (
 	keyImageRef                = "polaris.imageRef"
 	keyConfigYaml              = "polaris.config.yaml"
-	keyResourcesRequestsCPU    = "polaris.resources.request.cpu"
-	keyResourcesRequestsMemory = "polaris.resources.request.memory"
-	keyResourcesLimitCPU       = "polaris.resources.limit.cpu"
-	keyResourcesLimitMemory    = "polaris.resources.limit.memory"
+	keyResourcesRequestsCPU    = "polaris.resources.requests.cpu"
+	keyResourcesRequestsMemory = "polaris.resources.requests.memory"
+	keyResourcesLimitsCPU      = "polaris.resources.limits.cpu"
+	keyResourcesLimitsMemory   = "polaris.resources.limits.memory"
 )
 
 const (
@@ -247,12 +247,12 @@ func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
 		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyResourcesLimitCPU, &requirements.Limits, corev1.ResourceCPU)
+	err = c.setResourceLimit(keyResourcesLimitsCPU, &requirements.Limits, corev1.ResourceCPU)
 	if err != nil {
 		return requirements, err
 	}
 
-	err = c.setResourceLimit(keyResourcesLimitMemory, &requirements.Limits, corev1.ResourceMemory)
+	err = c.setResourceLimit(keyResourcesLimitsMemory, &requirements.Limits, corev1.ResourceMemory)
 	if err != nil {
 		return requirements, err
 	}
@@ -292,8 +292,8 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyConfigYaml:              DefaultConfigYAML,
 			keyResourcesRequestsCPU:    "50m",
 			keyResourcesRequestsMemory: "50M",
-			keyResourcesLimitCPU:       "300m",
-			keyResourcesLimitMemory:    "300M",
+			keyResourcesLimitsCPU:      "300m",
+			keyResourcesLimitsMemory:   "300M",
 		},
 	})
 }

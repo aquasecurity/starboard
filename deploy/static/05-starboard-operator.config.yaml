@@ -44,10 +44,10 @@ metadata:
     "app.kubernetes.io/managed-by": "starboard"
 data:
   polaris.imageRef: quay.io/fairwinds/polaris:3.2
-  polaris.resources.request.cpu: "50m"
-  polaris.resources.request.memory: "50M"
-  polaris.resources.limit.cpu: "300m"
-  polaris.resources.limit.memory: "300M"
+  polaris.resources.requests.cpu: "50m"
+  polaris.resources.requests.memory: "50M"
+  polaris.resources.limits.cpu: "300m"
+  polaris.resources.limits.memory: "300M"
   polaris.config.yaml: |
     checks:
       # reliability
