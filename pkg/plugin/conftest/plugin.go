@@ -20,11 +20,94 @@ import (
 )
 
 const (
-	conftestContainerName = "conftest"
-	policyPrefix          = "conftest.policy."
-	workloadKey           = "starboard.workload.yaml"
-	defaultCheckCategory  = "Security"
+	// Plugin the name of this plugin.
+	Plugin = "Conftest"
 )
+
+const (
+	containerName        = "conftest"
+	workloadKey          = "starboard.workload.yaml"
+	defaultCheckCategory = "Security"
+)
+
+const (
+	keyImageRef                = "conftest.imageRef"
+	keyResourcesRequestsCPU    = "conftest.resources.requests.cpu"
+	keyResourcesRequestsMemory = "conftest.resources.requests.memory"
+	keyResourcesLimitsCPU      = "conftest.resources.limits.cpu"
+	keyResourcesLimitsMemory   = "conftest.resources.limits.memory"
+	keyPrefixPolicy            = "conftest.policy."
+)
+
+// Config defines configuration params for this plugin.
+type Config struct {
+	starboard.PluginConfig
+}
+
+// GetImageRef returns upstream Conftest container image reference.
+func (c Config) GetImageRef() (string, error) {
+	return c.GetRequiredData(keyImageRef)
+}
+
+// GetPolicies returns Config keys prefixed with `conftest.policy.` that define
+// Rego policies.
+func (c Config) GetPolicies() map[string]string {
+	policies := make(map[string]string)
+
+	for key, value := range c.Data {
+		if !strings.HasPrefix(key, keyPrefixPolicy) {
+			continue
+		}
+		if !strings.HasSuffix(key, ".rego") {
+			continue
+		}
+		policies[key] = value
+	}
+
+	return policies
+}
+
+// GetResourceRequirements constructs ResourceRequirements from the Config.
+func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
+	requirements := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{},
+		Limits:   corev1.ResourceList{},
+	}
+
+	err := c.setResourceLimit(keyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitsCPU, &requirements.Limits, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitsMemory, &requirements.Limits, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	return requirements, nil
+}
+
+func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) error {
+	if value, found := c.Data[configKey]; found {
+		quantity, err := resource.ParseQuantity(value)
+		if err != nil {
+			return fmt.Errorf("parsing resource definition %s: %s %v", configKey, value, err)
+		}
+
+		(*k8sResourceList)[k8sResourceName] = quantity
+	}
+	return nil
+}
 
 type plugin struct {
 	idGenerator ext.IDGenerator
@@ -43,7 +126,11 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+			keyImageRef:                "openpolicyagent/conftest:v0.25.0",
+			keyResourcesRequestsCPU:    "50m",
+			keyResourcesRequestsMemory: "50M",
+			keyResourcesLimitsCPU:      "300m",
+			keyResourcesLimitsMemory:   "300M",
 		},
 	})
 }
@@ -51,23 +138,29 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
 	cm, err := ctx.GetConfig()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting config: %w", err)
 	}
-	return kube.ComputeHash(cm.Data), nil
+	data := make(map[string]string)
+	for key, value := range cm.Data {
+		if strings.HasPrefix(key, "conftest.resources.") {
+			continue
+		}
+		data[key] = value
+	}
+	return kube.ComputeHash(data), nil
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
-	imageRef, err := p.getImageRef(ctx)
+	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return corev1.PodSpec{}, nil, fmt.Errorf("getting image reference: %w", err)
+		return corev1.PodSpec{}, nil, fmt.Errorf("constructing config from plugin context: %w", err)
+	}
+	imageRef, err := config.GetImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting image ref: %w", err)
 	}
 
-	config, err := ctx.GetConfig()
-	if err != nil {
-		return corev1.PodSpec{}, nil, fmt.Errorf("getting config: %w", err)
-	}
-
-	policies := p.getPolicies(config)
+	policies := config.GetPolicies()
 
 	var volumeMounts []corev1.VolumeMount
 	var volumeItems []corev1.KeyToPath
@@ -76,7 +169,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 	secretData := make(map[string]string)
 
 	for policy, script := range policies {
-		policyName := strings.TrimPrefix(policy, policyPrefix)
+		policyName := strings.TrimPrefix(policy, keyPrefixPolicy)
 
 		// Copy policies so even if the starboard-conftest-config ConfigMap has changed
 		// before the scan Job is run, it won't fail with references to non-existent config key error.
@@ -114,7 +207,10 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		SubPath:   "workload.yaml",
 		ReadOnly:  true,
 	})
-
+	requirements, err := config.GetResourceRequirements()
+	if err != nil {
+		return corev1.PodSpec{}, nil, fmt.Errorf("getting resource requirements: %w", err)
+	}
 	return corev1.PodSpec{
 			ServiceAccountName:           ctx.GetServiceAccountName(),
 			AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -133,21 +229,12 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 			},
 			Containers: []corev1.Container{
 				{
-					Name:                     conftestContainerName,
+					Name:                     containerName,
 					Image:                    imageRef,
 					ImagePullPolicy:          corev1.PullIfNotPresent,
 					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-					Resources: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("300m"),
-							corev1.ResourceMemory: resource.MustParse("300M"),
-						},
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("50m"),
-							corev1.ResourceMemory: resource.MustParse("50M"),
-						},
-					},
-					VolumeMounts: volumeMounts,
+					Resources:                requirements,
+					VolumeMounts:             volumeMounts,
 					Command: []string{
 						"sh",
 					},
@@ -176,29 +263,17 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		}}, nil
 }
 
-func (p *plugin) getPolicies(config starboard.PluginConfig) map[string]string {
-	policies := make(map[string]string)
-
-	for key, value := range config.Data {
-		if !strings.HasPrefix(key, policyPrefix) {
-			continue
-		}
-		if !strings.HasSuffix(key, ".rego") {
-			continue
-		}
-		policies[key] = value
-	}
-
-	return policies
-}
-
 func (p *plugin) GetContainerName() string {
-	return conftestContainerName
+	return containerName
 }
 
 func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+	config, err := p.newConfigFrom(ctx)
+	if err != nil {
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("constructing config from plugin context: %w", err)
+	}
 	var checkResults []CheckResult
-	err := json.NewDecoder(logsReader).Decode(&checkResults)
+	err = json.NewDecoder(logsReader).Decode(&checkResults)
 
 	checks := make([]v1alpha1.Check, 0)
 	var successesCount, warningCount, dangerCount int
@@ -231,14 +306,14 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		}
 	}
 
-	imageRef, err := p.getImageRef(ctx)
+	imageRef, err := config.GetImageRef()
 	if err != nil {
-		return v1alpha1.ConfigAuditReportData{}, err
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting image ref: %w", err)
 	}
 
 	version, err := starboard.GetVersionFromImageRef(imageRef)
 	if err != nil {
-		return v1alpha1.ConfigAuditReportData{}, err
+		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting version from image ref: %w", err)
 	}
 
 	return v1alpha1.ConfigAuditReportData{
@@ -268,10 +343,10 @@ func (p *plugin) getPolicyTitleFromResult(result Result) string {
 	return p.idGenerator.GenerateID()
 }
 
-func (p *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
-	config, err := ctx.GetConfig()
+func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
-		return "", err
+		return Config{}, fmt.Errorf("getting config: %w", err)
 	}
-	return config.GetRequiredData("conftest.imageRef")
+	return Config{PluginConfig: pluginConfig}, nil
 }

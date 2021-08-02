@@ -71,6 +71,10 @@ metadata:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
   conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
+  conftest.resources.requests.cpu: {{ .Values.conftest.resources.requests.cpu | quote }}
+  conftest.resources.requests.memory: {{ .Values.conftest.resources.requests.memory | quote }}
+  conftest.resources.limits.cpu: {{ .Values.conftest.resources.limits.cpu | quote }}
+  conftest.resources.limits.memory: {{ .Values.conftest.resources.limits.memory | quote }}
 {{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Polaris" }}
 ---

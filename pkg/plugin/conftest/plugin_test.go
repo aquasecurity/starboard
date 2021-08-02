@@ -14,6 +14,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,99 @@ var (
 	fixedTime  = time.Now()
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
+
+func TestConfig_GetPolicies(t *testing.T) {
+	g := NewGomegaWithT(t)
+	config := conftest.Config{
+		PluginConfig: starboard.PluginConfig{
+			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+
+				"conftest.resources.requests.cpu":    "50m",
+				"conftest.resources.requests.memory": "50M",
+				"conftest.resources.limits.cpu":      "300m",
+				"conftest.resources.limits.memory":   "300M",
+
+				"conftest.policy.libkubernetes.rego":      "<REGO_A>",
+				"conftest.policy.libutil.rego":            "<REGO_B>",
+				"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
+				"conftest.policy.cpu_not_limited.rego":    "<REGO_D>",
+
+				// This one should be skipped (no .rego suffix)
+				"conftest.policy.privileged": "<REGO_E>",
+				// This one should be skipped (no conftest.policy. prefix)
+				"foo": "bar",
+			},
+		},
+	}
+	g.Expect(config.GetPolicies()).To(Equal(map[string]string{
+		"conftest.policy.libkubernetes.rego":      "<REGO_A>",
+		"conftest.policy.libutil.rego":            "<REGO_B>",
+		"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
+		"conftest.policy.cpu_not_limited.rego":    "<REGO_D>",
+	}))
+}
+
+func TestConfig_GetResourceRequirements(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		config               conftest.Config
+		expectedError        string
+		expectedRequirements corev1.ResourceRequirements
+	}{
+		{
+			name:          "Should return empty requirements by default",
+			config:        conftest.Config{PluginConfig: starboard.PluginConfig{}},
+			expectedError: "",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{},
+				Limits:   corev1.ResourceList{},
+			},
+		},
+		{
+			name: "Should return configured resource requirement",
+			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.resources.requests.cpu":    "800m",
+					"conftest.resources.requests.memory": "200M",
+					"conftest.resources.limits.cpu":      "600m",
+					"conftest.resources.limits.memory":   "700M",
+				},
+			}},
+			expectedError: "",
+			expectedRequirements: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("800m"),
+					corev1.ResourceMemory: resource.MustParse("200M"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("600m"),
+					corev1.ResourceMemory: resource.MustParse("700M"),
+				},
+			},
+		},
+		{
+			name: "Should return error if resource is not parseable",
+			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.resources.requests.cpu": "roughly 100",
+				},
+			}},
+			expectedError: "parsing resource definition conftest.resources.requests.cpu: roughly 100 quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resourceRequirement, err := tc.config.GetResourceRequirements()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
+			}
+		})
+	}
+}
 
 func TestPlugin_Init(t *testing.T) {
 
@@ -66,6 +160,57 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
+				"conftest.imageRef":                  "openpolicyagent/conftest:v0.25.0",
+				"conftest.resources.requests.cpu":    "50m",
+				"conftest.resources.requests.memory": "50M",
+				"conftest.resources.limits.cpu":      "300m",
+				"conftest.resources.limits.memory":   "300M",
+			},
+		}))
+	})
+
+	t.Run("Should not overwrite existing config", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "starboard-conftest-config",
+				Namespace:       "starboard-ns",
+				ResourceVersion: "0",
+			},
+			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+			},
+		}).Build()
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(conftest.Plugin).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+
+		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		err := instance.Init(pluginContext)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		var cm corev1.ConfigMap
+		err = client.Get(context.Background(), types.NamespacedName{
+			Namespace: "starboard-ns",
+			Name:      "starboard-conftest-config",
+		}, &cm)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(cm).To(Equal(corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "starboard-conftest-config",
+				Namespace:       "starboard-ns",
+				ResourceVersion: "0",
+			},
+			Data: map[string]string{
 				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
 			},
 		}))
@@ -86,6 +231,11 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			},
 			Data: map[string]string{
 				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+
+				"conftest.resources.requests.cpu":    "50m",
+				"conftest.resources.requests.memory": "50M",
+				"conftest.resources.limits.cpu":      "300m",
+				"conftest.resources.limits.memory":   "300M",
 
 				"conftest.policy.libkubernetes.rego":      "<REGO>",
 				"conftest.policy.libutil.rego":            "<REGO>",
@@ -504,6 +654,27 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		pluginContext2 := newPluginContextWithConfigData(map[string]string{
 			"brown": "fox",
 			"foo":   "bar",
+		})
+
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		hash1, err := plugin.GetConfigHash(pluginContext1)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		hash2, err := plugin.GetConfigHash(pluginContext2)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(hash1).To(Equal(hash2))
+	})
+
+	t.Run("Should exclude resource requirements from calculating hash", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		pluginContext1 := newPluginContextWithConfigData(map[string]string{
+			"foo":                             "bar",
+			"conftest.resources.requests.cpu": "50m",
+		})
+		pluginContext2 := newPluginContextWithConfigData(map[string]string{
+			"foo":                             "bar",
+			"conftest.resources.requests.cpu": "60m",
 		})
 
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)

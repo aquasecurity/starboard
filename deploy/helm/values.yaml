@@ -294,6 +294,14 @@ polaris:
 conftest:
   # imageRef the image reference
   imageRef: docker.io/openpolicyagent/conftest:v0.25.0
+  # resources resource requests and limits
+  resources:
+    requests:
+      cpu: 50m
+      memory: 50M
+    limits:
+      cpu: 300m
+      memory: 300M
 
 aqua:
   # imageRef Aqua scanner image reference. The tag determines the version of the scanner binary executable and it must
