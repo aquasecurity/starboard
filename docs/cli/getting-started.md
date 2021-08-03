@@ -6,7 +6,7 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
 of these Kubernetes playgrounds:
 
-* [Katacode](https://www.katacoda.com/courses/kubernetes/playground)
+* [Katacoda](https://www.katacoda.com/courses/kubernetes/playground)
 * [Play with Kubernetes](http://labs.play-with-k8s.com/)
 
 You also need the `starboard` command to be installed, e.g. from the [binary releases](./installation/binary-releases.md).
@@ -26,10 +26,8 @@ starboard init
 The `init` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes jobs to perform
 scans. It also sends custom security resources definitions to the Kubernetes API:
 
-```
-$ kubectl api-resources --api-group aquasecurity.github.io
-```
 ```console
+$ kubectl api-resources --api-group aquasecurity.github.io
 NAME                   SHORTNAMES    APIGROUP                 NAMESPACED   KIND
 ciskubebenchreports    kubebench     aquasecurity.github.io   false        CISKubeBenchReport
 configauditreports     configaudit   aquasecurity.github.io   true         ConfigAuditReport
@@ -77,10 +75,10 @@ starboard get vulnerabilities deployment/nginx -o yaml
     In this example, the `nginx` deployment has a single container called `nginx`, hence only one instance of the
     `vulnerabilityreports.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`.
 
-To read more about custom resources and label selectors check [custom resource definitions][crds].
+To read more about custom resources and label selectors check [custom resource definitions].
 
-[trivy]: https://github.com/aquasecurity/trivy
-[crds]: ./../crds.md
+[trivy]: ./../integrations/vulnerability-scanners/trivy.md
+[custom resource definitions]: ./../crds/index.md
 
 Moving forward, let's take the same `nginx` Deployment and audit its Kubernetes configuration. As you remember we've
 created it with the `kubectl create deployment` command which applies the default settings to the deployment descriptors.
@@ -108,14 +106,6 @@ NAME               SCANNER   AGE   DANGER   WARNING   PASS
 deployment-nginx   Polaris   5s    0        8         9
 ```
 
-[comment]: <> (Similar to vulnerabilities the Starboard Octant plugin can visualize config audit reports. What's more important,)
-[comment]: <> (Starboard and Octant provide a single pane view with visibility into potentially dangerous and exploitable)
-[comment]: <> (vulnerabilities as well as configuration issues that might affect stability, reliability, and scalability of the)
-[comment]: <> (`nginx` Deployment.)
-[comment]: <> (<p align="center">)
-[comment]: <> (  <img src="docs/images/next-steps/deployment_configauditreports.png">)
-[comment]: <> (</p>)
-
 ## Generating HTML Reports
 
 Once you scanned the `nginx` Deployment for vulnerabilities and checked its configuration you can generate an HTML
@@ -123,9 +113,14 @@ report of identified risks:
 
 ```
 starboard get report deployment/nginx > nginx.deploy.html
+```
+
+```
 open nginx.deploy.html
 ```
-![Vulnerability Report](../images/vulnerabilityReport.png)
+
+![HTML Report](../images/html-report.png)
+
 ## What's Next?
 
 To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or

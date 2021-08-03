@@ -23,6 +23,7 @@ nav:
           - kubectl: operator/installation/kubectl.md
           - Helm: operator/installation/helm.md
           - Operator Lifecycle Manager: operator/installation/olm.md
+          - Upgrade: operator/installation/upgrade.md
       - Getting Started: operator/getting-started.md
       - Configuration: operator/configuration.md
   - Starboard Settings: settings.md
@@ -39,7 +40,13 @@ nav:
       - Managed Registries: integrations/managed-registries.md
       - Octant Plugin: integrations/octant.md
       - Lens Extension: integrations/lens.md
-  - Custom Resource Definitions: crds.md
+  - Custom Resource Definitions:
+    - Overview: crds/index.md
+    - VulnerabilityReport: crds/vulnerability-report.md
+    - ConfigAuditReport: crds/configaudit-report.md
+    - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
+    - CISKubeBenchReport: crds/ciskubebench-report.md
+    - KubeHunterReport: crds/kubehunter-report.md
   - Frequently Asked Questions: faq.md
   - Further Reading: further-reading.md
 
@@ -53,6 +60,8 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - admonition
+  - toc:
+      permalink: true
 
 # All data defined under extra is automatically exposed as a variable and can
 # be used from the template. For example, {{ var.version }}.
