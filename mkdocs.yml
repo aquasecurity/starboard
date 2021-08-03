@@ -85,8 +85,8 @@ extra:
     tag_prev: "v0.10.3"
     build:
       version: "0.11.0"
-      commit: "5bd33431a239b98be4a3287563b8664a9b3d5707"
-      date: "2021-05-14T12:20:34Z"
+      commit: "2ea747484635ae36cf7ff0d00184275f35779fed"
+      date: "2021-08-03T10:46:09Z"
     chart:
       version: 0.6.0
 
