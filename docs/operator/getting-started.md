@@ -6,7 +6,7 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
 of these Kubernetes playgrounds:
 
-* [Katacode](https://www.katacoda.com/courses/kubernetes/playground)
+* [Katacoda](https://www.katacoda.com/courses/kubernetes/playground)
 * [Play with Kubernetes](http://labs.play-with-k8s.com/)
 
 You also need the Starboard Operator to be installed in the `starboard-operator` namespace, e.g. with

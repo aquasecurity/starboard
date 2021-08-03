@@ -1,3 +1,5 @@
+# kubectl
+
 You can install the operator with provided static YAML manifests with fixed values. However, this approach has its
 shortcomings. For example, if you want to change the container image or modify default configuration settings, you have
 to edit existing manifests or customize them with tools such as [Kustomize].
@@ -29,8 +31,7 @@ watch the `default` namespace:
    ```
    Review the default values and makes sure the operator is configured properly:
    ```
-   kubectl describe cm starboard -n starboard-operator
-   kubectl describe secret starboard -n starboard-operator
+   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-operator
    ```
 4. Finally, create the `starboard-operator` Deployment in the `starboard-operator`
    namespace to start the operator's pod:

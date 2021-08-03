@@ -70,7 +70,10 @@ its configuration:
 
 ```
 kubectl create deployment nginx --image nginx
-kubectl starboard scan configauditreports deployment/nginx
+```
+
+```
+starboard scan configauditreports deployment/nginx
 ```
 
 Finally, inspect the ConfigAuditReport to confirm that the Deployment is not compliant with test policies:
@@ -78,8 +81,7 @@ Finally, inspect the ConfigAuditReport to confirm that the Deployment is not com
 ```console
 $ kubectl get configauditreport deployment-nginx -o jsonpath='{.report}' | jq
 {
-  "containerChecks": {},
-  "podChecks": [
+  "checks": [
     {
       "category": "Security",
       "checkID": "Root file system is not read-only",
@@ -98,7 +100,7 @@ $ kubectl get configauditreport deployment-nginx -o jsonpath='{.report}' | jq
   "scanner": {
     "name": "Conftest",
     "vendor": "Open Policy Agent",
-    "version": "v0.23.0"
+    "version": "v0.25.0"
   },
   "summary": {
     "dangerCount": 2,

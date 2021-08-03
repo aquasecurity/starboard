@@ -1,7 +1,7 @@
 # Overview
 
 Starboard CLI is a single executable binary which can be used to find risks, such as vulnerabilities or insecure pod
-descriptors, in Kubernetes workloads. By default, the risk assessment reports are stored as [custom resources][crds].
+descriptors, in Kubernetes workloads. By default, the risk assessment reports are stored as [custom resources].
 
 To learn more about the available Starboard CLI commands, run `starboard help` or type a command followed by the
 `-h` flag:
@@ -10,4 +10,4 @@ To learn more about the available Starboard CLI commands, run `starboard help` o
 starboard scan kubehunterreports -h
 ```
 
-[crds]: ./../crds.md
+[custom resources]: ./../crds/index.md

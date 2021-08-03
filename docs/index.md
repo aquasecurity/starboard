@@ -31,7 +31,7 @@ Starboard can be run in two different modes:
 - See a detailed introduction to Starboard with demos at [KubeCon + CloudNativeCon NA 2020][kubecon-video].
 - Join our [discussions] on GitHub.
 
-[crds]: crds.md
+[crds]: ./crds/index.md
 [cli]: cli/index.md
 [operator]: operator/index.md
 [Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard@{{ var.tag }}

@@ -46,9 +46,9 @@ with new plugin's configuration.
 
 - Install the operator and follow the [getting started](./getting-started.md) guide.
 
-[vulnerabilityreports]: ./../crds.md#vulnerabilityreport
-[configauditreports]: ./../crds.md#configauditreport
-[ciskubebenchreports]: ./../crds.md#ciskubebenchreport
-[kubehunterreports]: ./../crds.md#kubehunterreport
+[vulnerabilityreports]: ./../crds/vulnerability-report.md
+[configauditreports]: ./../crds/configaudit-report.md
+[ciskubebenchreports]: ./../crds/ciskubebench-report.md
+[kubehunterreports]: ./../crds/kubehunter-report.md
 
 [k8s-garbage-collection]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
