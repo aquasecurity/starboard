@@ -41,12 +41,12 @@ nav:
       - Octant Plugin: integrations/octant.md
       - Lens Extension: integrations/lens.md
   - Custom Resource Definitions:
-    - Overview: crds/index.md
-    - VulnerabilityReport: crds/vulnerability-report.md
-    - ConfigAuditReport: crds/configaudit-report.md
-    - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
-    - CISKubeBenchReport: crds/ciskubebench-report.md
-    - KubeHunterReport: crds/kubehunter-report.md
+      - Overview: crds/index.md
+      - VulnerabilityReport: crds/vulnerability-report.md
+      - ConfigAuditReport: crds/configaudit-report.md
+      - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
+      - CISKubeBenchReport: crds/ciskubebench-report.md
+      - KubeHunterReport: crds/kubehunter-report.md
   - Frequently Asked Questions: faq.md
   - Further Reading: further-reading.md
 
@@ -81,14 +81,14 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.11.0-rc1"
+    tag: "v0.11.0"
     tag_prev: "v0.10.3"
     build:
-      version: "0.11.0-rc1"
+      version: "0.11.0"
       commit: "5bd33431a239b98be4a3287563b8664a9b3d5707"
       date: "2021-05-14T12:20:34Z"
     chart:
-      version: 0.5.3
+      version: 0.6.0
 
 # Requires pip install mkdocs-macros-plugin
 plugins:

@@ -24,6 +24,8 @@ jobs:
         run: make unit-tests
   itest-starboard:
     name: Run integration tests / Starboard CLI
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -49,6 +51,8 @@ jobs:
           STARBOARD_CLI_LOG_LEVEL: "0"
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -83,6 +87,8 @@ jobs:
           OPERATOR_TARGET_NAMESPACES: default
   integration-operator-conftest:
     name: Integration / Operator / Conftest
+    needs:
+      - unit-tests
     runs-on: ubuntu-18.04
     steps:
       - name: Setup Go
@@ -114,7 +120,6 @@ jobs:
   release:
     name: Release
     needs:
-      - unit-tests
       - itest-starboard
       - itest-starboard-operator
       - integration-operator-conftest
