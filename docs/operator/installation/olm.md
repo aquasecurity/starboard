@@ -42,8 +42,7 @@ configure it to watch the `default` namespaces:
    ```
    Review the default values and makes sure the operator is configured properly:
    ```
-   kubectl describe cm starboard -n starboard-operator
-   kubectl describe secret starboard -n starboard-operator
+   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-operator
    ```
 5. Install the operator by creating the Subscription:
    ```
@@ -99,6 +98,7 @@ To uninstall the operator delete the Subscription, the ClusterServiceVersion, an
 kubectl delete subscription starboard-operator -n starboard-operator
 kubectl delete clusterserviceversion starboard-operator.{{ var.tag }} -n starboard-operator
 kubectl delete operatorgroup starboard-operator -n starboard-operator
+kubectl delete ns starboard-operator
 ```
 
 You have to manually delete custom resource definitions created by the OLM operator:

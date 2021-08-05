@@ -279,20 +279,20 @@ $ ./install.sh v0.17.0
 ### Build the Catalog Image
 
 The Starboard Operator metadata is formatted in *packagemanifest* layout so you need to place it in the directory
-structure of the [community-operators][community-operators] repository.
+structure of the [community-operators] repository.
 
 ```
-$ git clone git@github.com:operator-framework/community-operators.git
+$ git clone git@github.com:k8s-operatorhub/community-operators.git
 $ cd community-operators
 ```
 
 Build the catalog image for OLM containing just Starboard Operator with a Dockerfile like this:
 
 ```
-$ cat << EOF > starboard-catalog.Dockerfile
+$ cat << EOF > starboard.Dockerfile
 FROM quay.io/operator-framework/upstream-registry-builder as builder
 
-COPY upstream-community-operators/starboard-operator manifests
+COPY operators/starboard-operator manifests
 RUN /bin/initializer -o ./bundles.db
 
 FROM scratch
@@ -306,12 +306,11 @@ CMD ["--database", "bundles.db"]
 EOF
 ```
 
-Place the `starboard-catalog.Dockerfile` in the top-level directory of your cloned copy of the
-[community-operators][community-operators] repository, build it and push to a registry from where you can download
-it to your Kubernetes cluster:
+Place the `starboard.Dockerfile` in the top-level directory of your cloned copy of the [community-operators] repository,
+build it and push to a registry from where you can download it to your Kubernetes cluster:
 
 ```
-$ docker build -f starboard-catalog.Dockerfile -t docker.io/<your account>/starboard-catalog:dev .
+$ docker build -f starboard.Dockerfile -t docker.io/<your account>/starboard-catalog:dev .
 $ docker push docker.io/<your account>/starboard-catalog:dev
 ```
 
@@ -361,7 +360,7 @@ You can find more details about testing Operators with Operator Framework [here]
 [codecov]: https://codecov.io/
 [codecov-merging-reports]: https://docs.codecov.io/docs/merging-reports/
 [olm]: https://github.com/operator-framework/operator-lifecycle-manager
-[community-operators]: https://github.com/operator-framework/community-operators
+[community-operators]: https://github.com/k8s-operatorhub/community-operators
 [olm-operator-groups]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
 [k8s-sample-controller]: https://github.com/kubernetes/sample-controller
 [starboard-install-olm]: https://aquasecurity.github.io/starboard/latest/operator/installation/olm
