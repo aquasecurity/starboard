@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -83,7 +83,6 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 			go func(node corev1.Node) {
 				defer wg.Done()
 				report, err := scanner.Scan(ctx, node)
-
 				if err != nil {
 					klog.Errorf("Error while running kube-bench on node: %s: %v", node.Name, err)
 					return

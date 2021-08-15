@@ -14,14 +14,12 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-var (
-	defaultResyncDuration = 30 * time.Minute
-)
+var defaultResyncDuration = 30 * time.Minute
 
 type runnableJob struct {
 	scheme     *runtime.Scheme
