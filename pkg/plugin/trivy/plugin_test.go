@@ -261,6 +261,56 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 	}
 }
 
+func TestConfig_GetMirrors(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     trivy.Config
+		expectedOutput map[string]string
+		expectError    bool
+	}{
+		{
+			name: "Should return empty map when there is no key with trivy.mirrors.registry. prefix",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"foo": "bar",
+				},
+			}},
+			expectedOutput: make(map[string]string),
+		},
+		{
+			name: "Should return mirrors in a map",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"trivy.mirrors.registry.docker": "docker.io",
+					"trivy.mirrors.mirror.docker":   "mirror.io",
+				},
+			}},
+			expectedOutput: map[string]string{"docker.io": "mirror.io"},
+		},
+		{
+			name: "Should return error, if mirror is missing for registry",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"trivy.mirrors.registry.docker": "docker.io",
+				},
+			}},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mirrors, err := tc.configData.GetMirrors()
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tc.expectedOutput, mirrors)
+			}
+
+		})
+	}
+}
+
 func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {
@@ -1153,11 +1203,262 @@ CVE-2019-1543`,
 			},
 		},
 		{
+			name: "Standalone mode with mirror",
+			config: map[string]string{
+				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
+				"trivy.mode":     string(trivy.Standalone),
+
+				"trivy.resources.requests.cpu":    "100m",
+				"trivy.resources.requests.memory": "100M",
+				"trivy.resources.limits.cpu":      "500m",
+				"trivy.resources.limits.memory":   "500M",
+
+				"trivy.mirrors.registry.dockerio": "index.docker.io",
+				"trivy.mirrors.mirror.dockerio":   "mirror.io",
+			},
+			workloadSpec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "nginx",
+						Image: "nginx:1.16",
+					},
+				},
+			},
+			expectedJobSpec: corev1.PodSpec{
+				Affinity:                     starboard.LinuxNodeAffinity(),
+				RestartPolicy:                corev1.RestartPolicyNever,
+				AutomountServiceAccountToken: pointer.BoolPtr(false),
+				Volumes: []corev1.Volume{
+					{
+						Name: "data",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{
+								Medium: corev1.StorageMediumDefault,
+							},
+						},
+					},
+				},
+				InitContainers: []corev1.Container{
+					{
+						Name:                     "00000000-0000-0000-0000-000000000001",
+						Image:                    "docker.io/aquasec/trivy:0.14.0",
+						ImagePullPolicy:          corev1.PullIfNotPresent,
+						TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+						Env: []corev1.EnvVar{
+							{
+								Name: "HTTP_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.httpProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "HTTPS_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.httpsProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "NO_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.noProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+
+							{
+								Name: "GITHUB_TOKEN",
+								ValueFrom: &corev1.EnvVarSource{
+									SecretKeyRef: &corev1.SecretKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.githubToken",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+						},
+						Command: []string{
+							"trivy",
+						},
+						Args: []string{
+							"--download-db-only",
+							"--cache-dir", "/var/lib/trivy",
+						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("100m"),
+								corev1.ResourceMemory: resource.MustParse("100M"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("500m"),
+								corev1.ResourceMemory: resource.MustParse("500M"),
+							},
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "data",
+								MountPath: "/var/lib/trivy",
+								ReadOnly:  false,
+							},
+						},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:                     "nginx",
+						Image:                    "docker.io/aquasec/trivy:0.14.0",
+						ImagePullPolicy:          corev1.PullIfNotPresent,
+						TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+						Env: []corev1.EnvVar{
+							{
+								Name: "TRIVY_SEVERITY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.severity",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "TRIVY_IGNORE_UNFIXED",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.ignoreUnfixed",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "TRIVY_SKIP_FILES",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.skipFiles",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "TRIVY_SKIP_DIRS",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.skipDirs",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "HTTP_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.httpProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "HTTPS_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.httpsProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+							{
+								Name: "NO_PROXY",
+								ValueFrom: &corev1.EnvVarSource{
+									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "starboard-trivy-config",
+										},
+										Key:      "trivy.noProxy",
+										Optional: pointer.BoolPtr(true),
+									},
+								},
+							},
+						},
+						Command: []string{
+							"trivy",
+						},
+						Args: []string{
+							"--skip-update",
+							"--cache-dir", "/var/lib/trivy",
+							"--quiet",
+							"--format", "json",
+							"mirror.io/library/nginx:1.16",
+						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("100m"),
+								corev1.ResourceMemory: resource.MustParse("100M"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("500m"),
+								corev1.ResourceMemory: resource.MustParse("500M"),
+							},
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "data",
+								ReadOnly:  false,
+								MountPath: "/var/lib/trivy",
+							},
+						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged:               pointer.BoolPtr(false),
+							AllowPrivilegeEscalation: pointer.BoolPtr(false),
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{"all"},
+							},
+							ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+						},
+					},
+				},
+				SecurityContext: &corev1.PodSecurityContext{},
+			},
+		},
+		{
 			name: "ClientServer mode without insecure registry",
 			config: map[string]string{
-				"trivy.imageRef":                 "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":                     string(trivy.ClientServer),
-				"trivy.serverURL":                "http://trivy.trivy:4954",
+				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.14.0",
+				"trivy.mode":                      string(trivy.ClientServer),
+				"trivy.serverURL":                 "http://trivy.trivy:4954",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -1335,10 +1636,10 @@ CVE-2019-1543`,
 				"trivy.mode":                         string(trivy.ClientServer),
 				"trivy.serverURL":                    "http://trivy.trivy:4954",
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
-				"trivy.resources.requests.cpu":        "100m",
-				"trivy.resources.requests.memory":     "100M",
-				"trivy.resources.limits.cpu":          "500m",
-				"trivy.resources.limits.memory":       "500M",
+				"trivy.resources.requests.cpu":       "100m",
+				"trivy.resources.requests.memory":    "100M",
+				"trivy.resources.limits.cpu":         "500m",
+				"trivy.resources.limits.memory":      "500M",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -1973,6 +2274,59 @@ func TestGetScoreFromCVSS(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			score := trivy.GetScoreFromCVSS(tc.cvss)
 			assert.Equal(t, tc.expectedScore, score)
+		})
+	}
+}
+
+func TestGetMirroredImage(t *testing.T) {
+	testCases := []struct {
+		name     string
+		image    string
+		mirrors  map[string]string
+		expected string
+	}{
+		{
+			name:     "no matching mirror, same image",
+			image:    "index.docker.io/library/alpine",
+			mirrors:  map[string]string{"gcr.io": "mirror.io"},
+			expected: "index.docker.io/library/alpine",
+		},
+		{
+			name:     "matching mirror, changed image",
+			image:    "index.docker.io/library/alpine",
+			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
+			expected: "mirror.io/library/alpine",
+		},
+		{
+			name:     "no matching mirror, default registry",
+			image:    "library/alpine",
+			mirrors:  map[string]string{"gcr.io": "mirror.io"},
+			expected: "library/alpine",
+		},
+		{
+			name:     "matching mirror, default registry",
+			image:    "library/alpine",
+			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
+			expected: "mirror.io/library/alpine",
+		},
+		{
+			name:     "matching mirror, default registry, expanded image name",
+			image:    "alpine",
+			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
+			expected: "mirror.io/library/alpine",
+		},
+		{
+			name:     "matching mirror, no expanded image name",
+			image:    "quay.io/alpine",
+			mirrors:  map[string]string{"quay.io": "mirror.io"},
+			expected: "mirror.io/alpine",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			expected := trivy.GetMirroredImage(tc.image, tc.mirrors)
+			assert.Equal(t, tc.expected, expected)
 		})
 	}
 }

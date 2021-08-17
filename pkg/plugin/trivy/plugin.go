@@ -31,6 +31,8 @@ const (
 	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
 	keyTrivyIgnoreFile             = "trivy.ignoreFile"
 	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
+	keyTrivyMirrorSrcPrefix        = "trivy.mirrors.registry."
+	keyTrivyMirrorDstPrefix        = "trivy.mirrors.mirror."
 	keyTrivyHTTPProxy              = "trivy.httpProxy"
 	keyTrivyHTTPSProxy             = "trivy.httpsProxy"
 	keyTrivyNoProxy                = "trivy.noProxy"
@@ -103,6 +105,28 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	}
 
 	return insecureRegistries
+}
+
+func (c Config) GetMirrors() (map[string]string, error) {
+	res := make(map[string]string)
+	for registyKey, registry := range c.Data {
+		if !strings.HasPrefix(registyKey, keyTrivyMirrorSrcPrefix) {
+			continue
+		}
+		mirrorKey := fmt.Sprintf(
+			"%v%v",
+			keyTrivyMirrorDstPrefix,
+			strings.TrimPrefix(registyKey, keyTrivyMirrorSrcPrefix),
+		)
+
+		mirror, ok := c.Data[mirrorKey]
+		if !ok {
+			return res, fmt.Errorf("mirror %v missing for %v", mirrorKey, registyKey)
+		}
+
+		res[registry] = mirror
+	}
+	return res, nil
 }
 
 // GetResourceRequirements creates ResourceRequirements from the Config.
@@ -506,6 +530,11 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			return corev1.PodSpec{}, nil, err
 		}
 
+		mirrors, err := config.GetMirrors()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    trivyImageRef,
@@ -522,7 +551,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 				"--quiet",
 				"--format",
 				"json",
-				c.Image,
+				GetMirroredImage(c.Image, mirrors),
 			},
 			Resources:    resourceRequirements,
 			VolumeMounts: volumeMounts,
@@ -776,6 +805,11 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			return corev1.PodSpec{}, nil, err
 		}
 
+		mirrors, err := config.GetMirrors()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
 			Image:                    trivyImageRef,
@@ -792,7 +826,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 				"json",
 				"--remote",
 				trivyServerURL,
-				container.Image,
+				GetMirroredImage(container.Image, mirrors),
 			},
 			VolumeMounts: volumeMounts,
 			Resources:    requirements,
@@ -945,4 +979,44 @@ func GetScoreFromCVSS(CVSSs map[string]*CVSS) *float64 {
 	}
 
 	return nvdScore
+}
+
+func fullImagePath(image string) string {
+	const defaultRegistry = "index.docker.io"
+	registryAndImage := strings.Split(image, "/")
+	// Empty string
+	if len(registryAndImage) == 0 {
+		return image
+	}
+
+	// Add default Registry, if none is present
+	if len(registryAndImage) == 1 ||
+		!(strings.Contains(registryAndImage[0], ".") ||
+			strings.Contains(registryAndImage[0], ":") ||
+			registryAndImage[0] == "localhost") {
+		registryAndImage = append([]string{defaultRegistry}, registryAndImage...)
+	}
+
+	// Add "library" if only image name is given and registry is DockerHub
+	if len(registryAndImage) == 2 &&
+		(strings.HasSuffix(registryAndImage[0], "docker.io") ||
+			strings.HasSuffix(registryAndImage[0], "docker.com")) {
+		registryAndImage = append(registryAndImage[:2], registryAndImage[1:]...)
+		registryAndImage[1] = "library"
+	}
+
+	return strings.Join(registryAndImage, "/")
+}
+
+func GetMirroredImage(image string, mirrors map[string]string) string {
+	mirroredImage := fullImagePath(image)
+
+	for k, v := range mirrors {
+		if strings.HasPrefix(mirroredImage, k) {
+			mirroredImage = strings.Replace(mirroredImage, k, v, 1)
+			return mirroredImage
+		}
+	}
+	// If nothing is mirrord, we can simply use the input image without the fullpath.
+	return image
 }
