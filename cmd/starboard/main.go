@@ -8,7 +8,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	// Load all known auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

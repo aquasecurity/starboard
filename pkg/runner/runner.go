@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // ErrTimeout is returned when Runner's Run method fails due to a timeout event.
