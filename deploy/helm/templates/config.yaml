@@ -28,12 +28,21 @@ metadata:
 data:
   trivy.imageRef: {{ .Values.trivy.imageRef | quote }}
   trivy.mode: {{ .Values.trivy.mode | quote }}
-  trivy.httpProxy: "{{ .Values.trivy.httpProxy }}"
-  trivy.httpsProxy: "{{ .Values.trivy.httpsProxy }}"
-  trivy.noProxy: "{{ .Values.trivy.noProxy }}"
-  trivy.severity: "{{ .Values.trivy.severity }}"
+  {{- if .Values.trivy.httpProxy }}
+  trivy.httpProxy: {{ .Values.trivy.httpProxy | quote }}
+  {{- end }}
+  {{- if .Values.trivy.httpsProxy }}
+  trivy.httpsProxy: {{ .Values.trivy.httpsProxy | quote }}
+  {{- end }}
+  {{- if .Values.trivy.noProxy }}
+  trivy.noProxy: {{ .Values.trivy.noProxy | quote }}
+  {{- end }}
+  trivy.severity: {{ .Values.trivy.severity | quote }}
+  {{- if .Values.trivy.ignoreUnfixed }}
+  trivy.ignoreUnfixed: {{ .Values.trivy.ignoreUnfixed | quote }}
+  {{- end }}
   {{- if eq .Values.trivy.mode "ClientServer" }}
-  trivy.serverURL: "{{ .Values.trivy.serverURL }}"
+  trivy.serverURL: {{ required ".Values.trivy.serverURL is required" .Values.trivy.serverURL | quote }}
   {{- end }}
   {{- with .Values.trivy.resources }}
     {{- with .requests }}
@@ -60,6 +69,20 @@ metadata:
   name: starboard-trivy-config
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
+data:
+  {{- with .Values.trivy }}
+  {{- if .githubToken }}
+  trivy.githubToken: {{ .githubToken | b64enc | quote }}
+  {{- end }}
+  {{- if eq .mode "ClientServer" }}
+  {{- if .serverToken }}
+  trivy.serverToken: {{ .serverToken | b64enc | quote }}
+  {{- end }}
+  {{- if .serverCustomHeaders }}
+  trivy.serverCustomHeaders: {{ .serverCustomHeaders | b64enc | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
 ---
