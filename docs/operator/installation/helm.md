@@ -23,13 +23,15 @@ configure it to watch the `default` namespaces:
    ```
    helm install starboard-operator ./deploy/helm \
      -n starboard-operator --create-namespace \
-     --set="targetNamespaces=default"
+     --set="targetNamespaces=default" \
+     --set="trivy.ignoreUnfixed=true"
    ```
    Or install the chart from Aqua chart repository:
    ```
    helm install starboard-operator aqua/starboard-operator \
      -n starboard-operator --create-namespace \
      --set="targetNamespaces=default" \
+     --set="trivy.ignoreUnfixed=true" \
      --version {{ var.chart.version }}
    ```
    There are many [values][helm-values] in the chart that can be set to configure Starboard.
