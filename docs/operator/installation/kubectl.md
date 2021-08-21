@@ -11,6 +11,7 @@ watch the `default` namespace:
    ```
    kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/vulnerabilityreports.crd.yaml \
      -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/configauditreports.crd.yaml \
+     -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/clusterconfigauditreports.crd.yaml \
      -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/ciskubebenchreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
@@ -72,6 +73,7 @@ Delete custom resources definitions:
     ```
     kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/vulnerabilityreports.crd.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/configauditreports.crd.yaml \
+      -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/clusterconfigauditreports.crd.yaml \
       -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/crd/ciskubebenchreports.crd.yaml
     ```
 

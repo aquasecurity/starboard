@@ -9,6 +9,8 @@ const (
 	ConfigAuditReportCRVersion = "v1alpha1"
 	ConfigAuditReportKind      = "ConfigAuditReport"
 	ConfigAuditReportListKind  = "ConfigAuditReportList"
+
+	ClusterConfigAuditReportCRName = "clusterconfigauditreports.aquasecurity.github.io"
 )
 
 const (

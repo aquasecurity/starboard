@@ -83,6 +83,21 @@ var _ = Describe("Starboard CLI", func() {
 						}),
 					}),
 				}),
+				"clusterconfigauditreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Scope":   Equal(apiextensionsv1beta1.ClusterScoped),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clusterconfigauditreports",
+							Singular:   "clusterconfigauditreport",
+							ShortNames: []string{"clusterconfigaudit"},
+							Kind:       "ClusterConfigAuditReport",
+							ListKind:   "ClusterConfigAuditReportList",
+							Categories: []string{"all"},
+						}),
+					}),
+				}),
 				"ciskubebenchreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Group":   Equal("aquasecurity.github.io"),
