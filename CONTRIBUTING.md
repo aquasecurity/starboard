@@ -189,6 +189,7 @@ started with a basic development workflow. For other install modes see [Operator
    ```
    $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
        -f deploy/crd/configauditreports.crd.yaml \
+       -f deploy/crd/clusterconfigauditreports.crd.yaml \
        -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
@@ -254,6 +255,7 @@ $ kubectl delete -f deploy/static/01-starboard-operator.ns.yaml \
     -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
 $ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
     -f deploy/crd/configauditreports.crd.yaml \
+    -f deploy/crd/clusterconfigauditreports.crd.yaml \
     -f deploy/crd/ciskubebenchreports.crd.yaml
 ```
 

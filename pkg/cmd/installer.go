@@ -182,6 +182,15 @@ func (m *Installer) Install(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	clusterConfigAuditReportsCRD, err := embedded.GetClusterConfigAuditReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &clusterConfigAuditReportsCRD)
+	if err != nil {
+		return err
+	}
+
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 
 	err = m.createNamespaceIfNotFound(ctx, namespace)
@@ -381,36 +390,40 @@ func (m *Installer) deleteCRD(ctx context.Context, name string) (err error) {
 	return
 }
 
-func (m *Installer) Uninstall(ctx context.Context) (err error) {
-	err = m.deleteCRD(ctx, v1alpha1.VulnerabilityReportsCRName)
+func (m *Installer) Uninstall(ctx context.Context) error {
+	err := m.deleteCRD(ctx, v1alpha1.VulnerabilityReportsCRName)
 	if err != nil {
-		return
+		return err
 	}
 	err = m.deleteCRD(ctx, v1alpha1.CISKubeBenchReportCRName)
 	if err != nil {
-		return
+		return err
 	}
 	err = m.deleteCRD(ctx, v1alpha1.KubeHunterReportCRName)
 	if err != nil {
-		return
+		return err
 	}
 	err = m.deleteCRD(ctx, v1alpha1.ConfigAuditReportCRName)
 	if err != nil {
-		return
+		return err
+	}
+	err = m.deleteCRD(ctx, v1alpha1.ClusterConfigAuditReportCRName)
+	if err != nil {
+		return err
 	}
 	err = m.cleanupRBAC(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.configManager.Delete(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.cleanupNamespace(ctx)
 	if err != nil {
-		return
+		return err
 	}
-	return
+	return nil
 }

@@ -92,6 +92,7 @@ jobs:
         run: |
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
                  -f deploy/crd/configauditreports.crd.yaml \
+                 -f deploy/crd/clusterconfigauditreports.crd.yaml \
                  -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.sa.yaml \
@@ -130,6 +131,7 @@ jobs:
         run: |
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
                  -f deploy/crd/configauditreports.crd.yaml \
+                 -f deploy/crd/clusterconfigauditreports.crd.yaml \
                  -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.sa.yaml \
@@ -177,7 +179,7 @@ jobs:
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.164.0
+          version: v0.175.0
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
