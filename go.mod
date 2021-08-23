@@ -16,10 +16,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/quicktemplate v1.6.3
 	k8s.io/api v0.22.1
-	k8s.io/apiextensions-apiserver v0.22.0
+	k8s.io/apiextensions-apiserver v0.22.1
 	k8s.io/apimachinery v0.22.1
-	k8s.io/cli-runtime v0.22.0
-	k8s.io/client-go v0.22.0
+	k8s.io/cli-runtime v0.22.1
+	k8s.io/client-go v0.22.1
 	k8s.io/code-generator v0.22.1
 	k8s.io/klog/v2 v2.10.0
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176
