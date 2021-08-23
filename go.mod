@@ -20,7 +20,7 @@ require (
 	k8s.io/apimachinery v0.22.0
 	k8s.io/cli-runtime v0.22.0
 	k8s.io/client-go v0.22.0
-	k8s.io/code-generator v0.22.0
+	k8s.io/code-generator v0.22.1
 	k8s.io/klog/v2 v2.10.0
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176
 	sigs.k8s.io/controller-runtime v0.9.6
