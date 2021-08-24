@@ -284,6 +284,22 @@ func NewPlugin(clock ext.Clock) configauditreport.Plugin {
 	}
 }
 
+var (
+	supportedKinds = map[kube.Kind]bool{
+		kube.KindPod:                   true,
+		kube.KindReplicaSet:            true,
+		kube.KindReplicationController: true,
+		kube.KindStatefulSet:           true,
+		kube.KindDaemonSet:             true,
+		kube.KindCronJob:               true,
+		kube.KindJob:                   true,
+	}
+)
+
+func (p *plugin) SupportsKind(kind kube.Kind) bool {
+	return supportedKinds[kind]
+}
+
 // Init ensures the default Config required by this plugin.
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{

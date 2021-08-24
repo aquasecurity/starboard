@@ -4,15 +4,14 @@ import (
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Plugin defines the interface between Starboard and Kubernetes workload
-// configuration checkers / linters / sanitizers. Not a final version, rather
-// first step to separate generic workloads discovery code and Polaris
-// implementation details.
+// configuration checkers / linters / sanitizers.
 type Plugin interface {
 
 	// Init is a callback to initialize this plugin, e.g. ensure the default
@@ -36,4 +35,8 @@ type Plugin interface {
 	// GetConfigHash returns hash of the plugin's configuration settings. The computed hash
 	// is used to invalidate v1alpha1.ConfigAuditReport object whenever configuration changes.
 	GetConfigHash(ctx starboard.PluginContext) (string, error)
+
+	// SupportsKind returns true if the given resource kind is supported by
+	// this plugin, false otherwise.
+	SupportsKind(kind kube.Kind) bool
 }

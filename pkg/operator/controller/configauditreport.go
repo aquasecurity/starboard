@@ -75,6 +75,10 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range resources {
+		if !r.Plugin.SupportsKind(resource.kind) {
+			r.Logger.Info("Skipping unsupported kind", "plugin", r.PluginContext.GetName(), "kind", resource.kind)
+			continue
+		}
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
 				Not(ManagedByStarboardOperator),
@@ -90,6 +94,10 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range clusterResources {
+		if !r.Plugin.SupportsKind(resource.kind) {
+			r.Logger.Info("Skipping unsupported kind", "plugin", r.PluginContext.GetName(), "kind", resource.kind)
+			continue
+		}
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
 				Not(ManagedByStarboardOperator),

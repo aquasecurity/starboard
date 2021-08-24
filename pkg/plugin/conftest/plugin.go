@@ -123,6 +123,30 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 	}
 }
 
+var (
+	supportedKinds = map[kube.Kind]bool{
+		kube.KindPod:                   true,
+		kube.KindReplicaSet:            true,
+		kube.KindReplicationController: true,
+		kube.KindStatefulSet:           true,
+		kube.KindDaemonSet:             true,
+		kube.KindCronJob:               true,
+		kube.KindJob:                   true,
+		kube.KindService:               true,
+		kube.KindConfigMap:             true,
+		kube.KindRole:                  true,
+		kube.KindRoleBinding:           true,
+
+		kube.KindClusterRole:              true,
+		kube.KindClusterRoleBindings:      true,
+		kube.KindCustomResourceDefinition: true,
+	}
+)
+
+func (p *plugin) SupportsKind(kind kube.Kind) bool {
+	return supportedKinds[kind]
+}
+
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
