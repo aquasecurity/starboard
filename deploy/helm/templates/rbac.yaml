@@ -33,6 +33,7 @@ rules:
       - pods
       - pods/log
       - replicationcontrollers
+      - services
     verbs:
       - get
       - list
@@ -40,7 +41,7 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - "nodes"
+      - nodes
     verbs:
       - get
       - list
@@ -71,7 +72,7 @@ rules:
       - create
   - apiGroups:
       - apps
-    resources: # resources that own pods are inspected
+    resources:
       - replicasets
       - statefulsets
       - daemonsets
@@ -82,19 +83,36 @@ rules:
   - apiGroups:
       - batch
     resources:
+      - jobs
       - cronjobs
     verbs:
       - get
       - list
       - watch
   - apiGroups:
-      - batch
-    resources: # jobs are inspected and directly used by the starboard-operator
-      - jobs
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
     verbs:
       - get
       - list
       - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
       - create
       - delete
   - apiGroups:
@@ -102,6 +120,7 @@ rules:
     resources:
       - vulnerabilityreports
       - configauditreports
+      - clusterconfigauditreports
       - ciskubebenchreports
     verbs:
       - get

@@ -11,12 +11,15 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
@@ -48,6 +51,14 @@ const (
 	KindDaemonSet             Kind = "DaemonSet"
 	KindCronJob               Kind = "CronJob"
 	KindJob                   Kind = "Job"
+	KindService               Kind = "Service"
+	KindConfigMap             Kind = "ConfigMap"
+	KindRole                  Kind = "Role"
+	KindRoleBinding           Kind = "RoleBinding"
+
+	KindClusterRole              Kind = "ClusterRole"
+	KindClusterRoleBindings      Kind = "ClusterRoleBinding"
+	KindCustomResourceDefinition Kind = "CustomResourceDefinition"
 )
 
 // IsBuiltInWorkload returns true if the specified v1.OwnerReference
@@ -59,6 +70,67 @@ func IsBuiltInWorkload(controller *metav1.OwnerReference) bool {
 			controller.Kind == string(KindStatefulSet) ||
 			controller.Kind == string(KindDaemonSet) ||
 			controller.Kind == string(KindJob))
+}
+
+func IsClusterScopedKind(k string) bool {
+	switch k {
+	case string(KindClusterRole), string(KindClusterRoleBindings), string(KindCustomResourceDefinition):
+		return true
+	default:
+		return false
+	}
+}
+
+func PartialObjectToLabels(obj Object) map[string]string {
+	labels := map[string]string{
+		starboard.LabelResourceKind:      string(obj.Kind),
+		starboard.LabelResourceNamespace: obj.Namespace,
+	}
+	if len(validation.IsValidLabelValue(obj.Name)) == 0 {
+		labels[starboard.LabelResourceName] = obj.Name
+	} else {
+		labels[starboard.LabelResourceNameHash] = ComputeHash(obj.Name)
+	}
+	return labels
+}
+
+func ObjectToObjectMetadata(obj client.Object, meta *metav1.ObjectMeta) error {
+	if meta.Labels == nil {
+		meta.Labels = make(map[string]string)
+	}
+	meta.Labels[starboard.LabelResourceKind] = obj.GetObjectKind().GroupVersionKind().Kind
+	meta.Labels[starboard.LabelResourceNamespace] = obj.GetNamespace()
+	if len(validation.IsValidLabelValue(obj.GetName())) == 0 {
+		meta.Labels[starboard.LabelResourceName] = obj.GetName()
+	} else {
+		meta.Labels[starboard.LabelResourceNameHash] = ComputeHash(obj.GetName())
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+		meta.Annotations[starboard.LabelResourceName] = obj.GetName()
+	}
+	return nil
+}
+
+func PartialObjectFromObjectMetadata(objectMeta metav1.ObjectMeta) (Object, error) {
+	if _, found := objectMeta.Labels[starboard.LabelResourceKind]; !found {
+		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
+	}
+	var objname string
+	if _, found := objectMeta.Labels[starboard.LabelResourceName]; !found {
+		if _, found := objectMeta.Annotations[starboard.LabelResourceName]; found {
+			objname = objectMeta.Annotations[starboard.LabelResourceName]
+		} else {
+			return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
+		}
+	} else {
+		objname = objectMeta.Labels[starboard.LabelResourceName]
+	}
+	return Object{
+		Kind:      Kind(objectMeta.Labels[starboard.LabelResourceKind]),
+		Name:      objname,
+		Namespace: objectMeta.Labels[starboard.LabelResourceNamespace],
+	}, nil
 }
 
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
@@ -128,6 +200,37 @@ func GetPartialObjectFromKindAndNamespacedName(kind Kind, name types.NamespacedN
 	}
 }
 
+// ComputeSpecHash computes hash of the specified K8s client.Object.
+// The hash is used to indicate whether the client.Object should be
+// rescanned or not by adding it as the starboard.LabelResourceSpecHash
+// label to an instance of a security report.
+func ComputeSpecHash(obj client.Object) (string, error) {
+	switch t := obj.(type) {
+	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.Job:
+		spec, err := GetPodSpec(obj)
+		if err != nil {
+			return "", err
+		}
+		return ComputeHash(spec), nil
+	case *corev1.Service:
+		return ComputeHash(obj), nil
+	case *corev1.ConfigMap:
+		return ComputeHash(obj), nil
+	case *rbacv1.Role:
+		return ComputeHash(obj), nil
+	case *rbacv1.RoleBinding:
+		return ComputeHash(obj), nil
+	case *rbacv1.ClusterRole:
+		return ComputeHash(obj), nil
+	case *rbacv1.ClusterRoleBinding:
+		return ComputeHash(obj), nil
+	case *apiextensionsv1.CustomResourceDefinition:
+		return ComputeHash(obj), nil
+	default:
+		return "", fmt.Errorf("computing spec hash of unsupported object: %T", t)
+	}
+}
+
 // GetPodSpec returns v1.PodSpec from the specified Kubernetes
 // client.Object. Returns error if the given client.Object
 // is not a Kubernetes workload.
@@ -177,6 +280,20 @@ func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workloa
 		obj = &batchv1beta1.CronJob{}
 	case KindJob:
 		obj = &batchv1.Job{}
+	case KindService:
+		obj = &corev1.Service{}
+	case KindConfigMap:
+		obj = &corev1.ConfigMap{}
+	case KindRole:
+		obj = &rbacv1.Role{}
+	case KindRoleBinding:
+		obj = &rbacv1.RoleBinding{}
+	case KindClusterRole:
+		obj = &rbacv1.ClusterRole{}
+	case KindClusterRoleBindings:
+		obj = &rbacv1.ClusterRoleBinding{}
+	case KindCustomResourceDefinition:
+		obj = &apiextensionsv1.CustomResourceDefinition{}
 	default:
 		return nil, fmt.Errorf("unknown kind: %s", workload.Kind)
 	}

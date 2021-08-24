@@ -21,9 +21,10 @@ const (
 const (
 	LabelResourceKind      = "starboard.resource.kind"
 	LabelResourceName      = "starboard.resource.name"
+	LabelResourceNameHash  = "starboard.resource.name-hash"
 	LabelResourceNamespace = "starboard.resource.namespace"
 	LabelContainerName     = "starboard.container.name"
-	LabelPodSpecHash       = "pod-spec-hash"
+	LabelResourceSpecHash  = "resource-spec-hash"
 	LabelPluginConfigHash  = "plugin-config-hash"
 
 	LabelConfigAuditReportScanner   = "configAuditReport.scanner"

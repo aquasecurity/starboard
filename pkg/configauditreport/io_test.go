@@ -79,7 +79,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceKind:      "Deployment",
 					starboard.LabelResourceName:      "app",
 					starboard.LabelResourceNamespace: "qa",
-					starboard.LabelPodSpecHash:       "h1",
+					starboard.LabelResourceSpecHash:  "h1",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{
@@ -98,7 +98,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceKind:      "Deployment",
 					starboard.LabelResourceName:      "app",
 					starboard.LabelResourceNamespace: "qa",
-					starboard.LabelPodSpecHash:       "h2",
+					starboard.LabelResourceSpecHash:  "h2",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{
@@ -126,7 +126,7 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceKind:      "Deployment",
 					starboard.LabelResourceName:      "app",
 					starboard.LabelResourceNamespace: "qa",
-					starboard.LabelPodSpecHash:       "h2",
+					starboard.LabelResourceSpecHash:  "h2",
 				},
 				ResourceVersion: "1",
 			},
@@ -139,31 +139,32 @@ func TestReadWriter(t *testing.T) {
 		}, found)
 	})
 
-	t.Run("Should find ConfigAuditReport", func(t *testing.T) {
-		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1alpha1.ConfigAuditReport{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace:       "my-namespace",
-				Name:            "deployment-my-deploy-my",
-				ResourceVersion: "0",
-				Labels: map[string]string{
-					starboard.LabelResourceKind:      string(kube.KindDeployment),
-					starboard.LabelResourceName:      "my-deploy",
-					starboard.LabelResourceNamespace: "my-namespace",
+	t.Run("Should find ConfigAuditReport by owner", func(t *testing.T) {
+		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(
+			&v1alpha1.ConfigAuditReport{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "my-namespace",
+					Name:            "deployment-my-deploy-my",
+					ResourceVersion: "0",
+					Labels: map[string]string{
+						starboard.LabelResourceKind:      string(kube.KindDeployment),
+						starboard.LabelResourceName:      "my-deploy",
+						starboard.LabelResourceNamespace: "my-namespace",
+					},
 				},
-			},
-			Report: v1alpha1.ConfigAuditReportData{},
-		}, &v1alpha1.ConfigAuditReport{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "my-namespace",
-				Name:      "my-sts",
-				Labels: map[string]string{
-					starboard.LabelResourceKind:      string(kube.KindStatefulSet),
-					starboard.LabelResourceName:      "my-sts",
-					starboard.LabelResourceNamespace: "my-namespace",
+				Report: v1alpha1.ConfigAuditReportData{},
+			}, &v1alpha1.ConfigAuditReport{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-namespace",
+					Name:      "my-sts",
+					Labels: map[string]string{
+						starboard.LabelResourceKind:      string(kube.KindStatefulSet),
+						starboard.LabelResourceName:      "my-sts",
+						starboard.LabelResourceNamespace: "my-namespace",
+					},
 				},
-			},
-			Report: v1alpha1.ConfigAuditReportData{},
-		}).Build()
+				Report: v1alpha1.ConfigAuditReportData{},
+			}).Build()
 
 		readWriter := configauditreport.NewReadWriter(client)
 		found, err := readWriter.FindReportByOwner(context.TODO(), kube.Object{
@@ -181,6 +182,65 @@ func TestReadWriter(t *testing.T) {
 					starboard.LabelResourceKind:      string(kube.KindDeployment),
 					starboard.LabelResourceName:      "my-deploy",
 					starboard.LabelResourceNamespace: "my-namespace",
+				},
+			},
+			Report: v1alpha1.ConfigAuditReportData{},
+		}, found)
+	})
+
+	t.Run("Should find ConfigAuditReport by owner with special name", func(t *testing.T) {
+		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(
+			&v1alpha1.ConfigAuditReport{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "kube-system",
+					Name:            "role-79f88497",
+					ResourceVersion: "0",
+					Labels: map[string]string{
+						starboard.LabelResourceKind:      "Role",
+						starboard.LabelResourceNameHash:  "79f88497",
+						starboard.LabelResourceNamespace: "kube-system",
+					},
+					Annotations: map[string]string{
+						starboard.LabelResourceName: "system:controller:cloud-provider",
+					},
+				},
+				Report: v1alpha1.ConfigAuditReportData{},
+			}, &v1alpha1.ConfigAuditReport{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "kube-system",
+					Name:            "role-868458b9d6",
+					ResourceVersion: "0",
+					Labels: map[string]string{
+						starboard.LabelResourceKind:      "Role",
+						starboard.LabelResourceNameHash:  "868458b9d6",
+						starboard.LabelResourceNamespace: "kube-system",
+					},
+					Annotations: map[string]string{
+						starboard.LabelResourceName: "system:controller:token-cleaner",
+					},
+				},
+				Report: v1alpha1.ConfigAuditReportData{},
+			}).Build()
+
+		readWriter := configauditreport.NewReadWriter(client)
+		found, err := readWriter.FindReportByOwner(context.TODO(), kube.Object{
+			Kind:      kube.KindRole,
+			Name:      "system:controller:token-cleaner",
+			Namespace: "kube-system",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, &v1alpha1.ConfigAuditReport{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:       "kube-system",
+				Name:            "role-868458b9d6",
+				ResourceVersion: "0",
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Role",
+					starboard.LabelResourceNameHash:  "868458b9d6",
+					starboard.LabelResourceNamespace: "kube-system",
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:controller:token-cleaner",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{},
@@ -242,9 +302,9 @@ func TestReadWriter(t *testing.T) {
 						Name:            "clusterrole-admin",
 						ResourceVersion: "0",
 						Labels: map[string]string{
-							starboard.LabelResourceKind: "ClusterRole",
-							starboard.LabelResourceName: "admin",
-							starboard.LabelPodSpecHash:  "h1",
+							starboard.LabelResourceKind:     "ClusterRole",
+							starboard.LabelResourceName:     "admin",
+							starboard.LabelResourceSpecHash: "h1",
 						},
 					},
 					Report: v1alpha1.ConfigAuditReportData{
@@ -260,9 +320,9 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clusterrole-admin",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: "ClusterRole",
-					starboard.LabelResourceName: "admin",
-					starboard.LabelPodSpecHash:  "h2",
+					starboard.LabelResourceKind:     "ClusterRole",
+					starboard.LabelResourceName:     "admin",
+					starboard.LabelResourceSpecHash: "h2",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{
@@ -286,9 +346,9 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clusterrole-admin",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: "ClusterRole",
-					starboard.LabelResourceName: "admin",
-					starboard.LabelPodSpecHash:  "h2",
+					starboard.LabelResourceKind:     "ClusterRole",
+					starboard.LabelResourceName:     "admin",
+					starboard.LabelResourceSpecHash: "h2",
 				},
 				ResourceVersion: "1",
 			},
@@ -310,8 +370,9 @@ func TestReadWriter(t *testing.T) {
 						Name:            "clusterrole-viewer",
 						ResourceVersion: "1",
 						Labels: map[string]string{
-							starboard.LabelResourceKind: "ClusterRole",
-							starboard.LabelResourceName: "viewer",
+							starboard.LabelResourceKind:      "ClusterRole",
+							starboard.LabelResourceName:      "viewer",
+							starboard.LabelResourceNamespace: "",
 						},
 					},
 					Report: v1alpha1.ConfigAuditReportData{},
@@ -321,8 +382,9 @@ func TestReadWriter(t *testing.T) {
 						Name:            "clusterrole-editor",
 						ResourceVersion: "1",
 						Labels: map[string]string{
-							starboard.LabelResourceKind: "ClusterRole",
-							starboard.LabelResourceName: "editor",
+							starboard.LabelResourceKind:      "ClusterRole",
+							starboard.LabelResourceName:      "editor",
+							starboard.LabelResourceNamespace: "",
 						},
 					},
 					Report: v1alpha1.ConfigAuditReportData{},
@@ -340,8 +402,9 @@ func TestReadWriter(t *testing.T) {
 				Name:            "clusterrole-editor",
 				ResourceVersion: "1",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: "ClusterRole",
-					starboard.LabelResourceName: "editor",
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceName:      "editor",
+					starboard.LabelResourceNamespace: "",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{},

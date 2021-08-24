@@ -16,6 +16,8 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -44,7 +46,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	workloads := []struct {
+	resources := []struct {
 		kind       kube.Kind
 		forObject  client.Object
 		ownsObject client.Object
@@ -56,19 +58,46 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		{kind: kube.KindDaemonSet, forObject: &appsv1.DaemonSet{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindCronJob, forObject: &batchv1beta1.CronJob{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindJob, forObject: &batchv1.Job{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindService, forObject: &corev1.Service{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindConfigMap, forObject: &corev1.ConfigMap{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindRole, forObject: &rbacv1.Role{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{kind: kube.KindRoleBinding, forObject: &rbacv1.RoleBinding{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 	}
 
-	for _, workload := range workloads {
+	clusterResources := []struct {
+		kind       kube.Kind
+		forObject  client.Object
+		ownsObject client.Object
+	}{
+		{kind: kube.KindClusterRole, forObject: &rbacv1.ClusterRole{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
+		{kind: kube.KindClusterRoleBindings, forObject: &rbacv1.ClusterRoleBinding{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
+		{kind: kube.KindCustomResourceDefinition, forObject: &apiextensionsv1.CustomResourceDefinition{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
+	}
+
+	for _, resource := range resources {
 		err = ctrl.NewControllerManagedBy(mgr).
-			For(workload.forObject, builder.WithPredicates(
+			For(resource.forObject, builder.WithPredicates(
 				Not(ManagedByStarboardOperator),
 				Not(IsBeingTerminated),
 				installModePredicate,
 			)).
-			Owns(workload.ownsObject).
-			Complete(r.reconcileWorkload(workload.kind))
+			Owns(resource.ownsObject).
+			Complete(r.reconcileResource(resource.kind))
 		if err != nil {
-			return err
+			return fmt.Errorf("constructing controller for %s: %w", resource.kind, err)
+		}
+	}
+
+	for _, resource := range clusterResources {
+		err = ctrl.NewControllerManagedBy(mgr).
+			For(resource.forObject, builder.WithPredicates(
+				Not(ManagedByStarboardOperator),
+				Not(IsBeingTerminated),
+			)).
+			Owns(resource.ownsObject).
+			Complete(r.reconcileResource(resource.kind))
+		if err != nil {
+			return fmt.Errorf("constructing controller for %s: %w", resource.kind, err)
 		}
 	}
 
@@ -82,54 +111,54 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r.reconcileJobs())
 }
 
-func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) reconcile.Func {
+func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("kind", workloadKind, "name", req.NamespacedName)
+		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
 
-		workloadPartial := kube.GetPartialObjectFromKindAndNamespacedName(workloadKind, req.NamespacedName)
+		resourcePartial := kube.GetPartialObjectFromKindAndNamespacedName(resourceKind, req.NamespacedName)
 
-		log.V(1).Info("Getting workload from cache")
-		workloadObj, err := r.GetObjectFromPartialObject(ctx, workloadPartial)
+		log.V(1).Info("Getting resource from cache")
+		resource, err := r.GetObjectFromPartialObject(ctx, resourcePartial)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached workload that must have been deleted")
+				log.V(1).Info("Ignoring cached resource that must have been deleted")
 				return ctrl.Result{}, nil
 			}
-			return ctrl.Result{}, fmt.Errorf("getting %s from cache: %w", workloadKind, err)
+			return ctrl.Result{}, fmt.Errorf("getting %s from cache: %w", resourceKind, err)
 		}
 
-		// Skip processing if it's a Pod controlled by a built-in K8s workload.
-		if workloadKind == kube.KindPod {
-			controller := metav1.GetControllerOf(workloadObj)
+		// Skip processing if a resource is a Pod controlled by a built-in K8s workload.
+		if resourceKind == kube.KindPod {
+			controller := metav1.GetControllerOf(resource)
 			if kube.IsBuiltInWorkload(controller) {
 				log.V(1).Info("Ignoring managed pod", "controllerKind", controller.Kind, "controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
 		}
 
-		// Skip processing if it's a Job controlled by CronJob.
-		if workloadKind == kube.KindJob {
-			controller := metav1.GetControllerOf(workloadObj)
+		// Skip processing if a resource is a Job controlled by CronJob.
+		if resourceKind == kube.KindJob {
+			controller := metav1.GetControllerOf(resource)
 			if controller != nil && controller.Kind == string(kube.KindCronJob) {
 				log.V(1).Info("Ignoring managed job", "controllerKind", controller.Kind, "controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
 		}
 
-		podSpec, err := kube.GetPodSpec(workloadObj)
+		resourceSpecHash, err := kube.ComputeSpecHash(resource)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("computing spec hash: %w", err)
 		}
-		podSpecHash := kube.ComputeHash(podSpec)
+
 		pluginConfigHash, err := r.Plugin.GetConfigHash(r.PluginContext)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("computing plugin config hash: %w", err)
 		}
 
-		log = log.WithValues("podSpecHash", podSpecHash, "pluginConfigHash", pluginConfigHash)
+		log = log.WithValues("resourceSpecHash", resourceSpecHash, "pluginConfigHash", pluginConfigHash)
 
 		log.V(1).Info("Checking whether configuration audit report exists")
-		hasReport, err := r.hasReport(ctx, workloadPartial, podSpecHash, pluginConfigHash)
+		hasReport, err := r.hasReport(ctx, resourcePartial, resourceSpecHash, pluginConfigHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -140,7 +169,7 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 		}
 
 		log.V(1).Info("Checking whether configuration audit has been scheduled")
-		_, job, err := r.hasActiveScanJob(ctx, workloadObj, podSpecHash)
+		_, job, err := r.hasActiveScanJob(ctx, resource, resourceSpecHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -163,30 +192,30 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 
 		scanJobTolerations, err := r.ConfigData.GetScanJobTolerations()
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("getting scan job tolerations: %w", err)
 		}
 
 		scanJobAnnotations, err := r.ConfigData.GetScanJobAnnotations()
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("getting scan job annotations: %w", err)
 		}
 
 		job, secrets, err := configauditreport.NewScanJob().
 			WithPlugin(r.Plugin).
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).
-			WithObject(workloadObj).
+			WithObject(resource).
 			WithTolerations(scanJobTolerations).
-			WithScanJobAnnotations(scanJobAnnotations).
+			WithAnnotations(scanJobAnnotations).
 			Get()
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("constructing scan job: %w", err)
 		}
 
 		for _, secret := range secrets {
 			err := r.Client.Create(ctx, secret)
 			if err != nil {
-				if !errors.IsAlreadyExists(err) {
+				if errors.IsAlreadyExists(err) {
 					log.V(1).Info("Secret already exists", "secretName", secret.Name)
 					return ctrl.Result{}, nil
 				}
@@ -221,13 +250,28 @@ func (r *ConfigAuditReportReconciler) reconcileWorkload(workloadKind kube.Kind) 
 }
 
 func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
+	if kube.IsClusterScopedKind(string(owner.Kind)) {
+		return r.hasClusterReport(ctx, owner, podSpecHash, pluginConfigHash)
+	}
 	// TODO FindByOwner should accept optional label selector to further narrow down search results
 	report, err := r.ReadWriter.FindReportByOwner(ctx, owner)
 	if err != nil {
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelPodSpecHash] == podSpecHash &&
+		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
+			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+	}
+	return false, nil
+}
+
+func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
+	report, err := r.ReadWriter.FindClusterReportByOwner(ctx, owner)
+	if err != nil {
+		return false, err
+	}
+	if report != nil {
+		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
 			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
@@ -243,7 +287,7 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj 
 		}
 		return false, nil, fmt.Errorf("getting pod from cache: %w", err)
 	}
-	if job.Labels[starboard.LabelPodSpecHash] == hash {
+	if job.Labels[starboard.LabelResourceSpecHash] == hash {
 		return true, job, nil
 	}
 	return false, nil, nil
@@ -286,7 +330,7 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
-	owner, err := kube.ObjectFromLabelsSet(job.Labels)
+	owner, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
 	if err != nil {
 		return fmt.Errorf("getting workload from scan job labels set: %w", err)
 	}
@@ -302,16 +346,16 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting object from partial object: %w", err)
 	}
 
-	podSpecHash, ok := job.Labels[starboard.LabelPodSpecHash]
+	resourceSpecHash, ok := job.Labels[starboard.LabelResourceSpecHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", starboard.LabelPodSpecHash)
+		return fmt.Errorf("expected label %s not set", starboard.LabelResourceSpecHash)
 	}
 	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
 	if !ok {
 		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
-	hasReport, err := r.hasReport(ctx, owner, podSpecHash, pluginConfigHash)
+	hasReport, err := r.hasReport(ctx, owner, resourceSpecHash, pluginConfigHash)
 	if err != nil {
 		return err
 	}
@@ -332,20 +376,16 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		_ = logsStream.Close()
 	}()
 
-	report, err := configauditreport.NewReportBuilder(r.Client.Scheme()).
+	reportBuilder := configauditreport.NewReportBuilder(r.Client.Scheme()).
 		Controller(ownerObj).
-		PodSpecHash(podSpecHash).
+		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
-		Data(result).
-		Get()
+		Data(result)
+	err = reportBuilder.Write(ctx, r.ReadWriter)
 	if err != nil {
 		return err
 	}
 
-	err = r.ReadWriter.WriteReport(ctx, report)
-	if err != nil {
-		return err
-	}
 	log.V(1).Info("Deleting complete scan job", "owner", owner)
 	return r.deleteJob(ctx, job)
 }
