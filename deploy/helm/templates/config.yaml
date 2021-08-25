@@ -71,17 +71,17 @@ metadata:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
   {{- with .Values.trivy }}
-  {{- if .githubToken }}
+    {{- if .githubToken }}
   trivy.githubToken: {{ .githubToken | b64enc | quote }}
-  {{- end }}
-  {{- if eq .mode "ClientServer" }}
-  {{- if .serverToken }}
+    {{- end }}
+    {{- if eq .mode "ClientServer" }}
+      {{- if .serverToken }}
   trivy.serverToken: {{ .serverToken | b64enc | quote }}
-  {{- end }}
-  {{- if .serverCustomHeaders }}
+      {{- end }}
+      {{- if .serverCustomHeaders }}
   trivy.serverCustomHeaders: {{ .serverCustomHeaders | b64enc | quote }}
-  {{- end }}
-  {{- end }}
+      {{- end }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
