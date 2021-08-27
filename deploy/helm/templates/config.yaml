@@ -12,7 +12,7 @@ data:
   vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
   {{- end }}
   {{- if .Values.operator.kubernetesBenchmarkEnabled }}
-  kube-bench.imageRef: "{{ .Values.kubeBench.imageRef }}"
+  kube-bench.imageRef: {{ required ".Values.kubeBench.imageRef is required" .Values.kubeBench.imageRef | quote }}
   {{- end }}
   {{- if .Values.operator.configAuditScannerEnabled }}
   configAuditReports.scanner: {{ .Values.starboard.configAuditReportsPlugin | quote }}
@@ -26,7 +26,7 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  trivy.imageRef: {{ .Values.trivy.imageRef | quote }}
+  trivy.imageRef: {{ required ".Values.trivy.imageRef is required" .Values.trivy.imageRef | quote }}
   trivy.mode: {{ .Values.trivy.mode | quote }}
   {{- if .Values.trivy.httpProxy }}
   trivy.httpProxy: {{ .Values.trivy.httpProxy | quote }}
@@ -93,7 +93,7 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  conftest.imageRef: {{ .Values.conftest.imageRef | quote }}
+  conftest.imageRef: {{ required ".Values.conftest.imageRef is required" .Values.conftest.imageRef | quote }}
   conftest.resources.requests.cpu: {{ .Values.conftest.resources.requests.cpu | quote }}
   conftest.resources.requests.memory: {{ .Values.conftest.resources.requests.memory | quote }}
   conftest.resources.limits.cpu: {{ .Values.conftest.resources.limits.cpu | quote }}
@@ -108,7 +108,7 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  polaris.imageRef: "{{ .Values.polaris.imageRef }}"
+  polaris.imageRef: {{ required ".Values.polaris.imageRef is required" .Values.polaris.imageRef | quote }}
   polaris.config.yaml: |
   {{- toYaml .Values.polaris.config | nindent 4 }}
 {{- end }}
