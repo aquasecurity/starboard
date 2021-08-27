@@ -78,6 +78,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
 				Not(ManagedByStarboardOperator),
+				Not(IsLeaderElectionResource),
 				Not(IsBeingTerminated),
 				installModePredicate,
 			)).
