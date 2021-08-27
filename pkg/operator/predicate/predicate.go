@@ -115,8 +115,8 @@ var IsLinuxNode = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	return false
 })
 
-// IsLeaderElectionResource, returns true for resources used in leader election, means resources
-// having LeaderElectionAnnotationKey in annotation
+// IsLeaderElectionResource returns true for resources used in leader election, means resources
+// annotated with resourcelock.LeaderElectionRecordAnnotationKey.
 var IsLeaderElectionResource = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if _, ok := obj.GetAnnotations()[resourcelock.LeaderElectionRecordAnnotationKey]; ok {
 		return true
