@@ -9,6 +9,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -116,6 +117,10 @@ func TestReportBuilder(t *testing.T) {
 
 type testPlugin struct {
 	configHash string
+}
+
+func (p *testPlugin) SupportsKind(kind kube.Kind) bool {
+	return true
 }
 
 func (p *testPlugin) Init(_ starboard.PluginContext) error {

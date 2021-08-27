@@ -14,6 +14,7 @@ import (
 	"github.com/aquasecurity/starboard/itest/starboard-operator/behavior"
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,6 +79,8 @@ var _ = BeforeSuite(func() {
 		AssertTimeout:         3 * time.Minute,
 		PrimaryNamespace:      corev1.NamespaceDefault,
 		PrimaryWorkloadPrefix: "wordpress",
+
+		ConfigAuditReportsPlugin: conftest.Plugin,
 
 		Client: kubeClient,
 		Helper: helper.NewHelper(scheme, kubeClient),
