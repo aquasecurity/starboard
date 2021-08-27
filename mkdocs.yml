@@ -81,10 +81,10 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.12.0-rc1"
+    tag: "v0.12.0-rc2"
     tag_prev: "v0.11.0"
     build:
-      version: "0.12.0-rc1"
+      version: "0.12.0-rc2"
       commit: "2ea747484635ae36cf7ff0d00184275f35779fed"
       date: "2021-08-03T10:46:09Z"
     chart:
