@@ -100,7 +100,8 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	if err != nil {
 		return nil, err
 	}
-	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "warn"}
+	kubeHunterArgs := []string{"--pod", "--report", "json", "--log", "none"}
+	// Temporary fix for logging: https://github.com/aquasecurity/kube-hunter/issues/465
 	quick, err := s.config.GetKubeHunterQuick()
 	if err != nil {
 		return nil, err
