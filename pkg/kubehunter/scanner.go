@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -30,9 +29,8 @@ type Config interface {
 }
 
 type Scanner struct {
-	scheme    *runtime.Scheme
-	clientset kubernetes.Interface
-	ext.IDGenerator
+	scheme     *runtime.Scheme
+	clientset  kubernetes.Interface
 	opts       kube.ScannerOpts
 	logsReader kube.LogsReader
 	config     starboard.ConfigData
@@ -45,12 +43,11 @@ func NewScanner(
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
-		scheme:      scheme,
-		clientset:   clientset,
-		IDGenerator: ext.NewGoogleUUIDGenerator(),
-		logsReader:  kube.NewLogsReader(clientset),
-		config:      config,
-		opts:        opts,
+		scheme:     scheme,
+		clientset:  clientset,
+		logsReader: kube.NewLogsReader(clientset),
+		config:     config,
+		opts:       opts,
 	}
 }
 
@@ -149,7 +146,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.GenerateID(),
+			Name:      fmt.Sprintf("scan-kubehunterreports-%s", kube.ComputeHash("cluster")),
 			Namespace: starboard.NamespaceName,
 		},
 		Spec: batchv1.JobSpec{
