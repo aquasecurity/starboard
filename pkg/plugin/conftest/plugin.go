@@ -126,6 +126,7 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 var (
 	supportedKinds = map[kube.Kind]bool{
 		kube.KindPod:                   true,
+		kube.KindDeployment:            true,
 		kube.KindReplicaSet:            true,
 		kube.KindReplicationController: true,
 		kube.KindStatefulSet:           true,
