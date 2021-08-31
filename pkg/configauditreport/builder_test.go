@@ -119,8 +119,12 @@ type testPlugin struct {
 	configHash string
 }
 
-func (p *testPlugin) SupportsKind(kind kube.Kind) bool {
+func (p *testPlugin) SupportsKind(_ kube.Kind) bool {
 	return true
+}
+
+func (p *testPlugin) IsReady(_ starboard.PluginContext) (bool, error) {
+	return true, nil
 }
 
 func (p *testPlugin) Init(_ starboard.PluginContext) error {

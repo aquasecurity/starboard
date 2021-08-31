@@ -301,6 +301,10 @@ func (p *plugin) SupportsKind(kind kube.Kind) bool {
 	return supportedKinds[kind]
 }
 
+func (p *plugin) IsReady(_ starboard.PluginContext) (bool, error) {
+	return true, nil
+}
+
 // Init ensures the default Config required by this plugin.
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{

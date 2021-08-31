@@ -39,4 +39,8 @@ type Plugin interface {
 	// SupportsKind returns true if the given resource kind is supported by
 	// this plugin, false otherwise.
 	SupportsKind(kind kube.Kind) bool
+
+	// IsReady returns true if the plugin is ready for reconciliation, false
+	// otherwise.
+	IsReady(ctx starboard.PluginContext) (bool, error)
 }

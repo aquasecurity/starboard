@@ -121,10 +121,75 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 }
 
+func TestPlugin_IsReady(t *testing.T) {
+
+	testCases := []struct {
+		name       string
+		configData map[string]string
+		expected   bool
+	}{
+		{
+			name: "Should return false if there are no policies",
+			configData: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+			},
+			expected: false,
+		},
+		{
+			name: "Should return true if there is at least one policy",
+			configData: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.policy.kubernetes.rego": `package main
+
+deny[res] {
+  input.kind == "Deployment"
+  not input.spec.template.spec.securityContext.runAsNonRoot
+
+  msg := "Containers must not run as root"
+
+  res := {
+    "msg": msg,
+    "title": "Runs as root user"
+  }
+}
+`},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewGomegaWithT(t)
+
+			client := fake.NewClientBuilder().WithObjects(
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "starboard-conftest-config",
+						Namespace:       "starboard-ns",
+						ResourceVersion: "0",
+					},
+					Data: tc.configData,
+				}).Build()
+
+			pluginContext := starboard.NewPluginContext().
+				WithName(conftest.Plugin).
+				WithNamespace("starboard-ns").
+				WithServiceAccountName("starboard-sa").
+				WithClient(client).
+				Get()
+
+			instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+			ready, err := instance.IsReady(pluginContext)
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(ready).To(Equal(tc.expected))
+		})
+	}
+
+}
+
 func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {
-
 		g := NewGomegaWithT(t)
 
 		client := fake.NewClientBuilder().WithObjects().Build()
@@ -172,16 +237,17 @@ func TestPlugin_Init(t *testing.T) {
 	t.Run("Should not overwrite existing config", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
-		client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            "starboard-conftest-config",
-				Namespace:       "starboard-ns",
-				ResourceVersion: "0",
-			},
-			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
-			},
-		}).Build()
+		client := fake.NewClientBuilder().WithObjects(
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "starboard-conftest-config",
+					Namespace:       "starboard-ns",
+					ResourceVersion: "0",
+				},
+				Data: map[string]string{
+					"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				},
+			}).Build()
 
 		pluginContext := starboard.NewPluginContext().
 			WithName(conftest.Plugin).
