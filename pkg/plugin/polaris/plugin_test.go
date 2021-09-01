@@ -100,6 +100,27 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 }
 
+func TestPlugin_IsReady(t *testing.T) {
+
+	t.Run("Should always return true", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		client := fake.NewClientBuilder().Build()
+
+		pluginContext := starboard.NewPluginContext().
+			WithName(string(starboard.Polaris)).
+			WithNamespace("starboard-ns").
+			WithServiceAccountName("starboard-sa").
+			WithClient(client).
+			Get()
+
+		instance := polaris.NewPlugin(fixedClock)
+		ready, err := instance.IsReady(pluginContext)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(ready).To(BeTrue())
+	})
+}
+
 func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {

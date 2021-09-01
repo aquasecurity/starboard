@@ -76,7 +76,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	for _, resource := range resources {
 		if !r.Plugin.SupportsKind(resource.kind) {
-			r.Logger.Info("Skipping unsupported kind", "plugin", r.PluginContext.GetName(), "kind", resource.kind)
+			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
 		err = ctrl.NewControllerManagedBy(mgr).
@@ -95,7 +95,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	for _, resource := range clusterResources {
 		if !r.Plugin.SupportsKind(resource.kind) {
-			r.Logger.Info("Skipping unsupported kind", "plugin", r.PluginContext.GetName(), "kind", resource.kind)
+			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
 		err = ctrl.NewControllerManagedBy(mgr).
@@ -124,6 +124,19 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
 
+		ready, err := r.Plugin.IsReady(r.PluginContext)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("checking whether plugin is ready: %w", err)
+		}
+		if !ready {
+			log.V(1).Info("Pushing back reconcile key",
+				"reason", "plugin not ready",
+				"pluginName", r.PluginContext.GetName(),
+				"retryAfter", r.ScanJobRetryAfter)
+			// TODO Introduce more generic param to retry processing a given key.
+			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
+		}
+
 		resourcePartial := kube.GetPartialObjectFromKindAndNamespacedName(resourceKind, req.NamespacedName)
 
 		log.V(1).Info("Getting resource from cache")
@@ -140,7 +153,9 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 		if resourceKind == kube.KindPod {
 			controller := metav1.GetControllerOf(resource)
 			if kube.IsBuiltInWorkload(controller) {
-				log.V(1).Info("Ignoring managed pod", "controllerKind", controller.Kind, "controllerName", controller.Name)
+				log.V(1).Info("Ignoring managed pod",
+					"controllerKind", controller.Kind,
+					"controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
 		}
@@ -195,7 +210,10 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 		log.V(1).Info("Checking scan jobs limit", "count", scanJobsCount, "limit", r.ConcurrentScanJobsLimit)
 
 		if limitExceeded {
-			log.V(1).Info("Pushing back scan job", "count", scanJobsCount, "retryAfter", r.ScanJobRetryAfter)
+			log.V(1).Info("Pushing back reconcile key",
+				"reason", "scan jobs limit exceeded",
+				"scanJobsCount", scanJobsCount,
+				"retryAfter", r.ScanJobRetryAfter)
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 

@@ -148,6 +148,15 @@ func (p *plugin) SupportsKind(kind kube.Kind) bool {
 	return supportedKinds[kind]
 }
 
+// IsReady returns true if there is at least one policy, false otherwise.
+func (p *plugin) IsReady(ctx starboard.PluginContext) (bool, error) {
+	config, err := p.newConfigFrom(ctx)
+	if err != nil {
+		return false, err
+	}
+	return len(config.GetPolicies()) > 0, nil
+}
+
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
