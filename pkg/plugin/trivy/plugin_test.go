@@ -100,7 +100,7 @@ func TestConfig_GetMode(t *testing.T) {
 					"trivy.mode": "P2P",
 				},
 			}},
-			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer)",
+			expectedError: "invalid value (P2P) of trivy.mode; allowed values (Standalone, ClientServer, FileSystem)",
 		},
 	}
 	for _, tc := range testCases {

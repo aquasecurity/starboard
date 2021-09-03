@@ -56,6 +56,7 @@ type Mode string
 const (
 	Standalone   Mode = "Standalone"
 	ClientServer Mode = "ClientServer"
+	FileSystem   Mode = "FileSystem"
 )
 
 // Config defines configuration params for this plugin.
@@ -80,10 +81,12 @@ func (c Config) GetMode() (Mode, error) {
 		return Standalone, nil
 	case ClientServer:
 		return ClientServer, nil
+	case FileSystem:
+		return FileSystem, nil
 	}
 
-	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
-		value, keyTrivyMode, Standalone, ClientServer)
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s, %s)",
+		value, keyTrivyMode, Standalone, ClientServer, FileSystem)
 }
 
 func (c Config) GetServerURL() (string, error) {
@@ -210,6 +213,8 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec
 		return p.getPodSpecForStandaloneMode(config, spec, credentials)
 	case ClientServer:
 		return p.getPodSpecForClientServerMode(config, spec, credentials)
+	case FileSystem:
+		return p.getPodSpecForFileSystemMode(config, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
@@ -229,9 +234,27 @@ func (p *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec,
 }
 
 const (
-	sharedVolumeName     = "data"
-	ignoreFileVolumeName = "ignorefile"
+	sharedVolumeName            = "data"
+	ignoreFileVolumeName        = "ignorefile"
+	fsSharedVolumeName          = "starboard"
+	sharedVolumeLocationOfTrivy = "/var/starboard/trivy"
 )
+
+func constructEnvVarSourceFromConfigMap(envName, trivyConfigName, trivyConfikey string) (res corev1.EnvVar) {
+	res = corev1.EnvVar{
+		Name: envName,
+		ValueFrom: &corev1.EnvVarSource{
+			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: trivyConfigName,
+				},
+				Key:      trivyConfikey,
+				Optional: pointer.BoolPtr(true),
+			},
+		},
+	}
+	return
+}
 
 // In the Standalone mode there is the init container responsible for
 // downloading the latest Trivy DB file from GitHub and storing it to the empty
@@ -562,6 +585,188 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 		InitContainers:               []corev1.Container{initContainer},
 		Containers:                   containers,
 		SecurityContext:              &corev1.PodSecurityContext{},
+	}, secrets, nil
+}
+
+//FileSystem mode is quite similar to standalone mode.
+//The only difference is that instead of scanning the resource by name,
+//We scanning the resource place on a specific file system location using the following command.
+//
+//     trivy --quiet fs  --format json --ignore-unfixed  file/system/location
+//
+func (p *plugin) getPodSpecForFileSystemMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	var secrets []*corev1.Secret
+
+	trivyImageRef, err := config.GetImageRef()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
+
+	requirements, err := config.GetResourceRequirements()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      fsSharedVolumeName,
+			ReadOnly:  false,
+			MountPath: "/var/starboard",
+		},
+	}
+	initBinaryContainer := corev1.Container{
+		Name:                     p.idGenerator.GenerateID(),
+		Image:                    trivyImageRef,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		Env: []corev1.EnvVar{
+			constructEnvVarSourceFromConfigMap("HTTP_PROXY", trivyConfigName, keyTrivyHTTPProxy),
+			constructEnvVarSourceFromConfigMap("HTTPS_PROXY", trivyConfigName, keyTrivyHTTPSProxy),
+			constructEnvVarSourceFromConfigMap("NO_PROXY", trivyConfigName, keyTrivyNoProxy),
+			constructEnvVarSourceFromConfigMap("GITHUB_TOKEN", trivyConfigName, keyTrivyGitHubToken),
+		},
+		Command: []string{
+			"cp",
+			"-v",
+			"/usr/local/bin/trivy",
+			sharedVolumeLocationOfTrivy,
+		},
+		Resources:    requirements,
+		VolumeMounts: volumeMounts,
+	}
+
+	initDBContainer := corev1.Container{
+		Name:                     p.idGenerator.GenerateID(),
+		Image:                    trivyImageRef,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		Env: []corev1.EnvVar{
+			constructEnvVarSourceFromConfigMap("HTTP_PROXY", trivyConfigName, keyTrivyHTTPProxy),
+			constructEnvVarSourceFromConfigMap("HTTPS_PROXY", trivyConfigName, keyTrivyHTTPSProxy),
+			constructEnvVarSourceFromConfigMap("NO_PROXY", trivyConfigName, keyTrivyNoProxy),
+			constructEnvVarSourceFromConfigMap("GITHUB_TOKEN", trivyConfigName, keyTrivyGitHubToken),
+		},
+		Command: []string{
+			sharedVolumeLocationOfTrivy,
+		},
+		Args: []string{
+			"--download-db-only",
+			"--cache-dir",
+			"/var/starboard/trivy-db",
+		},
+		Resources:    requirements,
+		VolumeMounts: volumeMounts,
+	}
+
+	var containers []corev1.Container
+
+	volumes := []corev1.Volume{
+		{
+			Name: fsSharedVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{
+					Medium: corev1.StorageMediumDefault,
+				},
+			},
+		},
+	}
+
+	if config.IgnoreFileExists() {
+		volumes = append(volumes, corev1.Volume{
+			Name: ignoreFileVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: trivyConfigName,
+					},
+					Items: []corev1.KeyToPath{
+						{
+							Key:  keyTrivyIgnoreFile,
+							Path: ".trivyignore",
+						},
+					},
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      ignoreFileVolumeName,
+			MountPath: "/tmp/trivy/.trivyignore",
+			SubPath:   ".trivyignore",
+		})
+	}
+
+	for _, c := range spec.Containers {
+
+		env := []corev1.EnvVar{
+			constructEnvVarSourceFromConfigMap("TRIVY_SEVERITY", trivyConfigName, keyTrivySeverity),
+			constructEnvVarSourceFromConfigMap("TRIVY_IGNORE_UNFIXED", trivyConfigName, keyTrivyIgnoreUnfixed),
+			constructEnvVarSourceFromConfigMap("TRIVY_SKIP_FILES", trivyConfigName, keyTrivySkipFiles),
+			constructEnvVarSourceFromConfigMap("TRIVY_SKIP_DIRS", trivyConfigName, keyTrivySkipDirs),
+			constructEnvVarSourceFromConfigMap("HTTP_PROXY", trivyConfigName, keyTrivyHTTPProxy),
+			constructEnvVarSourceFromConfigMap("HTTPS_PROXY", trivyConfigName, keyTrivyHTTPSProxy),
+			constructEnvVarSourceFromConfigMap("NO_PROXY", trivyConfigName, keyTrivyNoProxy),
+		}
+		if config.IgnoreFileExists() {
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_IGNOREFILE",
+				Value: "/tmp/trivy/.trivyignore",
+			})
+		}
+
+		env, err = p.appendTrivyInsecureEnv(config, c.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
+		resourceRequirements, err := config.GetResourceRequirements()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
+		containers = append(containers, corev1.Container{
+			Name:                     c.Name,
+			Image:                    c.Image,
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+			Env:                      env,
+			Command: []string{
+				sharedVolumeLocationOfTrivy,
+			},
+			Args: []string{
+				"--skip-update",
+				"--cache-dir",
+				"/var/starboard/trivy-db",
+				"--quiet",
+				"fs",
+				"--format",
+				"json",
+				"/",
+			},
+			Resources:    resourceRequirements,
+			VolumeMounts: volumeMounts,
+			SecurityContext: &corev1.SecurityContext{
+				Privileged:               pointer.BoolPtr(false),
+				AllowPrivilegeEscalation: pointer.BoolPtr(false),
+				Capabilities: &corev1.Capabilities{
+					Drop: []corev1.Capability{"all"},
+				},
+				ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+			},
+		})
+	}
+
+	return corev1.PodSpec{
+		Affinity:                     starboard.LinuxNodeAffinity(),
+		RestartPolicy:                corev1.RestartPolicyNever,
+		AutomountServiceAccountToken: pointer.BoolPtr(false),
+		Volumes:                      volumes,
+		InitContainers:               []corev1.Container{initBinaryContainer, initDBContainer},
+		Containers:                   containers,
+		SecurityContext:              &corev1.PodSecurityContext{},
+		NodeName:                     spec.NodeName,
 	}, secrets, nil
 }
 
