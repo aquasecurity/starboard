@@ -31,7 +31,7 @@ func (r *logsReader) GetLogsByJobAndContainerName(ctx context.Context, job *batc
 	if err != nil {
 		return nil, fmt.Errorf("getting pod controllered by job: %q: %w", job.Namespace+"/"+job.Name, err)
 	}
-	if pod != nil {
+	if pod == nil {
 		return nil, fmt.Errorf("getting pod controlled by job: %q: pod not found", job.Namespace+"/"+job.Name)
 	}
 
