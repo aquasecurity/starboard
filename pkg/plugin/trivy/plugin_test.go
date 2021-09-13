@@ -266,7 +266,6 @@ func TestConfig_GetMirrors(t *testing.T) {
 		name           string
 		configData     trivy.Config
 		expectedOutput map[string]string
-		expectError    bool
 	}{
 		{
 			name: "Should return empty map when there is no key with trivy.mirrors.registry. prefix",
@@ -281,32 +280,16 @@ func TestConfig_GetMirrors(t *testing.T) {
 			name: "Should return mirrors in a map",
 			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"trivy.mirrors.registry.docker": "docker.io",
-					"trivy.mirrors.mirror.docker":   "mirror.io",
+					"trivy.registry.mirror.docker.io": "mirror.io",
 				},
 			}},
 			expectedOutput: map[string]string{"docker.io": "mirror.io"},
-		},
-		{
-			name: "Should return error, if mirror is missing for registry",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
-				Data: map[string]string{
-					"trivy.mirrors.registry.docker": "docker.io",
-				},
-			}},
-			expectError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mirrors, err := tc.configData.GetMirrors()
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.Equal(t, tc.expectedOutput, mirrors)
-			}
-
+			assert.Equal(t, tc.expectedOutput, tc.configData.GetMirrors())
 		})
 	}
 }
@@ -1213,8 +1196,7 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 
-				"trivy.mirrors.registry.dockerio": "index.docker.io",
-				"trivy.mirrors.mirror.dockerio":   "mirror.io",
+				"trivy.registry.mirror.index.docker.io": "mirror.io",
 			},
 			workloadSpec: corev1.PodSpec{
 				Containers: []corev1.Container{
@@ -2280,53 +2262,40 @@ func TestGetScoreFromCVSS(t *testing.T) {
 
 func TestGetMirroredImage(t *testing.T) {
 	testCases := []struct {
-		name     string
-		image    string
-		mirrors  map[string]string
-		expected string
+		name          string
+		image         string
+		mirrors       map[string]string
+		expected      string
+		expectedError string
 	}{
 		{
-			name:     "no matching mirror, same image",
-			image:    "index.docker.io/library/alpine",
+			name:     "Mirror not match",
+			image:    "alpine",
 			mirrors:  map[string]string{"gcr.io": "mirror.io"},
-			expected: "index.docker.io/library/alpine",
+			expected: "alpine",
 		},
 		{
-			name:     "matching mirror, changed image",
-			image:    "index.docker.io/library/alpine",
-			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
-			expected: "mirror.io/library/alpine",
-		},
-		{
-			name:     "no matching mirror, default registry",
-			image:    "library/alpine",
-			mirrors:  map[string]string{"gcr.io": "mirror.io"},
-			expected: "library/alpine",
-		},
-		{
-			name:     "matching mirror, default registry",
-			image:    "library/alpine",
-			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
-			expected: "mirror.io/library/alpine",
-		},
-		{
-			name:     "matching mirror, default registry, expanded image name",
+			name:     "Mirror match",
 			image:    "alpine",
 			mirrors:  map[string]string{"index.docker.io": "mirror.io"},
-			expected: "mirror.io/library/alpine",
+			expected: "mirror.io/library/alpine:latest",
 		},
 		{
-			name:     "matching mirror, no expanded image name",
-			image:    "quay.io/alpine",
-			mirrors:  map[string]string{"quay.io": "mirror.io"},
-			expected: "mirror.io/alpine",
+			name:          "Broken image",
+			image:         "alpine@sha256:broken",
+			expectedError: "could not parse reference: alpine@sha256:broken",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			expected := trivy.GetMirroredImage(tc.image, tc.mirrors)
-			assert.Equal(t, tc.expected, expected)
+			expected, err := trivy.GetMirroredImage(tc.image, tc.mirrors)
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, expected)
+			}
 		})
 	}
 }

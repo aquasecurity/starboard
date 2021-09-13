@@ -31,8 +31,7 @@ const (
 	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
 	keyTrivyIgnoreFile             = "trivy.ignoreFile"
 	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
-	keyTrivyMirrorSrcPrefix        = "trivy.mirrors.registry."
-	keyTrivyMirrorDstPrefix        = "trivy.mirrors.mirror."
+	keyTrivyMirrorPrefix           = "trivy.registry.mirror."
 	keyTrivyHTTPProxy              = "trivy.httpProxy"
 	keyTrivyHTTPSProxy             = "trivy.httpsProxy"
 	keyTrivyNoProxy                = "trivy.noProxy"
@@ -107,26 +106,15 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
-func (c Config) GetMirrors() (map[string]string, error) {
+func (c Config) GetMirrors() map[string]string {
 	res := make(map[string]string)
-	for registyKey, registry := range c.Data {
-		if !strings.HasPrefix(registyKey, keyTrivyMirrorSrcPrefix) {
+	for registryKey, mirror := range c.Data {
+		if !strings.HasPrefix(registryKey, keyTrivyMirrorPrefix) {
 			continue
 		}
-		mirrorKey := fmt.Sprintf(
-			"%v%v",
-			keyTrivyMirrorDstPrefix,
-			strings.TrimPrefix(registyKey, keyTrivyMirrorSrcPrefix),
-		)
-
-		mirror, ok := c.Data[mirrorKey]
-		if !ok {
-			return res, fmt.Errorf("mirror %v missing for %v", mirrorKey, registyKey)
-		}
-
-		res[registry] = mirror
+		res[strings.TrimPrefix(registryKey, keyTrivyMirrorPrefix)] = mirror
 	}
-	return res, nil
+	return res
 }
 
 // GetResourceRequirements creates ResourceRequirements from the Config.
@@ -530,7 +518,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			return corev1.PodSpec{}, nil, err
 		}
 
-		mirrors, err := config.GetMirrors()
+		optionalMirroredImage, err := GetMirroredImage(c.Image, config.GetMirrors())
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -551,7 +539,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 				"--quiet",
 				"--format",
 				"json",
-				GetMirroredImage(c.Image, mirrors),
+				optionalMirroredImage,
 			},
 			Resources:    resourceRequirements,
 			VolumeMounts: volumeMounts,
@@ -805,7 +793,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			return corev1.PodSpec{}, nil, err
 		}
 
-		mirrors, err := config.GetMirrors()
+		optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -826,7 +814,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 				"json",
 				"--remote",
 				trivyServerURL,
-				GetMirroredImage(container.Image, mirrors),
+				optionalMirroredImage,
 			},
 			VolumeMounts: volumeMounts,
 			Resources:    requirements,
@@ -981,42 +969,18 @@ func GetScoreFromCVSS(CVSSs map[string]*CVSS) *float64 {
 	return nvdScore
 }
 
-func fullImagePath(image string) string {
-	const defaultRegistry = "index.docker.io"
-	registryAndImage := strings.Split(image, "/")
-	// Empty string
-	if len(registryAndImage) == 0 {
-		return image
+func GetMirroredImage(image string, mirrors map[string]string) (string, error) {
+	ref, err := name.ParseReference(image)
+	if err != nil {
+		return "", err
 	}
-
-	// Add default Registry, if none is present
-	if len(registryAndImage) == 1 ||
-		!(strings.Contains(registryAndImage[0], ".") ||
-			strings.Contains(registryAndImage[0], ":") ||
-			registryAndImage[0] == "localhost") {
-		registryAndImage = append([]string{defaultRegistry}, registryAndImage...)
-	}
-
-	// Add "library" if only image name is given and registry is DockerHub
-	if len(registryAndImage) == 2 &&
-		(strings.HasSuffix(registryAndImage[0], "docker.io") ||
-			strings.HasSuffix(registryAndImage[0], "docker.com")) {
-		registryAndImage = append(registryAndImage[:2], registryAndImage[1:]...)
-		registryAndImage[1] = "library"
-	}
-
-	return strings.Join(registryAndImage, "/")
-}
-
-func GetMirroredImage(image string, mirrors map[string]string) string {
-	mirroredImage := fullImagePath(image)
-
+	mirroredImage := ref.Name()
 	for k, v := range mirrors {
 		if strings.HasPrefix(mirroredImage, k) {
 			mirroredImage = strings.Replace(mirroredImage, k, v, 1)
-			return mirroredImage
+			return mirroredImage, nil
 		}
 	}
-	// If nothing is mirrord, we can simply use the input image without the fullpath.
-	return image
+	// If nothing is mirrord, we can simply use the input image.
+	return image, nil
 }
