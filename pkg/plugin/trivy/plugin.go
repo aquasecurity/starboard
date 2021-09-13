@@ -31,6 +31,7 @@ const (
 	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
 	keyTrivyIgnoreFile             = "trivy.ignoreFile"
 	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
+	keyTrivyMirrorPrefix           = "trivy.registry.mirror."
 	keyTrivyHTTPProxy              = "trivy.httpProxy"
 	keyTrivyHTTPSProxy             = "trivy.httpsProxy"
 	keyTrivyNoProxy                = "trivy.noProxy"
@@ -103,6 +104,17 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	}
 
 	return insecureRegistries
+}
+
+func (c Config) GetMirrors() map[string]string {
+	res := make(map[string]string)
+	for registryKey, mirror := range c.Data {
+		if !strings.HasPrefix(registryKey, keyTrivyMirrorPrefix) {
+			continue
+		}
+		res[strings.TrimPrefix(registryKey, keyTrivyMirrorPrefix)] = mirror
+	}
+	return res
 }
 
 // GetResourceRequirements creates ResourceRequirements from the Config.
@@ -506,6 +518,11 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 			return corev1.PodSpec{}, nil, err
 		}
 
+		optionalMirroredImage, err := GetMirroredImage(c.Image, config.GetMirrors())
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    trivyImageRef,
@@ -522,7 +539,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 				"--quiet",
 				"--format",
 				"json",
-				c.Image,
+				optionalMirroredImage,
 			},
 			Resources:    resourceRequirements,
 			VolumeMounts: volumeMounts,
@@ -776,6 +793,11 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			return corev1.PodSpec{}, nil, err
 		}
 
+		optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:                     container.Name,
 			Image:                    trivyImageRef,
@@ -792,7 +814,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 				"json",
 				"--remote",
 				trivyServerURL,
-				container.Image,
+				optionalMirroredImage,
 			},
 			VolumeMounts: volumeMounts,
 			Resources:    requirements,
@@ -945,4 +967,20 @@ func GetScoreFromCVSS(CVSSs map[string]*CVSS) *float64 {
 	}
 
 	return nvdScore
+}
+
+func GetMirroredImage(image string, mirrors map[string]string) (string, error) {
+	ref, err := name.ParseReference(image)
+	if err != nil {
+		return "", err
+	}
+	mirroredImage := ref.Name()
+	for k, v := range mirrors {
+		if strings.HasPrefix(mirroredImage, k) {
+			mirroredImage = strings.Replace(mirroredImage, k, v, 1)
+			return mirroredImage, nil
+		}
+	}
+	// If nothing is mirrord, we can simply use the input image.
+	return image, nil
 }
