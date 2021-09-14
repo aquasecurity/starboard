@@ -266,16 +266,16 @@ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
 To install [Operator Lifecycle Manager][olm] (OLM) run:
 
 ```
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/crds.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/olm.yaml
 ```
 
 or
 
 ```
-curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh -o install.sh
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/install.sh -o install.sh
 chmod +x install.sh
-./install.sh v0.17.0
+./install.sh v0.18.3
 ```
 
 ### Build the Catalog Image
