@@ -50,19 +50,19 @@ These guidelines will help you get started with the Starboard project.
 
 1. Install Go
 
-   The project requires [Go 1.15][go-download] or later. We also assume that you're familiar with
+   The project requires [Go 1.16][go-download] or later. We also assume that you're familiar with
    Go's [GOPATH workspace][go-code] convention, and have the appropriate environment variables set.
 2. Get the source code:
 
    ```
-   $ git clone git@github.com:aquasecurity/starboard.git
-   $ cd starboard
+   git clone git@github.com:aquasecurity/starboard.git
+   cd starboard
    ```
 3. Access to a Kubernetes cluster. We assume that you're using a [KIND][kind] cluster. To create a single-node KIND
    cluster, run:
 
    ```
-   $ kind create cluster
+   kind create cluster
    ```
 
 ## Build Binaries
@@ -76,7 +76,7 @@ These guidelines will help you get started with the Starboard project.
 To build all Starboard binaries, run:
 
 ```
-$ make
+make
 ```
 
 This uses the `go build` command and builds binaries in the `./bin` directory.
@@ -84,15 +84,15 @@ This uses the `go build` command and builds binaries in the `./bin` directory.
 To build all Starboard binaries into Docker images, run:
 
 ```
-$ make docker-build
+make docker-build
 ```
 
 To load Docker images into your KIND cluster, run:
 
 ```
-$ kind load docker-image aquasec/starboard:dev
-$ kind load docker-image aquasec/starboard-operator:dev
-$ kind load docker-image aquasec/starboard-scanner-aqua:dev
+kind load docker-image aquasec/starboard:dev
+kind load docker-image aquasec/starboard-operator:dev
+kind load docker-image aquasec/starboard-scanner-aqua:dev
 ```
 
 ## Run Tests
@@ -106,13 +106,13 @@ collaborators, more coarse grained integration tests might be required.
 To run all unit tests with code coverage enabled, run:
 
 ```
-$ make unit-tests
+make unit-tests
 ```
 
 To open the test coverage report in your web browser, run:
 
 ```
-$ go tool cover -html=coverage.txt
+go tool cover -html=coverage.txt
 ```
 
 ### Run Integration Tests
@@ -121,7 +121,7 @@ The integration tests assumes that you have a working kubernetes cluster (e.g KI
 variable is pointing to that cluster configuration file. For example:
 
 ```
-$ export KUBECONFIG=~/.kube/config
+export KUBECONFIG=~/.kube/config
 ```
 
 There are separate integration tests for Starboard CLI and for Starboard Operator. The tests may leave the cluster in a
@@ -130,24 +130,24 @@ dirty state, so running one test after the other may cause spurious failures.
 To run the integration tests for Starboard CLI with code coverage enabled, run:
 
 ```
-$ make itests-starboard
+make itests-starboard
 ```
 
 To open the test coverage report in your web browser, run:
 
 ```
-$ go tool cover -html=itest/starboard/coverage.txt
+go tool cover -html=itest/starboard/coverage.txt
 ```
 
 To run the integration tests for Starboard Operator and view the coverage report, first do the
 [prerequisite steps](#prerequisites), and then run:
 
 ```
-$ OPERATOR_NAMESPACE=starboard-operator \
-    OPERATOR_TARGET_NAMESPACES=default \
-    OPERATOR_LOG_DEV_MODE=true \
-    make itests-starboard-operator
-$ go tool cover -html=itest/starboard-operator/coverage.txt
+OPERATOR_NAMESPACE=starboard-operator \
+  OPERATOR_TARGET_NAMESPACES=default \
+  OPERATOR_LOG_DEV_MODE=true \
+  make itests-starboard-operator
+go tool cover -html=itest/starboard-operator/coverage.txt
 ```
 
 ### Code Coverage
@@ -167,9 +167,9 @@ generators here for custom security resources. This project follows the patterns
 The code generation starts with:
 
 ```
-$ go mod vendor
-$ export GOPATH="$(go env GOPATH)"
-$ ./hack/update-codegen.sh
+go mod vendor
+export GOPATH="$(go env GOPATH)"
+./hack/update-codegen.sh
 ```
 
 In addition, there is a second script called `./hack/verify-codegen.sh`. This script calls the
@@ -187,18 +187,18 @@ started with a basic development workflow. For other install modes see [Operator
 1. Send custom resource definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
-       -f deploy/crd/configauditreports.crd.yaml \
-       -f deploy/crd/clusterconfigauditreports.crd.yaml \
-       -f deploy/crd/ciskubebenchreports.crd.yaml
+   kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
+     -f deploy/crd/configauditreports.crd.yaml \
+     -f deploy/crd/clusterconfigauditreports.crd.yaml \
+     -f deploy/crd/ciskubebenchreports.crd.yaml
    ```
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
 
    ```
-   $ kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-       -f deploy/static/02-starboard-operator.sa.yaml \
-       -f deploy/static/03-starboard-operator.clusterrole.yaml \
-       -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+   kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
+     -f deploy/static/02-starboard-operator.sa.yaml \
+     -f deploy/static/03-starboard-operator.clusterrole.yaml \
+     -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
    ```
 
    This will create the `starboard-operator` namespace, and the `starboard-operator` service account. Beyond that,
@@ -207,7 +207,7 @@ started with a basic development workflow. For other install modes see [Operator
 3. (Optional) Create configuration objects:
 
    ```
-   $ kubectl apply -f deploy/static/05-starboard-operator.config.yaml
+   kubectl apply -f deploy/static/05-starboard-operator.config.yaml
    ```
 
 ### In cluster
@@ -215,17 +215,17 @@ started with a basic development workflow. For other install modes see [Operator
 1. Build the operator binary into the Docker image:
 
    ```
-   $ make docker-build-starboard-operator
+   make docker-build-starboard-operator
    ```
 2. Load the Docker image from your host into KIND cluster nodes:
 
    ```
-   $ kind load docker-image aquasec/starboard-operator:dev
+   kind load docker-image aquasec/starboard-operator:dev
    ```
 3. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
 
    ```
-   $ kubectl apply -k deploy/static
+   kubectl apply -k deploy/static
    ```
 
 ### Out of cluster
@@ -233,7 +233,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Run the main method of the operator program:
 
    ```
-   $ OPERATOR_NAMESPACE=starboard-operator \
+   OPERATOR_NAMESPACE=starboard-operator \
      OPERATOR_TARGET_NAMESPACES=default \
      OPERATOR_LOG_DEV_MODE=true \
      OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED=true \
@@ -247,16 +247,16 @@ started with a basic development workflow. For other install modes see [Operator
 ### Uninstall
 
 ```
-$ kubectl delete -k deploy/static
-$ kubectl delete -f deploy/static/05-starboard-operator.config.yaml
-$ kubectl delete -f deploy/static/01-starboard-operator.ns.yaml \
-    -f deploy/static/02-starboard-operator.sa.yaml \
-    -f deploy/static/03-starboard-operator.clusterrole.yaml \
-    -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
-$ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
-    -f deploy/crd/configauditreports.crd.yaml \
-    -f deploy/crd/clusterconfigauditreports.crd.yaml \
-    -f deploy/crd/ciskubebenchreports.crd.yaml
+kubectl delete -k deploy/static
+kubectl delete -f deploy/static/05-starboard-operator.config.yaml
+kubectl delete -f deploy/static/01-starboard-operator.ns.yaml \
+  -f deploy/static/02-starboard-operator.sa.yaml \
+  -f deploy/static/03-starboard-operator.clusterrole.yaml \
+  -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
+  -f deploy/crd/configauditreports.crd.yaml \
+  -f deploy/crd/clusterconfigauditreports.crd.yaml \
+  -f deploy/crd/ciskubebenchreports.crd.yaml
 ```
 
 ## Operator Lifecycle Manager (OLM)
@@ -266,16 +266,16 @@ $ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
 To install [Operator Lifecycle Manager][olm] (OLM) run:
 
 ```
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml
-$ kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml
 ```
 
 or
 
 ```
-$ curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh -o install.sh
-$ chmod +x install.sh
-$ ./install.sh v0.17.0
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh -o install.sh
+chmod +x install.sh
+./install.sh v0.17.0
 ```
 
 ### Build the Catalog Image
@@ -284,14 +284,14 @@ The Starboard Operator metadata is formatted in *packagemanifest* layout so you 
 structure of the [community-operators] repository.
 
 ```
-$ git clone git@github.com:k8s-operatorhub/community-operators.git
-$ cd community-operators
+git clone git@github.com:k8s-operatorhub/community-operators.git
+cd community-operators
 ```
 
 Build the catalog image for OLM containing just Starboard Operator with a Dockerfile like this:
 
 ```
-$ cat << EOF > starboard.Dockerfile
+cat << EOF > starboard.Dockerfile
 FROM quay.io/operator-framework/upstream-registry-builder as builder
 
 COPY operators/starboard-operator manifests
@@ -312,8 +312,8 @@ Place the `starboard.Dockerfile` in the top-level directory of your cloned copy 
 build it and push to a registry from where you can download it to your Kubernetes cluster:
 
 ```
-$ docker build -f starboard.Dockerfile -t docker.io/<your account>/starboard-catalog:dev .
-$ docker push docker.io/<your account>/starboard-catalog:dev
+docker image build -f starboard.Dockerfile -t docker.io/<your account>/starboard-catalog:dev .
+docker image push docker.io/<your account>/starboard-catalog:dev
 ```
 
 ### Register the Catalog Image
@@ -339,7 +339,7 @@ EOF
 You can delete the default catalog that OLM ships with to avoid duplicate entries:
 
 ```
-$ kubectl delete catalogsource operatorhubio-catalog -n olm
+kubectl delete catalogsource operatorhubio-catalog -n olm
 ```
 
 Inspect the list of loaded packagemanifests on the system with the following command to filter for the Starboard Operator:
