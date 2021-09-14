@@ -1,0 +1,38 @@
+version: 2.1
+
+orbs:
+  architect: giantswarm/architect@4.2.0
+
+workflows:
+  build:
+    jobs:
+      - architect/go-build:
+          name: go-build
+          binary: trivy
+          resource_class: large
+          filters:
+            tags:
+              only: /^v.*/
+
+      - architect/push-to-docker:
+          name: push-to-docker
+          context: "architect"
+          image: "docker.io/giantswarm/trivy"
+          username_envar: "DOCKER_USERNAME"
+          password_envar: "DOCKER_PASSWORD"
+          requires:
+            - go-build
+          filters:
+            tags:
+              only: /^v.*/
+
+      - architect/push-to-docker:
+          name: push-to-quay
+          image: "quay.io/giantswarm/trivy"
+          username_envar: "QUAY_USERNAME"
+          password_envar: "QUAY_PASSWORD"
+          requires:
+            - go-build
+          filters:
+            tags:
+              only: /^v.*/
