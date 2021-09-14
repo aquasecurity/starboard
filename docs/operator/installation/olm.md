@@ -12,13 +12,20 @@ configure it to watch the `default` namespaces:
 
 1. Install the Operator Lifecycle Manager:
    ```
-   curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh | bash -s v0.17.0
+   curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/install.sh -o install.sh
+   chmod +x install.sh
+   ./install.sh v0.18.3
+   ```
+   or
+   ```
+   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/crds.yaml
+   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/olm.yaml
    ```
 2. Create the namespace to install the operator in:
    ```
    kubectl create ns starboard-operator
    ```
-3. Declare the target namespaces by creating the OperatorGroup:
+3. Declare `default` as the target namespace by creating the OperatorGroup:
    ```
    cat << EOF | kubectl apply -f -
    apiVersion: operators.coreos.com/v1alpha2
