@@ -257,6 +257,15 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	}
 }
 
+func GetPodStatus(obj client.Object) (corev1.PodStatus, error) {
+	switch t := obj.(type) {
+	case *corev1.Pod:
+		return (obj.(*corev1.Pod)).Status, nil
+	default:
+		return corev1.PodStatus{}, fmt.Errorf("unsupported workload: %T", t)
+	}
+}
+
 type ObjectResolver struct {
 	client.Client
 }

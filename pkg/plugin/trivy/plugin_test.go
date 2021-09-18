@@ -2021,7 +2021,7 @@ CVE-2019-1543`,
 				).Build()).
 				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator())
-			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
+			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, corev1.PodStatus{}, tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
 			assert.Equal(t, tc.expectedJobSpec, jobSpec)

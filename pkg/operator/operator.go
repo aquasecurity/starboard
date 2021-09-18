@@ -144,22 +144,41 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err != nil {
 			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
 		}
+		if operatorConfig.DigestScannerEnabled {
+			if err = (&controller.DigestVulnerabilityReportReconciler{
+				Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
+				Config:         operatorConfig,
+				ConfigData:     starboardConfig,
+				Client:         mgr.GetClient(),
+				ObjectResolver: objectResolver,
+				LimitChecker:   limitChecker,
+				LogsReader:     logsReader,
+				SecretsReader:  secretsReader,
+				Plugin:         plugin,
+				PluginContext:  pluginContext,
+				ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
+			}).SetupWithManager(mgr); err != nil {
+				return fmt.Errorf("unable to setup digest vulnerabilityreport reconciler: %w", err)
+			}
+		} else {
+			if err = (&controller.VulnerabilityReportReconciler{
+				Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
+				Config:         operatorConfig,
+				ConfigData:     starboardConfig,
+				Client:         mgr.GetClient(),
+				ObjectResolver: objectResolver,
+				LimitChecker:   limitChecker,
+				LogsReader:     logsReader,
+				SecretsReader:  secretsReader,
+				Plugin:         plugin,
+				PluginContext:  pluginContext,
+				ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
+			}).SetupWithManager(mgr); err != nil {
+				return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
+			}
 
-		if err = (&controller.VulnerabilityReportReconciler{
-			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
-			Config:         operatorConfig,
-			ConfigData:     starboardConfig,
-			Client:         mgr.GetClient(),
-			ObjectResolver: objectResolver,
-			LimitChecker:   limitChecker,
-			LogsReader:     logsReader,
-			SecretsReader:  secretsReader,
-			Plugin:         plugin,
-			PluginContext:  pluginContext,
-			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
-		}).SetupWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 		}
+
 	}
 
 	if operatorConfig.ConfigAuditScannerEnabled {

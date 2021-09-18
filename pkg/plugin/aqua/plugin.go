@@ -37,6 +37,10 @@ func (s *plugin) Init(_ starboard.PluginContext) error {
 	return nil
 }
 
+func (p *plugin) GetScanJobSpecByStatus(ctx starboard.PluginContext, podStatus corev1.PodStatus, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	return p.GetScanJobSpec(ctx, spec, credentials)
+}
+
 func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	initContainerName := s.idGenerator.GenerateID()
 
