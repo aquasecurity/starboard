@@ -14,7 +14,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
-	github.com/valyala/quicktemplate v1.6.3
+	github.com/valyala/quicktemplate v1.7.0
 	k8s.io/api v0.22.2
 	k8s.io/apiextensions-apiserver v0.22.1
 	k8s.io/apimachinery v0.22.2
