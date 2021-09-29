@@ -1,11 +1,10 @@
 package v1alpha1
 
 import (
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 )
 
 // SchemeGroupVersion is group version used to register these objects
@@ -33,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&VulnerabilityReport{},
 		&VulnerabilityReportList{},
+		&ClusterVulnerabilityReport{},
+		&ClusterVulnerabilityReportList{},
 		&CISKubeBenchReport{},
 		&CISKubeBenchReportList{},
 		&KubeHunterReport{},
