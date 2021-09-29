@@ -749,6 +749,21 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 			})
 		}
 
+		volumes = []corev1.Volume{
+			{Name: "dockersock",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/var/run/docker.sock",
+					},
+				},
+			},
+		}
+
+		volumeMounts = []corev1.VolumeMount{
+			{Name: "dockersock",
+				MountPath: "/var/run/docker.sock",
+			}}
+
 		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
