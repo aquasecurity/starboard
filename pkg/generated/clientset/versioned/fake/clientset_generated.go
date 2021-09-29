@@ -58,7 +58,10 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 	return c.tracker
 }
 
-var _ clientset.Interface = &Clientset{}
+var (
+	_ clientset.Interface = &Clientset{}
+	_ testing.FakeClient  = &Clientset{}
+)
 
 // AquasecurityV1alpha1 retrieves the AquasecurityV1alpha1Client
 func (c *Clientset) AquasecurityV1alpha1() aquasecurityv1alpha1.AquasecurityV1alpha1Interface {
