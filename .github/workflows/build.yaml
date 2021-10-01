@@ -184,6 +184,10 @@ jobs:
         with:
           version: ${{ env.KIND_VERSION }}
           image: ${{ env.KIND_IMAGE }}
+      - name: Test connection to Kubernetes cluster
+        run: |
+          kubectl cluster-info
+          kubectl describe node
       - name: Run integration tests
         run: |
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
