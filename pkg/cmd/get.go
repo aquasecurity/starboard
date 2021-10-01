@@ -13,8 +13,8 @@ func NewGetCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags,
 		Use:   "get",
 		Short: "Get security reports",
 	}
-	getCmd.AddCommand(NewGetVulnerabilitiesCmd(buildInfo.Executable, cf, outWriter))
-	getCmd.AddCommand(NewGetConfigAuditCmd(buildInfo.Executable, cf, outWriter))
+	getCmd.AddCommand(NewGetVulnerabilityReportsCmd(buildInfo.Executable, cf, outWriter))
+	getCmd.AddCommand(NewGetConfigAuditReportsCmd(buildInfo.Executable, cf, outWriter))
 	getCmd.AddCommand(NewGetReportCmd(buildInfo, cf, outWriter))
 	getCmd.PersistentFlags().StringP("output", "o", "yaml", "Output format. One of yaml|json")
 
