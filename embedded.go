@@ -10,6 +10,8 @@ import (
 var (
 	//go:embed deploy/crd/vulnerabilityreports.crd.yaml
 	vulnerabilityReportsCRD []byte
+	//go:embed deploy/crd/clustervulnerabilityreports.crd.yaml
+	clusterVulnerabilityReportsCRD []byte
 	//go:embed deploy/crd/configauditreports.crd.yaml
 	configAuditReportsCRD []byte
 	//go:embed deploy/crd/clusterconfigauditreports.crd.yaml
@@ -22,6 +24,10 @@ var (
 
 func GetVulnerabilityReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
 	return getCRDFromBytes(vulnerabilityReportsCRD)
+}
+
+func GetClusterVulnerabilityReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
+	return getCRDFromBytes(clusterVulnerabilityReportsCRD)
 }
 
 func GetConfigAuditReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {

@@ -13,8 +13,9 @@ import (
 
 func NewCleanupCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cleanup",
-		Short: "Delete Kubernetes resources created by Starboard",
+		Use:     "uninstall",
+		Aliases: []string{"cleanup"},
+		Short:   "Delete Kubernetes resources created by Starboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {

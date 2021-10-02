@@ -35,13 +35,13 @@ var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
 		err := cmd.Run(versionInfo, []string{
-			"starboard", "init",
+			"starboard", "install",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	Describe("Command init", func() {
+	Describe("Command install", func() {
 
 		It("should initialize Starboard", func() {
 
@@ -66,6 +66,21 @@ var _ = Describe("Starboard CLI", func() {
 							Categories: []string{"all"},
 						}),
 						"Scope": Equal(apiextensionsv1beta1.NamespaceScoped),
+					}),
+				}),
+				"clustervulnerabilityreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clustervulnerabilityreports",
+							Singular:   "clustervulnerabilityreport",
+							ShortNames: []string{"clustervuln", "clustervulns"},
+							Kind:       "ClusterVulnerabilityReport",
+							ListKind:   "ClusterVulnerabilityReportList",
+							Categories: []string{"all"},
+						}),
+						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
 					}),
 				}),
 				"configauditreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
@@ -630,7 +645,7 @@ var _ = Describe("Starboard CLI", func() {
 		})
 	})
 
-	Describe("Command get vulnerabilities", func() {
+	Describe("Command get vulnerabilityreports", func() {
 		Context("for deployment/nginx resource", func() {
 			When("vulnerabilities are associated with the deployment itself", func() {
 
@@ -662,7 +677,7 @@ var _ = Describe("Starboard CLI", func() {
 						stderr := NewBuffer()
 
 						err := cmd.Run(versionInfo, []string{
-							"starboard", "get", "vulnerabilities",
+							"starboard", "get", "vulnerabilityreports",
 							"deployment/" + deploy.Name,
 							"--namespace", deploy.Namespace,
 							"-v", starboardCLILogLevel,
@@ -1107,7 +1122,7 @@ var _ = Describe("Starboard CLI", func() {
 	AfterEach(func() {
 		err := cmd.Run(versionInfo, []string{
 			"starboard",
-			"cleanup",
+			"uninstall",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
