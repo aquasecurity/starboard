@@ -19,7 +19,7 @@ func TestWriter_Write(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
 
 		writer := kubehunter.NewWriter(clientset)
-		err := writer.Write(context.TODO(), v1alpha1.KubeHunterOutput{
+		err := writer.Write(context.TODO(), v1alpha1.KubeHunterReportData{
 			Summary: v1alpha1.KubeHunterSummary{
 				HighCount: 7,
 			},
@@ -42,7 +42,7 @@ func TestWriter_Write(t *testing.T) {
 						starboard.LabelResourceName: "my-cluster",
 					},
 				},
-				Report: v1alpha1.KubeHunterOutput{
+				Report: v1alpha1.KubeHunterReportData{
 					Summary: v1alpha1.KubeHunterSummary{
 						HighCount: 7,
 					},
@@ -60,7 +60,7 @@ func TestWriter_Write(t *testing.T) {
 					starboard.LabelResourceName: "my-cluster",
 				},
 			},
-			Report: v1alpha1.KubeHunterOutput{
+			Report: v1alpha1.KubeHunterReportData{
 				Summary: v1alpha1.KubeHunterSummary{
 					HighCount: 1,
 				},
@@ -68,7 +68,7 @@ func TestWriter_Write(t *testing.T) {
 		})
 
 		writer := kubehunter.NewWriter(clientset)
-		err := writer.Write(context.TODO(), v1alpha1.KubeHunterOutput{
+		err := writer.Write(context.TODO(), v1alpha1.KubeHunterReportData{
 			Summary: v1alpha1.KubeHunterSummary{
 				HighCount: 3,
 			},
@@ -91,7 +91,7 @@ func TestWriter_Write(t *testing.T) {
 						starboard.LabelResourceName: "my-cluster",
 					},
 				},
-				Report: v1alpha1.KubeHunterOutput{
+				Report: v1alpha1.KubeHunterReportData{
 					Summary: v1alpha1.KubeHunterSummary{
 						HighCount: 3,
 					},

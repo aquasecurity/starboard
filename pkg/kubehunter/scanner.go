@@ -51,17 +51,17 @@ func NewScanner(
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
+func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterReportData, error) {
 	// 1. Prepare descriptor for the Kubernetes Job which will run kube-hunter
 	job, err := s.prepareKubeHunterJob()
 	if err != nil {
-		return v1alpha1.KubeHunterOutput{}, err
+		return v1alpha1.KubeHunterReportData{}, err
 	}
 
 	// 2. Run the prepared Job and wait for its completion or failure
 	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job))
 	if err != nil {
-		return v1alpha1.KubeHunterOutput{}, fmt.Errorf("running kube-hunter job: %w", err)
+		return v1alpha1.KubeHunterReportData{}, fmt.Errorf("running kube-hunter job: %w", err)
 	}
 
 	defer func() {
@@ -82,7 +82,7 @@ func (s *Scanner) Scan(ctx context.Context) (v1alpha1.KubeHunterOutput, error) {
 		job.Namespace, job.Name)
 	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, kubeHunterContainerName)
 	if err != nil {
-		return v1alpha1.KubeHunterOutput{}, fmt.Errorf("getting logs: %w", err)
+		return v1alpha1.KubeHunterReportData{}, fmt.Errorf("getting logs: %w", err)
 	}
 	defer func() {
 		_ = logsStream.Close()
