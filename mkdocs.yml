@@ -43,6 +43,7 @@ nav:
   - Custom Resource Definitions:
       - Overview: crds/index.md
       - VulnerabilityReport: crds/vulnerability-report.md
+      - ClusterVulnerabilityReport: crds/clustervulnerability-report.md
       - ConfigAuditReport: crds/configaudit-report.md
       - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
       - CISKubeBenchReport: crds/ciskubebench-report.md
