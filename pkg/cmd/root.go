@@ -34,7 +34,7 @@ $ %[1]s scan vulnerabilityreports deployment/nginx
 
 Once this has been done, you can retrieve the vulnerability report:
 
-$ %[1]s get vulnerabilities deployment/nginx -o yaml
+$ %[1]s get vulnerabilityreports deployment/nginx -o yaml
 `
 )
 
@@ -55,6 +55,7 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 	rootCmd.AddCommand(NewInitCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewScanCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewGetCmd(buildInfo, cf, outWriter))
+	rootCmd.AddCommand(NewGetReportCmd(buildInfo, cf, outWriter))
 	rootCmd.AddCommand(NewCleanupCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 

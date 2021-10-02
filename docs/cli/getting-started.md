@@ -55,7 +55,7 @@ images associated with the specified deployment. Once this has been done, you ca
 reports for this workload:
 
 ```
-starboard get vulnerabilities deployment/nginx -o yaml
+starboard get vulnerabilityreports deployment/nginx -o yaml
 ```
 
 !!! tip
@@ -67,7 +67,7 @@ starboard get vulnerabilities deployment/nginx -o yaml
 
     ```console
     $ kubectl get vulnerabilityreports -o wide \
-    >  -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+       -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
     NAME                     REPOSITORY      TAG    SCANNER   AGE    CRITICAL   HIGH   MEDIUM   LOW   UNKNOWN
     deployment-nginx-nginx   library/nginx   1.16   Trivy     2m6s   3          40     24       90    0
     ```
@@ -94,14 +94,14 @@ starboard scan configauditreports deployment/nginx
 Retrieve the configuration audit report:
 
 ```
-starboard get configaudit deployment/nginx -o yaml
+starboard get configauditreports deployment/nginx -o yaml
 ```
 
 or
 
 ```console
 $ kubectl get configauditreport -o wide \
->  -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+    -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
 NAME               SCANNER   AGE   DANGER   WARNING   PASS
 deployment-nginx   Polaris   5s    0        8         9
 ```
@@ -112,7 +112,7 @@ Once you scanned the `nginx` Deployment for vulnerabilities and checked its conf
 report of identified risks:
 
 ```
-starboard get report deployment/nginx > nginx.deploy.html
+starboard report deployment/nginx > nginx.deploy.html
 ```
 
 ```
