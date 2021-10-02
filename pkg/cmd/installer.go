@@ -32,7 +32,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: starboard.NamespaceName,
 			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+				starboard.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 	}
@@ -40,7 +40,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: starboard.ServiceAccountName,
 			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+				starboard.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -49,7 +49,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleStarboard,
 			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+				starboard.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -102,7 +102,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleBindingStarboard,
 			Labels: labels.Set{
-				"app.kubernetes.io/managed-by": "starboard",
+				starboard.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -155,7 +155,14 @@ func (m *Installer) Install(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
+	clusterVulnerabilityReportsCRD, err := embedded.GetClusterVulnerabilityReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &clusterVulnerabilityReportsCRD)
+	if err != nil {
+		return err
+	}
 	kubeBenchReportsCRD, err := embedded.GetCISKubeBenchReportsCRD()
 	if err != nil {
 		return err
@@ -392,6 +399,10 @@ func (m *Installer) deleteCRD(ctx context.Context, name string) (err error) {
 
 func (m *Installer) Uninstall(ctx context.Context) error {
 	err := m.deleteCRD(ctx, v1alpha1.VulnerabilityReportsCRName)
+	if err != nil {
+		return err
+	}
+	err = m.deleteCRD(ctx, v1alpha1.ClusterVulnerabilityReportsCRName)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 	rootCmd.AddCommand(NewInitCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewScanCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewGetCmd(buildInfo, cf, outWriter))
-	rootCmd.AddCommand(NewGetReportCmd(buildInfo, cf, outWriter))
+	rootCmd.AddCommand(NewReportCmd(buildInfo, cf, outWriter))
 	rootCmd.AddCommand(NewCleanupCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
 

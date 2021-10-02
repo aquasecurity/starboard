@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewGetReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+func NewReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
 	return &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
 		Short: "Generate an HTML security report for a specified Kubernetes object",
@@ -40,13 +40,13 @@ TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. '
 NAME is the name of a particular Kubernetes workload.
 `, info.Executable),
 		Example: fmt.Sprintf(`  # Generate an HTML report for a deployment with the specified name and save it to a file.
-  %[1]s get report deployment/nginx > nginx.deploy.html
+  %[1]s report deployment/nginx > nginx.deploy.html
 
   # Generate an HTML report for a namespace with the specified name and save it to a file.
-  %[1]s get report namespace/kube-system > kube-system.ns.html
+  %[1]s report namespace/kube-system > kube-system.ns.html
 
   # Generate an HTML report for a node with the specified name and save it to a file.
-  %[1]s get report node/kind-control-plane > kind-control-plane.node.html
+  %[1]s report node/kind-control-plane > kind-control-plane.node.html
 `, info.Executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
@@ -77,13 +77,13 @@ NAME is the name of a particular Kubernetes workload.
 				kube.KindJob,
 				kube.KindPod:
 				reporter := report.NewWorkloadReporter(clock, kubeClient)
-				return reporter.Generate(workload, outWriter)
+				return reporter.Generate(workload, out)
 			case kube.KindNamespace:
 				reporter := report.NewNamespaceReporter(clock, kubeClient)
-				return reporter.Generate(workload, outWriter)
+				return reporter.Generate(workload, out)
 			case kube.KindNode:
 				reporter := report.NewNodeReporter(clock, kubeClient)
-				return reporter.Generate(workload, outWriter)
+				return reporter.Generate(workload, out)
 			default:
 				return fmt.Errorf("HTML report is not supported for %q", workload.Kind)
 			}

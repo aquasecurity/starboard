@@ -13,14 +13,17 @@ import (
 
 func NewInitCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Create Kubernetes resources used by Starboard",
+		Use:     "install",
+		Aliases: []string{"init"},
+		Short:   "Create Kubernetes resources used by Starboard",
 		Long: `Create all the resources used by Starboard. It will create the following in your
 Kubernetes cluster:
 
  - CustomResourceDefinition objects:
    - "vulnerabilityreports.aquasecurity.github.io"
+   - "clustervulnerabilityreports.aquasecurity.github.io"
    - "configauditreports.aquasecurity.github.io"
+   - "clusterconfigauditreports.aquasecurity.github.io"
    - "ciskubebenchreports.aquasecurity.github.io"
    - "kubehunterreports.aquasecurity.github.io"
  - RBAC objects:
@@ -30,13 +33,15 @@ Kubernetes cluster:
    - The "starboard" service account
    - The "starboard" ConfigMap
    - The "starboard" secret
+   - The "starboard-trivy-config" ConfigMap
+   - The "starboard-polaris-config" ConfigMap
 
 The "starboard" ConfigMap and the "starboard" secret contain the default
 config parameters. However this can be modified to change the behaviour
 of the scanners.
 
 All resources created by this command can be removed from the cluster using
-the "cleanup" command.`,
+the "uninstall" command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
