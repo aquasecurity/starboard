@@ -54,6 +54,7 @@ jobs:
       - name: Test connection to Kubernetes cluster
         run: |
           kubectl cluster-info
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
           kubectl describe node
       - name: Run integration tests
         run: |
@@ -87,6 +88,7 @@ jobs:
       - name: Test connection to Kubernetes cluster
         run: |
           kubectl cluster-info
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
           kubectl describe node
       - name: Run integration tests
         run: |
@@ -130,6 +132,7 @@ jobs:
       - name: Test connection to Kubernetes cluster
         run: |
           kubectl cluster-info
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
           kubectl describe node
       - name: Run integration tests
         run: |
