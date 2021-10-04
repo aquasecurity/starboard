@@ -1,10 +1,13 @@
 # Set the default goal
 .DEFAULT_GOAL := build
 
+export KUBECONFIG ?= ${HOME}/.kube/config
+
 # Active module mode, as we use Go modules to manage dependencies
 export GO111MODULE=on
 GOPATH=$(shell go env GOPATH)
 GOBIN=$(GOPATH)/bin
+GINKGO=$(GOBIN)/ginkgo
 
 SOURCES := $(shell find . -name '*.go')
 
@@ -37,12 +40,12 @@ build-starboard-scanner-aqua: $(SOURCES)
 .PHONY: get-ginkgo
 ## Installs Ginkgo CLI
 get-ginkgo:
-	go install github.com/onsi/ginkgo/ginkgo
+	@go install github.com/onsi/ginkgo/ginkgo
 
 .PHONY: get-qtc
 ## Installs quicktemplate compiler
 get-qtc:
-	go install github.com/valyala/quicktemplate/qtc
+	@go install github.com/valyala/quicktemplate/qtc
 
 .PHONY: compile-templates
 ## Converts quicktemplate files (*.qtpl) into Go code
@@ -60,10 +63,8 @@ unit-tests: $(SOURCES)
 
 .PHONY: itests-starboard
 ## Runs integration tests for Starboard CLI with code coverage enabled
-itests-starboard: check-env get-ginkgo
-	$(GOBIN)/ginkgo \
-	--progress \
-	--v \
+itests-starboard: check-kubeconfig get-ginkgo
+	@$(GINKGO) \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/cmd,\
 	github.com/aquasecurity/starboard/pkg/plugin,\
@@ -79,10 +80,8 @@ itests-starboard: check-env get-ginkgo
 
 .PHONY: itests-starboard-operator
 ## Runs integration tests for Starboard Operator with code coverage enabled
-itests-starboard-operator: check-env get-ginkgo
-	$(GOBIN)/ginkgo \
-	--progress \
-	--v \
+itests-starboard-operator: check-kubeconfig get-ginkgo
+	@$(GINKGO) \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
 	github.com/aquasecurity/starboard/pkg/operator/predicate,\
@@ -97,10 +96,8 @@ itests-starboard-operator: check-env get-ginkgo
 	./itest/starboard-operator
 
 .PHONY: integration-operator-conftest
-integration-operator-conftest: check-env get-ginkgo
-	$(GOBIN)/ginkgo \
-	--progress \
-	--v \
+integration-operator-conftest: check-kubeconfig get-ginkgo
+	@$(GINKGO) \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
 	github.com/aquasecurity/starboard/pkg/operator/predicate,\
@@ -110,9 +107,12 @@ integration-operator-conftest: check-env get-ginkgo
 	github.com/aquasecurity/starboard/pkg/configauditreport \
 	./itest/starboard-operator/configauditreport/conftest
 
-check-env:
+.PHONY: check-kubeconfig
+check-kubeconfig:
 ifndef KUBECONFIG
 	$(error Environment variable KUBECONFIG is not set)
+else
+	@echo "KUBECONFIG=${KUBECONFIG}"
 endif
 
 .PHONY: clean

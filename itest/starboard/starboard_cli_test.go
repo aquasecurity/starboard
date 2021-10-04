@@ -31,6 +31,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var (
+	assertTimeout = 10 * time.Second
+)
+
 var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
@@ -475,15 +479,29 @@ var _ = Describe("Starboard CLI", func() {
 
 		Context("when Deployment is specified as workload", func() {
 
+			var ctx context.Context
 			var deploy *appsv1.Deployment
 
+			DeploymentIsReady := func() (bool, error) {
+				var d appsv1.Deployment
+				err := kubeClient.Get(context.TODO(), client.ObjectKey{Namespace: deploy.Namespace, Name: deploy.Name}, &d)
+				if err != nil {
+					return false, err
+				}
+				return d.Status.ReadyReplicas == *d.Spec.Replicas, nil
+			}
+
 			BeforeEach(func() {
-				deploy = helper.NewDeployment().WithName("nginx").
+				ctx = context.TODO()
+				deploy = helper.NewDeployment().WithRandomName("nginx").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
 					Build()
-				err := kubeClient.Create(context.TODO(), deploy)
+				err := kubeClient.Create(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
+
+				// Wait for the deployment to be ready.
+				Eventually(DeploymentIsReady, assertTimeout).Should(BeTrue())
 			})
 
 			It("should create VulnerabilityReport", func() {
@@ -495,20 +513,27 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
+				// Get updated deployment to find its revision.
+				err = kubeClient.Get(ctx, client.ObjectKey{Namespace: deploy.Namespace, Name: deploy.Name}, deploy)
+				Expect(err).ToNot(HaveOccurred())
+
+				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
+				Expect(err).ToNot(HaveOccurred())
+
 				var reportList v1alpha1.VulnerabilityReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					starboard.LabelResourceKind:      string(kube.KindDeployment),
-					starboard.LabelResourceName:      deploy.Name,
-					starboard.LabelResourceNamespace: deploy.Namespace,
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
+					starboard.LabelResourceKind:      string(kube.KindReplicaSet),
+					starboard.LabelResourceName:      revision.Name,
+					starboard.LabelResourceNamespace: revision.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", deploy),
+					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", revision),
 				}))
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.TODO(), deploy)
+				err := kubeClient.Delete(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})

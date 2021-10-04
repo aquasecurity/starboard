@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
@@ -20,6 +21,7 @@ import (
 var (
 	kubeClient             client.Client
 	apiextensionsClientset apiextensions.ApiextensionsV1beta1Interface
+	objectResolver         *kube.ObjectResolver
 )
 
 var (
@@ -99,6 +101,10 @@ var _ = BeforeSuite(func() {
 		Scheme: starboard.NewScheme(),
 	})
 	Expect(err).ToNot(HaveOccurred())
+
+	objectResolver = &kube.ObjectResolver{
+		Client: kubeClient,
+	}
 
 	apiextensionsClientset, err = apiextensions.NewForConfig(config)
 	Expect(err).ToNot(HaveOccurred())

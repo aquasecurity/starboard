@@ -650,3 +650,225 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 	}
 
 }
+
+func TestObjectResolver_ReportOwner(t *testing.T) {
+	nginxDeploy := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx",
+			Labels: map[string]string{
+				"app": "nginx",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/revision": "1",
+			},
+			UID: "734c1370-2281-4946-9b5f-940b33f3e4b8",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: pointer.Int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "nginx",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: corev1.NamespaceDefault,
+					Name:      "nginx",
+					Labels: map[string]string{
+						"app": "nginx",
+					},
+					Annotations: map[string]string{
+						"deployment.kubernetes.io/revision": "1",
+					},
+				},
+			},
+		},
+	}
+	nginxReplicaSet := &appsv1.ReplicaSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "ReplicaSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx-6d4cf56db6",
+			Labels: map[string]string{
+				"app":               "nginx",
+				"pod-template-hash": "6d4cf56db6",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/desired-replicas": "1",
+				"deployment.kubernetes.io/max-replicas":     "4",
+				"deployment.kubernetes.io/revision":         "1",
+			},
+			UID: "ecfff877-784c-4f05-8b70-abe441ca1976",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "apps/v1",
+					Kind:               "Deployment",
+					Name:               "nginx",
+					UID:                "734c1370-2281-4946-9b5f-940b33f3e4b8",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
+				},
+			},
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Replicas: pointer.Int32(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "6d4cf56db6",
+				},
+			},
+		},
+	}
+	nginxPod := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx-6d4cf56db6-4kw2v",
+			Labels: map[string]string{
+				"app":               "nginx",
+				"pod-template-hash": "6d4cf56db6",
+			},
+			UID: "44ca7a2a-29c5-4510-b503-0218bc9d3308",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "apps/v1",
+					Kind:               "ReplicaSet",
+					Name:               "nginx-6d4cf56db6",
+					UID:                "ecfff877-784c-4f05-8b70-abe441ca1976",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
+				},
+			},
+		},
+	}
+
+	unmanagedPod := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "unmanaged",
+			Labels: map[string]string{
+				"run": "unmanaged",
+			},
+			UID: "10641566-209e-4e4d-ac58-a3f3895e0045",
+		},
+	}
+
+	piJob := &batchv1.Job{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "batch/v1",
+			Kind:       "Job",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "pi",
+			UID:       "ef340242-b677-485e-b506-2ac1dde48bca",
+			Labels: map[string]string{
+				"controller-uid": "ef340242-b677-485e-b506-2ac1dde48bca",
+				"job-name":       "pi",
+			},
+		},
+		Spec: batchv1.JobSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"controller-uid": "ef340242 - b677 - 485e-b506-2ac1dde48bca",
+				},
+			},
+		},
+	}
+	piPod := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "pi-wnbbm",
+			Labels: map[string]string{
+				"controller-uid": "ef340242-b677-485e-b506-2ac1dde48bca",
+				"job-name":       "pi",
+			},
+			UID: "3921e0cd-1852-4c1d-ab0a-9721f3f28276",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "batch/v1",
+					Kind:               "Job",
+					Name:               "pi",
+					UID:                "ef340242-b677-485e-b506-2ac1dde48bca",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
+				},
+			},
+		},
+	}
+
+	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+		nginxDeploy,
+		nginxReplicaSet,
+		nginxPod,
+		unmanagedPod,
+		piJob,
+		piPod,
+	).Build()
+
+	testCases := []struct {
+		name     string
+		workload client.Object
+		owner    client.Object
+	}{
+		{
+			name:     "Should return ReplicaSet for Deployment",
+			workload: nginxDeploy,
+			owner:    nginxReplicaSet,
+		},
+		{
+			name:     "Should return ReplicaSet for ReplicaSet",
+			workload: nginxReplicaSet,
+			owner:    nginxReplicaSet,
+		},
+		{
+			name:     "Should return ReplicaSet for Pod",
+			workload: nginxPod,
+			owner:    nginxReplicaSet,
+		},
+		{
+			name:     "Should return Pod for unmanaged Pod",
+			workload: unmanagedPod,
+			owner:    unmanagedPod,
+		},
+		{
+			name:     "Should return Job for unmanaged Job",
+			workload: piJob,
+			owner:    piJob,
+		},
+		{
+			name:     "Should return Job for Pod",
+			workload: piPod,
+			owner:    piJob,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			or := kube.ObjectResolver{Client: testClient}
+			owner, err := or.ReportOwner(context.TODO(), tc.workload)
+			require.NoError(t, err)
+			assert.Equal(t, tc.owner, owner)
+		})
+	}
+}
