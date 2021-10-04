@@ -7,22 +7,22 @@ on:
     branches:
       - main
     paths-ignore:
-      - ".github/ISSUE_TEMPLATE/*.md"
-      - "*.md"
-      - "docs/**"
-      - "mkdocs.yml"
-      - "LICENSE"
-      - "NOTICE"
+      - '.github/ISSUE_TEMPLATE/*.md'
+      - '*.md'
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'LICENSE'
+      - 'NOTICE'
   pull_request:
     branches:
       - main
     paths-ignore:
-      - ".github/ISSUE_TEMPLATE/*.md"
-      - "*.md"
-      - "docs/**"
-      - "mkdocs.yml"
-      - "LICENSE"
-      - "NOTICE"
+      - '.github/ISSUE_TEMPLATE/*.md'
+      - '*.md'
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'LICENSE'
+      - 'NOTICE'
 env:
   GO_VERSION: "1.16"
   KIND_VERSION: "v0.11.1"
