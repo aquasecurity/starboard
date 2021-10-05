@@ -43,7 +43,6 @@ spec:
     plural: ciskubebenchreports
     kind: CISKubeBenchReport
     listKind: CISKubeBenchReportList
-    categories:
-      - all
+    categories: []
     shortNames:
       - kubebench
