@@ -34,7 +34,7 @@ type KubeHunterReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Report KubeHunterOutput `json:"report"`
+	Report KubeHunterReportData `json:"report"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -47,7 +47,7 @@ type KubeHunterReportList struct {
 	Items []KubeHunterReport `json:"items"`
 }
 
-type KubeHunterOutput struct {
+type KubeHunterReportData struct {
 	UpdateTimestamp metav1.Time               `json:"updateTimestamp"`
 	Scanner         Scanner                   `json:"scanner"`
 	Summary         KubeHunterSummary         `json:"summary"`

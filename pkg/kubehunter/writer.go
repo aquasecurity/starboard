@@ -13,7 +13,7 @@ import (
 )
 
 type Writer interface {
-	Write(ctx context.Context, report v1alpha1.KubeHunterOutput, cluster string) error
+	Write(ctx context.Context, report v1alpha1.KubeHunterReportData, cluster string) error
 }
 
 type writer struct {
@@ -26,7 +26,7 @@ func NewWriter(clientset versioned.Interface) Writer {
 	}
 }
 
-func (w *writer) Write(ctx context.Context, report v1alpha1.KubeHunterOutput, cluster string) error {
+func (w *writer) Write(ctx context.Context, report v1alpha1.KubeHunterReportData, cluster string) error {
 	if strings.TrimSpace(cluster) == "" {
 		return errors.New("cluster name must not be blank")
 	}

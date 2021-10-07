@@ -12,25 +12,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewGetConfigAuditCmd(executable string, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+func NewGetConfigAuditReportsCmd(executable string, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "configaudit (NAME | TYPE/NAME)",
-		Short: "Get configuration audit report",
-		Long: `Get configuration audit report for the specified workload
+		Use:     "configauditreports (NAME | TYPE/NAME)",
+		Aliases: []string{"configaudit"},
+		Short:   "Get configuration audit reports",
+		Long: `Get configuration audit reports for the specified resource
 
-TYPE is a Kubernetes workload. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
-NAME is the name of a particular Kubernetes workload.
+TYPE is a Kubernetes resource. Shortcuts and API groups will be resolved, e.g. 'po' or 'deployments.apps'.
+NAME is the name of a particular Kubernetes resource.
 `,
-		Example: fmt.Sprintf(`  # Get configuration audit for a Deployment with the specified name
-  %[1]s get configauditreports.aquasecurity.github.io deploy/nginx
+		Example: fmt.Sprintf(`  # Get configuration audit report for a Deployment with the specified name
+  %[1]s get configauditreports deploy/nginx
 
-  # Get configuration audit for a Deployment with the specified name in the specified namespace
+  # Get configuration audit report for a Deployment with the specified name in the specified namespace
   %[1]s get configauditreports deploy/nginx -n staging
 
-  # Get configuration audit for a ReplicaSet with the specified name
+  # Get configuration audit report for a ReplicaSet with the specified name
   %[1]s get configaudit replicaset/nginx
 
-  # Get vulnerabilities for a CronJob with the specified name in JSON output format
+  # Get configuration audit report for a CronJob with the specified name in JSON output format
   %[1]s get configaudit cj/my-job -o json`, executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
@@ -63,7 +64,7 @@ NAME is the name of a particular Kubernetes workload.
 			}
 
 			if report == nil {
-				fmt.Fprintf(outWriter, "No reports found in %s namespace.\n", workload.Namespace)
+				fmt.Fprintf(out, "No reports found in %s namespace.\n", workload.Namespace)
 				return nil
 			}
 
@@ -76,7 +77,7 @@ NAME is the name of a particular Kubernetes workload.
 				return fmt.Errorf("create printer: %v", err)
 			}
 
-			if err := printer.PrintObj(report, outWriter); err != nil {
+			if err := printer.PrintObj(report, out); err != nil {
 				return fmt.Errorf("print vulnerability reports: %v", err)
 			}
 

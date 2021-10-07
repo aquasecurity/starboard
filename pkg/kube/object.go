@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -301,6 +302,134 @@ func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workloa
 	if err != nil {
 		return nil, err
 	}
+	return o.ensureGVK(obj)
+}
+
+var ErrReplicaSetNotFound = errors.New("replicaset not found")
+
+// ReportOwner resolves the owner of v1alpha1.VulnerabilityReport
+// in the hierarchy of the specified built-in K8s workload.
+func (o *ObjectResolver) ReportOwner(ctx context.Context, workload client.Object) (client.Object, error) {
+	switch v := workload.(type) {
+	case *appsv1.Deployment:
+		return o.ReplicaSetByDeployment(ctx, workload.(*appsv1.Deployment))
+	case *batchv1.Job:
+		controller := metav1.GetControllerOf(workload)
+		if controller == nil {
+			// Unmanaged Job
+			return workload, nil
+		}
+		if controller.Kind == string(KindCronJob) {
+			return o.CronJobByJob(ctx, workload.(*batchv1.Job))
+		}
+		// Job controlled by sth else (usually frameworks)
+		return workload, nil
+	case *corev1.Pod:
+		controller := metav1.GetControllerOf(workload)
+		if controller == nil {
+			// Unmanaged Pod
+			return workload, nil
+		}
+		if controller.Kind == string(KindReplicaSet) {
+			return o.ReplicaSetByPod(ctx, workload.(*corev1.Pod))
+		}
+		if controller.Kind == string(KindJob) {
+			// Managed by Job or CronJob
+			job, err := o.JobByPod(ctx, workload.(*corev1.Pod))
+			if err != nil {
+				return nil, err
+			}
+			return o.ReportOwner(ctx, job)
+		}
+		// Pod controlled by sth else (usually frameworks)
+		return workload, nil
+	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob:
+		return workload, nil
+	default:
+		return nil, fmt.Errorf("unsupported workload kind: %T", v)
+	}
+}
+
+// ReplicaSetByDeployment returns the current revision of the specified Deployment.
+// If the current revision cannot be found the ErrReplicaSetNotFound error
+// is returned.
+func (o *ObjectResolver) ReplicaSetByDeployment(ctx context.Context, deploy *appsv1.Deployment) (*appsv1.ReplicaSet, error) {
+	var rsList appsv1.ReplicaSetList
+	err := o.Client.List(ctx, &rsList,
+		client.InNamespace(deploy.Namespace),
+		client.MatchingLabelsSelector{
+			Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
+		})
+	if err != nil {
+		return nil, err
+	}
+	if len(rsList.Items) == 0 {
+		return nil, ErrReplicaSetNotFound
+	}
+	for _, rs := range rsList.Items {
+		if deploy.Annotations["deployment.kubernetes.io/revision"] !=
+			rs.Annotations["deployment.kubernetes.io/revision"] {
+			continue
+		}
+		obj, err := o.ensureGVK(rs.DeepCopy())
+		return obj.(*appsv1.ReplicaSet), err
+	}
+	return nil, ErrReplicaSetNotFound
+}
+
+// ReplicaSetByPod returns the controller ReplicaSet of the specified Pod.
+func (o *ObjectResolver) ReplicaSetByPod(ctx context.Context, pod *corev1.Pod) (*appsv1.ReplicaSet, error) {
+	controller := metav1.GetControllerOf(pod)
+	if controller == nil {
+		return nil, fmt.Errorf("did not find a controller for pod %q", pod.Name)
+	}
+	if controller.Kind != "ReplicaSet" {
+		return nil, fmt.Errorf("pod %q is controlled by a %q, want replicaset", pod.Name, controller.Kind)
+	}
+	rs := &appsv1.ReplicaSet{}
+	err := o.Client.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: controller.Name}, rs)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := o.ensureGVK(rs)
+	return obj.(*appsv1.ReplicaSet), err
+}
+
+func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1beta1.CronJob, error) {
+	controller := metav1.GetControllerOf(job)
+	if controller == nil {
+		return nil, fmt.Errorf("did not find a controller for job %q", job.Name)
+	}
+	if controller.Kind != "CronJob" {
+		return nil, fmt.Errorf("pod %q is controlled by a %q, want CronJob", job.Name, controller.Kind)
+	}
+	cj := &batchv1beta1.CronJob{}
+	err := o.Client.Get(ctx, client.ObjectKey{Namespace: job.Namespace, Name: controller.Name}, cj)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := o.ensureGVK(cj)
+	return obj.(*batchv1beta1.CronJob), err
+}
+
+func (o *ObjectResolver) JobByPod(ctx context.Context, pod *corev1.Pod) (*batchv1.Job, error) {
+	controller := metav1.GetControllerOf(pod)
+	if controller == nil {
+		return nil, fmt.Errorf("did not find a controller for pod %q", pod.Name)
+	}
+	if controller.Kind != "Job" {
+		return nil, fmt.Errorf("pod %q is controlled by a %q, want replicaset", pod.Name, controller.Kind)
+	}
+	rs := &batchv1.Job{}
+	err := o.Client.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: controller.Name}, rs)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := o.ensureGVK(rs)
+	return obj.(*batchv1.Job), err
+}
+
+func (o *ObjectResolver) ensureGVK(obj client.Object) (client.Object, error) {
 	gvk, err := apiutil.GVKForObject(obj, o.Client.Scheme())
 	if err != nil {
 		return nil, err
