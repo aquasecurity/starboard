@@ -330,7 +330,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"trivy.imageRef": "docker.io/aquasec/trivy:0.19.2",
+				"trivy.imageRef": "docker.io/aquasec/trivy:0.20.0",
 				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 				"trivy.mode":     "Standalone",
 
@@ -355,7 +355,7 @@ func TestPlugin_Init(t *testing.T) {
 					ResourceVersion: "1",
 				},
 				Data: map[string]string{
-					"trivy.imageRef": "docker.io/aquasec/trivy:0.19.2",
+					"trivy.imageRef": "docker.io/aquasec/trivy:0.20.0",
 					"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 					"trivy.mode":     "Standalone",
 				},
@@ -389,7 +389,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"trivy.imageRef": "docker.io/aquasec/trivy:0.19.2",
+				"trivy.imageRef": "docker.io/aquasec/trivy:0.20.0",
 				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 				"trivy.mode":     "Standalone",
 			},
@@ -2031,7 +2031,9 @@ CVE-2019-1543`,
 }
 
 var (
-	sampleReportAsString = `[{
+	sampleReportAsString = `{
+		"SchemaVersion": 2,
+		"Results":[{
 		"Target": "alpine:3.10.2 (alpine 3.10.2)",
 		"Type": "alpine",
 		"Vulnerabilities": [
@@ -2061,7 +2063,7 @@ var (
 				]
 			}
 		]
-	}]`
+	}]}`
 
 	sampleReport = v1alpha1.VulnerabilityReportData{
 		UpdateTimestamp: metav1.NewTime(fixedTime),
