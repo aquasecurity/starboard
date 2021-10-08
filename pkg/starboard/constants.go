@@ -1,6 +1,12 @@
 package starboard
 
 const (
+	Banner = `Starboard is an Aqua Security open source project.
+Learn about our open source work and portfolio on https://www.aquasec.com/products/open-source-projects/.
+`
+)
+
+const (
 	// NamespaceName the name of the namespace in which Starboard stores its
 	// configuration and where it runs scan jobs.
 	NamespaceName = "starboard"
