@@ -240,15 +240,17 @@ var _ = Describe("Starboard CLI", func() {
 
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
 
+			var ctx context.Context
 			var pod *corev1.Pod
 
 			BeforeEach(func() {
-				pod = helper.NewPod().WithName("nginx-and-tomcat").
+				ctx = context.TODO()
+				pod = helper.NewPod().WithRandomName("nginx-and-redis").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
-					WithContainer("tomcat-container", "tomcat:8").
+					WithContainer("redis-container", "redis:5").
 					Build()
-				err := kubeClient.Create(context.TODO(), pod)
+				err := kubeClient.Create(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -262,20 +264,20 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				var reportList v1alpha1.VulnerabilityReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
 					starboard.LabelResourceKind:      string(kube.KindPod),
 					starboard.LabelResourceName:      pod.Name,
 					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx-container":  IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
-					"tomcat-container": IsVulnerabilityReportForContainerOwnedBy("tomcat-container", pod),
+					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
+					"redis-container": IsVulnerabilityReportForContainerOwnedBy("redis-container", pod),
 				}))
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.TODO(), pod)
+				err := kubeClient.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
