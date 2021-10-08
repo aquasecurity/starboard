@@ -183,7 +183,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator) vulnerabilityreport
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyTrivyImageRef: "docker.io/aquasec/trivy:0.19.2",
+			keyTrivyImageRef: "docker.io/aquasec/trivy:0.20.0",
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 
@@ -851,15 +851,14 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
-
-	var reports []ScanReport
+	var reports ScanReport
 	err = json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
 	vulnerabilities := make([]v1alpha1.Vulnerability, 0)
 
-	for _, report := range reports {
+	for _, report := range reports.Results {
 		for _, sr := range report.Vulnerabilities {
 			vulnerabilities = append(vulnerabilities, v1alpha1.Vulnerability{
 				VulnerabilityID:  sr.VulnerabilityID,

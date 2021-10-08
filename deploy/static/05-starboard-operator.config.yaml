@@ -27,7 +27,7 @@ metadata:
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 data:
-  trivy.imageRef: docker.io/aquasec/trivy:0.19.2
+  trivy.imageRef: docker.io/aquasec/trivy:0.20.0
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
   trivy.mode: Standalone
   trivy.resources.requests.cpu: 100m
