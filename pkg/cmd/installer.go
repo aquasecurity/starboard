@@ -146,6 +146,7 @@ func NewInstaller(
 	}
 }
 
+// Install creates Kubernetes API objects required by Starboard CLI.
 func (m *Installer) Install(ctx context.Context) error {
 	vulnerabilityReportsCRD, err := embedded.GetVulnerabilityReportsCRD()
 	if err != nil {
@@ -244,20 +245,18 @@ func (m *Installer) Install(ctx context.Context) error {
 	return m.initRBAC(ctx)
 }
 
-func (m *Installer) initRBAC(ctx context.Context) (err error) {
-	err = m.createServiceAccountIfNotFound(ctx, serviceAccount)
+func (m *Installer) initRBAC(ctx context.Context) error {
+	err := m.createServiceAccountIfNotFound(ctx, serviceAccount)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = m.createOrUpdateClusterRole(ctx, clusterRole)
 	if err != nil {
-		return
+		return err
 	}
 
-	err = m.createOrUpdateClusterRoleBinding(ctx, clusterRoleBinding)
-
-	return
+	return m.createOrUpdateClusterRoleBinding(ctx, clusterRoleBinding)
 }
 
 func (m *Installer) cleanupRBAC(ctx context.Context) (err error) {

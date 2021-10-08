@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
@@ -62,7 +64,13 @@ the "uninstall" command.`,
 			}
 			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
 			installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
-			return installer.Install(context.Background())
+			err = installer.Install(context.Background())
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(os.Stdout)
+			fmt.Fprintf(os.Stdout, starboard.Banner)
+			return nil
 		},
 	}
 	return cmd
