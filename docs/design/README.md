@@ -3,7 +3,8 @@
 An index of various (informal) design and explanation documents that were
 created for different purposes. Mainly to brainstorm how Starboard works.
 
-> **NOTE** This is not an official documentation of Starboard.
+> **NOTE** This is not an official documentation of Starboard. Some design
+> documents may be out of date.
 
 ## Overview
 
@@ -24,9 +25,3 @@ created for different purposes. Mainly to brainstorm how Starboard works.
 [explain_starboard_rescan_jitter.png]: ./explain_starboard_rescan_jitter.png
 [explain_starboard_cli_init.png]: ./explain_starboard_cli_init.png
 [design_namespace_security_report.pdf]: ./design_namespace_security_report.pdf
-
-## Vulnerability Scanning 2.0
-
-![](design_vulnerability_scanning_2.0.png)
-
-![](design_scan_by_image_digest.png)
