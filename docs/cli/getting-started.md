@@ -27,13 +27,20 @@ The `install` subcommand creates the `starboard` namespace, in which Starboard e
 scans. It also sends custom security resources definitions to the Kubernetes API:
 
 ```console
-$ kubectl api-resources --api-group aquasecurity.github.io
+kubectl api-resources --api-group aquasecurity.github.io
+```
+
+<details>
+<summary>Result</summary>
+
+```
 NAME                   SHORTNAMES    APIGROUP                 NAMESPACED   KIND
 ciskubebenchreports    kubebench     aquasecurity.github.io   false        CISKubeBenchReport
 configauditreports     configaudit   aquasecurity.github.io   true         ConfigAuditReport
 kubehunterreports      kubehunter    aquasecurity.github.io   false        KubeHunterReport
 vulnerabilityreports   vulns,vuln    aquasecurity.github.io   true         VulnerabilityReport
 ```
+</details>
 
 !!! tip
     There's also a `starboard uninstall` subcommand, which can be used to remove all resources created by Starboard.
@@ -100,11 +107,18 @@ starboard get configauditreports deployment/nginx -o yaml
 or
 
 ```console
-$ kubectl get configauditreport -o wide \
+kubectl get configauditreport -o wide \
     -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+```
+
+<details>
+<summary>Result</summary>
+
+```
 NAME               SCANNER   AGE   DANGER   WARNING   PASS
 deployment-nginx   Polaris   5s    0        8         9
 ```
+</details>
 
 ## Generating HTML Reports
 
