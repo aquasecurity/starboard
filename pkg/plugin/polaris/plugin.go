@@ -285,24 +285,24 @@ func NewPlugin(clock ext.Clock) configauditreport.Plugin {
 }
 
 var (
-	supportedKinds = map[kube.Kind]bool{
-		kube.KindPod:                   true,
-		kube.KindDeployment:            true,
-		kube.KindReplicaSet:            true,
-		kube.KindReplicationController: true,
-		kube.KindStatefulSet:           true,
-		kube.KindDaemonSet:             true,
-		kube.KindCronJob:               true,
-		kube.KindJob:                   true,
+	supportedKinds = []kube.Kind{
+		kube.KindPod,
+		kube.KindDeployment,
+		kube.KindReplicaSet,
+		kube.KindReplicationController,
+		kube.KindStatefulSet,
+		kube.KindDaemonSet,
+		kube.KindCronJob,
+		kube.KindJob,
 	}
 )
 
-func (p *plugin) SupportsKind(kind kube.Kind) bool {
-	return supportedKinds[kind]
+func (p *plugin) SupportedKinds() []kube.Kind {
+	return supportedKinds
 }
 
-func (p *plugin) IsReady(_ starboard.PluginContext) (bool, error) {
-	return true, nil
+func (p *plugin) IsApplicable(_ starboard.PluginContext, _ client.Object) (bool, string, error) {
+	return true, "", nil
 }
 
 // Init ensures the default Config required by this plugin.
@@ -319,7 +319,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
+func (p *plugin) ConfigHash(ctx starboard.PluginContext, _ kube.Kind) (string, error) {
 	cm, err := ctx.GetConfig()
 	if err != nil {
 		return "", err

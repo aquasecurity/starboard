@@ -50,6 +50,8 @@ var (
 
 	//go:embed testdata/run_as_root.rego
 	runAsRootPolicy string
+	//go:embed testdata/service_with_external_ip.rego
+	serviceWithExternalIPPolicy string
 )
 
 func TestIntegrationOperatorWithConftest(t *testing.T) {
@@ -111,7 +113,10 @@ var _ = BeforeSuite(func() {
 		Data: map[string]string{
 			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.25.0",
 
-			"conftest.policy.runs_as_root.rego": runAsRootPolicy,
+			"conftest.policy.runs_as_root.rego":              runAsRootPolicy,
+			"conftest.policy.runs_as_root.kinds":             "Workload",
+			"conftest.policy.service_with_external_ip.rego":  serviceWithExternalIPPolicy,
+			"conftest.policy.service_with_external_ip.kinds": "Service",
 		},
 	}
 	err = kubeClient.Create(context.Background(), conftestCM)
