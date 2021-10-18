@@ -307,46 +307,45 @@ func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workloa
 
 var ErrReplicaSetNotFound = errors.New("replicaset not found")
 
-// ReportOwner resolves the owner of v1alpha1.VulnerabilityReport
-// in the hierarchy of the specified built-in K8s workload.
-func (o *ObjectResolver) ReportOwner(ctx context.Context, workload client.Object) (client.Object, error) {
-	switch v := workload.(type) {
+// ReportOwner resolves the owner of a security report for the specified object.
+func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (client.Object, error) {
+	switch obj.(type) {
 	case *appsv1.Deployment:
-		return o.ReplicaSetByDeployment(ctx, workload.(*appsv1.Deployment))
+		return o.ReplicaSetByDeployment(ctx, obj.(*appsv1.Deployment))
 	case *batchv1.Job:
-		controller := metav1.GetControllerOf(workload)
+		controller := metav1.GetControllerOf(obj)
 		if controller == nil {
 			// Unmanaged Job
-			return workload, nil
+			return obj, nil
 		}
 		if controller.Kind == string(KindCronJob) {
-			return o.CronJobByJob(ctx, workload.(*batchv1.Job))
+			return o.CronJobByJob(ctx, obj.(*batchv1.Job))
 		}
 		// Job controlled by sth else (usually frameworks)
-		return workload, nil
+		return obj, nil
 	case *corev1.Pod:
-		controller := metav1.GetControllerOf(workload)
+		controller := metav1.GetControllerOf(obj)
 		if controller == nil {
 			// Unmanaged Pod
-			return workload, nil
+			return obj, nil
 		}
 		if controller.Kind == string(KindReplicaSet) {
-			return o.ReplicaSetByPod(ctx, workload.(*corev1.Pod))
+			return o.ReplicaSetByPod(ctx, obj.(*corev1.Pod))
 		}
 		if controller.Kind == string(KindJob) {
 			// Managed by Job or CronJob
-			job, err := o.JobByPod(ctx, workload.(*corev1.Pod))
+			job, err := o.JobByPod(ctx, obj.(*corev1.Pod))
 			if err != nil {
 				return nil, err
 			}
 			return o.ReportOwner(ctx, job)
 		}
 		// Pod controlled by sth else (usually frameworks)
-		return workload, nil
+		return obj, nil
 	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob:
-		return workload, nil
+		return obj, nil
 	default:
-		return nil, fmt.Errorf("unsupported workload kind: %T", v)
+		return obj, nil
 	}
 }
 

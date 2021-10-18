@@ -817,6 +817,16 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		},
 	}
 
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "test-config",
+		},
+		Data: map[string]string{
+			"foo": "bar",
+		},
+	}
+
 	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 		nginxDeploy,
 		nginxReplicaSet,
@@ -824,49 +834,55 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		unmanagedPod,
 		piJob,
 		piPod,
+		cm,
 	).Build()
 
 	testCases := []struct {
 		name     string
-		workload client.Object
+		resource client.Object
 		owner    client.Object
 	}{
 		{
 			name:     "Should return ReplicaSet for Deployment",
-			workload: nginxDeploy,
+			resource: nginxDeploy,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return ReplicaSet for ReplicaSet",
-			workload: nginxReplicaSet,
+			resource: nginxReplicaSet,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return ReplicaSet for Pod",
-			workload: nginxPod,
+			resource: nginxPod,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return Pod for unmanaged Pod",
-			workload: unmanagedPod,
+			resource: unmanagedPod,
 			owner:    unmanagedPod,
 		},
 		{
 			name:     "Should return Job for unmanaged Job",
-			workload: piJob,
+			resource: piJob,
 			owner:    piJob,
 		},
 		{
 			name:     "Should return Job for Pod",
-			workload: piPod,
+			resource: piPod,
 			owner:    piJob,
+		},
+		{
+			name:     "Should return ConfigMap for ConfigMap",
+			resource: cm,
+			owner:    cm,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			or := kube.ObjectResolver{Client: testClient}
-			owner, err := or.ReportOwner(context.TODO(), tc.workload)
+			owner, err := or.ReportOwner(context.TODO(), tc.resource)
 			require.NoError(t, err)
 			assert.Equal(t, tc.owner, owner)
 		})
