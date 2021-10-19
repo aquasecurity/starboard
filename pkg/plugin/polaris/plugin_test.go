@@ -28,6 +28,8 @@ var (
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
 
+const polarisVersion = "4.2"
+
 func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
@@ -159,7 +161,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"polaris.imageRef":                  "quay.io/fairwinds/polaris:4.0",
+				"polaris.imageRef":                  "quay.io/fairwinds/polaris:" + polarisVersion,
 				"polaris.config.yaml":               polaris.DefaultConfigYAML,
 				"polaris.resources.requests.cpu":    "50m",
 				"polaris.resources.requests.memory": "50M",
@@ -179,7 +181,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
-				"polaris.imageRef": "quay.io/fairwinds/polaris:4.0",
+				"polaris.imageRef": "quay.io/fairwinds/polaris:" + polarisVersion,
 				"polaris.config.yaml": `checks:
   cpuRequestsMissing: warning`,
 			},
@@ -213,7 +215,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
-				"polaris.imageRef": "quay.io/fairwinds/polaris:4.0",
+				"polaris.imageRef": "quay.io/fairwinds/polaris:" + polarisVersion,
 				"polaris.config.yaml": `checks:
   cpuRequestsMissing: warning`,
 			},
@@ -234,7 +236,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		{
 			name: "Should return job spec for Deployment",
 			config: map[string]string{
-				"polaris.imageRef":                  "quay.io/fairwinds/polaris:4.0",
+				"polaris.imageRef":                  "quay.io/fairwinds/polaris:" + polarisVersion,
 				"polaris.resources.requests.cpu":    "50m",
 				"polaris.resources.requests.memory": "50M",
 				"polaris.resources.limits.cpu":      "300m",
@@ -270,7 +272,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Containers: []corev1.Container{
 					{
 						Name:                     "polaris",
-						Image:                    "quay.io/fairwinds/polaris:4.0",
+						Image:                    "quay.io/fairwinds/polaris:" + polarisVersion,
 						ImagePullPolicy:          corev1.PullIfNotPresent,
 						TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 						Resources: corev1.ResourceRequirements{
@@ -360,7 +362,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			Data: map[string]string{
-				"polaris.imageRef": "quay.io/fairwinds/polaris:4.0",
+				"polaris.imageRef": "quay.io/fairwinds/polaris:" + polarisVersion,
 			},
 		}).Build()).
 		Get()
@@ -372,7 +374,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	g.Expect(result.Scanner).To(Equal(v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
-		Version: "4.0",
+		Version: polarisVersion,
 	}))
 	g.Expect(result.Summary).To(Equal(v1alpha1.ConfigAuditSummary{
 		PassCount:    2,

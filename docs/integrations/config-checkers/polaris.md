@@ -14,7 +14,7 @@ The [default][config-default] Polaris [configuration] can be customized to do th
 
 | CONFIGMAP KEY                        | DEFAULT                                                | DESCRIPTION |
 | ------------------------------------ | ------------------------------------------------------ | ----------- |
-| `polaris.imageRef`                   | `quay.io/fairwinds/polaris:4.0`                        | Polaris image reference |
+| `polaris.imageRef`                   | `quay.io/fairwinds/polaris:4.2`                        | Polaris image reference |
 | `polaris.config.yaml`                | [Check the default value here][default-polaris-config] | Polaris configuration file |
 | `polaris.resources.request.cpu`      | `50m`                                                  | The minimum amount of CPU required to run Polaris scanner pod. |
 | `polaris.resources.request.memory`   | `50M`                                                  | The minimum amount of memory required to run Polaris scanner pod. |
