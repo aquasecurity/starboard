@@ -150,7 +150,7 @@ kubeBench:
   imageRef: docker.io/aquasec/kube-bench:0.6.3
 
 polaris:
-  imageRef: quay.io/fairwinds/polaris:4.0
+  imageRef: quay.io/fairwinds/polaris:4.2
   # resources resource requests and limits
   resources:
     requests:

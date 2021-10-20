@@ -24,7 +24,7 @@ var (
 	polarisScanner = v1alpha1.Scanner{
 		Name:    "Polaris",
 		Vendor:  "Fairwinds Ops",
-		Version: "4.0",
+		Version: "4.2",
 	}
 	conftestScanner = v1alpha1.Scanner{
 		Name:    "Conftest",

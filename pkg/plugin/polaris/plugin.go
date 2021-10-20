@@ -309,7 +309,7 @@ func (p *plugin) IsReady(_ starboard.PluginContext) (bool, error) {
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyImageRef:                "quay.io/fairwinds/polaris:4.0",
+			keyImageRef:                "quay.io/fairwinds/polaris:4.2",
 			keyConfigYaml:              DefaultConfigYAML,
 			keyResourcesRequestsCPU:    "50m",
 			keyResourcesRequestsMemory: "50M",
