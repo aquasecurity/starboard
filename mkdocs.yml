@@ -32,7 +32,7 @@ nav:
           - Overview: integrations/vulnerability-scanners/index.md
           - Trivy: integrations/vulnerability-scanners/trivy.md
           - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
-      - Infraestructure Scanners:
+      - Infrastructure Scanners:
           - Overview: integrations/infra-scanners/index.md
       - Configuration Checkers:
           - Overview: integrations/config-checkers/index.md
