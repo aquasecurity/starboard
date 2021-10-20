@@ -77,7 +77,7 @@ func MapDockerRegistryServersToAuths(imagePullSecrets []corev1.Secret) (map[stri
 		dockerConfig := &docker.Config{}
 		err := dockerConfig.Read(data)
 		if err != nil {
-			return nil, fmt.Errorf("reading content of %s: %w", corev1.DockerConfigJsonKey, err)
+			return nil, fmt.Errorf("reading %s field of %q secret: %w", corev1.DockerConfigJsonKey, secret.Namespace+"/"+secret.Name, err)
 		}
 		for authKey, auth := range dockerConfig.Auths {
 			server, err := docker.GetServerFromDockerAuthKey(authKey)
