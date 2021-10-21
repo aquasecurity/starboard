@@ -703,6 +703,7 @@ var _ = Describe("Starboard CLI", func() {
 							"starboard", "get", "vulnerabilityreports",
 							"deployment/" + deploy.Name,
 							"--namespace", deploy.Namespace,
+							"--output", "yaml",
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -804,6 +805,7 @@ var _ = Describe("Starboard CLI", func() {
 							"starboard", "get", "vulnerabilities",
 							"deployment/" + deploy.Name,
 							"--namespace", testNamespace.Name,
+							"--output", "yaml",
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -831,6 +833,7 @@ var _ = Describe("Starboard CLI", func() {
 							"starboard", "get", "vulnerabilities",
 							"replicaset/" + replicasetName,
 							"--namespace", testNamespace.Name,
+							"--output", "yaml",
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
@@ -858,6 +861,7 @@ var _ = Describe("Starboard CLI", func() {
 							"starboard", "get", "vulnerabilities",
 							"pod/" + podName,
 							"--namespace", testNamespace.Name,
+							"--output", "yaml",
 							"-v", starboardCLILogLevel,
 						}, stdout, stderr)
 						Expect(err).ToNot(HaveOccurred())
