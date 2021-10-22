@@ -822,6 +822,7 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 	}
 
 	return corev1.PodSpec{
+		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Containers:                   containers,
