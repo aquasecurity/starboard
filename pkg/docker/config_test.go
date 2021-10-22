@@ -82,6 +82,17 @@ func TestConfig_Read(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Should return error when auth is not username and password concatenated with a colon",
+			givenJSON: `{
+							"auths": {
+								"my-registry.domain.io": {
+									"auth": "b25seXVzZXJuYW1l"
+								}
+							}
+						}`,
+			expectedError: errors.New("expected username and password concatenated with a colon (:)"),
+		},
 	}
 
 	for _, tc := range testCases {
