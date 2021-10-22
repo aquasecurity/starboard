@@ -82,6 +82,12 @@ func IsClusterScopedKind(k string) bool {
 	}
 }
 
+// PartialObjectToLabels encodes the specified Object as a set of labels.
+//
+// If Object's name cannot be used as the value of the
+// starboard.LabelResourceName label, as a fallback, this method will calculate
+// a hash of the Object's name and use it as the value of the
+// starboard.LabelResourceNameHash label.
 func PartialObjectToLabels(obj Object) map[string]string {
 	labels := map[string]string{
 		starboard.LabelResourceKind:      string(obj.Kind),
@@ -95,6 +101,8 @@ func PartialObjectToLabels(obj Object) map[string]string {
 	return labels
 }
 
+// ObjectToObjectMetadata encodes the specified client.Object as a set of labels
+// and annotations added to the given ObjectMeta.
 func ObjectToObjectMetadata(obj client.Object, meta *metav1.ObjectMeta) error {
 	if meta.Labels == nil {
 		meta.Labels = make(map[string]string)

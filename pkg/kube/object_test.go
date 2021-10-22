@@ -59,6 +59,177 @@ func TestIsBuiltInWorkload(t *testing.T) {
 	}
 }
 
+func TestIsClusterScopedKind(t *testing.T) {
+	testCases := []struct {
+		kind string
+		want bool
+	}{
+		{
+			kind: "Role",
+			want: false,
+		},
+		{
+			kind: "RoleBinding",
+			want: false,
+		},
+		{
+			kind: "ClusterRole",
+			want: true,
+		},
+		{
+			kind: "ClusterRoleBinding",
+			want: true,
+		},
+		{
+			kind: "CustomResourceDefinition",
+			want: true,
+		},
+		{
+			kind: "Pod",
+			want: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tt.want, tt.kind), func(t *testing.T) {
+			assert.Equal(t, tt.want, kube.IsClusterScopedKind(tt.kind))
+		})
+	}
+}
+
+func TestPartialObjectToLabels(t *testing.T) {
+	testCases := []struct {
+		name   string
+		object kube.Object
+		labels map[string]string
+	}{
+		{
+			name: "Should map object with simple name",
+			object: kube.Object{
+				Kind:      kube.KindPod,
+				Name:      "my-pod",
+				Namespace: "production",
+			},
+			labels: map[string]string{
+				starboard.LabelResourceKind:      "Pod",
+				starboard.LabelResourceNamespace: "production",
+				starboard.LabelResourceName:      "my-pod",
+			},
+		},
+		{
+			name: "Should map object with name that is not a valid label",
+			object: kube.Object{
+				Kind: kube.KindClusterRole,
+				Name: "system:controller:namespace-controller",
+			},
+			labels: map[string]string{
+				starboard.LabelResourceKind:      "ClusterRole",
+				starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:namespace-controller"),
+				starboard.LabelResourceNamespace: "",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.labels, kube.PartialObjectToLabels(tc.object))
+		})
+	}
+}
+
+func TestObjectToObjectMetadata(t *testing.T) {
+	testCases := []struct {
+		name     string
+		meta     metav1.ObjectMeta
+		object   client.Object
+		expected metav1.ObjectMeta
+	}{
+		{
+			name: "Should map object with simple name",
+			meta: metav1.ObjectMeta{},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-pod",
+					Namespace: "production",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Pod",
+					starboard.LabelResourceName:      "my-pod",
+					starboard.LabelResourceNamespace: "production",
+				},
+			},
+		},
+		{
+			name: "Should map object with name that is not a valid label",
+			meta: metav1.ObjectMeta{},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "system:controller:node-controller",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					starboard.LabelResourceNamespace: "",
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:controller:node-controller",
+				},
+			},
+		},
+		{
+			name: "Should map object and merge labels and annotations",
+			meta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					"foo": "bar",
+				},
+				Annotations: map[string]string{
+					"kee": "pass",
+				},
+			},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "system:controller:node-controller",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					"foo": "bar",
+
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					starboard.LabelResourceNamespace: "",
+				},
+				Annotations: map[string]string{
+					"kee": "pass",
+
+					starboard.LabelResourceName: "system:controller:node-controller",
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := kube.ObjectToObjectMetadata(tc.object, &tc.meta)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, tc.meta)
+		})
+	}
+}
+
 func TestObjectFromLabelsSet(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -490,43 +661,6 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 		assert.Equal(t, "nginx-549f5fcb58", name)
 	})
 
-}
-
-func TestIsClusterScopedKind(t *testing.T) {
-	testCases := []struct {
-		kind string
-		want bool
-	}{
-		{
-			kind: "Role",
-			want: false,
-		},
-		{
-			kind: "RoleBinding",
-			want: false,
-		},
-		{
-			kind: "ClusterRole",
-			want: true,
-		},
-		{
-			kind: "ClusterRoleBinding",
-			want: true,
-		},
-		{
-			kind: "CustomResourceDefinition",
-			want: true,
-		},
-		{
-			kind: "Pod",
-			want: false,
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tt.want, tt.kind), func(t *testing.T) {
-			assert.Equal(t, tt.want, kube.IsClusterScopedKind(tt.kind))
-		})
-	}
 }
 
 func TestPartialObjectFromObjectMetadata(t *testing.T) {
