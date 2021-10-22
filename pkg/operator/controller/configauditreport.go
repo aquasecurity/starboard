@@ -227,7 +227,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			return ctrl.Result{}, fmt.Errorf("getting scan job annotations: %w", err)
 		}
 
-		job, secrets, err := configauditreport.NewScanJob().
+		job, secrets, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(r.Plugin).
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).

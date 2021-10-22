@@ -151,7 +151,7 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with simple name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		job, _, err := configauditreport.NewScanJob().
+		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).
@@ -173,7 +173,6 @@ func TestScanJobBuilder(t *testing.T) {
 			}).
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(job).NotTo(BeNil())
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-fcc9884cb",
@@ -212,7 +211,7 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with special name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		job, _, err := configauditreport.NewScanJob().
+		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).

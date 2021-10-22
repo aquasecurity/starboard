@@ -28,7 +28,7 @@ type ScanJobBuilder struct {
 	annotations   map[string]string
 }
 
-func NewScanJob() *ScanJobBuilder {
+func NewScanJobBuilder() *ScanJobBuilder {
 	return &ScanJobBuilder{}
 }
 

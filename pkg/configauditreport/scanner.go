@@ -70,7 +70,7 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.Object) (*ReportBuilder
 	}
 
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, secrets, err := NewScanJob().
+	job, secrets, err := NewScanJobBuilder().
 		WithPlugin(s.plugin).
 		WithPluginContext(s.pluginContext).
 		WithTimeout(s.opts.ScanJobTimeout).
