@@ -1455,6 +1455,7 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
+				Affinity:                     starboard.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
@@ -1632,6 +1633,7 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
+				Affinity:                     starboard.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
@@ -1817,6 +1819,7 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
+				Affinity:                     starboard.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
