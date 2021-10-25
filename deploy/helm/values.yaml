@@ -404,6 +404,9 @@ podAnnotations: {}
 podSecurityContext: {}
   # fsGroup: 2000
 
+podSecurityPolicy:
+  create: false
+
 securityContext:
   privileged: false
   allowPrivilegeEscalation: false

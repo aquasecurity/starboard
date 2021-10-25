@@ -550,6 +550,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 					Drop: []corev1.Capability{"all"},
 				},
 				ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+				RunAsNonRoot: pointer.BoolPtr(false),
 			},
 		})
 	}
