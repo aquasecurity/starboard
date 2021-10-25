@@ -112,6 +112,7 @@ type SecretsReader interface {
 	ListByLocalObjectReferences(ctx context.Context, refs []corev1.LocalObjectReference, ns string) ([]corev1.Secret, error)
 	ListByServiceAccount(ctx context.Context, name string, ns string) ([]corev1.Secret, error)
 	ListImagePullSecretsByPodSpec(ctx context.Context, spec corev1.PodSpec, ns string) ([]corev1.Secret, error)
+	CredentialsByWorkload(ctx context.Context, workload client.Object) (map[string]docker.Auth, error)
 }
 
 // NewSecretsReader constructs a new SecretsReader which is using the client
@@ -168,4 +169,16 @@ func (r *secretsReader) ListImagePullSecretsByPodSpec(ctx context.Context, spec 
 	}
 
 	return append(secrets, serviceAccountSecrets...), nil
+}
+
+func (r *secretsReader) CredentialsByWorkload(ctx context.Context, workload client.Object) (map[string]docker.Auth, error) {
+	spec, err := GetPodSpec(workload)
+	if err != nil {
+		return nil, fmt.Errorf("getting Pod template: %w", err)
+	}
+	imagePullSecrets, err := r.ListImagePullSecretsByPodSpec(ctx, spec, workload.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	return MapContainerNamesToDockerAuths(GetContainerImagesFromPodSpec(spec), imagePullSecrets)
 }
