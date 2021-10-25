@@ -75,7 +75,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 
 	jobSpec.Tolerations = append(jobSpec.Tolerations, s.tolerations...)
 
-	pluginConfigHash, err := s.plugin.GetConfigHash(s.pluginContext)
+	pluginConfigHash, err := s.plugin.ConfigHash(s.pluginContext, kube.Kind(s.object.GetObjectKind().GroupVersionKind().Kind))
 	if err != nil {
 		return nil, nil, err
 	}

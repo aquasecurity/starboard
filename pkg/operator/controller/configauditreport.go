@@ -75,7 +75,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range resources {
-		if !r.Plugin.SupportsKind(resource.kind) {
+		if !r.supportsKind(resource.kind) {
 			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
@@ -94,7 +94,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range clusterResources {
-		if !r.Plugin.SupportsKind(resource.kind) {
+		if !r.supportsKind(resource.kind) {
 			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
@@ -120,22 +120,18 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r.reconcileJobs())
 }
 
+func (r *ConfigAuditReportReconciler) supportsKind(kind kube.Kind) bool {
+	for _, k := range r.Plugin.SupportedKinds() {
+		if k == kind {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
-
-		ready, err := r.Plugin.IsReady(r.PluginContext)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("checking whether plugin is ready: %w", err)
-		}
-		if !ready {
-			log.V(1).Info("Pushing back reconcile key",
-				"reason", "plugin not ready",
-				"pluginName", r.PluginContext.GetName(),
-				"retryAfter", r.ScanJobRetryAfter)
-			// TODO Introduce more generic param to retry processing a given key.
-			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
-		}
 
 		resourcePartial := kube.GetPartialObjectFromKindAndNamespacedName(resourceKind, req.NamespacedName)
 
@@ -169,12 +165,26 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			}
 		}
 
+		// Skip processing if plugin is not applicable to this object
+		applicable, reason, err := r.Plugin.IsApplicable(r.PluginContext, resource)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("checking whether plugin is applicable: %w", err)
+		}
+		if !applicable {
+			log.V(1).Info("Pushing back reconcile key",
+				"reason", reason,
+				"pluginName", r.PluginContext.GetName(),
+				"retryAfter", r.ScanJobRetryAfter)
+			// TODO Introduce more generic param to retry processing a given key.
+			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
+		}
+
 		resourceSpecHash, err := kube.ComputeSpecHash(resource)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("computing spec hash: %w", err)
 		}
 
-		pluginConfigHash, err := r.Plugin.GetConfigHash(r.PluginContext)
+		pluginConfigHash, err := r.Plugin.ConfigHash(r.PluginContext, kube.Kind(resource.GetObjectKind().GroupVersionKind().Kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("computing plugin config hash: %w", err)
 		}

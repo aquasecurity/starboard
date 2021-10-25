@@ -119,12 +119,12 @@ type testPlugin struct {
 	configHash string
 }
 
-func (p *testPlugin) SupportsKind(_ kube.Kind) bool {
-	return true
+func (p *testPlugin) SupportedKinds() []kube.Kind {
+	return []kube.Kind{}
 }
 
-func (p *testPlugin) IsReady(_ starboard.PluginContext) (bool, error) {
-	return true, nil
+func (p *testPlugin) IsApplicable(_ starboard.PluginContext, _ client.Object) (bool, string, error) {
+	return true, "", nil
 }
 
 func (p *testPlugin) Init(_ starboard.PluginContext) error {
@@ -143,7 +143,7 @@ func (p *testPlugin) GetContainerName() string {
 	return ""
 }
 
-func (p *testPlugin) GetConfigHash(_ starboard.PluginContext) (string, error) {
+func (p *testPlugin) ConfigHash(_ starboard.PluginContext, _ kube.Kind) (string, error) {
 	return p.configHash, nil
 }
 
