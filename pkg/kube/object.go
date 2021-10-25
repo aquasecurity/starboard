@@ -142,6 +142,7 @@ func PartialObjectFromObjectMetadata(objectMeta metav1.ObjectMeta) (Object, erro
 	}, nil
 }
 
+// Deprecated use PartialObjectFromObjectMetadata instead.
 func ObjectFromLabelsSet(set labels.Set) (Object, error) {
 	if !set.Has(starboard.LabelResourceKind) {
 		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)

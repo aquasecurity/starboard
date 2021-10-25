@@ -68,7 +68,7 @@ var _ = BeforeSuite(func() {
 		PrimaryWorkloadPrefix: "wordpress",
 
 		Client: kubeClient,
-		Helper: helper.NewHelper(scheme, kubeClient),
+		Helper: helper.NewHelper(kubeClient),
 	}
 
 	startCtx, stopFunc = context.WithCancel(context.Background())

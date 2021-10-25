@@ -30,7 +30,7 @@ env:
 jobs:
   unit-tests:
     name: Run unit tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -55,7 +55,7 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -72,14 +72,15 @@ jobs:
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.175.0
+          version: v0.183.0
           args: release --snapshot --skip-publish --rm-dist
   itest-starboard:
     name: Run integration tests / Starboard CLI
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -118,7 +119,8 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -156,7 +158,6 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-operator
-          OPERATOR_SERVICE_ACCOUNT: starboard-operator
           OPERATOR_TARGET_NAMESPACES: default
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
@@ -167,7 +168,8 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -205,7 +207,6 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-operator
-          OPERATOR_SERVICE_ACCOUNT: starboard-operator
           OPERATOR_TARGET_NAMESPACES: default
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
@@ -213,7 +214,7 @@ jobs:
           files: ./itest/starboard-operator/configauditreport/conftest/coverage.txt
   verify-code:
     name: Verify code
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
