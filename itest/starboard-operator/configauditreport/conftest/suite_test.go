@@ -85,7 +85,7 @@ var _ = BeforeSuite(func() {
 		ConfigAuditReportsPlugin: conftest.Plugin,
 
 		Client: kubeClient,
-		Helper: helper.NewHelper(scheme, kubeClient),
+		Helper: helper.NewHelper(kubeClient),
 	}
 
 	// We can disable vulnerability scanner and CIS benchmarks

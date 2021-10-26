@@ -367,17 +367,15 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
-	owner, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
+	ownerRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
 	if err != nil {
-		return fmt.Errorf("getting workload from scan job labels set: %w", err)
+		return fmt.Errorf("getting owner from scan job metadata: %w", err)
 	}
 
-	log.V(1).Info("Processing complete scan job", "owner", owner)
-
-	ownerObj, err := r.GetObjectFromPartialObject(ctx, owner)
+	owner, err := r.GetObjectFromPartialObject(ctx, ownerRef)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.V(1).Info("Deleting complete scan job for workload that must have been deleted")
+			log.V(1).Info("Report owner must have been deleted", "owner", owner)
 			return r.deleteJob(ctx, job)
 		}
 		return fmt.Errorf("getting object from partial object: %w", err)
@@ -392,7 +390,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
-	hasReport, err := r.hasReport(ctx, owner, resourceSpecHash, pluginConfigHash)
+	hasReport, err := r.hasReport(ctx, ownerRef, resourceSpecHash, pluginConfigHash)
 	if err != nil {
 		return err
 	}
@@ -408,16 +406,19 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
+	reportData, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
+	if err != nil {
+		return err
+	}
 
 	reportBuilder := configauditreport.NewReportBuilder(r.Client.Scheme()).
-		Controller(ownerObj).
+		Controller(owner).
 		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
-		Data(result)
+		Data(reportData)
 	err = reportBuilder.Write(ctx, r.ReadWriter)
 	if err != nil {
 		return err
