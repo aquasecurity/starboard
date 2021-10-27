@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 data:
@@ -15,7 +15,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: starboard
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 ---
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-trivy-config
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 data:
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-polaris-config
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
     "app.kubernetes.io/managed-by": "starboard"
 data:

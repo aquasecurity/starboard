@@ -178,9 +178,9 @@ code if any of the generated files is not up-to-date. We're running it as a step
 
 ## Test Starboard Operator
 
-You can deploy the operator in the `starboard-operator` namespace and configure it to watch the `default`
-namespace. In OLM terms such install mode is called *SingleNamespace*. The *SingleNamespace* mode is good to get
-started with a basic development workflow. For other install modes see [Operator Multitenancy with OperatorGroups][olm-operator-groups].
+You can deploy the operator in the `starboard-system` namespace and configure it to watch the `default` namespace.
+In OLM terms such install mode is called *SingleNamespace*. The *SingleNamespace* mode is good to get started with a
+basic development workflow. For other install modes see [Operator Multitenancy with OperatorGroups][olm-operator-groups].
 
 ### Prerequisites
 
@@ -196,18 +196,16 @@ started with a basic development workflow. For other install modes see [Operator
 
    ```
    kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-     -f deploy/static/02-starboard-operator.sa.yaml \
-     -f deploy/static/03-starboard-operator.clusterrole.yaml \
-     -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+     -f deploy/static/02-starboard-operator.rbac.yaml
    ```
 
-   This will create the `starboard-operator` namespace, and the `starboard-operator` service account. Beyond that,
+   This will create the `starboard-system` namespace, and the `starboard-operator` service account. Beyond that,
    it will create the `starboard-operator` ClusterRole and bind it to the `starboard-operator` service account in the
-   `starboard-operator` namespace via the `starboard-operator` ClusterRoleBinding.
+   `starboard-system` namespace via the `starboard-operator` ClusterRoleBinding.
 3. (Optional) Create configuration objects:
 
    ```
-   kubectl apply -f deploy/static/05-starboard-operator.config.yaml
+   kubectl apply -f deploy/static/03-starboard-operator.config.yaml
    ```
 
 ### In cluster
@@ -222,7 +220,7 @@ started with a basic development workflow. For other install modes see [Operator
    ```
    kind load docker-image aquasec/starboard-operator:dev
    ```
-3. Create the `starboard-operator` Deployment in the `starboard-operator` namespace to run the operator's container:
+3. Create the `starboard-operator` Deployment in the `starboard-system` namespace to run the operator's container:
 
    ```
    kubectl apply -k deploy/static
@@ -233,7 +231,7 @@ started with a basic development workflow. For other install modes see [Operator
 1. Run the main method of the operator program:
 
    ```
-   OPERATOR_NAMESPACE=starboard-operator \
+   OPERATOR_NAMESPACE=starboard-system \
      OPERATOR_TARGET_NAMESPACES=default \
      OPERATOR_LOG_DEV_MODE=true \
      OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED=true \
@@ -248,11 +246,9 @@ started with a basic development workflow. For other install modes see [Operator
 
 ```
 kubectl delete -k deploy/static
-kubectl delete -f deploy/static/05-starboard-operator.config.yaml
-kubectl delete -f deploy/static/01-starboard-operator.ns.yaml \
-  -f deploy/static/02-starboard-operator.sa.yaml \
-  -f deploy/static/03-starboard-operator.clusterrole.yaml \
-  -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+kubectl delete -f deploy/static/03-starboard-operator.config.yaml
+kubectl delete -f deploy/static/02-starboard-operator.rbac.yaml \
+  -f deploy/static/01-starboard-operator.ns.yaml
 kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
   -f deploy/crd/configauditreports.crd.yaml \
   -f deploy/crd/clusterconfigauditreports.crd.yaml \
@@ -280,7 +276,7 @@ chmod +x install.sh
 
 ### Build the Catalog Image
 
-The Starboard Operator metadata is formatted in *packagemanifest* layout so you need to place it in the directory
+The Starboard Operator metadata is formatted in *packagemanifest* layout, so you need to place it in the directory
 structure of the [community-operators] repository.
 
 ```

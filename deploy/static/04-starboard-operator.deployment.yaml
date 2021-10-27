@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: starboard-operator
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
     app: starboard-operator
 spec:
@@ -34,7 +34,7 @@ spec:
                 - ALL
           env:
             - name: OPERATOR_NAMESPACE
-              value: "starboard-operator"
+              value: "starboard-system"
             - name: OPERATOR_TARGET_NAMESPACES
               value: "default"
             - name: OPERATOR_LOG_DEV_MODE
