@@ -3,11 +3,10 @@
 The [Operator Lifecycle Manager (OLM)][olm] provides a declarative way to install and upgrade operators and their
 dependencies.
 
-You can install the Starboard operator from [OperatorHub.io](https://operatorhub.io/operator/starboard-operator)
-or [ArtifactHUB](https://artifacthub.io/) by creating the OperatorGroup, which defines the operator's
-multitenancy, and Subscription that links everything together to run the operator's pod.
+You can install the Starboard operator from [OperatorHub.io] or [ArtifactHUB] by creating the OperatorGroup, which
+defines the operator's multitenancy, and Subscription that links everything together to run the operator's pod.
 
-As an example, let's install the operator from the OperatorHub catalog in the `starboard-operator` namespace and
+As an example, let's install the operator from the OperatorHub catalog in the `starboard-system` namespace and
 configure it to watch the `default` namespaces:
 
 1. Install the Operator Lifecycle Manager:
@@ -23,7 +22,7 @@ configure it to watch the `default` namespaces:
    ```
 2. Create the namespace to install the operator in:
    ```
-   kubectl create ns starboard-operator
+   kubectl create ns starboard-system
    ```
 3. Declare `default` as the target namespace by creating the OperatorGroup:
    ```
@@ -32,24 +31,24 @@ configure it to watch the `default` namespaces:
    kind: OperatorGroup
    metadata:
      name: starboard-operator
-     namespace: starboard-operator
+     namespace: starboard-system
    spec:
      targetNamespaces:
      - default
    EOF
    ```
 4. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
-   the `starboard-operator` namespace. For example, you can use Trivy
+   the `starboard-system` namespace. For example, you can use Trivy
    in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
    [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
    If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
    on startup with the default settings:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/05-starboard-operator.config.yaml
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.config.yaml
    ```
    Review the default values and makes sure the operator is configured properly:
    ```
-   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-operator
+   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-system
    ```
 5. Install the operator by creating the Subscription:
    ```
@@ -58,7 +57,7 @@ configure it to watch the `default` namespaces:
    kind: Subscription
    metadata:
      name: starboard-operator
-     namespace: starboard-operator
+     namespace: starboard-system
    spec:
      channel: alpha
      name: starboard-operator
@@ -75,26 +74,26 @@ configure it to watch the `default` namespaces:
          value: "true"
    EOF
    ```
-   The operator will be installed in the `starboard-operator` namespace and will be usable from the `default` namespace.
+   The operator will be installed in the `starboard-system` namespace and will be usable from the `default` namespace.
    Note that the `spec.config` property allows you to override the default [configuration](./../configuration.md) of
    the operator's Deployment.
 
 6. After install, watch the operator come up using the following command:
    ```console
-   $ kubectl get clusterserviceversions -n starboard-operator
+   $ kubectl get clusterserviceversions -n starboard-system
    NAME                        DISPLAY              VERSION   REPLACES                     PHASE
    starboard-operator.{{ var.tag }}  Starboard Operator   {{ var.build.version }}    starboard-operator.{{ var.tag_prev }}   Succeeded
    ```
    If the above command succeeds and the ClusterServiceVersion has transitioned from `Installing` to `Succeeded` phase
    you will also find the operator's Deployment in the same namespace where the Subscription is:
    ```console
-   $ kubectl get deployments -n starboard-operator
+   $ kubectl get deployments -n starboard-system
    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
    starboard-operator   1/1     1            1           11m
    ```
    If for some reason it's not ready yet, check the logs of the Deployment for errors:
    ```
-   kubectl logs deployment/starboard-operator -n starboard-operator
+   kubectl logs deployment/starboard-operator -n starboard-system
    ```
 
 ## Uninstall
@@ -102,10 +101,10 @@ configure it to watch the `default` namespaces:
 To uninstall the operator delete the Subscription, the ClusterServiceVersion, and the OperatorGroup:
 
 ```
-kubectl delete subscription starboard-operator -n starboard-operator
-kubectl delete clusterserviceversion starboard-operator.{{ var.tag }} -n starboard-operator
-kubectl delete operatorgroup starboard-operator -n starboard-operator
-kubectl delete ns starboard-operator
+kubectl delete subscription starboard-operator -n starboard-system
+kubectl delete clusterserviceversion starboard-operator.{{ var.tag }} -n starboard-system
+kubectl delete operatorgroup starboard-operator -n starboard-system
+kubectl delete ns starboard-system
 ```
 
 You have to manually delete custom resource definitions created by the OLM operator:
@@ -121,3 +120,5 @@ You have to manually delete custom resource definitions created by the OLM opera
     ```
 
 [olm]: https://github.com/operator-framework/operator-lifecycle-manager/
+[OperatorHub.io]: https://operatorhub.io/operator/starboard-operator/
+[ArtifactHUB]: https://artifacthub.io/
