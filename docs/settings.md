@@ -55,7 +55,7 @@ configuration settings for common use cases. For example, switch Trivy from
 | `configAuditReports.scanner`   | `Polaris`                             | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
 | `scanJob.tolerations`          | N/A                                   | JSON representation of the [tolerations] to be applied to the scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'` |
 | `scanJob.annotations`          | N/A                                   | One-line comma-separated representation of the annotations which the user wants the scanner pods to be annotated with. Example: `foo=bar,env=stage` will annotate the scanner pods with the annotations `foo: bar` and `env: stage` |
-| `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.6.5`  | kube-bench image reference |
+| `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:v0.6.5`  | kube-bench image reference |
 | `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.6.3` | kube-hunter image reference |
 | `kube-hunter.quick`            | `"false"`                             | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
 
