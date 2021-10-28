@@ -6,6 +6,7 @@ metadata:
   namespace: starboard-system
   labels:
     app: starboard-operator
+    app.kubernetes.io/managed-by: starboard
 spec:
   replicas: 1
   strategy:
@@ -13,10 +14,12 @@ spec:
   selector:
     matchLabels:
       app: starboard-operator
+      app.kubernetes.io/managed-by: starboard
   template:
     metadata:
       labels:
         app: starboard-operator
+        app.kubernetes.io/managed-by: starboard
     spec:
       serviceAccountName: starboard-operator
       automountServiceAccountToken: true
