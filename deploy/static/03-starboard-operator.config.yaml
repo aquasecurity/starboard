@@ -9,7 +9,7 @@ metadata:
 data:
   vulnerabilityReports.scanner: Trivy
   configAuditReports.scanner: Polaris
-  kube-bench.imageRef: docker.io/aquasec/kube-bench:0.6.3
+  kube-bench.imageRef: docker.io/aquasec/kube-bench:v0.6.5
 ---
 apiVersion: v1
 kind: Secret
