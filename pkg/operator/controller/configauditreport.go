@@ -369,7 +369,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 
 	ownerRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
 	if err != nil {
-		return fmt.Errorf("getting owner from scan job metadata: %w", err)
+		return fmt.Errorf("getting owner ref from scan job metadata: %w", err)
 	}
 
 	owner, err := r.GetObjectFromPartialObject(ctx, ownerRef)
