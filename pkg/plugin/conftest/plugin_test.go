@@ -30,35 +30,80 @@ var (
 )
 
 func TestConfig_GetPoliciesByKind(t *testing.T) {
-	g := NewGomegaWithT(t)
-	config := conftest.Config{
-		PluginConfig: starboard.PluginConfig{
-			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
 
-				"conftest.resources.requests.cpu":    "50m",
-				"conftest.resources.requests.memory": "50M",
-				"conftest.resources.limits.cpu":      "300m",
-				"conftest.resources.limits.memory":   "300M",
-
-				"conftest.library.kubernetes.rego":         "<REGO_A>",
-				"conftest.library.utils.rego":              "<REGO_B>",
-				"conftest.policy.access_to_host_pid.rego":  "<REGO_C>",
-				"conftest.policy.cpu_not_limited.rego":     "<REGO_D>",
-				"conftest.policy.access_to_host_pid.kinds": "Pod,ReplicaSet",
-				"conftest.policy.cpu_not_limited.kinds":    "Workload",
-
-				// This one should be skipped (no .rego suffix)
-				"conftest.policy.privileged": "<REGO_E>",
-				// This one should be skipped (no conftest.policy. prefix)
-				"foo": "bar",
+	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.library.kubernetes.rego":        "<REGO_A>",
+					"conftest.library.utils.rego":             "<REGO_B>",
+					"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
+				},
 			},
-		},
-	}
-	g.Expect(config.GetPoliciesByKind("Pod")).To(Equal(map[string]string{
-		"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
-		"conftest.policy.cpu_not_limited.rego":    "<REGO_D>",
-	}))
+		}
+		_, err := config.GetPoliciesByKind("Pod")
+		g.Expect(err).To(MatchError("kinds not defined for policy: conftest.policy.access_to_host_pid.rego"))
+	})
+
+	t.Run("Should return error when policy is not found", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.policy.access_to_host_pid.kinds": "Workload",
+				},
+			},
+		}
+		_, err := config.GetPoliciesByKind("Pod")
+		g.Expect(err).To(MatchError("expected policy not found: conftest.policy.access_to_host_pid.rego"))
+	})
+
+	t.Run("Should return policies as Rego modules", func(t *testing.T) {
+
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+
+					"conftest.resources.requests.cpu":    "50m",
+					"conftest.resources.requests.memory": "50M",
+					"conftest.resources.limits.cpu":      "300m",
+					"conftest.resources.limits.memory":   "300M",
+
+					"conftest.library.kubernetes.rego":                       "<REGO_A>",
+					"conftest.library.utils.rego":                            "<REGO_B>",
+					"conftest.policy.access_to_host_pid.rego":                "<REGO_C>",
+					"conftest.policy.cpu_not_limited.rego":                   "<REGO_D>",
+					"configmap_with_sensitive_data.rego":                     "<REGO_E>",
+					"configmap_with_secret_data.rego":                        "<REGO_F>",
+					"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+
+					"conftest.policy.access_to_host_pid.kinds":                "Pod,ReplicaSet",
+					"conftest.policy.cpu_not_limited.kinds":                   "Workload",
+					"configmap_with_sensitive_data.kinds":                     "ConfigMap",
+					"configmap_with_secret_data.kinds":                        "ConfigMap",
+					"conftest.policy.object_without_recommended_labels.kinds": "*",
+
+					// This one should be skipped (no .rego suffix)
+					"conftest.policy.privileged": "<REGO_E>",
+					// This one should be skipped (no conftest.policy. prefix)
+					"foo": "bar",
+				},
+			},
+		}
+		g.Expect(config.GetPoliciesByKind("Pod")).To(Equal(map[string]string{
+			"conftest.policy.access_to_host_pid.rego":                "<REGO_C>",
+			"conftest.policy.cpu_not_limited.rego":                   "<REGO_D>",
+			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+		}))
+		g.Expect(config.GetPoliciesByKind("ConfigMap")).To(Equal(map[string]string{
+			"configmap_with_sensitive_data.rego":                     "<REGO_E>",
+			"configmap_with_secret_data.rego":                        "<REGO_F>",
+			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+		}))
+	})
 }
 
 func TestConfig_GetResourceRequirements(t *testing.T) {
