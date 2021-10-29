@@ -133,7 +133,7 @@ func TestPlugin_IsApplicable(t *testing.T) {
 		{
 			name: "Should return false if there are no policies",
 			configData: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 			},
 			obj: &corev1.Pod{
 				TypeMeta: metav1.TypeMeta{
@@ -146,7 +146,7 @@ func TestPlugin_IsApplicable(t *testing.T) {
 		{
 			name: "Should return true if there is at least one policy",
 			configData: map[string]string{
-				"conftest.imageRef":                "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef":                "openpolicyagent/conftest:v0.28.2",
 				"conftest.policy.kubernetes.kinds": "Pod",
 				"conftest.policy.kubernetes.rego": `package main
 
@@ -240,7 +240,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"conftest.imageRef":                  "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef":                  "openpolicyagent/conftest:v0.28.2",
 				"conftest.resources.requests.cpu":    "50m",
 				"conftest.resources.requests.memory": "50M",
 				"conftest.resources.limits.cpu":      "300m",
@@ -260,7 +260,7 @@ func TestPlugin_Init(t *testing.T) {
 					ResourceVersion: "0",
 				},
 				Data: map[string]string{
-					"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+					"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 				},
 			}).Build()
 
@@ -292,7 +292,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 			},
 		}))
 	})
@@ -562,7 +562,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 			},
 		}).Build()).
 		Get()
@@ -583,7 +583,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		"Scanner": Equal(v1alpha1.Scanner{
 			Name:    "Conftest",
 			Vendor:  "Open Policy Agent",
-			Version: "v0.25.0",
+			Version: "v0.28.2",
 		}),
 		"Summary": Equal(v1alpha1.ConfigAuditSummary{
 			DangerCount:  6,

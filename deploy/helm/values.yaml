@@ -346,7 +346,7 @@ polaris:
 
 conftest:
   # imageRef the image reference
-  imageRef: docker.io/openpolicyagent/conftest:v0.25.0
+  imageRef: docker.io/openpolicyagent/conftest:v0.28.2
   # resources resource requests and limits
   resources:
     requests:

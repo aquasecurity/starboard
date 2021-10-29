@@ -50,7 +50,7 @@ metadata:
   namespace: starboard-operator
   name: starboard-conftest-config
 data:
-  conftest.imageRef: openpolicyagent/conftest:v0.25.0
+  conftest.imageRef: openpolicyagent/conftest:v0.28.2
   conftest.resources.requests.cpu: 50
   conftest.resources.requests.memory: 50M
   conftest.resources.limits.cpu: 300m
@@ -84,7 +84,7 @@ metadata:
     # Introduce a way to version configuration schema.
     starboard.plugin.config.version: "v2"
 data:
-  conftest.imageRef: openpolicyagent/conftest:v0.25.0
+  conftest.imageRef: openpolicyagent/conftest:v0.28.2
   conftest.resources.requests.cpu: 50
   conftest.resources.requests.memory: 50M
   conftest.resources.limits.cpu: 300m

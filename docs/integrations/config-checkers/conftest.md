@@ -58,7 +58,7 @@ As an example, let's create the `starboard-conftest-config` ConfigMap with [file
 
 ```
 kubectl create configmap starboard-conftest-config -n <starboard_namespace> \
-  --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.25.0 \
+  --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.28.2 \
   --from-file=conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego \
   --from-file=conftest.library.utils.rego=kubernetes/lib/utils.rego \
   --from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
@@ -137,7 +137,7 @@ report:
 
 | CONFIGMAP KEY                        | DEFAULT                                      | DESCRIPTION |
 | ------------------------------------ | -------------------------------------------- | ----------- |
-| `conftest.imageRef`                  | `docker.io/openpolicyagent/conftest:v0.25.0` | Conftest image reference |
+| `conftest.imageRef`                  | `docker.io/openpolicyagent/conftest:v0.28.2` | Conftest image reference |
 | `conftest.resources.requests.cpu`    | `50m`                                        | The minimum amount of CPU required to run Conftest scanner pod. |
 | `conftest.resources.requests.memory` | `50M`                                        | The minimum amount of memory required to run Conftest scanner pod. |
 | `conftest.resources.limits.cpu`      | `300m`                                       | The maximum amount of CPU allowed to run Conftest scanner pod. |

@@ -46,7 +46,7 @@ var (
 			Namespace: "starboard",
 		},
 		Data: map[string]string{
-			"conftest.imageRef":                  "docker.io/openpolicyagent/conftest:v0.25.0",
+			"conftest.imageRef":                  "docker.io/openpolicyagent/conftest:v0.28.2",
 			"conftest.policy.runs_as_root.kinds": "Workload",
 			"conftest.policy.runs_as_root.rego": `
 	package main
