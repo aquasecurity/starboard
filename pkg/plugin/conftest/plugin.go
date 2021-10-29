@@ -221,7 +221,7 @@ func (p *plugin) IsApplicable(ctx starboard.PluginContext, obj client.Object) (b
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyImageRef:                "openpolicyagent/conftest:v0.25.0",
+			keyImageRef:                "openpolicyagent/conftest:v0.28.2",
 			keyResourcesRequestsCPU:    "50m",
 			keyResourcesRequestsMemory: "50M",
 			keyResourcesLimitsCPU:      "300m",
