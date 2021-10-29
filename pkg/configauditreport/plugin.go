@@ -32,15 +32,15 @@ type Plugin interface {
 	// to read logs from.
 	GetContainerName() string
 
-	// GetConfigHash returns hash of the plugin's configuration settings. The computed hash
-	// is used to invalidate v1alpha1.ConfigAuditReport object whenever configuration changes.
-	GetConfigHash(ctx starboard.PluginContext) (string, error)
+	// ConfigHash returns hash of the plugin's configuration settings. The computed hash
+	// is used to invalidate v1alpha1.ConfigAuditReport and v1alpha1.ClusterConfigAuditReport
+	// objects whenever configuration applicable to the specified resource kind changes.
+	ConfigHash(ctx starboard.PluginContext, kind kube.Kind) (string, error)
 
-	// SupportsKind returns true if the given resource kind is supported by
-	// this plugin, false otherwise.
-	SupportsKind(kind kube.Kind) bool
+	// SupportedKinds returns kinds supported by this plugin.
+	SupportedKinds() []kube.Kind
 
-	// IsReady returns true if the plugin is ready for reconciliation, false
-	// otherwise.
-	IsReady(ctx starboard.PluginContext) (bool, error)
+	// IsApplicable return true if the given object can be scanned by this
+	// plugin, false otherwise.
+	IsApplicable(ctx starboard.PluginContext, obj client.Object) (bool, string, error)
 }

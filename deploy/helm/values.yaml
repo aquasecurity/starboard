@@ -147,7 +147,7 @@ trivy:
   # serverCustomHeaders: "foo=bar"
 
 kubeBench:
-  imageRef: docker.io/aquasec/kube-bench:0.6.3
+  imageRef: docker.io/aquasec/kube-bench:v0.6.5
 
 polaris:
   imageRef: quay.io/fairwinds/polaris:4.2
@@ -346,7 +346,7 @@ polaris:
 
 conftest:
   # imageRef the image reference
-  imageRef: docker.io/openpolicyagent/conftest:v0.25.0
+  imageRef: docker.io/openpolicyagent/conftest:v0.28.2
   # resources resource requests and limits
   resources:
     requests:

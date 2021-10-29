@@ -10,7 +10,7 @@ env:
 jobs:
   unit-tests:
     name: Run unit tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -32,7 +32,8 @@ jobs:
     name: Run integration tests / Starboard CLI
     needs:
       - unit-tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -66,7 +67,8 @@ jobs:
     name: Run integration tests / Starboard Operator
     needs:
       - unit-tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -93,24 +95,22 @@ jobs:
       - name: Run integration tests
         run: |
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
-                 -f deploy/crd/configauditreports.crd.yaml \
-                 -f deploy/crd/clusterconfigauditreports.crd.yaml \
-                 -f deploy/crd/ciskubebenchreports.crd.yaml
+            -f deploy/crd/configauditreports.crd.yaml \
+            -f deploy/crd/clusterconfigauditreports.crd.yaml \
+            -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.sa.yaml \
-            -f deploy/static/03-starboard-operator.clusterrole.yaml \
-            -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+            -f deploy/static/02-starboard-operator.rbac.yaml
           make itests-starboard-operator
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-operator
-          OPERATOR_SERVICE_ACCOUNT: starboard-operator
+          OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
   integration-operator-conftest:
     name: Integration / Operator / Conftest
     needs:
       - unit-tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -141,14 +141,11 @@ jobs:
                  -f deploy/crd/clusterconfigauditreports.crd.yaml \
                  -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.sa.yaml \
-            -f deploy/static/03-starboard-operator.clusterrole.yaml \
-            -f deploy/static/04-starboard-operator.clusterrolebinding.yaml
+            -f deploy/static/02-starboard-operator.rbac.yaml
           make integration-operator-conftest
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-operator
-          OPERATOR_SERVICE_ACCOUNT: starboard-operator
+          OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
   release:
     name: Release
@@ -156,7 +153,7 @@ jobs:
       - itest-starboard
       - itest-starboard-operator
       - integration-operator-conftest
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -186,7 +183,7 @@ jobs:
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.175.0
+          version: v0.183.0
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

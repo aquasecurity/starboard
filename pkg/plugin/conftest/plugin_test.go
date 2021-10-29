@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -28,36 +29,81 @@ var (
 	fixedClock = ext.NewFixedClock(fixedTime)
 )
 
-func TestConfig_GetPolicies(t *testing.T) {
-	g := NewGomegaWithT(t)
-	config := conftest.Config{
-		PluginConfig: starboard.PluginConfig{
-			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+func TestConfig_GetPoliciesByKind(t *testing.T) {
 
-				"conftest.resources.requests.cpu":    "50m",
-				"conftest.resources.requests.memory": "50M",
-				"conftest.resources.limits.cpu":      "300m",
-				"conftest.resources.limits.memory":   "300M",
-
-				"conftest.policy.libkubernetes.rego":      "<REGO_A>",
-				"conftest.policy.libutil.rego":            "<REGO_B>",
-				"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
-				"conftest.policy.cpu_not_limited.rego":    "<REGO_D>",
-
-				// This one should be skipped (no .rego suffix)
-				"conftest.policy.privileged": "<REGO_E>",
-				// This one should be skipped (no conftest.policy. prefix)
-				"foo": "bar",
+	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.library.kubernetes.rego":        "<REGO_A>",
+					"conftest.library.utils.rego":             "<REGO_B>",
+					"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
+				},
 			},
-		},
-	}
-	g.Expect(config.GetPolicies()).To(Equal(map[string]string{
-		"conftest.policy.libkubernetes.rego":      "<REGO_A>",
-		"conftest.policy.libutil.rego":            "<REGO_B>",
-		"conftest.policy.access_to_host_pid.rego": "<REGO_C>",
-		"conftest.policy.cpu_not_limited.rego":    "<REGO_D>",
-	}))
+		}
+		_, err := config.GetPoliciesByKind("Pod")
+		g.Expect(err).To(MatchError("kinds not defined for policy: conftest.policy.access_to_host_pid.rego"))
+	})
+
+	t.Run("Should return error when policy is not found", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.policy.access_to_host_pid.kinds": "Workload",
+				},
+			},
+		}
+		_, err := config.GetPoliciesByKind("Pod")
+		g.Expect(err).To(MatchError("expected policy not found: conftest.policy.access_to_host_pid.rego"))
+	})
+
+	t.Run("Should return policies as Rego modules", func(t *testing.T) {
+
+		g := NewGomegaWithT(t)
+		config := conftest.Config{
+			PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
+
+					"conftest.resources.requests.cpu":    "50m",
+					"conftest.resources.requests.memory": "50M",
+					"conftest.resources.limits.cpu":      "300m",
+					"conftest.resources.limits.memory":   "300M",
+
+					"conftest.library.kubernetes.rego":                       "<REGO_A>",
+					"conftest.library.utils.rego":                            "<REGO_B>",
+					"conftest.policy.access_to_host_pid.rego":                "<REGO_C>",
+					"conftest.policy.cpu_not_limited.rego":                   "<REGO_D>",
+					"configmap_with_sensitive_data.rego":                     "<REGO_E>",
+					"configmap_with_secret_data.rego":                        "<REGO_F>",
+					"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+
+					"conftest.policy.access_to_host_pid.kinds":                "Pod,ReplicaSet",
+					"conftest.policy.cpu_not_limited.kinds":                   "Workload",
+					"configmap_with_sensitive_data.kinds":                     "ConfigMap",
+					"configmap_with_secret_data.kinds":                        "ConfigMap",
+					"conftest.policy.object_without_recommended_labels.kinds": "*",
+
+					// This one should be skipped (no .rego suffix)
+					"conftest.policy.privileged": "<REGO_E>",
+					// This one should be skipped (no conftest.policy. prefix)
+					"foo": "bar",
+				},
+			},
+		}
+		g.Expect(config.GetPoliciesByKind("Pod")).To(Equal(map[string]string{
+			"conftest.policy.access_to_host_pid.rego":                "<REGO_C>",
+			"conftest.policy.cpu_not_limited.rego":                   "<REGO_D>",
+			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+		}))
+		g.Expect(config.GetPoliciesByKind("ConfigMap")).To(Equal(map[string]string{
+			"configmap_with_sensitive_data.rego":                     "<REGO_E>",
+			"configmap_with_secret_data.rego":                        "<REGO_F>",
+			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
+		}))
+	})
 }
 
 func TestConfig_GetResourceRequirements(t *testing.T) {
@@ -121,24 +167,32 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 }
 
-func TestPlugin_IsReady(t *testing.T) {
+func TestPlugin_IsApplicable(t *testing.T) {
 
 	testCases := []struct {
 		name       string
 		configData map[string]string
+		obj        client.Object
 		expected   bool
 	}{
 		{
 			name: "Should return false if there are no policies",
 			configData: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
+			},
+			obj: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
 			},
 			expected: false,
 		},
 		{
 			name: "Should return true if there is at least one policy",
 			configData: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef":                "openpolicyagent/conftest:v0.28.2",
+				"conftest.policy.kubernetes.kinds": "Pod",
 				"conftest.policy.kubernetes.rego": `package main
 
 deny[res] {
@@ -153,6 +207,12 @@ deny[res] {
   }
 }
 `},
+			obj: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+			},
 			expected: true,
 		},
 	}
@@ -179,7 +239,7 @@ deny[res] {
 				Get()
 
 			instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-			ready, err := instance.IsReady(pluginContext)
+			ready, _, err := instance.IsApplicable(pluginContext, tc.obj)
 			g.Expect(err).ToNot(HaveOccurred())
 			g.Expect(ready).To(Equal(tc.expected))
 		})
@@ -225,7 +285,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"conftest.imageRef":                  "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef":                  "openpolicyagent/conftest:v0.28.2",
 				"conftest.resources.requests.cpu":    "50m",
 				"conftest.resources.requests.memory": "50M",
 				"conftest.resources.limits.cpu":      "300m",
@@ -245,7 +305,7 @@ func TestPlugin_Init(t *testing.T) {
 					ResourceVersion: "0",
 				},
 				Data: map[string]string{
-					"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+					"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 				},
 			}).Build()
 
@@ -277,7 +337,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 			},
 		}))
 	})
@@ -303,11 +363,15 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"conftest.resources.limits.cpu":      "300m",
 				"conftest.resources.limits.memory":   "300M",
 
-				"conftest.policy.libkubernetes.rego":      "<REGO>",
-				"conftest.policy.libutil.rego":            "<REGO>",
+				"conftest.library.kubernetes.rego":        "<REGO>",
+				"conftest.library.utils.rego":             "<REGO>",
 				"conftest.policy.access_to_host_pid.rego": "<REGO>",
 				"conftest.policy.cpu_not_limited.rego":    "<REGO>",
-				"conftest.policy.privileged":              "<REGO>", // This one should be skipped (no .rego suffix)
+
+				"conftest.policy.access_to_host_pid.kinds": "*",
+				"conftest.policy.cpu_not_limited.kinds":    "*",
+
+				"conftest.policy.privileged": "<REGO>", // This one should be skipped (no .rego suffix)
 
 				"foo": "bar", // This one should be skipped (no conftest.policy. prefix)
 			},
@@ -363,14 +427,14 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"VolumeMounts": ConsistOf(
 					corev1.VolumeMount{
 						Name:      "scan-configauditreport-5d4445db4f-volume",
-						MountPath: "/project/policy/libkubernetes.rego",
-						SubPath:   "libkubernetes.rego",
+						MountPath: "/project/policy/kubernetes.rego",
+						SubPath:   "kubernetes.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
 						Name:      "scan-configauditreport-5d4445db4f-volume",
-						MountPath: "/project/policy/libutil.rego",
-						SubPath:   "libutil.rego",
+						MountPath: "/project/policy/utils.rego",
+						SubPath:   "utils.rego",
 						ReadOnly:  true,
 					},
 					corev1.VolumeMount{
@@ -415,12 +479,12 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		"SecretName": Equal("scan-configauditreport-5d4445db4f-volume"),
 		"Items": ConsistOf(
 			corev1.KeyToPath{
-				Key:  "conftest.policy.libkubernetes.rego",
-				Path: "libkubernetes.rego",
+				Key:  "conftest.library.kubernetes.rego",
+				Path: "kubernetes.rego",
 			},
 			corev1.KeyToPath{
-				Key:  "conftest.policy.libutil.rego",
-				Path: "libutil.rego",
+				Key:  "conftest.library.utils.rego",
+				Path: "utils.rego",
 			},
 			corev1.KeyToPath{
 				Key:  "conftest.policy.access_to_host_pid.rego",
@@ -443,8 +507,8 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			StringData: map[string]string{
-				"conftest.policy.libkubernetes.rego":      "<REGO>",
-				"conftest.policy.libutil.rego":            "<REGO>",
+				"conftest.library.kubernetes.rego":        "<REGO>",
+				"conftest.library.utils.rego":             "<REGO>",
 				"conftest.policy.access_to_host_pid.rego": "<REGO>",
 				"conftest.policy.cpu_not_limited.rego":    "<REGO>",
 				"starboard.workload.yaml": `metadata:
@@ -543,7 +607,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 				Namespace: "starboard-ns",
 			},
 			Data: map[string]string{
-				"conftest.imageRef": "openpolicyagent/conftest:v0.25.0",
+				"conftest.imageRef": "openpolicyagent/conftest:v0.28.2",
 			},
 		}).Build()).
 		Get()
@@ -564,7 +628,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		"Scanner": Equal(v1alpha1.Scanner{
 			Name:    "Conftest",
 			Vendor:  "Open Policy Agent",
-			Version: "v0.25.0",
+			Version: "v0.28.2",
 		}),
 		"Summary": Equal(v1alpha1.ConfigAuditSummary{
 			DangerCount:  6,
@@ -671,7 +735,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}))
 }
 
-func TestPlugin_GetConfigHash(t *testing.T) {
+func TestPlugin_ConfigHash(t *testing.T) {
 
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
 		return starboard.NewPluginContext().
@@ -693,19 +757,19 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		g := NewGomegaWithT(t)
 
 		pluginContext1 := newPluginContextWithConfigData(map[string]string{
-			"foo":   "bar",
-			"brown": "fox",
+			"conftest.policy.policyA.rego":  "foo",
+			"conftest.policy.policyA.kinds": "Pod",
 		})
 		pluginContext2 := newPluginContextWithConfigData(map[string]string{
-			"brown": "fox",
-			"foo":   "baz",
+			"conftest.policy.policyA.rego":  "bar",
+			"conftest.policy.policyA.kinds": "Pod",
 		})
 
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "Pod")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "Pod")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).ToNot(Equal(hash2))
 	})
@@ -723,10 +787,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		})
 
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).To(Equal(hash2))
 	})
@@ -744,10 +808,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		})
 
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).To(Equal(hash2))
 	})

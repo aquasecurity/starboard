@@ -1,13 +1,13 @@
 # Helm
 
-[Helm][helm], which is de facto standard package manager for Kubernetes, allows
-installing applications from parameterized YAML manifests called Helm [charts][helm-charts].
+[Helm], which is de facto standard package manager for Kubernetes, allows installing applications from parameterized
+YAML manifests called Helm [charts].
 
-To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to
-deploy the Starboard operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
+To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Starboard
+operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
 
-As an example, let's install the operator in the `starboard-operator` namespace and
-configure it to watch the `default` namespaces:
+As an example, let's install the operator in the `starboard-system` namespace and configure it to watch the `default`
+namespaces:
 
 1. Clone the chart directory:
    ```
@@ -19,40 +19,40 @@ configure it to watch the `default` namespaces:
    helm repo add aqua https://aquasecurity.github.io/helm-charts/
    helm repo update
    ```
-2. Install the chart from local directory:
+2. Install the chart from a local directory:
    ```
    helm install starboard-operator ./deploy/helm \
-     -n starboard-operator --create-namespace \
+     --namespace starboard-system \
+     --create-namespace \
      --set="targetNamespaces=default" \
      --set="trivy.ignoreUnfixed=true"
    ```
-   Or install the chart from Aqua chart repository:
+   Or install the chart from the Aqua chart repository:
    ```
    helm install starboard-operator aqua/starboard-operator \
-     -n starboard-operator --create-namespace \
+     --namespace starboard-system \
+     --create-namespace \
      --set="targetNamespaces=default" \
      --set="trivy.ignoreUnfixed=true" \
      --version {{ var.chart.version }}
    ```
-   There are many [values][helm-values] in the chart that can be set to configure Starboard.
-3. Check that the `starboard-operator` Helm release is created in the `starboard-operator`
-   namespace:
+   There are many [values] in the chart that can be set to configure Starboard.
+3. Check that the `starboard-operator` Helm release is created in the `starboard-system` namespace:
    ```console
-   $ helm list -n starboard-operator
+   $ helm list -n starboard-system
    NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
-   starboard-operator	starboard-operator	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart.version }}	{{ var.build.version }}
+   starboard-operator	starboard-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart.version }}	{{ var.build.version }}
    ```
-   To confirm that the operator is running, check the number of replicas created by
-   the `starboard-operator` Deployment in the `starboard-operator` namespace:
+   To confirm that the operator is running, check the number of replicas created by the `starboard-operator` Deployment
+   in the `starboard-system` namespace:
    ```console
-   $ kubectl get deployment -n starboard-operator
+   $ kubectl get deployment -n starboard-system
    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
    starboard-operator   1/1     1            1           11m
    ```
-   If for some reason it's not ready yet, check the logs of the Deployment for
-   errors:
+   If for some reason it's not ready yet, check the logs of the Deployment for errors:
    ```
-   kubectl logs deployment/starboard-operator -n starboard-operator
+   kubectl logs deployment/starboard-operator -n starboard-system
    ```
 
 ## Uninstall
@@ -60,7 +60,7 @@ configure it to watch the `default` namespaces:
 You can uninstall the operator with the following command:
 
 ```
-helm uninstall starboard-operator -n starboard-operator
+helm uninstall starboard-operator -n starboard-system
 ```
 
 You have to manually delete custom resource definitions created by the `helm install` command:
@@ -70,12 +70,13 @@ You have to manually delete custom resource definitions created by the `helm ins
 
     ```
     kubectl delete crd vulnerabilityreports.aquasecurity.github.io
+    kubectl delete crd clustervulnerabilityreports.aquasecurity.github.io
     kubectl delete crd configauditreports.aquasecurity.github.io
     kubectl delete crd ciskubebenchreports.aquasecurity.github.io
     kubectl delete crd kubehunterreports.aquasecurity.github.io
     kubectl delete crd clusterconfigauditreports.aquasecurity.github.io
     ```
 
-[helm]: https://helm.sh/
-[helm-charts]: https://helm.sh/docs/topics/charts/
-[helm-values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/helm/values.yaml
+[Helm]: https://helm.sh/
+[charts]: https://helm.sh/docs/topics/charts/
+[values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/helm/values.yaml

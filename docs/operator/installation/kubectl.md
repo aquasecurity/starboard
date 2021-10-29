@@ -4,8 +4,8 @@ You can install the operator with provided static YAML manifests with fixed valu
 shortcomings. For example, if you want to change the container image or modify default configuration settings, you have
 to edit existing manifests or customize them with tools such as [Kustomize].
 
-As an example, let's install the operator in the `starboard-operator` namespace and configure it to
-watch the `default` namespace:
+As an example, let's install the operator in the `starboard-system` namespace and configure it to watch the `default`
+namespace:
 
 1. Send custom resource definitions to the Kubernetes API:
    ```
@@ -17,39 +17,35 @@ watch the `default` namespace:
 2. Send the following Kubernetes objects definitions to the Kubernetes API:
    ```
    kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/01-starboard-operator.ns.yaml \
-     -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/02-starboard-operator.sa.yaml \
-     -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.clusterrole.yaml \
-     -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/04-starboard-operator.clusterrolebinding.yaml
+     -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/02-starboard-operator.rbac.yaml
    ```
 3. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
-   the `starboard-operator` namespace. For example, you can use Trivy
+   the `starboard-system` namespace. For example, you can use Trivy
    in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
    [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
    If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
    on startup with the default settings:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/05-starboard-operator.config.yaml
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.config.yaml
    ```
    Review the default values and makes sure the operator is configured properly:
    ```
-   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-operator
+   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-system
    ```
-4. Finally, create the `starboard-operator` Deployment in the `starboard-operator`
-   namespace to start the operator's pod:
+4. Finally, create the `starboard-operator` Deployment in the `starboard-system` namespace to start the operator's pod:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/06-starboard-operator.deployment.yaml
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/04-starboard-operator.deployment.yaml
    ```
-5. To confirm that the operator is running, check the number of replicas created by
-   the `starboard-operator` Deployment in the `starboard-operator` namespace:
+5. To confirm that the operator is running, check the number of replicas created by the `starboard-operator` Deployment
+   in the `starboard-system` namespace:
    ```console
-   $ kubectl get deployment -n starboard-operator
+   $ kubectl get deployment -n starboard-system
    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
    starboard-operator   1/1     1            1           11m
    ```
-   If for some reason it's not ready yet, check the logs of the Deployment for
-   errors:
+   If for some reason it's not ready yet, check the logs of the Deployment for errors:
    ```
-   kubectl logs deployment/starboard-operator -n starboard-operator
+   kubectl logs deployment/starboard-operator -n starboard-system
    ```
 
 ## Uninstall
@@ -57,11 +53,9 @@ watch the `default` namespace:
 You can uninstall the operator with the following command:
 
 ```
-kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/06-starboard-operator.deployment.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/05-starboard-operator.config.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/04-starboard-operator.clusterrolebinding.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.clusterrole.yaml \
-  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/02-starboard-operator.sa.yaml \
+kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/04-starboard-operator.deployment.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.config.yaml \
+  -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/02-starboard-operator.rbac.yaml \
   -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/01-starboard-operator.ns.yaml
 ```
 

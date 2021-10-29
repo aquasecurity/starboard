@@ -119,12 +119,12 @@ type testPlugin struct {
 	configHash string
 }
 
-func (p *testPlugin) SupportsKind(_ kube.Kind) bool {
-	return true
+func (p *testPlugin) SupportedKinds() []kube.Kind {
+	return []kube.Kind{}
 }
 
-func (p *testPlugin) IsReady(_ starboard.PluginContext) (bool, error) {
-	return true, nil
+func (p *testPlugin) IsApplicable(_ starboard.PluginContext, _ client.Object) (bool, string, error) {
+	return true, "", nil
 }
 
 func (p *testPlugin) Init(_ starboard.PluginContext) error {
@@ -143,7 +143,7 @@ func (p *testPlugin) GetContainerName() string {
 	return ""
 }
 
-func (p *testPlugin) GetConfigHash(_ starboard.PluginContext) (string, error) {
+func (p *testPlugin) ConfigHash(_ starboard.PluginContext, _ kube.Kind) (string, error) {
 	return p.configHash, nil
 }
 
@@ -151,7 +151,7 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with simple name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		job, _, err := configauditreport.NewScanJob().
+		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).
@@ -173,7 +173,6 @@ func TestScanJobBuilder(t *testing.T) {
 			}).
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(job).NotTo(BeNil())
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-fcc9884cb",
@@ -212,7 +211,7 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with special name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		job, _, err := configauditreport.NewScanJob().
+		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).

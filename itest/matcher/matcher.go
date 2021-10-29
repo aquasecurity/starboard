@@ -7,9 +7,11 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -29,7 +31,7 @@ var (
 	conftestScanner = v1alpha1.Scanner{
 		Name:    "Conftest",
 		Vendor:  "Open Policy Agent",
-		Version: "v0.25.0",
+		Version: "v0.28.2",
 	}
 )
 
@@ -40,12 +42,14 @@ var (
 // of the actual v1alpha1.VulnerabilityReport.
 func IsVulnerabilityReportForContainerOwnedBy(containerName string, owner client.Object) types.GomegaMatcher {
 	return &vulnerabilityReportMatcher{
+		scheme:        starboard.NewScheme(),
 		containerName: containerName,
 		owner:         owner,
 	}
 }
 
 type vulnerabilityReportMatcher struct {
+	scheme                *runtime.Scheme
 	owner                 client.Object
 	containerName         string
 	failureMessage        string
@@ -57,19 +61,20 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf("%T expects a %T", vulnerabilityReportMatcher{}, v1alpha1.VulnerabilityReport{})
 	}
-	gvk, err := apiutil.GVKForObject(m.owner, starboard.NewScheme())
+	gvk, err := apiutil.GVKForObject(m.owner, m.scheme)
 	if err != nil {
 		return false, err
 	}
 
+	keys, err := m.objectToLabelsAsMatchKeys(m.owner)
+	if err != nil {
+		return false, err
+	}
+	keys[starboard.LabelContainerName] = Equal(m.containerName)
+
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
-			"Labels": MatchKeys(IgnoreExtras, Keys{
-				starboard.LabelContainerName:     Equal(m.containerName),
-				starboard.LabelResourceKind:      Equal(gvk.Kind),
-				starboard.LabelResourceName:      Equal(m.owner.GetName()),
-				starboard.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
-			}),
+			"Labels": MatchKeys(IgnoreExtras, keys),
 			"OwnerReferences": ConsistOf(metav1.OwnerReference{
 				APIVersion:         gvk.GroupVersion().Identifier(),
 				Kind:               gvk.Kind,
@@ -92,6 +97,29 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 	m.failureMessage = matcher.FailureMessage(actual)
 	m.negatedFailureMessage = matcher.NegatedFailureMessage(actual)
 	return success, nil
+}
+
+func (m *vulnerabilityReportMatcher) objectToLabelsAsMatchKeys(obj client.Object) (map[interface{}]types.GomegaMatcher, error) {
+	kind := obj.GetObjectKind().GroupVersionKind().Kind
+	if kind == "" {
+		gvk, err := apiutil.GVKForObject(m.owner, m.scheme)
+		if err != nil {
+			return nil, err
+		}
+		kind = gvk.Kind
+	}
+
+	labels := kube.PartialObjectToLabels(kube.Object{
+		Kind:      kube.Kind(kind),
+		Name:      obj.GetName(),
+		Namespace: obj.GetNamespace(),
+	})
+
+	keys := make(map[interface{}]types.GomegaMatcher)
+	for k, v := range labels {
+		keys[k] = Equal(v)
+	}
+	return keys, nil
 }
 
 func (m *vulnerabilityReportMatcher) FailureMessage(_ interface{}) string {

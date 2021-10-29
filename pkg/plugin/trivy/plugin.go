@@ -207,9 +207,9 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec
 	}
 	switch mode {
 	case Standalone:
-		return p.getPodSpecForStandaloneMode(config, spec, credentials)
+		return p.getPodSpecForStandaloneMode(ctx, config, spec, credentials)
 	case ClientServer:
-		return p.getPodSpecForClientServerMode(config, spec, credentials)
+		return p.getPodSpecForClientServerMode(ctx, config, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
@@ -246,7 +246,7 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -557,6 +557,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 	return corev1.PodSpec{
 		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Volumes:                      volumes,
 		InitContainers:               []corev1.Container{initContainer},
@@ -572,7 +573,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
@@ -822,7 +823,9 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 	}
 
 	return corev1.PodSpec{
+		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Containers:                   containers,
 		Volumes:                      volumes,

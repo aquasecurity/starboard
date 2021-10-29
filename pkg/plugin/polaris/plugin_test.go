@@ -102,7 +102,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}
 }
 
-func TestPlugin_IsReady(t *testing.T) {
+func TestPlugin_IsApplicable(t *testing.T) {
 
 	t.Run("Should always return true", func(t *testing.T) {
 		g := NewGomegaWithT(t)
@@ -117,7 +117,7 @@ func TestPlugin_IsReady(t *testing.T) {
 			Get()
 
 		instance := polaris.NewPlugin(fixedClock)
-		ready, err := instance.IsReady(pluginContext)
+		ready, _, err := instance.IsApplicable(pluginContext, &corev1.Pod{})
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(ready).To(BeTrue())
 	})
@@ -418,7 +418,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}))
 }
 
-func TestPlugin_GetConfigHash(t *testing.T) {
+func TestPlugin_ConfigHash(t *testing.T) {
 
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
 		return starboard.NewPluginContext().
@@ -449,10 +449,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		})
 
 		plugin := polaris.NewPlugin(fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).ToNot(Equal(hash2))
 	})
@@ -470,10 +470,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		})
 
 		plugin := polaris.NewPlugin(fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).To(Equal(hash2))
 	})
@@ -491,10 +491,10 @@ func TestPlugin_GetConfigHash(t *testing.T) {
 		})
 
 		plugin := polaris.NewPlugin(fixedClock)
-		hash1, err := plugin.GetConfigHash(pluginContext1)
+		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
-		hash2, err := plugin.GetConfigHash(pluginContext2)
+		hash2, err := plugin.ConfigHash(pluginContext2, "")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(hash1).To(Equal(hash2))
 	})

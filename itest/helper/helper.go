@@ -224,9 +224,9 @@ type Helper struct {
 	kubeBenchReportReader kubebench.Reader
 }
 
-func NewHelper(scheme *runtime.Scheme, client client.Client) *Helper {
+func NewHelper(client client.Client) *Helper {
 	return &Helper{
-		scheme:                scheme,
+		scheme:                client.Scheme(),
 		kubeClient:            client,
 		kubeBenchReportReader: kubebench.NewReadWriter(client),
 	}
@@ -360,4 +360,15 @@ func (h *Helper) UpdateDeploymentImage(namespace, name string) error {
 
 		return err == nil, err
 	})
+}
+
+func (h *Helper) DeploymentIsReady(deploy client.ObjectKey) func() (bool, error) {
+	return func() (bool, error) {
+		var d appsv1.Deployment
+		err := h.kubeClient.Get(context.TODO(), client.ObjectKey{Namespace: deploy.Namespace, Name: deploy.Name}, &d)
+		if err != nil {
+			return false, err
+		}
+		return d.Status.ReadyReplicas == *d.Spec.Replicas, nil
+	}
 }

@@ -2,7 +2,6 @@ package kube_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -226,69 +224,6 @@ func TestObjectToObjectMetadata(t *testing.T) {
 			err := kube.ObjectToObjectMetadata(tc.object, &tc.meta)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, tc.meta)
-		})
-	}
-}
-
-func TestObjectFromLabelsSet(t *testing.T) {
-	testCases := []struct {
-		name           string
-		labelsSet      labels.Set
-		expectedObject kube.Object
-		expectedError  error
-	}{
-		{
-			name: "Should return object for namespaced object",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind:      "Deployment",
-				starboard.LabelResourceName:      "my-deployment",
-				starboard.LabelResourceNamespace: "my-namespace",
-			},
-			expectedObject: kube.Object{
-				Kind:      kube.KindDeployment,
-				Name:      "my-deployment",
-				Namespace: "my-namespace",
-			},
-		},
-		{
-			name: "Should return object for cluster-scoped object",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind: "Node",
-				starboard.LabelResourceName: "my-node",
-			},
-			expectedObject: kube.Object{
-				Kind:      kube.KindNode,
-				Name:      "my-node",
-				Namespace: "",
-			},
-		},
-		{
-			name: "Should return error when object kind is not specified as label",
-			labelsSet: labels.Set{
-				starboard.LabelResourceName:      "my-deployment",
-				starboard.LabelResourceNamespace: "my-namespace",
-			},
-			expectedError: errors.New("required label does not exist: starboard.resource.kind"),
-		},
-		{
-			name: "Should return error when object name is not specified as label",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind: "Deployment",
-			},
-			expectedError: errors.New("required label does not exist: starboard.resource.name"),
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			obj, err := kube.ObjectFromLabelsSet(tc.labelsSet)
-			switch {
-			case tc.expectedError == nil:
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedObject, obj)
-			default:
-				assert.EqualError(t, err, tc.expectedError.Error())
-			}
 		})
 	}
 }

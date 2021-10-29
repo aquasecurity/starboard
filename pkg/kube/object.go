@@ -142,20 +142,6 @@ func PartialObjectFromObjectMetadata(objectMeta metav1.ObjectMeta) (Object, erro
 	}, nil
 }
 
-func ObjectFromLabelsSet(set labels.Set) (Object, error) {
-	if !set.Has(starboard.LabelResourceKind) {
-		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
-	}
-	if !set.Has(starboard.LabelResourceName) {
-		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
-	}
-	return Object{
-		Kind:      Kind(set.Get(starboard.LabelResourceKind)),
-		Name:      set.Get(starboard.LabelResourceName),
-		Namespace: set.Get(starboard.LabelResourceNamespace),
-	}, nil
-}
-
 func GVRForResource(mapper meta.RESTMapper, resource string) (gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, err error) {
 	fullySpecifiedGVR, groupResource := schema.ParseResourceArg(strings.ToLower(resource))
 	if fullySpecifiedGVR != nil {

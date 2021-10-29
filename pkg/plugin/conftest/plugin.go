@@ -2,6 +2,7 @@ package conftest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -37,6 +38,14 @@ const (
 	keyResourcesLimitsCPU      = "conftest.resources.limits.cpu"
 	keyResourcesLimitsMemory   = "conftest.resources.limits.memory"
 	keyPrefixPolicy            = "conftest.policy."
+	keyPrefixLibrary           = "conftest.library."
+	keySuffixKinds             = ".kinds"
+	keySuffixRego              = ".rego"
+)
+
+const (
+	kindAny      = "*"
+	kindWorkload = "Workload"
 )
 
 // Config defines configuration params for this plugin.
@@ -49,22 +58,64 @@ func (c Config) GetImageRef() (string, error) {
 	return c.GetRequiredData(keyImageRef)
 }
 
-// GetPolicies returns Config keys prefixed with `conftest.policy.` that define
-// Rego policies.
-func (c Config) GetPolicies() map[string]string {
-	policies := make(map[string]string)
-
+func (c Config) GetLibraries() map[string]string {
+	libs := make(map[string]string)
 	for key, value := range c.Data {
-		if !strings.HasPrefix(key, keyPrefixPolicy) {
+		if !strings.HasPrefix(key, keyPrefixLibrary) {
 			continue
 		}
-		if !strings.HasSuffix(key, ".rego") {
+		if !strings.HasSuffix(key, keySuffixRego) {
 			continue
 		}
-		policies[key] = value
+		libs[key] = value
 	}
+	return libs
+}
 
-	return policies
+func (c Config) GetPoliciesByKind(kind string) (map[string]string, error) {
+	policies := make(map[string]string)
+	for key, value := range c.Data {
+		if strings.HasSuffix(key, keySuffixRego) && strings.HasPrefix(key, keyPrefixPolicy) {
+			// Check if kinds were defined for this policy
+			kindsKey := strings.TrimSuffix(key, keySuffixRego) + keySuffixKinds
+			if _, ok := c.Data[kindsKey]; !ok {
+				return nil, fmt.Errorf("kinds not defined for policy: %s", key)
+			}
+		}
+
+		if !strings.HasSuffix(key, keySuffixKinds) {
+			continue
+		}
+		for _, k := range strings.Split(value, ",") {
+			if k == kindWorkload && !c.IsWorkload(kind) {
+				continue
+			}
+			if k != kindAny && k != kindWorkload && k != kind {
+				continue
+			}
+
+			policyKey := strings.TrimSuffix(key, keySuffixKinds) + keySuffixRego
+			var ok bool
+
+			policies[policyKey], ok = c.Data[policyKey]
+			if !ok {
+				return nil, fmt.Errorf("expected policy not found: %s", policyKey)
+			}
+		}
+	}
+	return policies, nil
+}
+
+// TODO move to kube package?
+func (c Config) IsWorkload(kind string) bool {
+	return kind == "Pod" ||
+		kind == "Deployment" ||
+		kind == "ReplicaSet" ||
+		kind == "ReplicationController" ||
+		kind == "StatefulSet" ||
+		kind == "DaemonSet" ||
+		kind == "Job" ||
+		kind == "CronJob"
 }
 
 // GetResourceRequirements constructs ResourceRequirements from the Config.
@@ -124,43 +175,53 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 }
 
 var (
-	supportedKinds = map[kube.Kind]bool{
-		kube.KindPod:                   true,
-		kube.KindDeployment:            true,
-		kube.KindReplicaSet:            true,
-		kube.KindReplicationController: true,
-		kube.KindStatefulSet:           true,
-		kube.KindDaemonSet:             true,
-		kube.KindCronJob:               true,
-		kube.KindJob:                   true,
-		kube.KindService:               true,
-		kube.KindConfigMap:             true,
-		kube.KindRole:                  true,
-		kube.KindRoleBinding:           true,
+	supportedKinds = []kube.Kind{
+		kube.KindPod,
+		kube.KindDeployment,
+		kube.KindReplicaSet,
+		kube.KindReplicationController,
+		kube.KindStatefulSet,
+		kube.KindDaemonSet,
+		kube.KindCronJob,
+		kube.KindJob,
+		kube.KindService,
+		kube.KindConfigMap,
+		kube.KindRole,
+		kube.KindRoleBinding,
 
-		kube.KindClusterRole:              true,
-		kube.KindClusterRoleBindings:      true,
-		kube.KindCustomResourceDefinition: true,
+		kube.KindClusterRole,
+		kube.KindClusterRoleBindings,
+		kube.KindCustomResourceDefinition,
 	}
 )
 
-func (p *plugin) SupportsKind(kind kube.Kind) bool {
-	return supportedKinds[kind]
+func (p *plugin) SupportedKinds() []kube.Kind {
+	return supportedKinds
 }
 
-// IsReady returns true if there is at least one policy, false otherwise.
-func (p *plugin) IsReady(ctx starboard.PluginContext) (bool, error) {
+// IsApplicable returns true if there is at least one policy applicable to the specified object kind, false otherwise.
+func (p *plugin) IsApplicable(ctx starboard.PluginContext, obj client.Object) (bool, string, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
-	return len(config.GetPolicies()) > 0, nil
+	if obj.GetObjectKind().GroupVersionKind().Kind == "" {
+		return false, "", errors.New("object kind must not be nil")
+	}
+	policies, err := config.GetPoliciesByKind(obj.GetObjectKind().GroupVersionKind().Kind)
+	if err != nil {
+		return false, "", err
+	}
+	if len(policies) == 0 {
+		return false, fmt.Sprintf("no Rego policies found for kind %s", obj.GetObjectKind().GroupVersionKind().Kind), nil
+	}
+	return true, "", nil
 }
 
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyImageRef:                "openpolicyagent/conftest:v0.25.0",
+			keyImageRef:                "openpolicyagent/conftest:v0.28.2",
 			keyResourcesRequestsCPU:    "50m",
 			keyResourcesRequestsMemory: "50M",
 			keyResourcesLimitsCPU:      "300m",
@@ -169,19 +230,16 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (p *plugin) GetConfigHash(ctx starboard.PluginContext) (string, error) {
-	cm, err := ctx.GetConfig()
+func (p *plugin) ConfigHash(ctx starboard.PluginContext, kind kube.Kind) (string, error) {
+	config, err := p.newConfigFrom(ctx)
 	if err != nil {
-		return "", fmt.Errorf("getting config: %w", err)
+		return "", err
 	}
-	data := make(map[string]string)
-	for key, value := range cm.Data {
-		if strings.HasPrefix(key, "conftest.resources.") {
-			continue
-		}
-		data[key] = value
+	modules, err := p.modulesByKind(config, string(kind))
+	if err != nil {
+		return "", err
 	}
-	return kube.ComputeHash(data), nil
+	return kube.ComputeHash(modules), nil
 }
 
 func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
@@ -194,7 +252,10 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		return corev1.PodSpec{}, nil, fmt.Errorf("getting image ref: %w", err)
 	}
 
-	policies := config.GetPolicies()
+	modules, err := p.modulesByKind(config, obj.GetObjectKind().GroupVersionKind().Kind)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
 
 	var volumeMounts []corev1.VolumeMount
 	var volumeItems []corev1.KeyToPath
@@ -202,25 +263,25 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 	secretName := configauditreport.GetScanJobName(obj) + "-volume"
 	secretData := make(map[string]string)
 
-	for policy, script := range policies {
-		policyName := strings.TrimPrefix(policy, keyPrefixPolicy)
+	for module, script := range modules {
+		moduleName := strings.TrimPrefix(module, keyPrefixPolicy)
+		moduleName = strings.TrimPrefix(moduleName, keyPrefixLibrary)
 
 		// Copy policies so even if the starboard-conftest-config ConfigMap has changed
 		// before the scan Job is run, it won't fail with references to non-existent config key error.
-		secretData[policy] = script
+		secretData[module] = script
 
 		volumeItems = append(volumeItems, corev1.KeyToPath{
-			Key:  policy,
-			Path: policyName,
+			Key:  module,
+			Path: moduleName,
 		})
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      secretName,
-			MountPath: "/project/policy/" + policyName,
-			SubPath:   policyName,
+			MountPath: "/project/policy/" + moduleName,
+			SubPath:   moduleName,
 			ReadOnly:  true,
 		})
-
 	}
 
 	workloadAsYAML, err := yaml.Marshal(obj)
@@ -295,6 +356,17 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 			},
 			StringData: secretData,
 		}}, nil
+}
+
+func (p *plugin) modulesByKind(config Config, kind string) (map[string]string, error) {
+	modules, err := config.GetPoliciesByKind(kind)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range config.GetLibraries() {
+		modules[key] = value
+	}
+	return modules, nil
 }
 
 func (p *plugin) GetContainerName() string {

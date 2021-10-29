@@ -42,6 +42,8 @@ nav:
       - Managed Registries: integrations/managed-registries.md
       - Octant Plugin: integrations/octant.md
       - Lens Extension: integrations/lens.md
+  - Tutorials:
+      - Manage Access to Security Reports: tutorials/manage_access_to_security_reports.md
   - Custom Resource Definitions:
       - Overview: crds/index.md
       - VulnerabilityReport: crds/vulnerability-report.md
@@ -84,14 +86,14 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.12.0"
-    tag_prev: "v0.11.0"
+    tag: "v0.13.0-rc1"
+    tag_prev: "v0.12.0"
     build:
-      version: "0.12.0"
+      version: "0.13.0-rc1"
       commit: "7b7db3acb673a7aaed50839aed168cba8163230a"
       date: "2021-09-15T17:30:09Z"
     chart:
-      version: 0.7.0
+      version: 0.8.0
 
 # Requires pip install mkdocs-macros-plugin
 plugins:
