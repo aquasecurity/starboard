@@ -75,6 +75,14 @@ func (c Config) GetLibraries() map[string]string {
 func (c Config) GetPoliciesByKind(kind string) (map[string]string, error) {
 	policies := make(map[string]string)
 	for key, value := range c.Data {
+		if strings.HasSuffix(key, keySuffixRego) && strings.HasPrefix(key, keyPrefixPolicy) {
+			// Check if kinds were defined for this policy
+			kindsKey := strings.TrimSuffix(key, keySuffixRego) + keySuffixKinds
+			if _, ok := c.Data[kindsKey]; !ok {
+				return nil, fmt.Errorf("kinds not defined for policy: %s", key)
+			}
+		}
+
 		if !strings.HasSuffix(key, keySuffixKinds) {
 			continue
 		}
@@ -91,7 +99,7 @@ func (c Config) GetPoliciesByKind(kind string) (map[string]string, error) {
 
 			policies[policyKey], ok = c.Data[policyKey]
 			if !ok {
-				return nil, fmt.Errorf("policy not found: %s", policyKey)
+				return nil, fmt.Errorf("expected policy not found: %s", policyKey)
 			}
 		}
 	}
