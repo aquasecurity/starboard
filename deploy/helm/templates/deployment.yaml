@@ -12,7 +12,6 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/secret: {{ .Values.envSecret.stringData | toYaml | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -41,6 +40,8 @@ spec:
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
               value: ":9090"
+            - name: OPERATOR_LOG_DEV_MODE
+              value: {{ .Values.operator.logDevMode | quote }}
             - name: OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED
               value: {{ .Values.operator.kubernetesBenchmarkEnabled | quote }}
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
@@ -51,17 +52,6 @@ spec:
               value: {{ .Values.operator.batchDeleteLimit | quote }}
             - name: OPERATOR_BATCH_DELETE_DELAY
               value: {{ .Values.operator.batchDeleteDelay | quote }}
-            {{- /* Import configuration from passed Helm values */}}
-            {{- range $key, $value := .Values.envSecret.stringData }}
-            {{- if $value }}
-            - name: {{ $key | quote }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.envSecret.name | default (include "starboard-operator.fullname" $) | quote }}
-                  key: {{ $key | quote }}
-                  optional: true
-            {{- end }}
-            {{- end }}
           ports:
             # metrics port is exposed by the k8s Service and by default also
             # have annotations which will help prometheus as a target for

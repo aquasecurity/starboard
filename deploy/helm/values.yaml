@@ -15,6 +15,8 @@ operator:
   # leaderElectionId determines the name of the resource that leader election
   # will use for holding the leader lock.
   leaderElectionId: "starboard-operator"
+  # logDevMode the flag to enable development mode (more human-readable output, extra stack traces and logging information, etc)
+  logDevMode: false
   # vulnerabilityScannerEnabled the flag to enable vulnerability scanner
   vulnerabilityScannerEnabled: true
   # configAuditScannerEnabled the flag to enable configuration audit scanner
@@ -41,30 +43,6 @@ service:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: /metrics
-
-# envSecret represent a k8s Secret resource that will be referenced to mount
-# environment variables.
-envSecret:
-  # create specifies whether a k8s Secret should be created with a given
-  # stringData. If this is set to false, only the keys defined in stringData
-  # will be optionally mounted from the named secret, rather than all keys in
-  # the named k8s Secret.
-  create: true
-  # name specifies the name of the k8s Secret to reference. If not set, a name
-  # is generated using the fullname template. name is currently required to be
-  # hardcoded to starboard-operator as the starboard-operator binary makes a
-  # hardcoded reference to that name:
-  # https://github.com/aquasecurity/starboard/blob/ad6b9b99931d7524806f79b1329fdda82c75a715/pkg/operator/scanner.go#L26-L28
-  name: "starboard-operator"
-  # stringData specifies key value pairs to be added to the k8s Secret and
-  # mounted by the Pod as environment variables.
-  #
-  # NOTE: OPERATOR_NAMESPACE will be set based on where this Helm chart was
-  #       installed, and you are required to specify targetNamespace instead of
-  #       OPERATOR_TARGET_NAMESPACE below for this Helm chart to function
-  #       properly.
-  stringData:
-    OPERATOR_LOG_DEV_MODE: "false"
 
 starboard:
   # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
