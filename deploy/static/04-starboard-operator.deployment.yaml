@@ -4,6 +4,11 @@ kind: Service
 metadata:
   name: starboard-operator
   namespace: starboard-system
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
   annotations:
     prometheus.io/path: /metrics
     prometheus.io/scrape: "true"
@@ -14,7 +19,8 @@ spec:
       targetPort: metrics
       name: metrics
   selector:
-    app: starboard-operator
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,18 +28,23 @@ metadata:
   name: starboard-operator
   namespace: starboard-system
   labels:
-    app: starboard-operator
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: starboard-operator
+      app.kubernetes.io/name: starboard-operator
+      app.kubernetes.io/instance: starboard-operator
   template:
     metadata:
       labels:
-        app: starboard-operator
+        app.kubernetes.io/name: starboard-operator
+        app.kubernetes.io/instance: starboard-operator
     spec:
       serviceAccountName: starboard-operator
       automountServiceAccountToken: true
