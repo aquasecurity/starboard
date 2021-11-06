@@ -5,7 +5,10 @@ metadata:
   name: starboard
   namespace: starboard-system
   labels:
-    "app.kubernetes.io/managed-by": "starboard"
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
 data:
   vulnerabilityReports.scanner: Trivy
   configAuditReports.scanner: Polaris
@@ -17,7 +20,10 @@ metadata:
   name: starboard
   namespace: starboard-system
   labels:
-    "app.kubernetes.io/managed-by": "starboard"
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -25,7 +31,10 @@ metadata:
   name: starboard-trivy-config
   namespace: starboard-system
   labels:
-    "app.kubernetes.io/managed-by": "starboard"
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
 data:
   trivy.imageRef: docker.io/aquasec/trivy:0.20.0
   trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -41,7 +50,10 @@ metadata:
   name: starboard-polaris-config
   namespace: starboard-system
   labels:
-    "app.kubernetes.io/managed-by": "starboard"
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
 data:
   polaris.imageRef: quay.io/fairwinds/polaris:4.2
   polaris.resources.requests.cpu: "50m"
