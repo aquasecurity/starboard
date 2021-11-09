@@ -9,15 +9,15 @@ Configuration of the operator's Pod is done via environment variables at startup
 | `OPERATOR_SCAN_JOB_TIMEOUT`                 | `5m`                   | The length of time to wait before giving up on a scan job |
 | `OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT`       | `10`                   | The maximum number of scan jobs create by the operator |
 | `OPERATOR_SCAN_JOB_RETRY_AFTER`             | `30s`                  | The duration to wait before retrying a failed scan job |
+| `OPERATOR_BATCH_DELETE_LIMIT`               | `10`                   | The maximum number of config audit reports deleted by the operator when the plugin's config has changed. |
+| `OPERATOR_BATCH_DELETE_DELAY`               | `10s`                  | The duration to wait before deleting another batch of config audit reports. |
 | `OPERATOR_METRICS_BIND_ADDRESS`             | `:8080`                | The TCP address to bind to for serving [Prometheus][prometheus] metrics. It can be set to `0` to disable the metrics serving. |
 | `OPERATOR_HEALTH_PROBE_BIND_ADDRESS`        | `:9090`                | The TCP address to bind to for serving health probes, i.e. `/healthz/` and `/readyz/` endpoints. |
 | `OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED` | `true`                 | The flag to enable CIS Kubernetes Benchmark scanner |
 | `OPERATOR_VULNERABILITY_SCANNER_ENABLED`    | `true`                 | The flag to enable vulnerability scanner |
 | `OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED`     | `true`                 | The flag to enable configuration audit scanner |
 | `OPERATOR_LEADER_ELECTION_ENABLED`          | `false`                | The flag to enable operator replica leader election |
-| `OPERATOR_LEADER_ELECTION_ID`               | `starboard-operator`   | The name of the resource lock for leader election |
-| `OPERATOR_BATCH_DELETE_LIMIT`               | `10`                   | The maximum number of config audit reports deleted by the operator when the plugin's config has changed. |
-| `OPERATOR_BATCH_DELETE_DELAY`               | `10s`                  | The duration to wait before deleting another batch of config audit reports. |
+| `OPERATOR_LEADER_ELECTION_ID`               | `starboard-lock`       | The name of the resource lock for leader election |
 
 ## Install Modes
 
