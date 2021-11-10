@@ -1241,12 +1241,12 @@ policies.</p>
   --namespace $STARBOARD_NAMESPACE --create-namespace \
   --set=&quot;targetNamespaces=default&quot; \
   --set=&quot;starboard.configAuditReportsPlugin=Conftest&quot; \
-  --set-file=&quot;conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego&quot; \
-  --set-file=&quot;conftest.library.utils.rego=kubernetes/lib/utils.rego&quot; \
+  --set-file=&quot;conftest.library.kubernetes\.rego=kubernetes/lib/kubernetes.rego&quot; \
+  --set-file=&quot;conftest.library.utils\.rego=kubernetes/lib/utils.rego&quot; \
   --set-file=&quot;conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego&quot; \
   --set-file=&quot;conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego&quot; \
   --set-string=&quot;conftest.policy.file_system_not_read_only.kinds=Workload&quot; \
-  --set-string=&quot;conftest.policy.uses_image_tag_latest.rego=Workload&quot;
+  --set-string=&quot;conftest.policy.uses_image_tag_latest.kinds=Workload&quot;
 </code></pre></div></p>
 </div>
 <p>To test this setup out with Starboard CLI you can create the <code>nginx</code> Deployment with the latest <code>nginx</code> image and check
