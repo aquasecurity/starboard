@@ -84,12 +84,12 @@ kubectl create configmap starboard-conftest-config --namespace $STARBOARD_NAMESP
       --namespace $STARBOARD_NAMESPACE --create-namespace \
       --set="targetNamespaces=default" \
       --set="starboard.configAuditReportsPlugin=Conftest" \
-      --set-file="conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego" \
-      --set-file="conftest.library.utils.rego=kubernetes/lib/utils.rego" \
+      --set-file="conftest.library.kubernetes\.rego=kubernetes/lib/kubernetes.rego" \
+      --set-file="conftest.library.utils\.rego=kubernetes/lib/utils.rego" \
       --set-file="conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego" \
       --set-file="conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego" \
       --set-string="conftest.policy.file_system_not_read_only.kinds=Workload" \
-      --set-string="conftest.policy.uses_image_tag_latest.rego=Workload"
+      --set-string="conftest.policy.uses_image_tag_latest.kinds=Workload"
     ```
 
 To test this setup out with Starboard CLI you can create the `nginx` Deployment with the latest `nginx` image and check
