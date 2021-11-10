@@ -20,6 +20,7 @@ These guidelines will help you get started with the Starboard project.
   - [In Cluster](#in-cluster)
   - [Out of Cluster](#out-of-cluster)
   - [Uninstall](#uninstall)
+- [Update Static YAML Manifests](#update-static-yaml-manifests)
 - [Operator Lifecycle Manager (OLM)](#operator-lifecycle-manager-olm)
   - [Install OLM](#install-olm)
   - [Build the Catalog Image](#build-the-catalog-image)
@@ -253,6 +254,26 @@ kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
   -f deploy/crd/configauditreports.crd.yaml \
   -f deploy/crd/clusterconfigauditreports.crd.yaml \
   -f deploy/crd/ciskubebenchreports.crd.yaml
+```
+
+## Update Static YAML Manifests
+
+```
+mkdir -p $TMPDIR/starboard-helm-template
+```
+
+```
+helm template starboard-operator ./deploy/helm \
+  --namespace starboard-system --create-namespace \
+  --set="targetNamespaces=default" \
+  --set="managedBy=kubectl" \
+  --output-dir=$TMPDIR/starboard-helm-template
+```
+
+```
+cp $TMPDIR/starboard-helm-template/starboard-operator/templates/rbac.yaml deploy/static/02-starboard-operator.rbac.yaml
+cp $TMPDIR/starboard-helm-template/starboard-operator/templates/config.yaml deploy/static/03-starboard-operator.config.yaml
+cp $TMPDIR/starboard-helm-template/starboard-operator/templates/deployment.yaml deploy/static/04-starboard-operator.deployment.yaml
 ```
 
 ## Operator Lifecycle Manager (OLM)

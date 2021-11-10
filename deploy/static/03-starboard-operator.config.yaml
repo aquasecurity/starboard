@@ -1,5 +1,27 @@
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard
+  namespace: starboard-system
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard-trivy-config
+  namespace: starboard-system
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0-rc2"
+    app.kubernetes.io/managed-by: kubectl
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard
@@ -10,20 +32,9 @@ metadata:
     app.kubernetes.io/version: "0.13.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
-  vulnerabilityReports.scanner: Trivy
-  configAuditReports.scanner: Polaris
-  kube-bench.imageRef: docker.io/aquasec/kube-bench:v0.6.5
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: starboard
-  namespace: starboard-system
-  labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.13.0-rc2"
-    app.kubernetes.io/managed-by: kubectl
+  vulnerabilityReports.scanner: "Trivy"
+  configAuditReports.scanner: "Polaris"
+  kube-bench.imageRef: "docker.io/aquasec/kube-bench:v0.6.5"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -36,9 +47,9 @@ metadata:
     app.kubernetes.io/version: "0.13.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
-  trivy.imageRef: docker.io/aquasec/trivy:0.20.0
-  trivy.severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-  trivy.mode: Standalone
+  trivy.imageRef: "docker.io/aquasec/trivy:0.20.0"
+  trivy.mode: "Standalone"
+  trivy.severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
   trivy.resources.requests.cpu: 100m
   trivy.resources.requests.memory: 100M
   trivy.resources.limits.cpu: 500m
@@ -55,7 +66,7 @@ metadata:
     app.kubernetes.io/version: "0.13.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
-  polaris.imageRef: quay.io/fairwinds/polaris:4.2
+  polaris.imageRef: "quay.io/fairwinds/polaris:4.2"
   polaris.resources.requests.cpu: "50m"
   polaris.resources.requests.memory: "50M"
   polaris.resources.limits.cpu: "300m"

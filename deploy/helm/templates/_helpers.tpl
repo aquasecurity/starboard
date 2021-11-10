@@ -35,12 +35,14 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "starboard-operator.labels" -}}
+{{- if eq .Values.managedBy "Helm" -}}
 helm.sh/chart: {{ include "starboard-operator.chart" . }}
+{{ end -}}
 {{ include "starboard-operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/managed-by: {{ .Values.managedBy }}
 {{- end }}
 
 {{/*
