@@ -6,15 +6,15 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
 of these Kubernetes playgrounds:
 
-* [Katacoda](https://www.katacoda.com/courses/kubernetes/playground)
-* [Play with Kubernetes](http://labs.play-with-k8s.com/)
+* [Katacoda]
+* [Play with Kubernetes]
 
-You also need the Starboard Operator to be installed in the `starboard-operator` namespace, e.g. with
-[static YAML manifests](./installation/kubectl.md).
+You also need the Starboard Operator to be installed in the `starboard-system` namespace, e.g. with
+[static YAML manifests](./installation/kubectl.md) or [Helm](./installation/helm.md).
 
 ## Workloads Scanning
 
-Assuming that you installed the operator in the `starboard-operator` namespace, and it's configured to discover
+Assuming that you installed the operator in the `starboard-system` namespace, and it's configured to discover
 Kubernetes workloads in the `default` namespace, let's create the `nginx` Deployment that we know is vulnerable:
 
 ```
@@ -22,12 +22,12 @@ kubectl create deployment nginx --image nginx:1.16
 ```
 
 When the first ReplicaSet controlled by the `nginx` Deployment is created, the operator immediately detects that and
-creates the Kubernetes Job in the `starboard-operator` namespace to scan the `nginx:1.16` image for vulnerabilities.
+creates the Kubernetes Job in the `starboard-system` namespace to scan the `nginx:1.16` image for vulnerabilities.
 It also creates the Job to audit the Deployment's configuration for common pitfalls such as running the `nginx`
 container as root:
 
 ```console
-$ kubectl get job -n starboard-operator
+$ kubectl get job -n starboard-system
 NAME                                 COMPLETIONS   DURATION   AGE
 scan-configauditreport-c4956cb9d     0/1           1s         1s
 scan-vulnerabilityreport-c4956cb9d   0/1           1s         1s
@@ -188,4 +188,6 @@ kube-system      └─Pod/kube-scheduler-kind-control-plane           True     
 
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/
+[Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
+[Play with Kubernetes]: http://labs.play-with-k8s.com/
 [tree]: https://github.com/ahmetb/kubectl-tree

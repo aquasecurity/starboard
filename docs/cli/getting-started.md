@@ -6,8 +6,8 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
 of these Kubernetes playgrounds:
 
-* [Katacoda](https://www.katacoda.com/courses/kubernetes/playground)
-* [Play with Kubernetes](http://labs.play-with-k8s.com/)
+* [Katacoda]
+* [Play with Kubernetes]
 
 You also need the `starboard` command to be installed, e.g. from the [binary releases](./installation/binary-releases.md).
 By default, it will use the same configuration as kubectl to communicate with the cluster.
