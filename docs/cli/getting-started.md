@@ -79,7 +79,7 @@ starboard get vulnerabilityreports deployment/nginx --container nginx -o yaml
     replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy     41m   21         50     34       104   0
     ```
 
-    To read more about custom resources and label selectors check [custom resource definitions].
+    To read more about custom resources and label selectors check [Custom Resource Definitions].
 
 Moving forward, let's take the same `nginx` Deployment and audit its Kubernetes configuration. As you remember we've
 created it with the `kubectl create deployment` command which applies the default settings to the deployment descriptors.
@@ -114,15 +114,17 @@ open nginx.deploy.html
 
 ## What's Next?
 
-To learn more about the available Starboard commands and scanners, such as [kube-bench] or [kube-hunter], use
-`starboard help`.
+* Learn more about the available Starboard commands and scanners, such as [kube-bench] or [kube-hunter], by running
+  `starboard help`.
+* Read up on [Infrastructure Scanners] integrated with Starboard.
 
 [Trivy]: ./../integrations/vulnerability-scanners/trivy.md
 [Polaris]: ./../integrations/config-checkers/polaris.md
-[custom resource definitions]: ./../crds/index.md
+[Custom Resource Definitions]: ./../crds/index.md
 [Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
 [Play with Kubernetes]: http://labs.play-with-k8s.com/
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/
 [kube-bench]: https://github.com/aquasecurity/kube-bench
 [kube-hunter]: https://github.com/aquasecurity/kube-hunter
+[Infrastructure Scanners]: ./../integrations/infra-scanners/index.md

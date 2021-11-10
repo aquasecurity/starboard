@@ -2,73 +2,71 @@
 
 Currently, these are the tools for infrastructure checking in Kubernetes:
 
-* CIS benchmark results per node provided by [kube-bench](https://github.com/aquasecurity/kube-bench)
-* Pen-testing results provided by [kube-hunter](https://github.com/aquasecurity/kube-hunter)
-
+* CIS benchmark for Kubernetes nodes provided by [kube-bench].
+* Penetration test results for a Kubernetes cluster provided by [kube-hunter].
 
 ## Kube-bench
 
-The CIS benchmark for Kubernetes provides prescriptive guidance for system and application administrators, security specialists, auditors, help desk, and platform deployment personnel who are responsible for establishing secure configuration for solutions that incorporate Kubernetes.
+The CIS benchmark for Kubernetes provides prescriptive guidance for system and application administrators, security
+specialists, auditors, help desk, and platform deployment personnel who are responsible for establishing secure
+configuration for solutions that incorporate Kubernetes.
 
-Currently, you can obtain the results using starboard operator and starboard client.
-
-Here the scan results using starboard client (installed by krew).
-
-> *scan ciskubebenchreports: Run the CIS Kubernetes Benchmark for each node of your cluster*
-```
-kubectl starboard scan ciskubebenchreports -v 3
-```
-
-Check the ciskubebenchreports generated:
-```
-kubectl get ciskubebenchreports -o wide
-```
-
-<details>
-<summary>Result</summary>
+To run the CIS Kubernetes benchmark for each node in your cluster use the following Starboard CLI command:
 
 ```
-NAME                   SCANNER      AGE     FAIL   WARN   INFO   PASS
-k8s-local-control-plane   kube-bench   3d14h   1      27     0      26
-k8s-local-worker          kube-bench   3d14h   1      27     0      19
-k8s-local-worker2         kube-bench   3d14h   1      27     0      19
-```
-</details>
-
-Generate the report HTML
-```
-k starboard get report nodes/k8s-local-worker > node01-report.html
+starboard scan ciskubebenchreports
 ```
 
-```
-open node01-report.html
+If everything goes fine, list benchmark results with the `kubectl get` command:
+
+```console
+$ kubectl get ciskubebenchreports -o wide
+NAME                 SCANNER      AGE   FAIL   WARN   INFO   PASS
+kind-control-plane   kube-bench   13s   11     43     0      69
+kind-worker          kube-bench   14s   1      29     0      19
+kind-worker2         kube-bench   14s   1      29     0      19
 ```
 
-![HTML Report](../../images/node01-report.png)
+With Starboard CLI it is also possible to generate a CIS Benchmark HTML report and open it in your web browser:
+
+```
+starboard report nodes/kind-control-plane > kind-control-plane-report.html
+```
+```
+open kind-control-plane-report.html
+```
+
+![Aqua Starboard Node Security HTML Report](../../images/node01-report.png)
+
 
 ## Kube-hunter
 
-kube-hunter hunts for security weaknesses in Kubernetes clusters. The tool was developed to increase awareness and visibility for security issues in Kubernetes environments.
+Kube-hunter hunts for security weaknesses in Kubernetes clusters. It was developed to increase awareness and visibility
+for security issues in Kubernetes environments.
 
-Currently, you can obtain the results using **only** starboard client.
+!!! tip
+    Kube-hunter is only integrated with Starboard CLI.
 
-Here the scan results.
-
-> *scan kubehunterreports: Hunt for security weaknesses in your Kubernetes cluster*
-```
-kubectl starboard scan kubehunterreports -v 3
-```
-
-Check the kubehunterreports generated:
-```
-kubectl get kubehunterreports -o wide
-```
-
-<details>
-<summary>Result</summary>
+To run kube-hunter in your cluster as a Pod use the following command:
 
 ```
+starboard scan kubehunterreports
+```
+
+If everything goes well, you can retrieve the penetration test report with the `kubectl get` command:
+
+```console
+$ kubectl get kubehunterreports -o wide
 NAME      SCANNER       AGE   HIGH   MEDIUM   LOW
 cluster   kube-hunter   27h   0      0        1
 ```
-</details>
+
+## What's Next?
+
+* See how Starboard Operator can automate [Infrastructure Scanning] with kube-bench.
+* Watch the video where we demonstrated [Automating Kubernetes Compliance Checks with Starboard Operator].
+
+[kube-bench]: https://github.com/aquasecurity/kube-bench/
+[kube-hunter]: https://github.com/aquasecurity/kube-hunter/
+[Infrastructure Scanning]: ./../../operator/getting-started.md#infrastructure-scanning
+[Automating Kubernetes Compliance Checks with Starboard Operator]: https://www.youtube.com/watch?v=hOQyEPL-ULI
