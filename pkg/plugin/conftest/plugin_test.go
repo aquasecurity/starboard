@@ -76,14 +76,14 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 					"conftest.library.utils.rego":                            "<REGO_B>",
 					"conftest.policy.access_to_host_pid.rego":                "<REGO_C>",
 					"conftest.policy.cpu_not_limited.rego":                   "<REGO_D>",
-					"configmap_with_sensitive_data.rego":                     "<REGO_E>",
-					"configmap_with_secret_data.rego":                        "<REGO_F>",
+					"conftest.policy.configmap_with_sensitive_data.rego":     "<REGO_E>",
+					"conftest.policy.configmap_with_secret_data.rego":        "<REGO_F>",
 					"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
 
 					"conftest.policy.access_to_host_pid.kinds":                "Pod,ReplicaSet",
 					"conftest.policy.cpu_not_limited.kinds":                   "Workload",
-					"configmap_with_sensitive_data.kinds":                     "ConfigMap",
-					"configmap_with_secret_data.kinds":                        "ConfigMap",
+					"conftest.policy.configmap_with_sensitive_data.kinds":     "ConfigMap",
+					"conftest.policy.configmap_with_secret_data.kinds":        "ConfigMap",
 					"conftest.policy.object_without_recommended_labels.kinds": "*",
 
 					// This one should be skipped (no .rego suffix)
@@ -99,8 +99,8 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
 		}))
 		g.Expect(config.GetPoliciesByKind("ConfigMap")).To(Equal(map[string]string{
-			"configmap_with_sensitive_data.rego":                     "<REGO_E>",
-			"configmap_with_secret_data.rego":                        "<REGO_F>",
+			"conftest.policy.configmap_with_sensitive_data.rego":     "<REGO_E>",
+			"conftest.policy.configmap_with_secret_data.rego":        "<REGO_F>",
 			"conftest.policy.object_without_recommended_labels.rego": "<REGO_G>",
 		}))
 	})
