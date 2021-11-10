@@ -9,8 +9,8 @@ of these Kubernetes playgrounds:
 * [Katacoda]
 * [Play with Kubernetes]
 
-You also need the `starboard` command to be installed, e.g. from the [binary releases](./installation/binary-releases.md).
-By default, it will use the same configuration as kubectl to communicate with the cluster.
+You also need the `starboard` command to be installed, e.g. [From the Binary Releases]. By default, it will use the same
+configuration as kubectl to communicate with the cluster.
 
 ## Scanning Workloads
 
@@ -123,6 +123,7 @@ open nginx.deploy.html
 [Custom Resource Definitions]: ./../crds/index.md
 [Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
 [Play with Kubernetes]: http://labs.play-with-k8s.com/
+[From the Binary Releases]: ./installation/binary-releases.md
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/
 [kube-bench]: https://github.com/aquasecurity/kube-bench

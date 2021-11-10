@@ -90,8 +90,8 @@ extra:
     tag_prev: "v0.12.0"
     build:
       version: "0.13.0"
-      commit: "7b7db3acb673a7aaed50839aed168cba8163230a"
-      date: "2021-09-15T17:30:09Z"
+      commit: "e27f83b39167474980f77e0fa4a83b811ceece9a"
+      date: "2021-11-10T18:08:16Z"
     chart:
       version: 0.8.0
 
