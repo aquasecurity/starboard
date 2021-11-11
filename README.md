@@ -37,21 +37,22 @@ Starboard can be run in two different modes:
 - As a [command][cli], so you can trigger scans and view the risks in a kubectl-compatible way or as part of your CI/CD
   pipeline.
 
-You can read more about the motivations and use cases in this [blog][aqua-starboard-blog] and join our [discussions].
-
-![](docs/images/starboard-cli-with-octant-demo.gif)
+  ![](docs/images/starboard-cli-with-octant-demo.gif)
 
 # Status
 
-This project is incubating and the APIs are not considered stable.
+Although we are trying to keep new releases backward compatible with previous versions, this project is still incubating
+and some APIs and custom resource definitions may change.
 
 # Documentation
 
-The official documentation, which provides detailed installation, configuration, and quick start guides, is available
-at https://aquasecurity.github.io/starboard/.
+The official [Documentation] provides detailed installation, configuration, troubleshooting, and quick start guides.
 
-Try the [Getting Started][cli-getting-started] guide to install the Starboard command and generate your first
-vulnerability report.
+Start by installing the Starboard command [From the Binary Releases] and follow the [Getting Started] guide to generate
+your first vulnerability and configuration audit reports!
+
+Read more about the motivations for the project and use cases in this [blog][aqua-starboard-blog] and join our
+[discussions].
 
 # Contributing
 
@@ -88,7 +89,9 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 [Custom Resource Definitions]: https://aquasecurity.github.io/starboard/latest/crds/
 [Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
 [cli]: https://aquasecurity.github.io/starboard/latest/cli
-[cli-getting-started]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
+[Documentation]: https://aquasecurity.github.io/starboard/
+[From the Binary Releases]: https://aquasecurity.github.io/starboard/latest/cli/installation/binary-releases/
+[Getting Started]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
 [Kubernetes operator]: https://aquasecurity.github.io/starboard/latest/operator
 
 [Octant Plugin]: https://aquasecurity.github.io/starboard/latest/integrations/octant
