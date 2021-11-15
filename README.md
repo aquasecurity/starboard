@@ -27,7 +27,7 @@ Starboard provides:
 - Automated vulnerability scanning for Kubernetes applications.
 - Automated configuration audits for Kubernetes resources with predefined rules or custom Open Policy Agent (OPA) policies.
 - Automated infrastructures scanning and compliance checks with CIS Benchmarks published by the Center for Internet Security (CIS).
-- Penetrations test results for a Kubernetes cluster.
+- Penetration test results for a Kubernetes cluster.
 
 Starboard can be run in two different modes:
 
