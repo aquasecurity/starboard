@@ -6,45 +6,58 @@ metadata:
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
-  scanJob.tolerations: {{ .Values.starboard.scanJobTolerations | toJson | quote }}
-  scanJob.annotations: {{ .Values.starboard.scanJobAnnotations | quote }}
+  {{- with .Values.starboard.scanJobTolerations }}
+  scanJob.tolerations: {{ . | toJson | quote }}
+  {{- end }}
+  {{- with .Values.starboard.scanJobAnnotations }}
+  scanJob.annotations: {{ . | quote }}
+  {{- end }}
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
   vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
-  {{- end }}
-  {{- if .Values.operator.kubernetesBenchmarkEnabled }}
-  kube-bench.imageRef: {{ required ".Values.kubeBench.imageRef is required" .Values.kubeBench.imageRef | quote }}
   {{- end }}
   {{- if .Values.operator.configAuditScannerEnabled }}
   configAuditReports.scanner: {{ .Values.starboard.configAuditReportsPlugin | quote }}
   {{- end }}
+  {{- if .Values.operator.kubernetesBenchmarkEnabled }}
+  kube-bench.imageRef: {{ required ".Values.kubeBench.imageRef is required" .Values.kubeBench.imageRef | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
 {{- if eq .Values.starboard.vulnerabilityReportsPlugin "Trivy" }}
+{{- with .Values.trivy }}
+{{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-trivy-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
 data:
-  trivy.imageRef: {{ required ".Values.trivy.imageRef is required" .Values.trivy.imageRef | quote }}
-  trivy.mode: {{ .Values.trivy.mode | quote }}
-  {{- if .Values.trivy.httpProxy }}
-  trivy.httpProxy: {{ .Values.trivy.httpProxy | quote }}
+  trivy.imageRef: {{ required ".Values.trivy.imageRef is required" .imageRef | quote }}
+  trivy.mode: {{ .mode | quote }}
+  {{- if .httpProxy }}
+  trivy.httpProxy: {{ .httpProxy | quote }}
   {{- end }}
-  {{- if .Values.trivy.httpsProxy }}
-  trivy.httpsProxy: {{ .Values.trivy.httpsProxy | quote }}
+  {{- if .httpsProxy }}
+  trivy.httpsProxy: {{ .httpsProxy | quote }}
   {{- end }}
-  {{- if .Values.trivy.noProxy }}
-  trivy.noProxy: {{ .Values.trivy.noProxy | quote }}
+  {{- if .noProxy }}
+  trivy.noProxy: {{ .noProxy | quote }}
   {{- end }}
-  trivy.severity: {{ .Values.trivy.severity | quote }}
-  {{- if .Values.trivy.ignoreUnfixed }}
-  trivy.ignoreUnfixed: {{ .Values.trivy.ignoreUnfixed | quote }}
+  trivy.severity: {{ .severity | quote }}
+  {{- if .ignoreUnfixed }}
+  trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
   {{- end }}
-  {{- if eq .Values.trivy.mode "ClientServer" }}
-  trivy.serverURL: {{ required ".Values.trivy.serverURL is required" .Values.trivy.serverURL | quote }}
+  {{- if eq .mode "ClientServer" }}
+  trivy.serverURL: {{ required ".Values.trivy.serverURL is required" .serverURL | quote }}
   {{- end }}
-  {{- with .Values.trivy.resources }}
+  {{- with .resources }}
     {{- with .requests }}
       {{- if .cpu }}
   trivy.resources.requests.cpu: {{ .cpu }}
@@ -68,9 +81,8 @@ kind: Secret
 metadata:
   name: starboard-trivy-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
 data:
-  {{- with .Values.trivy }}
   {{- if .githubToken }}
   trivy.githubToken: {{ .githubToken | b64enc | quote }}
   {{- end }}
@@ -82,35 +94,59 @@ data:
   trivy.serverCustomHeaders: {{ .serverCustomHeaders | b64enc | quote }}
   {{- end }}
   {{- end }}
-  {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
+{{- with .Values.conftest }}
+{{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-conftest-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
 data:
-  conftest.imageRef: {{ required ".Values.conftest.imageRef is required" .Values.conftest.imageRef | quote }}
-  conftest.resources.requests.cpu: {{ .Values.conftest.resources.requests.cpu | quote }}
-  conftest.resources.requests.memory: {{ .Values.conftest.resources.requests.memory | quote }}
-  conftest.resources.limits.cpu: {{ .Values.conftest.resources.limits.cpu | quote }}
-  conftest.resources.limits.memory: {{ .Values.conftest.resources.limits.memory | quote }}
+  conftest.imageRef: {{ required ".Values.conftest.imageRef is required" .imageRef | quote }}
+  {{- with .resources }}
+  conftest.resources.requests.cpu: {{ .requests.cpu | quote }}
+  conftest.resources.requests.memory: {{ .requests.memory | quote }}
+  conftest.resources.limits.cpu: {{ .limits.cpu | quote }}
+  conftest.resources.limits.memory: {{ .limits.memory | quote }}
+  {{- end }}
+  {{- range $key, $val := .library }}
+  conftest.library.{{ $key }}: {{ $val | quote }}
+  {{- end }}
+  {{- range $key, $val := .policy }}
+  conftest.policy.{{ $key }}.rego: {{ $val.rego | quote }}
+  conftest.policy.{{ $key }}.kinds: {{ $val.kinds | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- if eq .Values.starboard.configAuditReportsPlugin "Polaris" }}
+{{- with .Values.polaris }}
+{{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: starboard-polaris-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
 data:
-  polaris.imageRef: {{ required ".Values.polaris.imageRef is required" .Values.polaris.imageRef | quote }}
+  polaris.imageRef: {{ required ".Values.polaris.imageRef is required" .imageRef | quote }}
+  {{- with .resources }}
+  polaris.resources.requests.cpu: {{ .requests.cpu | quote }}
+  polaris.resources.requests.memory: {{ .requests.memory | quote }}
+  polaris.resources.limits.cpu: {{ .limits.cpu | quote }}
+  polaris.resources.limits.memory: {{ .limits.memory | quote }}
+  {{- end }}
   polaris.config.yaml: |
-  {{- toYaml .Values.polaris.config | nindent 4 }}
+  {{- toYaml .config | nindent 4 }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- if eq .Values.starboard.vulnerabilityReportsPlugin "Aqua" }}
 ---

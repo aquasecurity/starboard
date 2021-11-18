@@ -1,3 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "starboard-operator.fullname" . }}
+  labels:
+    {{- include "starboard-operator.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.metricsPort }}
+      targetPort: metrics
+      name: metrics
+  selector:
+    {{- include "starboard-operator.selectorLabels" . | nindent 4 }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,37 +26,47 @@ metadata:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.operator.replicas }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "starboard-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
       annotations:
-        checksum/secret: {{ .Values.envSecret.stringData | toYaml | sha256sum }}
-        {{- with .Values.podAnnotations }}
         {{- . | toYaml | nindent 8 }}
-        {{- end }}
+      {{- end }}
       labels:
         {{- include "starboard-operator.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "starboard-operator.serviceAccountName" . }}
+      automountServiceAccountToken: true
       containers:
-        - name: "{{ .Chart.Name }}"
+        - name: {{ .Chart.Name | quote }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- with .Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
           env:
             - name: OPERATOR_NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: OPERATOR_TARGET_NAMESPACES
               value: {{ tpl .Values.targetNamespaces . | quote }}
             - name: OPERATOR_SERVICE_ACCOUNT
-              value: {{ include "starboard-operator.serviceAccountName" . }}
-            {{- if gt (int .Values.operator.replicas) 1 }}
-            - name: OPERATOR_LEADER_ELECTION_ENABLED
-              value: "true"
-            {{- end }}
-            {{- if gt (int .Values.operator.replicas) 1 }}
-            - name: OPERATOR_LEADER_ELECTION_ID
-              value: {{ .Values.operator.leaderElectionId | quote }}
-            {{- end }}
+              value: {{ include "starboard-operator.serviceAccountName" . | quote }}
+            - name: OPERATOR_LOG_DEV_MODE
+              value: {{ .Values.operator.logDevMode | quote }}
+            - name: OPERATOR_SCAN_JOB_TIMEOUT
+              value: {{ .Values.operator.scanJobTimeout | quote }}
+            - name: OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT
+              value: {{ .Values.operator.scanJobsConcurrentLimit | quote }}
+            - name: OPERATOR_SCAN_JOB_RETRY_AFTER
+              value: {{ .Values.operator.scanJobsRetryDelay | quote }}
+            - name: OPERATOR_BATCH_DELETE_LIMIT
+              value: {{ .Values.operator.batchDeleteLimit | quote }}
+            - name: OPERATOR_BATCH_DELETE_DELAY
+              value: {{ .Values.operator.batchDeleteDelay | quote }}
             - name: OPERATOR_METRICS_BIND_ADDRESS
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
@@ -47,36 +77,22 @@ spec:
               value: {{ .Values.operator.vulnerabilityScannerEnabled | quote }}
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
               value: {{ .Values.operator.configAuditScannerEnabled | quote }}
-            - name: OPERATOR_BATCH_DELETE_LIMIT
-              value: {{ .Values.operator.batchDeleteLimit | quote }}
-            - name: OPERATOR_BATCH_DELETE_DELAY
-              value: {{ .Values.operator.batchDeleteDelay | quote }}
-            {{- /* Import configuration from passed Helm values */}}
-            {{- range $key, $value := .Values.envSecret.stringData }}
-            {{- if $value }}
-            - name: {{ $key | quote }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.envSecret.name | default (include "starboard-operator.fullname" $) | quote }}
-                  key: {{ $key | quote }}
-                  optional: true
-            {{- end }}
+            {{- if gt (int .Values.operator.replicas) 1 }}
+            - name: OPERATOR_LEADER_ELECTION_ENABLED
+              value: "true"
+            - name: OPERATOR_LEADER_ELECTION_ID
+              value: {{ .Values.operator.leaderElectionId | quote }}
             {{- end }}
           ports:
-            # metrics port is exposed by the k8s Service and by default also
-            # have annotations which will help prometheus as a target for
-            # scraping of metrics
             - name: metrics
               containerPort: 8080
-            # probes port is not exposed by the k8s Service and used directly by
-            # kubelet for the readinessProbe and livenessProbe
             - name: probes
               containerPort: 9090
           readinessProbe:
             httpGet:
               path: /readyz/
               port: probes
-            initialDelaySeconds: 0
+            initialDelaySeconds: 5
             periodSeconds: 10
             successThreshold: 1
             failureThreshold: 3
@@ -94,18 +110,12 @@ spec:
           securityContext:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.image.pullPolicy }}
-          imagePullPolicy: {{ . }}
-          {{- end }}
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets:
         {{- . | toYaml | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "starboard-operator.serviceAccountName" . }}
-      {{- with .Values.podSecurityContext }}
       securityContext:
-        {{- . | toYaml | nindent 8 }}
-      {{- end }}
+        {{- .Values.podSecurityContext | toYaml | nindent 8 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- . | toYaml | nindent 8 }}

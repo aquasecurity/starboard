@@ -32,12 +32,12 @@ nav:
           - Overview: integrations/vulnerability-scanners/index.md
           - Trivy: integrations/vulnerability-scanners/trivy.md
           - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
-      - Infrastructure Scanners:
-          - Overview: integrations/infra-scanners/index.md
       - Configuration Checkers:
           - Overview: integrations/config-checkers/index.md
           - Polaris: integrations/config-checkers/polaris.md
           - Conftest: integrations/config-checkers/conftest.md
+      - Infrastructure Scanners:
+          - Overview: integrations/infra-scanners/index.md
       - Private Registries: integrations/private-registries.md
       - Managed Registries: integrations/managed-registries.md
       - Octant Plugin: integrations/octant.md
@@ -86,12 +86,12 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.13.0-rc1"
+    tag: "v0.13.0"
     tag_prev: "v0.12.0"
     build:
-      version: "0.13.0-rc1"
-      commit: "7b7db3acb673a7aaed50839aed168cba8163230a"
-      date: "2021-09-15T17:30:09Z"
+      version: "0.13.0"
+      commit: "e27f83b39167474980f77e0fa4a83b811ceece9a"
+      date: "2021-11-10T18:08:16Z"
     chart:
       version: 0.8.0
 

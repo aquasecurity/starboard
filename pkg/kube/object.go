@@ -452,9 +452,11 @@ func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, ob
 		return "", fmt.Errorf("getting deployment %q: %w", object.Namespace+"/"+object.Name, err)
 	}
 	var rsList appsv1.ReplicaSetList
-	err = o.Client.List(ctx, &rsList, client.MatchingLabelsSelector{
-		Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
-	})
+	err = o.Client.List(ctx, &rsList,
+		client.InNamespace(deploy.Namespace),
+		client.MatchingLabelsSelector{
+			Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
+		})
 	if err != nil {
 		return "", fmt.Errorf("listing replicasets for deployment %q: %w", object.Name, err)
 	}

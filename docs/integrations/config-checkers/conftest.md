@@ -24,7 +24,10 @@ deny[res] {
 To integrate Conftest scanner change the value of the `configAuditReports.scanner` property to `Conftest`:
 
 ```
-kubectl patch cm starboard -n <starboard_namespace> \
+STARBOARD_NAMESPACE=<starboard_namespace>
+```
+```
+kubectl patch cm starboard -n $STARBOARD_NAMESPACE \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -57,7 +60,10 @@ As an example, let's create the `starboard-conftest-config` ConfigMap with [file
 [uses_image_tag_latest.rego] policies. Those two are very common checks performed by many other tools:
 
 ```
-kubectl create configmap starboard-conftest-config -n <starboard_namespace> \
+STARBOARD_NAMESPACE=<starboard_namespace>
+```
+```
+kubectl create configmap starboard-conftest-config --namespace $STARBOARD_NAMESPACE \
   --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.28.2 \
   --from-file=conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego \
   --from-file=conftest.library.utils.rego=kubernetes/lib/utils.rego \
@@ -66,6 +72,25 @@ kubectl create configmap starboard-conftest-config -n <starboard_namespace> \
   --from-literal=conftest.policy.file_system_not_read_only.kinds=Workload \
   --from-literal=conftest.policy.uses_image_tag_latest.kinds=Workload
 ```
+
+!!! tip
+
+    For the operator the Helm install command may look as follows.
+    ```
+    STARBOARD_NAMESPACE=<starboard_namespace>
+    ```
+    ```
+    helm install starboard-operator aqua/starboard-operator \
+      --namespace $STARBOARD_NAMESPACE --create-namespace \
+      --set="targetNamespaces=default" \
+      --set="starboard.configAuditReportsPlugin=Conftest" \
+      --set-file="conftest.library.kubernetes\.rego=kubernetes/lib/kubernetes.rego" \
+      --set-file="conftest.library.utils\.rego=kubernetes/lib/utils.rego" \
+      --set-file="conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego" \
+      --set-file="conftest.policy.uses_image_tag_latest.rego=kubernetes/policies/general/uses_image_tag_latest.rego" \
+      --set-string="conftest.policy.file_system_not_read_only.kinds=Workload" \
+      --set-string="conftest.policy.uses_image_tag_latest.kinds=Workload"
+    ```
 
 To test this setup out with Starboard CLI you can create the `nginx` Deployment with the latest `nginx` image and check
 its configuration:
@@ -142,7 +167,9 @@ report:
 | `conftest.resources.requests.memory` | `50M`                                        | The minimum amount of memory required to run Conftest scanner pod. |
 | `conftest.resources.limits.cpu`      | `300m`                                       | The maximum amount of CPU allowed to run Conftest scanner pod. |
 | `conftest.resources.limits.memory`   | `300M`                                       | The maximum amount of memory allowed to run Conftest scanner pod. |
-
+| `conftest.library.<name>.rego`       | N/A                                          | Rego library with helper functions |
+| `conftest.policy.<name>.rego`        | N/A                                          | Rego policy with the specified name |
+| `conftest.policy.<name>.kinds`       | N/A                                          | A comma-separated list of Kubernetes kinds applicable to the policy with a given name. You can use `Workload` or `*` as special kinds to represent any Kubernetes workload or any object. |
 
 [Open Policy Agent]: https://www.openpolicyagent.org
 [Conftest]: https://github.com/open-policy-agent/conftest

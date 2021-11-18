@@ -6,11 +6,11 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 cluster. If you do not already have a cluster, you can create one by installing [minikube] or [kind], or you can use one
 of these Kubernetes playgrounds:
 
-* [Katacoda](https://www.katacoda.com/courses/kubernetes/playground)
-* [Play with Kubernetes](http://labs.play-with-k8s.com/)
+* [Katacoda]
+* [Play with Kubernetes]
 
-You also need the `starboard` command to be installed, e.g. from the [binary releases](./installation/binary-releases.md).
-By default, it will use the same configuration as kubectl to communicate with the cluster.
+You also need the `starboard` command to be installed, e.g. [From the Binary Releases]. By default, it will use the same
+configuration as kubectl to communicate with the cluster.
 
 ## Scanning Workloads
 
@@ -24,7 +24,8 @@ starboard install
 ```
 
 The `install` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes jobs to perform
-scans. It also sends custom security resources definitions to the Kubernetes API:
+scans. It also sends custom security resources definitions to the Kubernetes API and creates default configuration
+objects:
 
 ```console
 kubectl api-resources --api-group aquasecurity.github.io
@@ -34,11 +35,13 @@ kubectl api-resources --api-group aquasecurity.github.io
 <summary>Result</summary>
 
 ```
-NAME                   SHORTNAMES    APIGROUP                 NAMESPACED   KIND
-ciskubebenchreports    kubebench     aquasecurity.github.io   false        CISKubeBenchReport
-configauditreports     configaudit   aquasecurity.github.io   true         ConfigAuditReport
-kubehunterreports      kubehunter    aquasecurity.github.io   false        KubeHunterReport
-vulnerabilityreports   vulns,vuln    aquasecurity.github.io   true         VulnerabilityReport
+NAME                          SHORTNAMES                 APIVERSION                        NAMESPACED   KIND
+ciskubebenchreports           kubebench                  aquasecurity.github.io/v1alpha1   false        CISKubeBenchReport
+clusterconfigauditreports     clusterconfigaudit         aquasecurity.github.io/v1alpha1   false        ClusterConfigAuditReport
+clustervulnerabilityreports   clustervuln,clustervulns   aquasecurity.github.io/v1alpha1   false        ClusterVulnerabilityReport
+configauditreports            configaudit                aquasecurity.github.io/v1alpha1   true         ConfigAuditReport
+kubehunterreports             kubehunter                 aquasecurity.github.io/v1alpha1   false        KubeHunterReport
+vulnerabilityreports          vuln,vulns                 aquasecurity.github.io/v1alpha1   true         VulnerabilityReport
 ```
 </details>
 
@@ -57,42 +60,39 @@ Run the vulnerability scanner to generate vulnerability reports:
 starboard scan vulnerabilityreports deployment/nginx
 ```
 
-Behind the scenes, by default this uses [Trivy][trivy] in Standalone mode to identify vulnerabilities in the container
-images associated with the specified deployment. Once this has been done, you can retrieve the latest vulnerability
+Behind the scenes, by default this uses [Trivy] in Standalone mode to identify vulnerabilities in the container
+images associated with the specified Deployment. Once this has been done, you can retrieve the latest vulnerability
 reports for this workload:
 
 ```
 starboard get vulnerabilityreports deployment/nginx -o yaml
 ```
 
+For a Deployment with *N* containers Starboard will create *N* instances of `vulnerabilityreports.aquasecurity.github.io`
+resources. To retrieve a vulnerability report for the specified container use the `--container` flag:
+
+```
+starboard get vulnerabilityreports deployment/nginx --container nginx -o yaml
+```
+
 !!! tip
-    Starboard relies on labels and label selectors to associate vulnerability reports with the specified Deployment.
-    For a Deployment with *N* container images Starboard creates *N* instances of `vulnerabilityreports.aquasecurity.github.io`
-    resources. In addition, each instance has the `starboard.container.name` label to associate it with a particular
-    container's image. This means that the same data retrieved by the `starboard get vulnerabilities` subcommand can be
-    fetched with the standard `kubectl get` command:
+    It is possible to retrieve vulnerability reports with the `kubectl get` command, but it requires knowledge of
+    Starboard implementation details. In particular, naming convention and labels and label selectors used to associate
+    vulnerability reports with Kubernetes workloads.
 
     ```console
-    $ kubectl get vulnerabilityreports -o wide \
-       -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
-    NAME                     REPOSITORY      TAG    SCANNER   AGE    CRITICAL   HIGH   MEDIUM   LOW   UNKNOWN
-    deployment-nginx-nginx   library/nginx   1.16   Trivy     2m6s   3          40     24       90    0
+    $ kubectl get vulnerabilityreports -o wide
+    NAME                                REPOSITORY      TAG    SCANNER   AGE   CRITICAL   HIGH   MEDIUM   LOW   UNKNOWN
+    replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy     41m   21         50     34       104   0
     ```
 
-    In this example, the `nginx` deployment has a single container called `nginx`, hence only one instance of the
-    `vulnerabilityreports.aquasecurity.github.io` resource is created with the label `starboard.container.name=nginx`.
-
-To read more about custom resources and label selectors check [custom resource definitions].
-
-[trivy]: ./../integrations/vulnerability-scanners/trivy.md
-[custom resource definitions]: ./../crds/index.md
+    To read more about custom resources and label selectors check [Custom Resource Definitions].
 
 Moving forward, let's take the same `nginx` Deployment and audit its Kubernetes configuration. As you remember we've
 created it with the `kubectl create deployment` command which applies the default settings to the deployment descriptors.
 However, we also know that in Kubernetes the defaults are usually the least secure.
 
-Run the scanner to audit the configuration using [Polaris](./../integrations/config-checkers/polaris.md), which is the
-default configuration checker:
+Run the scanner to audit the configuration using [Polaris], which is the default configuration checker:
 
 ```
 starboard scan configauditreports deployment/nginx
@@ -123,7 +123,7 @@ deployment-nginx   Polaris   5s    0        8         9
 ## Generating HTML Reports
 
 Once you scanned the `nginx` Deployment for vulnerabilities and checked its configuration you can generate an HTML
-report of identified risks:
+report of identified risks and open it in your web browser:
 
 ```
 starboard report deployment/nginx > nginx.deploy.html
@@ -133,15 +133,22 @@ starboard report deployment/nginx > nginx.deploy.html
 open nginx.deploy.html
 ```
 
-![HTML Report](../images/html-report.png)
+![Aqua Starboard Workload Security HTML Report](../images/html-report.png)
 
 ## What's Next?
 
-To learn more about the available Starboard commands and scanners, such as [kube-bench][aqua-kube-bench] or
-[kube-hunter][aqua-kube-hunter], use `starboard help`.
+* Learn more about the available Starboard commands and scanners, such as [kube-bench] or [kube-hunter], by running
+  `starboard help`.
+* Read up on [Infrastructure Scanners] integrated with Starboard.
 
+[Trivy]: ./../integrations/vulnerability-scanners/trivy.md
+[Polaris]: ./../integrations/config-checkers/polaris.md
+[Custom Resource Definitions]: ./../crds/index.md
+[Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
+[Play with Kubernetes]: http://labs.play-with-k8s.com/
+[From the Binary Releases]: ./installation/binary-releases.md
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/
-[polaris]: https://github.com/FairwindsOps/polaris
-[aqua-kube-bench]: https://github.com/aquasecurity/kube-bench
-[aqua-kube-hunter]: https://github.com/aquasecurity/kube-hunter
+[kube-bench]: https://github.com/aquasecurity/kube-bench
+[kube-hunter]: https://github.com/aquasecurity/kube-hunter
+[Infrastructure Scanners]: ./../integrations/infra-scanners/index.md
