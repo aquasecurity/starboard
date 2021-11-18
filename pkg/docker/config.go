@@ -29,6 +29,9 @@ func (v *BasicAuth) Decode() (string, string, error) {
 		return "", "", err
 	}
 	split := strings.Split(string(bytes), ":")
+	if len(split) != 2 {
+		return "", "", fmt.Errorf("expected username and password concatenated with a colon (:)")
+	}
 	return split[0], split[1], nil
 }
 

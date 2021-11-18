@@ -50,6 +50,8 @@ var (
 
 	//go:embed testdata/run_as_root.rego
 	runAsRootPolicy string
+	//go:embed testdata/service_with_external_ip.rego
+	serviceWithExternalIPPolicy string
 )
 
 func TestIntegrationOperatorWithConftest(t *testing.T) {
@@ -83,7 +85,7 @@ var _ = BeforeSuite(func() {
 		ConfigAuditReportsPlugin: conftest.Plugin,
 
 		Client: kubeClient,
-		Helper: helper.NewHelper(scheme, kubeClient),
+		Helper: helper.NewHelper(kubeClient),
 	}
 
 	// We can disable vulnerability scanner and CIS benchmarks
@@ -97,7 +99,7 @@ var _ = BeforeSuite(func() {
 		},
 		Data: map[string]string{
 			"configAuditReports.scanner": "Conftest",
-			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.25.0",
+			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.28.2",
 		},
 	}
 	err = kubeClient.Create(context.Background(), starboardCM)
@@ -109,9 +111,12 @@ var _ = BeforeSuite(func() {
 			Name:      starboard.GetPluginConfigMapName("Conftest"),
 		},
 		Data: map[string]string{
-			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.25.0",
+			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.28.2",
 
-			"conftest.policy.runs_as_root.rego": runAsRootPolicy,
+			"conftest.policy.runs_as_root.rego":              runAsRootPolicy,
+			"conftest.policy.runs_as_root.kinds":             "Workload",
+			"conftest.policy.service_with_external_ip.rego":  serviceWithExternalIPPolicy,
+			"conftest.policy.service_with_external_ip.kinds": "Service",
 		},
 	}
 	err = kubeClient.Create(context.Background(), conftestCM)

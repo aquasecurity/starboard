@@ -75,7 +75,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range resources {
-		if !r.Plugin.SupportsKind(resource.kind) {
+		if !r.supportsKind(resource.kind) {
 			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
@@ -94,7 +94,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	for _, resource := range clusterResources {
-		if !r.Plugin.SupportsKind(resource.kind) {
+		if !r.supportsKind(resource.kind) {
 			r.Logger.Info("Skipping unsupported kind", "pluginName", r.PluginContext.GetName(), "kind", resource.kind)
 			continue
 		}
@@ -120,22 +120,18 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r.reconcileJobs())
 }
 
+func (r *ConfigAuditReportReconciler) supportsKind(kind kube.Kind) bool {
+	for _, k := range r.Plugin.SupportedKinds() {
+		if k == kind {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
-
-		ready, err := r.Plugin.IsReady(r.PluginContext)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("checking whether plugin is ready: %w", err)
-		}
-		if !ready {
-			log.V(1).Info("Pushing back reconcile key",
-				"reason", "plugin not ready",
-				"pluginName", r.PluginContext.GetName(),
-				"retryAfter", r.ScanJobRetryAfter)
-			// TODO Introduce more generic param to retry processing a given key.
-			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
-		}
 
 		resourcePartial := kube.GetPartialObjectFromKindAndNamespacedName(resourceKind, req.NamespacedName)
 
@@ -169,12 +165,26 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			}
 		}
 
+		// Skip processing if plugin is not applicable to this object
+		applicable, reason, err := r.Plugin.IsApplicable(r.PluginContext, resource)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("checking whether plugin is applicable: %w", err)
+		}
+		if !applicable {
+			log.V(1).Info("Pushing back reconcile key",
+				"reason", reason,
+				"pluginName", r.PluginContext.GetName(),
+				"retryAfter", r.ScanJobRetryAfter)
+			// TODO Introduce more generic param to retry processing a given key.
+			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
+		}
+
 		resourceSpecHash, err := kube.ComputeSpecHash(resource)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("computing spec hash: %w", err)
 		}
 
-		pluginConfigHash, err := r.Plugin.GetConfigHash(r.PluginContext)
+		pluginConfigHash, err := r.Plugin.ConfigHash(r.PluginContext, kube.Kind(resource.GetObjectKind().GroupVersionKind().Kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("computing plugin config hash: %w", err)
 		}
@@ -227,7 +237,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			return ctrl.Result{}, fmt.Errorf("getting scan job annotations: %w", err)
 		}
 
-		job, secrets, err := configauditreport.NewScanJob().
+		job, secrets, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(r.Plugin).
 			WithPluginContext(r.PluginContext).
 			WithTimeout(r.Config.ScanJobTimeout).
@@ -357,17 +367,15 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
-	owner, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
+	ownerRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
 	if err != nil {
-		return fmt.Errorf("getting workload from scan job labels set: %w", err)
+		return fmt.Errorf("getting owner ref from scan job metadata: %w", err)
 	}
 
-	log.V(1).Info("Processing complete scan job", "owner", owner)
-
-	ownerObj, err := r.GetObjectFromPartialObject(ctx, owner)
+	owner, err := r.GetObjectFromPartialObject(ctx, ownerRef)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.V(1).Info("Deleting complete scan job for workload that must have been deleted")
+			log.V(1).Info("Report owner must have been deleted", "owner", owner)
 			return r.deleteJob(ctx, job)
 		}
 		return fmt.Errorf("getting object from partial object: %w", err)
@@ -382,7 +390,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
-	hasReport, err := r.hasReport(ctx, owner, resourceSpecHash, pluginConfigHash)
+	hasReport, err := r.hasReport(ctx, ownerRef, resourceSpecHash, pluginConfigHash)
 	if err != nil {
 		return err
 	}
@@ -398,16 +406,19 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
-	result, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
+	reportData, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
 	defer func() {
 		_ = logsStream.Close()
 	}()
+	if err != nil {
+		return err
+	}
 
 	reportBuilder := configauditreport.NewReportBuilder(r.Client.Scheme()).
-		Controller(ownerObj).
+		Controller(owner).
 		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
-		Data(result)
+		Data(reportData)
 	err = reportBuilder.Write(ctx, r.ReadWriter)
 	if err != nil {
 		return err

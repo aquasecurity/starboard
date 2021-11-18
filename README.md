@@ -14,41 +14,45 @@
 # Introduction
 
 Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that
-relate to different resources in a Kubernetes-native way. Starboard provides [custom resources definitions][crds]
-and a [Go module][go-module] to work with a range of existing security scanners, as well as a [kubectl]-compatible
-command, the [Octant plugin][octant-plugin], and the [Lens extension][lens-extension] that make security
-reports available through familiar Kubernetes tools.
+relate to different resources in a Kubernetes-native way. Starboard provides [Custom Resource Definitions] and a
+[Go module] to work with a range of existing security scanners, as well as a [kubectl]-compatible command, the
+[Octant Plugin], and the [Lens Extension] that make security reports available through familiar Kubernetes tools.
 
 <p align="center">
 <img src="docs/images/starboard-overview.png" alt="Starboard Overview"/>
 </p>
 
+Starboard provides:
+
+- Automated vulnerability scanning for Kubernetes applications.
+- Automated configuration audits for Kubernetes resources with predefined rules or custom Open Policy Agent (OPA) policies.
+- Automated infrastructures scanning and compliance checks with CIS Benchmarks published by the Center for Internet Security (CIS).
+- Penetration test results for a Kubernetes cluster.
+
 Starboard can be run in two different modes:
 
-- As a [command][cli], so you can trigger scans and view the risks in a kubectl-compatible way or as part of your CI/CD pipeline.
-- As an [operator] to automatically update security reports in response to workload and other changes on a Kubernetes
-  cluster - for example, initiating a vulnerability scan when a new pod is started.
+- As a [Kubernetes operator] to automatically update security reports in response to workload and other changes on a
+  Kubernetes cluster - for example, initiating a vulnerability scan when a new Pod is started or running CIS Benchmarks
+  when a new Node is added.
+- As a [command][cli], so you can trigger scans and view the risks in a kubectl-compatible way or as part of your CI/CD
+  pipeline.
 
-> **NOTE** Even though manual scanning through the command-line is useful, the fact that it's not automated makes it
-> less suitable with numerous Kubernetes workloads. Therefore, the [operator] provides a better option
-> for these scenarios, constantly monitoring built-in Kubernetes resources, such as Deployments, and running appropriate
-> scanners against the underlying deployment descriptors.
-
-You can read more about the motivations and use cases in this [blog][aqua-starboard-blog] and join our [discussions][discussions].
-
-![](docs/images/starboard-cli-with-octant-demo.gif)
+  ![](docs/images/starboard-cli-with-octant-demo.gif)
 
 # Status
 
-This project is incubating and the APIs are not considered stable.
+Although we are trying to keep new releases backward compatible with previous versions, this project is still incubating
+and some APIs and custom resource definitions may change.
 
 # Documentation
 
-The official documentation, which provides detailed installation, configuration, and quick start guides, is available
-at https://aquasecurity.github.io/starboard/.
+The official [Documentation] provides detailed installation, configuration, troubleshooting, and quick start guides.
 
-Try the [getting started guide][cli-getting-started] to install the Starboard command and generate your first
-vulnerability report.
+Start by installing the Starboard command [From the Binary Releases] and follow the [Getting Started] guide to generate
+your first vulnerability and configuration audit reports!
+
+Read more about the motivations for the project and use cases in this [blog][aqua-starboard-blog] and join our
+[discussions].
 
 # Contributing
 
@@ -82,12 +86,14 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 [aqua-starboard-blog]: https://blog.aquasec.com/starboard-kubernetes-tools
 [discussions]: https://github.com/aquasecurity/starboard/discussions
 
-[crds]: https://aquasecurity.github.io/starboard/latest/crds/
-[go-module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
+[Custom Resource Definitions]: https://aquasecurity.github.io/starboard/latest/crds/
+[Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
 [cli]: https://aquasecurity.github.io/starboard/latest/cli
-[cli-getting-started]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
-[operator]: https://aquasecurity.github.io/starboard/latest/operator
+[Documentation]: https://aquasecurity.github.io/starboard/
+[From the Binary Releases]: https://aquasecurity.github.io/starboard/latest/cli/installation/binary-releases/
+[Getting Started]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
+[Kubernetes operator]: https://aquasecurity.github.io/starboard/latest/operator
 
-[octant-plugin]: https://aquasecurity.github.io/starboard/latest/integrations/octant
-[lens-extension]: https://aquasecurity.github.io/starboard/latest/integrations/lens
+[Octant Plugin]: https://aquasecurity.github.io/starboard/latest/integrations/octant
+[Lens Extension]: https://aquasecurity.github.io/starboard/latest/integrations/lens
 [kubectl]: https://kubernetes.io/docs/reference/kubectl

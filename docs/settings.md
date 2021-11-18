@@ -5,9 +5,9 @@ confidential settings (such as a GitHub token). Starboard plugins read configura
 and Secrets named after the plugin. For example, Trivy configuration is stored in the ConfigMap and Secret named
 `starboard-trivy-config`.
 
-The `starboard init` command ensures the `starboard` ConfigMap and the `starboard` Secret in the `starboard` namespace
-with default settings. Similarly, the operator ensures the `starboard` ConfigMap and the `starboard` Secret in the
-`OPERATOR_NAMESPACE`.
+The `starboard install` command ensures the `starboard` ConfigMap and the `starboard` Secret in the `starboard`
+namespace with default settings. Similarly, the operator ensures the `starboard` ConfigMap and the `starboard` Secret in
+the `OPERATOR_NAMESPACE`.
 
 You can change the default settings with `kubectl patch` or `kubectl edit` commands. For example, by default Trivy
 displays vulnerabilities with all severity levels (`UNKNOWN`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). However, you can
@@ -15,7 +15,10 @@ display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severi
 ConfigMap:
 
 ```
-kubectl patch cm starboard-trivy-config -n <starboard_operator> \
+STARBOARD_NAMESPACE=<your starboard namespace>
+```
+```
+kubectl patch cm starboard-trivy-config -n $STARBOARD_NAMESPACE \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -30,9 +33,11 @@ EOF
 To set the GitHub token used by Trivy add the `trivy.githubToken` value to the `starboard-trivy-config` Secret:
 
 ```
+STARBOARD_NAMESPACE=<your starboard namespace>
 GITHUB_TOKEN=<your token>
-
-kubectl patch secret starboard-trivy-config -n <starboard_operator> \
+```
+```
+kubectl patch secret starboard-trivy-config -n $STARBOARD_NAMESPACE \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -45,9 +50,7 @@ EOF
 ```
 
 The following table lists available settings with their default values. Check plugins' documentation to see
-configuration settings for common use cases. For example, switch Trivy from
-[`Standalone`](./integrations/vulnerability-scanners/trivy.md#standalone) to
-[`ClientServer`](./integrations/vulnerability-scanners/trivy.md#clientserver) mode.
+configuration settings for common use cases. For example, switch Trivy from [Standalone] to [ClientServer] mode.
 
 | CONFIGMAP KEY                  | DEFAULT                               | DESCRIPTION |
 | ------------------------------ | ------------------------------------- | ----------- |
@@ -55,17 +58,22 @@ configuration settings for common use cases. For example, switch Trivy from
 | `configAuditReports.scanner`   | `Polaris`                             | The name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`. |
 | `scanJob.tolerations`          | N/A                                   | JSON representation of the [tolerations] to be applied to the scanner pods so that they can run on nodes with matching taints. Example: `'[{"key":"key1", "operator":"Equal", "value":"value1", "effect":"NoSchedule"}]'` |
 | `scanJob.annotations`          | N/A                                   | One-line comma-separated representation of the annotations which the user wants the scanner pods to be annotated with. Example: `foo=bar,env=stage` will annotate the scanner pods with the annotations `foo: bar` and `env: stage` |
-| `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:0.6.3`  | kube-bench image reference |
-| `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.6.1` | kube-hunter image reference |
+| `kube-bench.imageRef`          | `docker.io/aquasec/kube-bench:v0.6.5`  | kube-bench image reference |
+| `kube-hunter.imageRef`         | `docker.io/aquasec/kube-hunter:0.6.3` | kube-hunter image reference |
 | `kube-hunter.quick`            | `"false"`                             | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable. |
 
 !!! tip
     You can find it handy to delete a configuration key, which was not created by default by the `starboard init`
     command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
     ```
-    kubectl patch cm starboard-trivy-config -n <starboard_operator> \
+    STARBOARD_NAMESPACE=<your starboard namespace>
+    ```
+    ```
+    kubectl patch cm starboard-trivy-config -n $STARBOARD_NAMESPACE \
       --type json \
       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
     ```
 
+[Standalone]: ./integrations/vulnerability-scanners/trivy.md#standalone
+[ClientServer]: ./integrations/vulnerability-scanners/trivy.md#clientserver
 [tolerations]: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration

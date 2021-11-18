@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -240,18 +239,14 @@ func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 
 func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
-	log.V(1).Info("Processing complete scan job")
 
-	log.V(1).Info("Resolving node reference from labels")
-	nodeRef, err := kube.ObjectFromLabelsSet(job.Labels)
+	nodeRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
 	if err != nil {
-		return fmt.Errorf("getting node reference from job labels: %w", err)
+		return fmt.Errorf("getting owner ref from scan job metadata: %w", err)
 	}
-	log = log.WithValues("node", nodeRef.Name)
 
-	log.V(1).Info("Getting node from cache")
 	node := &corev1.Node{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: nodeRef.Name}, node)
+	err = r.Client.Get(ctx, client.ObjectKey{Name: nodeRef.Name}, node)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.V(1).Info("Ignore processing scan job for node that must have been deleted")

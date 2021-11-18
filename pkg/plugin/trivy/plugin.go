@@ -183,7 +183,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator) vulnerabilityreport
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyTrivyImageRef: "docker.io/aquasec/trivy:0.19.2",
+			keyTrivyImageRef: "docker.io/aquasec/trivy:0.20.0",
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 
@@ -207,9 +207,9 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec
 	}
 	switch mode {
 	case Standalone:
-		return p.getPodSpecForStandaloneMode(config, spec, credentials)
+		return p.getPodSpecForStandaloneMode(ctx, config, spec, credentials)
 	case ClientServer:
-		return p.getPodSpecForClientServerMode(config, spec, credentials)
+		return p.getPodSpecForClientServerMode(ctx, config, spec, credentials)
 	default:
 		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
 	}
@@ -246,7 +246,7 @@ const (
 //
 //     trivy --skip-update --cache-dir /var/lib/trivy \
 //       --format json <container image>
-func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -557,6 +557,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 	return corev1.PodSpec{
 		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Volumes:                      volumes,
 		InitContainers:               []corev1.Container{initContainer},
@@ -572,7 +573,7 @@ func (p *plugin) getPodSpecForStandaloneMode(config Config, spec corev1.PodSpec,
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image ref>
-func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
@@ -822,7 +823,9 @@ func (p *plugin) getPodSpecForClientServerMode(config Config, spec corev1.PodSpe
 	}
 
 	return corev1.PodSpec{
+		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
+		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
 		Containers:                   containers,
 		Volumes:                      volumes,
@@ -851,15 +854,14 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
-
-	var reports []ScanReport
+	var reports ScanReport
 	err = json.NewDecoder(logsReader).Decode(&reports)
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
 	vulnerabilities := make([]v1alpha1.Vulnerability, 0)
 
-	for _, report := range reports {
+	for _, report := range reports.Results {
 		for _, sr := range report.Vulnerabilities {
 			vulnerabilities = append(vulnerabilities, v1alpha1.Vulnerability{
 				VulnerabilityID:  sr.VulnerabilityID,

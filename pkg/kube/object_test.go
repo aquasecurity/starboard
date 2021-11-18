@@ -2,7 +2,6 @@ package kube_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -59,65 +57,173 @@ func TestIsBuiltInWorkload(t *testing.T) {
 	}
 }
 
-func TestObjectFromLabelsSet(t *testing.T) {
+func TestIsClusterScopedKind(t *testing.T) {
 	testCases := []struct {
-		name           string
-		labelsSet      labels.Set
-		expectedObject kube.Object
-		expectedError  error
+		kind string
+		want bool
 	}{
 		{
-			name: "Should return object for namespaced object",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind:      "Deployment",
-				starboard.LabelResourceName:      "my-deployment",
-				starboard.LabelResourceNamespace: "my-namespace",
-			},
-			expectedObject: kube.Object{
-				Kind:      kube.KindDeployment,
-				Name:      "my-deployment",
-				Namespace: "my-namespace",
-			},
+			kind: "Role",
+			want: false,
 		},
 		{
-			name: "Should return object for cluster-scoped object",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind: "Node",
-				starboard.LabelResourceName: "my-node",
-			},
-			expectedObject: kube.Object{
-				Kind:      kube.KindNode,
-				Name:      "my-node",
-				Namespace: "",
-			},
+			kind: "RoleBinding",
+			want: false,
 		},
 		{
-			name: "Should return error when object kind is not specified as label",
-			labelsSet: labels.Set{
-				starboard.LabelResourceName:      "my-deployment",
-				starboard.LabelResourceNamespace: "my-namespace",
-			},
-			expectedError: errors.New("required label does not exist: starboard.resource.kind"),
+			kind: "ClusterRole",
+			want: true,
 		},
 		{
-			name: "Should return error when object name is not specified as label",
-			labelsSet: labels.Set{
-				starboard.LabelResourceKind: "Deployment",
-			},
-			expectedError: errors.New("required label does not exist: starboard.resource.name"),
+			kind: "ClusterRoleBinding",
+			want: true,
+		},
+		{
+			kind: "CustomResourceDefinition",
+			want: true,
+		},
+		{
+			kind: "Pod",
+			want: false,
 		},
 	}
+	for _, tt := range testCases {
+		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tt.want, tt.kind), func(t *testing.T) {
+			assert.Equal(t, tt.want, kube.IsClusterScopedKind(tt.kind))
+		})
+	}
+}
 
+func TestPartialObjectToLabels(t *testing.T) {
+	testCases := []struct {
+		name   string
+		object kube.Object
+		labels map[string]string
+	}{
+		{
+			name: "Should map object with simple name",
+			object: kube.Object{
+				Kind:      kube.KindPod,
+				Name:      "my-pod",
+				Namespace: "production",
+			},
+			labels: map[string]string{
+				starboard.LabelResourceKind:      "Pod",
+				starboard.LabelResourceNamespace: "production",
+				starboard.LabelResourceName:      "my-pod",
+			},
+		},
+		{
+			name: "Should map object with name that is not a valid label",
+			object: kube.Object{
+				Kind: kube.KindClusterRole,
+				Name: "system:controller:namespace-controller",
+			},
+			labels: map[string]string{
+				starboard.LabelResourceKind:      "ClusterRole",
+				starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:namespace-controller"),
+				starboard.LabelResourceNamespace: "",
+			},
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			obj, err := kube.ObjectFromLabelsSet(tc.labelsSet)
-			switch {
-			case tc.expectedError == nil:
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedObject, obj)
-			default:
-				assert.EqualError(t, err, tc.expectedError.Error())
-			}
+			assert.Equal(t, tc.labels, kube.PartialObjectToLabels(tc.object))
+		})
+	}
+}
+
+func TestObjectToObjectMetadata(t *testing.T) {
+	testCases := []struct {
+		name     string
+		meta     metav1.ObjectMeta
+		object   client.Object
+		expected metav1.ObjectMeta
+	}{
+		{
+			name: "Should map object with simple name",
+			meta: metav1.ObjectMeta{},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Pod",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-pod",
+					Namespace: "production",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "Pod",
+					starboard.LabelResourceName:      "my-pod",
+					starboard.LabelResourceNamespace: "production",
+				},
+			},
+		},
+		{
+			name: "Should map object with name that is not a valid label",
+			meta: metav1.ObjectMeta{},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "system:controller:node-controller",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					starboard.LabelResourceNamespace: "",
+				},
+				Annotations: map[string]string{
+					starboard.LabelResourceName: "system:controller:node-controller",
+				},
+			},
+		},
+		{
+			name: "Should map object and merge labels and annotations",
+			meta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					"foo": "bar",
+				},
+				Annotations: map[string]string{
+					"kee": "pass",
+				},
+			},
+			object: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRole",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "system:controller:node-controller",
+				},
+			},
+			expected: metav1.ObjectMeta{
+				Labels: map[string]string{
+					"foo": "bar",
+
+					starboard.LabelResourceKind:      "ClusterRole",
+					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					starboard.LabelResourceNamespace: "",
+				},
+				Annotations: map[string]string{
+					"kee": "pass",
+
+					starboard.LabelResourceName: "system:controller:node-controller",
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := kube.ObjectToObjectMetadata(tc.object, &tc.meta)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, tc.meta)
 		})
 	}
 }
@@ -492,43 +598,6 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 
 }
 
-func TestIsClusterScopedKind(t *testing.T) {
-	testCases := []struct {
-		kind string
-		want bool
-	}{
-		{
-			kind: "Role",
-			want: false,
-		},
-		{
-			kind: "RoleBinding",
-			want: false,
-		},
-		{
-			kind: "ClusterRole",
-			want: true,
-		},
-		{
-			kind: "ClusterRoleBinding",
-			want: true,
-		},
-		{
-			kind: "CustomResourceDefinition",
-			want: true,
-		},
-		{
-			kind: "Pod",
-			want: false,
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(fmt.Sprintf("Should return %t when controller kind is %s", tt.want, tt.kind), func(t *testing.T) {
-			assert.Equal(t, tt.want, kube.IsClusterScopedKind(tt.kind))
-		})
-	}
-}
-
 func TestPartialObjectFromObjectMetadata(t *testing.T) {
 	testCases := []struct {
 		name          string
@@ -817,6 +886,16 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		},
 	}
 
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "test-config",
+		},
+		Data: map[string]string{
+			"foo": "bar",
+		},
+	}
+
 	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 		nginxDeploy,
 		nginxReplicaSet,
@@ -824,49 +903,55 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		unmanagedPod,
 		piJob,
 		piPod,
+		cm,
 	).Build()
 
 	testCases := []struct {
 		name     string
-		workload client.Object
+		resource client.Object
 		owner    client.Object
 	}{
 		{
 			name:     "Should return ReplicaSet for Deployment",
-			workload: nginxDeploy,
+			resource: nginxDeploy,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return ReplicaSet for ReplicaSet",
-			workload: nginxReplicaSet,
+			resource: nginxReplicaSet,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return ReplicaSet for Pod",
-			workload: nginxPod,
+			resource: nginxPod,
 			owner:    nginxReplicaSet,
 		},
 		{
 			name:     "Should return Pod for unmanaged Pod",
-			workload: unmanagedPod,
+			resource: unmanagedPod,
 			owner:    unmanagedPod,
 		},
 		{
 			name:     "Should return Job for unmanaged Job",
-			workload: piJob,
+			resource: piJob,
 			owner:    piJob,
 		},
 		{
 			name:     "Should return Job for Pod",
-			workload: piPod,
+			resource: piPod,
 			owner:    piJob,
+		},
+		{
+			name:     "Should return ConfigMap for ConfigMap",
+			resource: cm,
+			owner:    cm,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			or := kube.ObjectResolver{Client: testClient}
-			owner, err := or.ReportOwner(context.TODO(), tc.workload)
+			owner, err := or.ReportOwner(context.TODO(), tc.resource)
 			require.NoError(t, err)
 			assert.Equal(t, tc.owner, owner)
 		})

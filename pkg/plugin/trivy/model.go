@@ -4,9 +4,13 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
-type ScanReport struct {
+type ScanResult struct {
 	Target          string          `json:"Target"`
 	Vulnerabilities []Vulnerability `json:"Vulnerabilities"`
+}
+
+type ScanReport struct {
+	Results []ScanResult `json:"Results"`
 }
 
 type Vulnerability struct {

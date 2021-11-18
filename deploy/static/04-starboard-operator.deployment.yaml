@@ -1,48 +1,76 @@
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: starboard-operator
+  namespace: starboard-system
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0"
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/scrape: "true"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: metrics
+      name: metrics
+  selector:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: starboard-operator
-  namespace: starboard-operator
+  namespace: starboard-system
   labels:
-    app: starboard-operator
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.13.0"
+    app.kubernetes.io/managed-by: kubectl
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: starboard-operator
+      app.kubernetes.io/name: starboard-operator
+      app.kubernetes.io/instance: starboard-operator
   template:
     metadata:
       labels:
-        app: starboard-operator
+        app.kubernetes.io/name: starboard-operator
+        app.kubernetes.io/instance: starboard-operator
     spec:
       serviceAccountName: starboard-operator
       automountServiceAccountToken: true
-      securityContext: {}
       containers:
-        - name: operator
-          image: docker.io/aquasec/starboard-operator:0.12.0
+        - name: "starboard-operator"
+          image: "docker.io/aquasec/starboard-operator:0.13.0"
           imagePullPolicy: IfNotPresent
-          securityContext:
-            privileged: false
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
           env:
             - name: OPERATOR_NAMESPACE
-              value: "starboard-operator"
+              value: "starboard-system"
             - name: OPERATOR_TARGET_NAMESPACES
               value: "default"
+            - name: OPERATOR_SERVICE_ACCOUNT
+              value: "starboard-operator"
             - name: OPERATOR_LOG_DEV_MODE
               value: "false"
+            - name: OPERATOR_SCAN_JOB_TIMEOUT
+              value: "5m"
             - name: OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT
               value: "10"
             - name: OPERATOR_SCAN_JOB_RETRY_AFTER
               value: "30s"
+            - name: OPERATOR_BATCH_DELETE_LIMIT
+              value: "10"
+            - name: OPERATOR_BATCH_DELETE_DELAY
+              value: "10s"
             - name: OPERATOR_METRICS_BIND_ADDRESS
               value: ":8080"
             - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
@@ -53,10 +81,6 @@ spec:
               value: "true"
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
               value: "true"
-            - name: OPERATOR_BATCH_DELETE_LIMIT
-              value: "10"
-            - name: OPERATOR_BATCH_DELETE_DELAY
-              value: "10s"
           ports:
             - name: metrics
               containerPort: 8080
@@ -78,3 +102,14 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             failureThreshold: 10
+          resources:
+            {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+      securityContext:
+        {}

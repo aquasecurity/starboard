@@ -1,6 +1,0 @@
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: starboard-operator
-  namespace: starboard-operator
