@@ -19,8 +19,8 @@ might be, they tend to sit alongside Kubernetes, with each new product requiring
 commands and installation steps in order to operate them and find critical security information.
 
 Starboard attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
-(Custom Resource Definitions) and from there, making scan results accessible through the Kubernetes API. This way users
-can find and view the risks that relate to different resources in what we call a Kubernetes-native way.
+(Custom Resource Definitions) and from there, making security reports accessible through the Kubernetes API. This way
+users can find and view the risks that relate to different resources in what we call a Kubernetes-native way.
 
 Starboard provides:
 
