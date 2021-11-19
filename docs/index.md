@@ -1,18 +1,24 @@
 # Welcome to {{ config.site_name }}
 
-Starboard integrates security tools into the Kubernetes environment, so that users can find and view the risks that
-relate to different resources in a Kubernetes-native way. Starboard provides [Custom Resource Definitions] and a
-[Go module] to work with a range of existing security scanners, as well as a [kubectl]-compatible command, the
-[Octant Plugin], and the [Lens Extension] that make security reports available through familiar Kubernetes tools.
+There are lots of security tools in the cloud native world, created by Aqua and by others, for identifying and informing
+users about security issues in Kubernetes workloads and infrastructure components. However powerful and useful they
+might be, they tend to sit alongside Kubernetes, with each new product requiring users to learn a separate set of
+commands and installation steps in order to operate them and find critical security information.
+
+Starboard attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
+(Custom Resource Definitions) and from there, making scan results accessible through the Kubernetes API. This way users
+can find and view the risks that relate to different resources in what we call a Kubernetes-native way.
 
 Starboard provides:
 
-- Automated vulnerability scanning for Kubernetes applications.
+- Automated vulnerability scanning for Kubernetes workloads.
 - Automated configuration audits for Kubernetes resources with predefined rules or custom Open Policy Agent (OPA) policies.
 - Automated infrastructures scanning and compliance checks with CIS Benchmarks published by the Center for Internet Security (CIS).
 - Penetration test results for a Kubernetes cluster.
+- [Custom Resource Definitions] and a [Go module] to work with and integrate a range of security scanners.
+- The [Octant Plugin] and the [Lens Extension] that make security reports available through familiar Kubernetes interfaces.
 
-Starboard can be run in two different modes:
+Starboard can be used:
 
 - As a [Kubernetes operator] to automatically update security reports in response to workload and other changes on a
   Kubernetes cluster - for example, initiating a vulnerability scan when a new Pod is started or running CIS Benchmarks

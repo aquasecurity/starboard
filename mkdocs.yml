@@ -5,6 +5,7 @@ docs_dir: docs/
 repo_name: GitHub
 repo_url: https://github.com/aquasecurity/starboard
 edit_uri: ""
+copyright: Copyright 2019-2021 Aqua Security Software Ltd.
 
 nav:
   - Introduction: index.md
@@ -77,6 +78,8 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/aquasecurity
+    - icon: fontawesome/brands/slack
+      link: https://slack.aquasec.com/
     - icon: fontawesome/brands/youtube
       link: https://www.youtube.com/channel/UCZd5NF4XJRaU-yfextsY-pw
     - icon: fontawesome/brands/twitter
