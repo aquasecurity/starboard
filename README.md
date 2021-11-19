@@ -55,7 +55,7 @@ and some APIs and [Custom Resource Definitions] may change.
 The official [Documentation] provides detailed installation, configuration, troubleshooting, and quick start guides.
 
 Learn how to install the Starboard command [From the Binary Releases] and follow the [Getting Started][getting-started-cli]
-guide to generate your first vulnerability and configuration audit reports!
+guide to generate your first vulnerability and configuration audit reports.
 
 You can install the Starboard Operator with [Static YAML Manifests] and follow the [Getting Started][getting-started-operator]
 guide to see how vulnerability and configuration audit reports are generated automatically.
