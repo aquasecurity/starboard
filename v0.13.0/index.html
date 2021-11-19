@@ -1187,6 +1187,11 @@ users can find and view the risks that relate to different resources in what we 
 <li><a href="crds/">Custom Resource Definitions</a> and a <a href="https://pkg.go.dev/github.com/aquasecurity/starboard@v0.13.0">Go module</a> to work with and integrate a range of security scanners.</li>
 <li>The <a href="integrations/octant/">Octant Plugin</a> and the <a href="integrations/lens/">Lens Extension</a> that make security reports available through familiar Kubernetes interfaces.</li>
 </ul>
+<figure>
+  <img src="./images/starboard-overview.png" />
+  <figcaption>The high-level design diagram of Starboard toolkit.</figcaption>
+</figure>
+
 <p>Starboard can be used:</p>
 <ul>
 <li>As a <a href="operator/">Kubernetes operator</a> to automatically update security reports in response to workload and other changes on a
@@ -1197,10 +1202,16 @@ users can find and view the risks that relate to different resources in what we 
 </ul>
 <h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Follow the getting started guides for <a href="cli/getting-started/">Starboard CLI</a> and <a href="operator/getting-started/">Starboard Operator</a>.</li>
-<li>Read more about the motivations and use cases on the <a href="https://blog.aquasec.com/starboard-kubernetes-tools">Starboard: The Kubernetes-Native Toolkit for Unifying Security</a> blog.</li>
+<li>Learn how to install the Starboard command <a href="cli/installation/binary-releases/">From the Binary Releases</a> and
+  follow the <a href="cli/getting-started/">Getting Started</a> guide to generate your first vulnerability and configuration
+  audit reports.</li>
+<li>Install the Starboard Operator with <a href="operator/installation/kubectl/">Static YAML Manifests</a> and follow the
+  <a href="operator/getting-started/">Getting Started</a> guide to see how vulnerability and configuration audit reports are
+  generated automatically.</li>
+<li>Read more about the motivations for the project in the <a href="https://blog.aquasec.com/starboard-kubernetes-tools">Starboard: The Kubernetes-Native Toolkit for Unifying Security</a>
+  blog.</li>
 <li>See a detailed introduction to Starboard with demos at <a href="https://www.youtube.com/watch?v=cgcwIY1HVI0">KubeCon + CloudNativeCon NA 2020</a>.</li>
-<li>Join our <a href="https://github.com/aquasecurity/starboard/discussions">discussions</a> on GitHub.</li>
+<li>Join the community, and talk to us about any matter in <a href="https://github.com/aquasecurity/starboard/discussions/">GitHub Discussions</a> or <a href="https://slack.aquasec.com/">Slack</a>.</li>
 </ul>
                 
 
