@@ -17,6 +17,11 @@ builds:
       - windows
     goarch:
       - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
+      - 8
   - id: starboard-operator
     main: ./cmd/starboard-operator/main.go
     binary: starboard-operator
@@ -24,6 +29,11 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
+      - 8
   - id: starboard-scanner-aqua
     main: ./cmd/scanner-aqua/main.go
     binary: starboard-scanner-aqua
