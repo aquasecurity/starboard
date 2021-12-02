@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/caarlos0/env/v6"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,11 +25,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
+type PrivateRegistryConfig struct {
+	Server   string `env:"STARBOARD_TEST_REGISTRY_SERVER"`
+	Username string `env:"STARBOARD_TEST_REGISTRY_USERNAME"`
+	Password string `env:"STARBOARD_TEST_REGISTRY_PASSWORD"`
+	ImageRef string `env:"STARBOARD_TEST_REGISTRY_PRIVATE_IMAGE_REF"`
+}
+
+func (c *PrivateRegistryConfig) Parse() error {
+	return env.Parse(c)
+}
+
 type PodBuilder struct {
-	name             string
-	namespace        string
-	containers       []corev1.Container
-	imagePullSecrets []corev1.LocalObjectReference
+	name               string
+	namespace          string
+	containers         []corev1.Container
+	serviceAccountName string
+	imagePullSecrets   []corev1.LocalObjectReference
 }
 
 func NewPod() *PodBuilder {
@@ -56,6 +70,11 @@ func (b *PodBuilder) WithContainer(name, image string) *PodBuilder {
 	return b
 }
 
+func (b *PodBuilder) WithServiceAccountName(name string) *PodBuilder {
+	b.serviceAccountName = name
+	return b
+}
+
 func (b *PodBuilder) WithImagePullSecret(name string) *PodBuilder {
 	b.imagePullSecrets = append(b.imagePullSecrets, corev1.LocalObjectReference{
 		Name: name,
@@ -70,10 +89,101 @@ func (b *PodBuilder) Build() *corev1.Pod {
 			Namespace: b.namespace,
 		},
 		Spec: corev1.PodSpec{
-			Containers:       b.containers,
-			ImagePullSecrets: b.imagePullSecrets,
+			ServiceAccountName: b.serviceAccountName,
+			Containers:         b.containers,
+			ImagePullSecrets:   b.imagePullSecrets,
 		},
 	}
+}
+
+type ServiceAccountBuilder struct {
+	target *corev1.ServiceAccount
+}
+
+func NewServiceAccount() *ServiceAccountBuilder {
+	return &ServiceAccountBuilder{
+		target: &corev1.ServiceAccount{},
+	}
+}
+
+func (b *ServiceAccountBuilder) WithRandomName(prefix string) *ServiceAccountBuilder {
+	b.target.Name = prefix + "-" + rand.String(5)
+	return b
+}
+
+func (b *ServiceAccountBuilder) WithNamespace(namespace string) *ServiceAccountBuilder {
+	b.target.Namespace = namespace
+	return b
+}
+
+func (b *ServiceAccountBuilder) WithImagePullSecret(name string) *ServiceAccountBuilder {
+	b.target.ImagePullSecrets = append(b.target.ImagePullSecrets, corev1.LocalObjectReference{Name: name})
+	return b
+}
+
+func (b *ServiceAccountBuilder) Build() *corev1.ServiceAccount {
+	return b.target
+}
+
+type SecretBuilder struct {
+	target *corev1.Secret
+
+	registryServer   string
+	registryUsername string
+	registryPassword string
+}
+
+func NewDockerRegistrySecret() *SecretBuilder {
+	return &SecretBuilder{
+		target: &corev1.Secret{},
+	}
+}
+
+func (b *SecretBuilder) WithRandomName(name string) *SecretBuilder {
+	b.target.Name = name + "-" + rand.String(5)
+	return b
+}
+
+func (b *SecretBuilder) WithNamespace(namespace string) *SecretBuilder {
+	b.target.Namespace = namespace
+	return b
+}
+
+func (b *SecretBuilder) WithServer(server string) *SecretBuilder {
+	b.registryServer = server
+	return b
+}
+
+func (b *SecretBuilder) WithUsername(username string) *SecretBuilder {
+	b.registryUsername = username
+	return b
+}
+
+func (b *SecretBuilder) WithPassword(password string) *SecretBuilder {
+	b.registryPassword = password
+	return b
+}
+
+func (b *SecretBuilder) Build() (*corev1.Secret, error) {
+	dockerConfig, err := docker.Config{
+		Auths: map[string]docker.Auth{
+			b.registryServer: {
+				Username: b.registryUsername,
+				Password: b.registryPassword,
+				Auth:     docker.NewBasicAuth(b.registryUsername, b.registryPassword),
+			},
+		},
+	}.Write()
+	if err != nil {
+		return nil, err
+	}
+
+	b.target.Type = corev1.SecretTypeDockerConfigJson
+	b.target.Data = map[string][]byte{
+		corev1.DockerConfigJsonKey: dockerConfig,
+	}
+
+	return b.target, nil
 }
 
 type DeploymentBuilder struct {
