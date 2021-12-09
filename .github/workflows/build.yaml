@@ -224,6 +224,13 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Setup golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          args: --verbose
+          version: latest
+          skip-pkg-cache: true
+          skip-build-cache: true
       - name: Verify YAML code
         uses: ibiqlik/action-yamllint@v3
       - name: Vendor Go modules

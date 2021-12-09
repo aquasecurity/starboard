@@ -264,7 +264,7 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 	if value, found := c.Data[configKey]; found {
 		quantity, err := resource.ParseQuantity(value)
 		if err != nil {
-			return fmt.Errorf("parsing resource definition %s: %s %v", configKey, value, err)
+			return fmt.Errorf("parsing resource definition %s: %s %w", configKey, value, err)
 		}
 
 		(*k8sResourceList)[k8sResourceName] = quantity
