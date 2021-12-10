@@ -1,10 +1,10 @@
 package predicate_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"time"
 
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
@@ -17,13 +17,9 @@ import (
 )
 
 var _ = Describe("Predicate", func() {
-
 	Describe("When checking a InstallMode predicate", func() {
-
 		Context("When install mode is SingleNamespace", func() {
-
 			When("and object is in operator namespace", func() {
-
 				It("Should return false", func() {
 					config := etc.Config{
 						Namespace:        "starboard-operator",
@@ -41,13 +37,10 @@ var _ = Describe("Predicate", func() {
 					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
 					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
 					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
-
 				})
-
 			})
 
 			When("and object is in target namespace", func() {
-
 				It("Should return true", func() {
 					config := etc.Config{
 						Namespace:        "starboard-operator",
@@ -66,15 +59,11 @@ var _ = Describe("Predicate", func() {
 					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
 					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
 				})
-
 			})
-
 		})
 
 		Context("When install mode is MultiNamespaces", func() {
-
 			When("and object is in target namespace", func() {
-
 				It("Should return true", func() {
 					config := etc.Config{
 						Namespace:        "starboard-operator",
@@ -93,11 +82,9 @@ var _ = Describe("Predicate", func() {
 					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
 					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
 				})
-
 			})
 
 			When("and object is not in target namespace", func() {
-
 				It("Should return false", func() {
 					config := etc.Config{
 						Namespace:        "starboard-operator",
@@ -116,16 +103,12 @@ var _ = Describe("Predicate", func() {
 					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
 					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
 				})
-
 			})
-
 		})
 	})
 
 	Describe("When checking a HasName predicate", func() {
-
 		Context("When object has desired name", func() {
-
 			It("Should return true", func() {
 				instance := predicate.HasName("starboard-polaris-config")
 				obj := &corev1.Pod{
@@ -142,7 +125,6 @@ var _ = Describe("Predicate", func() {
 		})
 
 		Context("When object does not have desired name", func() {
-
 			It("Should return false", func() {
 				instance := predicate.HasName("starboard-conftest-config")
 				obj := &corev1.Pod{
@@ -160,9 +142,7 @@ var _ = Describe("Predicate", func() {
 	})
 
 	Describe("When checking a InNamespace predicate", func() {
-
 		Context("When object is in desired namespace", func() {
-
 			It("Should return true", func() {
 				instance := predicate.InNamespace("starboard-operator")
 				obj := &corev1.Pod{
@@ -176,11 +156,9 @@ var _ = Describe("Predicate", func() {
 				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
 				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
 			})
-
 		})
 
 		Context("When object is not in desired namespace", func() {
-
 			It("Should return false", func() {
 				instance := predicate.InNamespace("starboard-operator")
 				obj := &corev1.Pod{
@@ -194,13 +172,10 @@ var _ = Describe("Predicate", func() {
 				Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
 				Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
 			})
-
 		})
-
 	})
 
 	Describe("When checking a ManagedByStarboardOperator predicate", func() {
-
 		instance := predicate.ManagedByStarboardOperator
 
 		Context("Where object is managed by Starboard operator", func() {
@@ -254,7 +229,6 @@ var _ = Describe("Predicate", func() {
 	})
 
 	Describe("When checking a PodBeingTerminated predicate", func() {
-
 		instance := predicate.IsBeingTerminated
 		deletionTimestamp := metav1.NewTime(time.Now())
 
@@ -326,7 +300,6 @@ var _ = Describe("Predicate", func() {
 	})
 
 	Describe("When checking a Not predicate", func() {
-
 		Context("Where input predicate returns true", func() {
 			It("Should return false", func() {
 				instance := predicate.Not(predicatex.NewPredicateFuncs(func(_ client.Object) bool {
@@ -339,6 +312,5 @@ var _ = Describe("Predicate", func() {
 				Expect(instance.Generic(event.GenericEvent{})).To(BeFalse())
 			})
 		})
-
 	})
 })
