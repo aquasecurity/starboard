@@ -102,6 +102,12 @@ trivy:
   #
   # noProxy:
 
+  # Registries without SSL. There can be multiple registries with different keys.
+  nonSslRegistries: {}
+  #  pocRegistry: poc.myregistry.harbor.com.pl
+  #  qaRegistry: qa.registry.aquasec.com
+  #  internalRegistry: registry.registry.svc:5000
+
   # severity is a comma separated list of severity levels reported by Trivy.
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
