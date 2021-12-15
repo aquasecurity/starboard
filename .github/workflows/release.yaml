@@ -68,7 +68,7 @@ jobs:
           make itests-starboard
         env:
           KUBECONFIG: /home/runner/.kube/config
-          STARBOARD_CLI_LOG_LEVEL: "0"
+          STARBOARD_TEST_CLI_LOG_LEVEL: "0"
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
     needs:

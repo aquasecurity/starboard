@@ -116,7 +116,7 @@ jobs:
           make itests-starboard
         env:
           KUBECONFIG: /home/runner/.kube/config
-          STARBOARD_CLI_LOG_LEVEL: "0"
+          STARBOARD_TEST_CLI_LOG_LEVEL: "0"
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
