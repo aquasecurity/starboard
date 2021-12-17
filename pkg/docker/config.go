@@ -67,7 +67,15 @@ func (c *Config) Read(contents []byte) error {
 func decodeAuths(auths map[string]Auth) (map[string]Auth, error) {
 	decodedAuths := make(map[string]Auth)
 	for server, entry := range auths {
-		if (Auth{}) == entry {
+		if entry == (Auth{}) {
+			continue
+		}
+
+		if strings.TrimSpace(string(entry.Auth)) == "" {
+			decodedAuths[server] = Auth{
+				Username: entry.Username,
+				Password: entry.Password,
+			}
 			continue
 		}
 
