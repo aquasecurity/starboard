@@ -1,10 +1,10 @@
 # Docker
 
-We also release Docker images `aquasec/starboard:{{ var.build.version }}` and
-`public.ecr.aws/aquasecurity/starboard:{{ var.build.version }}` to run Starboard as a Docker container or to manually
+We also release Docker images `aquasec/starboard:{{ git.tag[1:] }}` and
+`public.ecr.aws/aquasecurity/starboard:{{ git.tag[1:] }}` to run Starboard as a Docker container or to manually
 schedule Kubernetes scan Jobs in your cluster.
 
 ```console
-$ docker container run --rm public.ecr.aws/aquasecurity/starboard:{{ var.build.version }} version
-Starboard Version: {Version:{{ var.build.version }} Commit:{{ var.build.commit }} Date:{{ var.build.date }}}
+$ docker container run --rm public.ecr.aws/aquasecurity/starboard:{{ git.tag[1:] }} version
+Starboard Version: {Version:{{ git.tag[1:] }} Commit:{{ git.commit }} Date:{{ git.date.isoformat() }}}
 ```

@@ -11,7 +11,7 @@ namespaces:
 
 1. Clone the chart directory:
    ```
-   git clone --depth 1 --branch {{ var.tag }} https://github.com/aquasecurity/starboard.git
+   git clone --depth 1 --branch {{ git.tag }} https://github.com/aquasecurity/starboard.git
    cd starboard
    ```
    Or add Aqua chart repository:
@@ -34,14 +34,14 @@ namespaces:
      --create-namespace \
      --set="targetNamespaces=default" \
      --set="trivy.ignoreUnfixed=true" \
-     --version {{ var.chart.version }}
+     --version {{ var.chart_version }}
    ```
    There are many [values] in the chart that can be set to configure Starboard.
 3. Check that the `starboard-operator` Helm release is created in the `starboard-system` namespace:
    ```console
    $ helm list -n starboard-system
    NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
-   starboard-operator	starboard-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart.version }}	{{ var.build.version }}
+   starboard-operator	starboard-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart_version }}	{{ git.tag[1:] }}
    ```
    To confirm that the operator is running, check the number of replicas created by the `starboard-operator` Deployment
    in the `starboard-system` namespace:
@@ -79,4 +79,4 @@ You have to manually delete custom resource definitions created by the `helm ins
 
 [Helm]: https://helm.sh/
 [charts]: https://helm.sh/docs/topics/charts/
-[values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/helm/values.yaml
+[values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/helm/values.yaml
