@@ -89,14 +89,8 @@ extra:
   version:
     provider: mike
   var:
-    tag: "v0.13.1"
-    tag_prev: "v0.13.0"
-    build:
-      version: "0.13.1"
-      commit: "e9cd6e1467f942ce114468f4d30012bd4256fa9c"
-      date: "2021-12-01T14:31:52Z"
-    chart:
-      version: 0.8.1
+    prev_git_tag: "v0.13.0"
+    chart_version: 0.8.1
 
 # Requires pip install mkdocs-macros-plugin
 plugins:

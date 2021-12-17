@@ -17,6 +17,6 @@ These are currently integrated configuration checkers:
 * See the explanation and demo of configuration auditing with Polaris on the
   [Automating Configuration Auditing with Starboard Operator By Aqua][blog] blog.
 
-[plugin-interface]: https://pkg.go.dev/github.com/aquasecurity/starboard@{{ var.tag }}/pkg/configauditreport#Plugin
-[Polaris plugin]: https://github.com/aquasecurity/starboard/blob/{{ var.tag }}/pkg/plugin/polaris/plugin.go
+[plugin-interface]: https://pkg.go.dev/github.com/aquasecurity/starboard@{{ git.tag }}/pkg/configauditreport#Plugin
+[Polaris plugin]: https://github.com/aquasecurity/starboard/blob/{{ git.tag }}/pkg/plugin/polaris/plugin.go
 [blog]: https://blog.aquasec.com/automating-configuration-auditing-starboard-operator
