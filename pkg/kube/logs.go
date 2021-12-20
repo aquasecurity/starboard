@@ -29,7 +29,7 @@ func NewLogsReader(clientset kubernetes.Interface) LogsReader {
 func (r *logsReader) GetLogsByJobAndContainerName(ctx context.Context, job *batchv1.Job, containerName string) (io.ReadCloser, error) {
 	pod, err := r.getPodByJob(ctx, job)
 	if err != nil {
-		return nil, fmt.Errorf("getting pod controllered by job: %q: %w", job.Namespace+"/"+job.Name, err)
+		return nil, fmt.Errorf("getting pod controlled by job: %q: %w", job.Namespace+"/"+job.Name, err)
 	}
 	if pod == nil {
 		return nil, fmt.Errorf("getting pod controlled by job: %q: pod not found", job.Namespace+"/"+job.Name)
