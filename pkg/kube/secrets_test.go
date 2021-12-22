@@ -1,10 +1,10 @@
 package kube_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
-
-	"testing"
 
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -13,7 +13,6 @@ import (
 )
 
 func TestNewImagePullSecret(t *testing.T) {
-
 	t.Run("should construct a new image secret with encoded data", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -45,7 +44,6 @@ func TestNewImagePullSecret(t *testing.T) {
 }
 
 func TestMapDockerRegistryServersToAuths(t *testing.T) {
-
 	t.Run("should map Docker registry servers to Docker authentication credentials", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -124,7 +122,6 @@ func TestMapDockerRegistryServersToAuths(t *testing.T) {
 }
 
 func TestMapContainerNamesToDockerAuths(t *testing.T) {
-
 	t.Run("should map container images to Docker authentication credentials", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 

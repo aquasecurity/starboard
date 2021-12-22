@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 
@@ -73,7 +74,7 @@ func scan(opt options, imageRef string) (report v1alpha1.VulnerabilityReportData
 	if err == nil {
 		return
 	}
-	if err != client.ErrNotFound {
+	if !errors.Is(err, client.ErrNotFound) {
 		return
 	}
 	report, err = cli.NewScanner(opt.version, opt.baseURL, opt.credentials).Scan(imageRef)

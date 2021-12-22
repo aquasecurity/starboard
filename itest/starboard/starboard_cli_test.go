@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 
 	"context"
-	"os"
 	"strings"
 	"time"
 
@@ -48,9 +47,11 @@ var _ = Describe("Starboard CLI", func() {
 
 	Describe("Command install", func() {
 
-		It("should initialize Starboard", func() {
+		It("should install Starboard", func() {
 
-			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{})
+			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{
+				LabelSelector: "app.kubernetes.io/managed-by=starboard",
+			})
 			Expect(err).ToNot(HaveOccurred())
 
 			groupByName := func(element interface{}) string {
@@ -204,7 +205,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				ctx = context.TODO()
-				pod = helper.NewPod().WithName("nginx").
+				pod = helper.NewPod().WithRandomName("nginx").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
 					Build()
@@ -284,33 +285,41 @@ var _ = Describe("Starboard CLI", func() {
 
 		})
 
-		// TODO Run with other integration tests
-		// The only reason this test is marked as pending is that I don't know
-		// how to pass DockerHub private repository credentials to this test case.
+		// TODO Run pending specs with other tests used to validate each PR.
+		//
+		// The only reason these tests are marked as pending is that I don't know how to pass private repository
+		// credentials from GitHub Actions runner via STARBOARD_TEST_REGISTRY_USERNAME and STARBOARD_TEST_REGISTRY_PASSWORD
+		// environment variables down to Go tests. The main challenge is that GitHub secrets are not available to
+		// workflow runs initiated from forked repositories. In other words, expressions like
+		// ${{ secrets.STARBOARD_TEST_REGISTRY_PASSWORD }} will evaluate to a blank string.
 		PContext("when unmanaged Pod with private image is specified as workload", func() {
 
-			var pod *corev1.Pod
+			var ctx context.Context
 			var imagePullSecret *corev1.Secret
+			var pod *corev1.Pod
 
 			BeforeEach(func() {
 				var err error
-				imagePullSecret, err = kube.NewImagePullSecret(metav1.ObjectMeta{
-					Name:      "registry-credentials",
-					Namespace: testNamespace.Name,
-				}, "https://index.docker.io/v1",
-					os.Getenv("STARBOARD_TEST_DOCKERHUB_REGISTRY_USERNAME"),
-					os.Getenv("STARBOARD_TEST_DOCKERHUB_REGISTRY_PASSWORD"))
-				Expect(err).ToNot(HaveOccurred())
 
-				err = kubeClient.Create(context.TODO(), imagePullSecret)
-				Expect(err).ToNot(HaveOccurred())
+				ctx = context.TODO()
 
-				pod = helper.NewPod().WithName("nginx-with-private-image").
+				imagePullSecret, err = helper.NewDockerRegistrySecret().
+					WithRandomName("regcred").
 					WithNamespace(testNamespace.Name).
-					WithContainer("nginx-container", "starboardcicd/private-nginx:1.16").
+					WithServer(privateRegistryConfig.Server).
+					WithUsername(privateRegistryConfig.Username).
+					WithPassword(privateRegistryConfig.Password).
+					Build()
+				Expect(err).ToNot(HaveOccurred())
+				err = kubeClient.Create(ctx, imagePullSecret)
+				Expect(err).ToNot(HaveOccurred())
+
+				pod = helper.NewPod().WithRandomName("private-pod").
+					WithNamespace(testNamespace.Name).
+					WithContainer("private", privateRegistryConfig.ImageRef).
 					WithImagePullSecret(imagePullSecret.Name).
 					Build()
-				err = kubeClient.Create(context.TODO(), pod)
+				err = kubeClient.Create(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -324,22 +333,97 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				var reportList v1alpha1.VulnerabilityReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
 					starboard.LabelResourceKind:      string(kube.KindPod),
 					starboard.LabelResourceName:      pod.Name,
 					starboard.LabelResourceNamespace: pod.Namespace,
 				})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
-					"nginx-container": IsVulnerabilityReportForContainerOwnedBy("nginx-container", pod),
+					"private": IsVulnerabilityReportForContainerOwnedBy("private", pod),
 				}))
 			})
 
 			AfterEach(func() {
-				err := kubeClient.Delete(context.TODO(), pod)
+				err := kubeClient.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = kubeClient.Delete(context.TODO(), imagePullSecret)
+				err = kubeClient.Delete(ctx, imagePullSecret)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+		})
+
+		PContext("when unmanaged Pod with private image and service account is specified as workload", func() {
+
+			var ctx context.Context
+			var imagePullSecret *corev1.Secret
+			var serviceAccount *corev1.ServiceAccount
+			var pod *corev1.Pod
+
+			BeforeEach(func() {
+				var err error
+
+				ctx = context.TODO()
+
+				imagePullSecret, err = helper.NewDockerRegistrySecret().
+					WithRandomName("regcred").
+					WithNamespace(testNamespace.Name).
+					WithServer(privateRegistryConfig.Server).
+					WithUsername(privateRegistryConfig.Username).
+					WithPassword(privateRegistryConfig.Password).
+					Build()
+				Expect(err).ToNot(HaveOccurred())
+				err = kubeClient.Create(ctx, imagePullSecret)
+				Expect(err).ToNot(HaveOccurred())
+
+				serviceAccount = helper.NewServiceAccount().
+					WithRandomName("test-sa").
+					WithNamespace(testNamespace.Name).
+					WithImagePullSecret(imagePullSecret.Name).
+					Build()
+				err = kubeClient.Create(ctx, serviceAccount)
+				Expect(err).ToNot(HaveOccurred())
+
+				pod = helper.NewPod().
+					WithRandomName("private-pod").
+					WithNamespace(testNamespace.Name).
+					WithContainer("private", privateRegistryConfig.ImageRef).
+					WithServiceAccountName(serviceAccount.Name).
+					Build()
+				err = kubeClient.Create(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should create VulnerabilityReport", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"scan", "vulnerabilityreports", "po/" + pod.Name,
+					"--namespace", pod.Namespace,
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+
+				var reportList v1alpha1.VulnerabilityReportList
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
+					starboard.LabelResourceKind:      string(kube.KindPod),
+					starboard.LabelResourceName:      pod.Name,
+					starboard.LabelResourceNamespace: pod.Namespace,
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reportList.Items).To(MatchAllElements(groupByContainerName, Elements{
+					"private": IsVulnerabilityReportForContainerOwnedBy("private", pod),
+				}))
+			})
+
+			AfterEach(func() {
+				err := kubeClient.Delete(ctx, pod)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = kubeClient.Delete(ctx, serviceAccount)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = kubeClient.Delete(ctx, imagePullSecret)
 				Expect(err).ToNot(HaveOccurred())
 			})
 

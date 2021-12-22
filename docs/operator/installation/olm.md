@@ -44,7 +44,7 @@ configure it to watch the `default` namespaces:
    If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
    on startup with the default settings:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ var.tag }}/deploy/static/03-starboard-operator.config.yaml
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/static/03-starboard-operator.config.yaml
    ```
    Review the default values and makes sure the operator is configured properly:
    ```
@@ -82,7 +82,7 @@ configure it to watch the `default` namespaces:
    ```console
    $ kubectl get clusterserviceversions -n starboard-system
    NAME                        DISPLAY              VERSION   REPLACES                     PHASE
-   starboard-operator.{{ var.tag }}  Starboard Operator   {{ var.build.version }}    starboard-operator.{{ var.tag_prev }}   Succeeded
+   starboard-operator.{{ git.tag }}  Starboard Operator   {{ git.tag[1:] }}    starboard-operator.{{ var.prev_git_tag }}   Succeeded
    ```
    If the above command succeeds and the ClusterServiceVersion has transitioned from `Installing` to `Succeeded` phase
    you will also find the operator's Deployment in the same namespace where the Subscription is:
@@ -102,7 +102,7 @@ To uninstall the operator delete the Subscription, the ClusterServiceVersion, an
 
 ```
 kubectl delete subscription starboard-operator -n starboard-system
-kubectl delete clusterserviceversion starboard-operator.{{ var.tag }} -n starboard-system
+kubectl delete clusterserviceversion starboard-operator.{{ git.tag }} -n starboard-system
 kubectl delete operatorgroup starboard-operator -n starboard-system
 kubectl delete ns starboard-system
 ```
