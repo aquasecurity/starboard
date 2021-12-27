@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
