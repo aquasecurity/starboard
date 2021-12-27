@@ -77,12 +77,10 @@ func (r *runner) Run(ctx context.Context, task Runnable) (err error) {
 
 func (r *runner) runAndWaitForever() (err error) {
 	klog.V(3).Info("Running task and waiting forever")
-	select {
 	// Signaled when processing is done.
-	case err := <-r.complete:
-		klog.V(3).Infof("Stopping runner on task completion with error: %v", err)
-		return err
-	}
+	err = <-r.complete
+	klog.V(3).Infof("Stopping runner on task completion with error: %v", err)
+	return err
 }
 
 func (r *runner) runWithTimeout() (err error) {

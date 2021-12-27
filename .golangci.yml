@@ -6,9 +6,9 @@ linters:
     - gci
     - gofmt
     - gofumpt
+    - gosimple
     - govet
     - misspell
   disable:
-    - gosimple
     - ineffassign
     - staticcheck

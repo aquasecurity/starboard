@@ -303,9 +303,9 @@ var ErrReplicaSetNotFound = errors.New("replicaset not found")
 
 // ReportOwner resolves the owner of a security report for the specified object.
 func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (client.Object, error) {
-	switch obj.(type) {
+	switch obj := obj.(type) {
 	case *appsv1.Deployment:
-		return o.ReplicaSetByDeployment(ctx, obj.(*appsv1.Deployment))
+		return o.ReplicaSetByDeployment(ctx, obj)
 	case *batchv1.Job:
 		controller := metav1.GetControllerOf(obj)
 		if controller == nil {
@@ -313,7 +313,7 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 			return obj, nil
 		}
 		if controller.Kind == string(KindCronJob) {
-			return o.CronJobByJob(ctx, obj.(*batchv1.Job))
+			return o.CronJobByJob(ctx, obj)
 		}
 		// Job controlled by sth else (usually frameworks)
 		return obj, nil
@@ -324,11 +324,11 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 			return obj, nil
 		}
 		if controller.Kind == string(KindReplicaSet) {
-			return o.ReplicaSetByPod(ctx, obj.(*corev1.Pod))
+			return o.ReplicaSetByPod(ctx, obj)
 		}
 		if controller.Kind == string(KindJob) {
 			// Managed by Job or CronJob
-			job, err := o.JobByPod(ctx, obj.(*corev1.Pod))
+			job, err := o.JobByPod(ctx, obj)
 			if err != nil {
 				return nil, err
 			}
