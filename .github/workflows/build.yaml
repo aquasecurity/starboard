@@ -80,6 +80,9 @@ jobs:
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          flags: unit-tests
           files: ./coverage.txt
   itest-starboard-cli:
     name: Run integration tests / Starboard CLI
@@ -120,6 +123,9 @@ jobs:
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          flags: integration-tests,cli
           files: ./itest/starboard/coverage.txt
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
@@ -167,6 +173,9 @@ jobs:
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          flags: integration-tests,operator
           files: ./itest/starboard-operator/coverage.txt
   integration-operator-conftest:
     name: Integration / Operator / Conftest
@@ -214,6 +223,9 @@ jobs:
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          flags: integration-tests,operator,conftest
           files: ./itest/starboard-operator/configauditreport/conftest/coverage.txt
   release-snapshot:
     name: Release unversioned snapshot

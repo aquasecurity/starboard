@@ -983,6 +983,6 @@ func GetMirroredImage(image string, mirrors map[string]string) (string, error) {
 			return mirroredImage, nil
 		}
 	}
-	// If nothing is mirrord, we can simply use the input image.
+	// If nothing is mirrored, we can simply use the input image.
 	return image, nil
 }
