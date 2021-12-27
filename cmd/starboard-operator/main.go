@@ -24,9 +24,7 @@ var (
 	}
 )
 
-var (
-	setupLog = log.Log.WithName("main")
-)
+var setupLog = log.Log.WithName("main")
 
 // main is the entrypoint of the Starboard Operator executable command.
 func main() {

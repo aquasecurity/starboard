@@ -1,14 +1,14 @@
 package conftest_test
 
 import (
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
-
 	"context"
 	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -30,7 +30,6 @@ var (
 )
 
 func TestConfig_GetPoliciesByKind(t *testing.T) {
-
 	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		config := conftest.Config{
@@ -60,7 +59,6 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 	})
 
 	t.Run("Should return policies as Rego modules", func(t *testing.T) {
-
 		g := NewGomegaWithT(t)
 		config := conftest.Config{
 			PluginConfig: starboard.PluginConfig{
@@ -168,7 +166,6 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 }
 
 func TestPlugin_IsApplicable(t *testing.T) {
-
 	testCases := []struct {
 		name       string
 		configData map[string]string
@@ -206,7 +203,8 @@ deny[res] {
     "title": "Runs as root user"
   }
 }
-`},
+`,
+			},
 			obj: &corev1.Pod{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pod",
@@ -244,11 +242,9 @@ deny[res] {
 			g.Expect(ready).To(Equal(tc.expected))
 		})
 	}
-
 }
 
 func TestPlugin_Init(t *testing.T) {
-
 	t.Run("Should create the default config", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -736,7 +732,6 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 }
 
 func TestPlugin_ConfigHash(t *testing.T) {
-
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
 		return starboard.NewPluginContext().
 			WithName("Conftest").

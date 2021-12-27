@@ -58,7 +58,8 @@ func (r *logsReader) getPodByJob(ctx context.Context, job *batchv1.Job) (*corev1
 	}
 	selector := fmt.Sprintf("controller-uid=%s", refreshedJob.Spec.Selector.MatchLabels["controller-uid"])
 	podList, err := r.clientset.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: selector})
+		LabelSelector: selector,
+	})
 	if err != nil {
 		return nil, err
 	}

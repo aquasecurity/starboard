@@ -10,7 +10,6 @@ import (
 )
 
 var _ = Describe("The Aqua API client", func() {
-
 	var server *Server
 	var aquaClient client.Clientset
 
@@ -157,5 +156,4 @@ var _ = Describe("The Aqua API client", func() {
 		// shut down the server between tests
 		server.Close()
 	})
-
 })

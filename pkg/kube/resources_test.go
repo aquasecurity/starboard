@@ -32,7 +32,6 @@ func TestGetContainerImagesFromPodSpec(t *testing.T) {
 }
 
 func TestGetContainerImagesFromJob(t *testing.T) {
-
 	t.Run("Should return error when annotation is not set", func(t *testing.T) {
 		_, err := kube.GetContainerImagesFromJob(&batchv1.Job{})
 		require.EqualError(t, err, "required annotation not set: starboard.container-images")
@@ -66,7 +65,6 @@ func TestGetContainerImagesFromJob(t *testing.T) {
 }
 
 func TestComputeHash(t *testing.T) {
-
 	booleanValue1 := true
 	booleanValue2 := true
 	booleanValue3 := false
@@ -149,5 +147,4 @@ func TestComputeHash(t *testing.T) {
 		}
 		assert.Equal(t, 100, len(hashes))
 	})
-
 }

@@ -14,7 +14,6 @@ import (
 )
 
 func TestWriter_Write(t *testing.T) {
-
 	t.Run("Should create KubeHunterReport", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
 
@@ -99,5 +98,4 @@ func TestWriter_Write(t *testing.T) {
 			},
 		}, reports)
 	})
-
 }

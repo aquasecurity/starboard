@@ -1,10 +1,10 @@
 package controller
 
 import (
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
-
 	"context"
 	"fmt"
+
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -361,7 +361,6 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 
 		return ctrl.Result{}, err
 	}
-
 }
 
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {

@@ -1,15 +1,15 @@
 package starboard
 
 import (
+	"context"
+	"strings"
+	"time"
+
 	. "github.com/aquasecurity/starboard/itest/matcher"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gstruct"
-
-	"context"
-	"strings"
-	"time"
 
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -31,12 +31,9 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var (
-	assertTimeout = 10 * time.Second
-)
+var assertTimeout = 10 * time.Second
 
 var _ = Describe("Starboard CLI", func() {
-
 	BeforeEach(func() {
 		err := cmd.Run(versionInfo, []string{
 			"starboard", "install",
@@ -46,9 +43,7 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command install", func() {
-
 		It("should install Starboard", func() {
-
 			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{
 				LabelSelector: "app.kubernetes.io/managed-by=starboard",
 			})
@@ -178,7 +173,6 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command version", func() {
-
 		It("should print the current version of the executable binary", func() {
 			out := NewBuffer()
 			err := cmd.Run(versionInfo, []string{
@@ -188,18 +182,15 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(out).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}"))
 		})
-
 	})
 
 	Describe("Command scan vulnerabilityreports", func() {
-
 		groupByContainerName := func(element interface{}) string {
 			return element.(v1alpha1.VulnerabilityReport).
 				Labels[starboard.LabelContainerName]
 		}
 
 		Context("when unmanaged Pod is specified as workload", func() {
-
 			var ctx context.Context
 			var pod *corev1.Pod
 
@@ -238,11 +229,9 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(context.TODO(), pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
-
 			var ctx context.Context
 			var pod *corev1.Pod
 
@@ -282,7 +271,6 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		// TODO Run pending specs with other tests used to validate each PR.
@@ -293,7 +281,6 @@ var _ = Describe("Starboard CLI", func() {
 		// workflow runs initiated from forked repositories. In other words, expressions like
 		// ${{ secrets.STARBOARD_TEST_REGISTRY_PASSWORD }} will evaluate to a blank string.
 		PContext("when unmanaged Pod with private image is specified as workload", func() {
-
 			var ctx context.Context
 			var imagePullSecret *corev1.Secret
 			var pod *corev1.Pod
@@ -351,11 +338,9 @@ var _ = Describe("Starboard CLI", func() {
 				err = kubeClient.Delete(ctx, imagePullSecret)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		PContext("when unmanaged Pod with private image and service account is specified as workload", func() {
-
 			var ctx context.Context
 			var imagePullSecret *corev1.Secret
 			var serviceAccount *corev1.ServiceAccount
@@ -426,11 +411,9 @@ var _ = Describe("Starboard CLI", func() {
 				err = kubeClient.Delete(ctx, imagePullSecret)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when ReplicaSet is specified as workload", func() {
-
 			var ctx context.Context
 			var rs *appsv1.ReplicaSet
 
@@ -491,11 +474,9 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(ctx, rs)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when ReplicationController is specified as workload", func() {
-
 			var ctx context.Context
 			var rc *corev1.ReplicationController
 
@@ -556,11 +537,9 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(ctx, rc)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when Deployment is specified as workload", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -613,7 +592,6 @@ var _ = Describe("Starboard CLI", func() {
 		})
 
 		Context("when Deployment with very long name is specified as workload", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -667,7 +645,6 @@ var _ = Describe("Starboard CLI", func() {
 		})
 
 		Context("when StatefulSet is specified as workload", func() {
-
 			var ctx context.Context
 			var sts *appsv1.StatefulSet
 
@@ -734,7 +711,6 @@ var _ = Describe("Starboard CLI", func() {
 		})
 
 		Context("when DaemonSet is specified as workload", func() {
-
 			var ctx context.Context
 			var ds *appsv1.DaemonSet
 
@@ -803,7 +779,6 @@ var _ = Describe("Starboard CLI", func() {
 	Describe("Command get vulnerabilityreports", func() {
 		Context("for deployment/nginx resource", func() {
 			When("vulnerabilities are associated with the deployment itself", func() {
-
 				var ctx context.Context
 				var deploy *appsv1.Deployment
 				var report *v1alpha1.VulnerabilityReport
@@ -1082,7 +1057,6 @@ var _ = Describe("Starboard CLI", func() {
 		})
 
 		Context("when unmanaged Pod is specified as workload", func() {
-
 			var ctx context.Context
 
 			BeforeEach(func() {
@@ -1108,11 +1082,9 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(ctx, object)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when unmanaged Pod with multiple containers is specified as workload", func() {
-
 			var ctx context.Context
 
 			BeforeEach(func() {
@@ -1138,11 +1110,9 @@ var _ = Describe("Starboard CLI", func() {
 				err := kubeClient.Delete(ctx, object)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("when CronJob is specified as workload", func() {
-
 			var ctx context.Context
 			BeforeEach(func() {
 				ctx = context.TODO()
@@ -1195,7 +1165,6 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command scan ciskubebenchreports", func() {
-
 		It("should create CISKubeBenchReports", func() {
 			err := cmd.Run(versionInfo, []string{
 				"starboard",
@@ -1242,7 +1211,6 @@ var _ = Describe("Starboard CLI", func() {
 	})
 
 	Describe("Command scan kubehunterreports", func() {
-
 		BeforeEach(func() {
 			var cm corev1.ConfigMap
 			err := kubeClient.Get(context.TODO(), types.NamespacedName{
@@ -1286,5 +1254,4 @@ var _ = Describe("Starboard CLI", func() {
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 	})
-
 })

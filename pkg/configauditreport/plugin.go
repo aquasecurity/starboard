@@ -13,7 +13,6 @@ import (
 // Plugin defines the interface between Starboard and Kubernetes workload
 // configuration checkers / linters / sanitizers.
 type Plugin interface {
-
 	// Init is a callback to initialize this plugin, e.g. ensure the default
 	// configuration.
 	Init(ctx starboard.PluginContext) error

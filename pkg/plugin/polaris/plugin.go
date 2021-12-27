@@ -284,18 +284,16 @@ func NewPlugin(clock ext.Clock) configauditreport.Plugin {
 	}
 }
 
-var (
-	supportedKinds = []kube.Kind{
-		kube.KindPod,
-		kube.KindDeployment,
-		kube.KindReplicaSet,
-		kube.KindReplicationController,
-		kube.KindStatefulSet,
-		kube.KindDaemonSet,
-		kube.KindCronJob,
-		kube.KindJob,
-	}
-)
+var supportedKinds = []kube.Kind{
+	kube.KindPod,
+	kube.KindDeployment,
+	kube.KindReplicaSet,
+	kube.KindReplicationController,
+	kube.KindStatefulSet,
+	kube.KindDaemonSet,
+	kube.KindCronJob,
+	kube.KindJob,
+}
 
 func (p *plugin) SupportedKinds() []kube.Kind {
 	return supportedKinds
@@ -454,7 +452,6 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 					Value: cr.Name,
 				},
 			})
-
 		}
 		checks = append(checks, containerChecks...)
 		containerNameToChecks[cr.Name] = containerChecks

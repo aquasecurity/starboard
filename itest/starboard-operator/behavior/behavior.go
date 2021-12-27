@@ -1,11 +1,11 @@
 package behavior
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"context"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
@@ -36,9 +36,7 @@ type Inputs struct {
 // of a vulnerability scanner with the given inputs.
 func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 	return func() {
-
 		Context("When unmanaged Pod is created", func() {
-
 			var ctx context.Context
 			var pod *corev1.Pod
 
@@ -62,11 +60,9 @@ func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 				err := inputs.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("When Deployment is created", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -98,7 +94,6 @@ func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 		})
 
 		Context("When Deployment is rolling updated", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -147,7 +142,6 @@ func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 		})
 
 		Context("When CronJob is created", func() {
-
 			var ctx context.Context
 			var cronJob *batchv1beta1.CronJob
 
@@ -212,9 +206,7 @@ func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 // of a configuration checker with the given inputs.
 func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 	return func() {
-
 		Context("When unmanaged Pod is created", func() {
-
 			var ctx context.Context
 			var pod *corev1.Pod
 
@@ -238,11 +230,9 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 				err := inputs.Delete(ctx, pod)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 
 		Context("When Deployment is created", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -274,7 +264,6 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 		})
 
 		Context("When Deployment is rolling updated", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -323,7 +312,6 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 		})
 
 		Context("When CronJob is created", func() {
-
 			var ctx context.Context
 			var cronJob *batchv1beta1.CronJob
 
@@ -373,7 +361,6 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 		})
 
 		Context("When ConfigAuditReport is deleted", func() {
-
 			var ctx context.Context
 			var deploy *appsv1.Deployment
 
@@ -460,7 +447,6 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 				err := inputs.Delete(ctx, svc)
 				Expect(err).ToNot(HaveOccurred())
 			})
-
 		})
 	}
 }
@@ -469,9 +455,7 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 // of a CIS Kubernetes Benchmark with the given inputs.
 func CISKubernetesBenchmarkBehavior(inputs *Inputs) func() {
 	return func() {
-
 		Context("When operator is started", func() {
-
 			It("Should create CISKubeBenchReports", func() {
 				var nodeList corev1.NodeList
 				err := inputs.List(context.Background(), &nodeList)
@@ -480,8 +464,6 @@ func CISKubernetesBenchmarkBehavior(inputs *Inputs) func() {
 					Eventually(inputs.HasCISKubeBenchReportOwnedBy(node), inputs.AssertTimeout).Should(BeTrue())
 				}
 			})
-
 		})
-
 	}
 }

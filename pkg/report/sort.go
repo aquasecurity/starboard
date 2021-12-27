@@ -65,13 +65,12 @@ func (ms *multiSorter) Less(i, j int) bool {
 	return ms.less[k](p, q)
 }
 
-var (
-	checkCompareFunc = []LessFunc{
-		func(r1, r2 *templates.CheckWithCount) bool {
-			return r1.AffectedWorkloads < r2.AffectedWorkloads
-		}, func(r1, r2 *templates.CheckWithCount) bool {
-			return r1.Severity > r2.Severity
-		}, func(r1, r2 *templates.CheckWithCount) bool {
-			return r1.ID > r2.ID
-		}}
-)
+var checkCompareFunc = []LessFunc{
+	func(r1, r2 *templates.CheckWithCount) bool {
+		return r1.AffectedWorkloads < r2.AffectedWorkloads
+	}, func(r1, r2 *templates.CheckWithCount) bool {
+		return r1.Severity > r2.Severity
+	}, func(r1, r2 *templates.CheckWithCount) bool {
+		return r1.ID > r2.ID
+	},
+}

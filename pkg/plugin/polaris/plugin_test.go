@@ -1,12 +1,12 @@
 package polaris_test
 
 import (
-	. "github.com/onsi/gomega"
-
 	"context"
 	"os"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -97,13 +97,11 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedRequirements, resourceRequirement, tc.name)
 			}
-
 		})
 	}
 }
 
 func TestPlugin_IsApplicable(t *testing.T) {
-
 	t.Run("Should always return true", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -124,7 +122,6 @@ func TestPlugin_IsApplicable(t *testing.T) {
 }
 
 func TestPlugin_Init(t *testing.T) {
-
 	t.Run("Should create the default config", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -221,7 +218,6 @@ func TestPlugin_Init(t *testing.T) {
 			},
 		}))
 	})
-
 }
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
@@ -335,7 +331,6 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			g.Expect(jobSpec).To(Equal(tc.expectedJobSpec))
 		})
 	}
-
 }
 
 func TestPlugin_GetContainerName(t *testing.T) {
@@ -419,7 +414,6 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 }
 
 func TestPlugin_ConfigHash(t *testing.T) {
-
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
 		return starboard.NewPluginContext().
 			WithName(string(starboard.Polaris)).

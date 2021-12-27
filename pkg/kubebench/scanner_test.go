@@ -155,7 +155,7 @@ func TestKubeBenchPlugin_ParseCISKubeBenchOutput(t *testing.T) {
 	config := starboard.ConfigData{
 		"kube-bench.imageRef": "aquasec/kube-bench:0.3.1",
 	}
-	var testCases = []struct {
+	testCases := []struct {
 		name string
 		in   string // input File
 		op   string // golden file

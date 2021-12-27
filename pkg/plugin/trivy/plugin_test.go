@@ -295,7 +295,6 @@ func TestConfig_GetMirrors(t *testing.T) {
 }
 
 func TestPlugin_Init(t *testing.T) {
-
 	t.Run("Should create the default config", func(t *testing.T) {
 		client := fake.NewClientBuilder().WithObjects().Build()
 
@@ -398,7 +397,6 @@ func TestPlugin_Init(t *testing.T) {
 }
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
-
 	testCases := []struct {
 		name string
 
@@ -2037,7 +2035,6 @@ CVE-2019-1543`,
 			assert.Equal(t, tc.expectedJobSpec, jobSpec)
 		})
 	}
-
 }
 
 var (
@@ -2203,7 +2200,6 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestGetScoreFromCVSS(t *testing.T) {

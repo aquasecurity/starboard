@@ -13,8 +13,10 @@ const (
 	userAgent      = "StarboardSecurityOperator"
 )
 
-var ErrNotFound = errors.New("not found")
-var ErrUnauthorized = errors.New("unauthorized")
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrUnauthorized = errors.New("unauthorized")
+)
 
 type client struct {
 	baseURL       string
@@ -150,5 +152,4 @@ func (r *Registries) List() ([]RegistryResponse, error) {
 	default:
 		return nil, fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
-
 }

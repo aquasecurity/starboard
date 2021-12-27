@@ -13,7 +13,8 @@ func TestClient(t *testing.T) {
 	}
 
 	c := NewClient("http://aqua.domain", Authorization{
-		Basic: &UsernameAndPassword{"administrator", "Password12345"}})
+		Basic: &UsernameAndPassword{"administrator", "Password12345"},
+	})
 
 	t.Run("Should list registries", func(t *testing.T) {
 		registries, err := c.Registries().List()
@@ -43,5 +44,4 @@ func TestClient(t *testing.T) {
 			t.Logf("vulnerability: %+v", vulnerability)
 		}
 	})
-
 }

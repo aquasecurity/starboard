@@ -245,13 +245,11 @@ func (b *DeploymentBuilder) Build() *appsv1.Deployment {
 	}
 }
 
-var (
-	trivyScanner = v1alpha1.Scanner{
-		Name:    "Trivy",
-		Vendor:  "Aqua Security",
-		Version: "0.16.0",
-	}
-)
+var trivyScanner = v1alpha1.Scanner{
+	Name:    "Trivy",
+	Vendor:  "Aqua Security",
+	Version: "0.16.0",
+}
 
 type VulnerabilityReportBuilder struct {
 	name      string

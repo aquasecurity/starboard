@@ -174,26 +174,24 @@ func NewPlugin(idGenerator ext.IDGenerator, clock ext.Clock) configauditreport.P
 	}
 }
 
-var (
-	supportedKinds = []kube.Kind{
-		kube.KindPod,
-		kube.KindDeployment,
-		kube.KindReplicaSet,
-		kube.KindReplicationController,
-		kube.KindStatefulSet,
-		kube.KindDaemonSet,
-		kube.KindCronJob,
-		kube.KindJob,
-		kube.KindService,
-		kube.KindConfigMap,
-		kube.KindRole,
-		kube.KindRoleBinding,
+var supportedKinds = []kube.Kind{
+	kube.KindPod,
+	kube.KindDeployment,
+	kube.KindReplicaSet,
+	kube.KindReplicationController,
+	kube.KindStatefulSet,
+	kube.KindDaemonSet,
+	kube.KindCronJob,
+	kube.KindJob,
+	kube.KindService,
+	kube.KindConfigMap,
+	kube.KindRole,
+	kube.KindRoleBinding,
 
-		kube.KindClusterRole,
-		kube.KindClusterRoleBindings,
-		kube.KindCustomResourceDefinition,
-	}
-)
+	kube.KindClusterRole,
+	kube.KindClusterRoleBindings,
+	kube.KindCustomResourceDefinition,
+}
 
 func (p *plugin) SupportedKinds() []kube.Kind {
 	return supportedKinds

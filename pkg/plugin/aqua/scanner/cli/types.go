@@ -78,5 +78,4 @@ type ScanOptions struct {
 	UseCVSS3                 bool `json:"use_cvss3"`
 }
 
-type Warning struct {
-}
+type Warning struct{}

@@ -255,7 +255,7 @@ func (c *configManager) Read(ctx context.Context) (ConfigData, error) {
 		return nil, err
 	}
 
-	var data = make(map[string]string)
+	data := make(map[string]string)
 
 	for k, v := range cm.Data {
 		data[k] = v
@@ -299,5 +299,8 @@ func LinuxNodeAffinity() *corev1.Affinity {
 							},
 						},
 					},
-				}}}}
+				},
+			},
+		},
+	}
 }

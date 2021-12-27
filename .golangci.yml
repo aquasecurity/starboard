@@ -3,6 +3,8 @@ run:
 linters:
   enable:
     - errorlint
+    - gofmt
+    - gofumpt
     - govet
   disable:
     - gosimple

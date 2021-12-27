@@ -128,13 +128,15 @@ func TestConfigData_GetKubeHunterQuick(t *testing.T) {
 			name:          "Should return false when parameter is not set",
 			configData:    starboard.ConfigData{},
 			expectedQuick: false,
-		}, {
+		},
+		{
 			name: "Should return error when quick is set to something other than \"false\" or \"true\" in config data",
 			configData: starboard.ConfigData{
 				"kube-hunter.quick": "not-a-boolean",
 			},
 			expectedError: "property kube-hunter.quick must be either \"false\" or \"true\", got \"not-a-boolean\"",
-		}, {
+		},
+		{
 			name: "Should return false when quick is set to \"false\" in config data",
 			configData: starboard.ConfigData{
 				"kube-hunter.quick": "false",
@@ -243,7 +245,6 @@ func TestConfigManager_Read(t *testing.T) {
 }
 
 func TestConfigManager_EnsureDefault(t *testing.T) {
-
 	t.Run("Should create ConfigMaps and Secret", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
 
@@ -327,11 +328,9 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})
 		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-polaris-config" not found`))
 	})
-
 }
 
 func TestConfigManager_Delete(t *testing.T) {
-
 	t.Run("Should not return error when ConfigMap and secret do not exist", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
 		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
@@ -399,7 +398,8 @@ func TestGetScanJobTolerations(t *testing.T) {
 		{
 			name: "one valid toleration",
 			config: starboard.ConfigData{
-				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`},
+				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`,
+			},
 			expected: []corev1.Toleration{{
 				Key:      "key1",
 				Operator: "Equal",
@@ -411,7 +411,8 @@ func TestGetScanJobTolerations(t *testing.T) {
 			name: "multiple valid tolerations",
 			config: starboard.ConfigData{
 				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"},
-					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`},
+					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`,
+			},
 			expected: []corev1.Toleration{
 				{
 					Key:      "key1",

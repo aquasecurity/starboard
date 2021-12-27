@@ -1,11 +1,11 @@
 package configauditreport_test
 
 import (
-	. "github.com/onsi/gomega"
-
 	"io"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
@@ -22,7 +22,6 @@ import (
 )
 
 func TestReportBuilder(t *testing.T) {
-
 	t.Run("Should build report for namespaced resource", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
@@ -148,7 +147,6 @@ func (p *testPlugin) ConfigHash(_ starboard.PluginContext, _ kube.Kind) (string,
 }
 
 func TestScanJobBuilder(t *testing.T) {
-
 	t.Run("Should build scan job for resource with simple name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		job, _, err := configauditreport.NewScanJobBuilder().

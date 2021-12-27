@@ -477,13 +477,11 @@ func TestGetPodSpec(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedPodSpec, podSpec)
 			}
-
 		})
 	}
 }
 
 func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
-
 	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -595,7 +593,6 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "nginx-549f5fcb58", name)
 	})
-
 }
 
 func TestPartialObjectFromObjectMetadata(t *testing.T) {
@@ -717,7 +714,6 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestObjectResolver_ReportOwner(t *testing.T) {

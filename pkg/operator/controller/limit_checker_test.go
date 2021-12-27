@@ -1,10 +1,10 @@
 package controller_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"context"
 
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
@@ -15,16 +15,13 @@ import (
 )
 
 var _ = Describe("LimitChecker", func() {
-
 	config := etc.Config{
 		Namespace:               "starboard-operator",
 		ConcurrentScanJobsLimit: 2,
 	}
 
 	Context("When there are more jobs than limit", func() {
-
 		It("Should return true", func() {
-
 			client := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "logs-exporter",
@@ -59,11 +56,9 @@ var _ = Describe("LimitChecker", func() {
 			Expect(limitExceeded).To(BeTrue())
 			Expect(jobsCount).To(Equal(3))
 		})
-
 	})
 
 	Context("When there are less jobs than limit", func() {
-
 		It("Should return false", func() {
 			client := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
@@ -85,6 +80,5 @@ var _ = Describe("LimitChecker", func() {
 			Expect(limitExceeded).To(BeFalse())
 			Expect(jobsCount).To(Equal(1))
 		})
-
 	})
 })

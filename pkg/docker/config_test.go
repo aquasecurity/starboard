@@ -132,7 +132,6 @@ func TestConfig_Read(t *testing.T) {
 				assert.Equal(t, tc.expectedAuth, dockerConfig.Auths)
 			}
 		})
-
 	}
 }
 

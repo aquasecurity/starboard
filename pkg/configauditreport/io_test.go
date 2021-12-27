@@ -16,7 +16,6 @@ import (
 )
 
 func TestReadWriter(t *testing.T) {
-
 	kubernetesScheme := starboard.NewScheme()
 
 	t.Run("Should create ConfigAuditReport", func(t *testing.T) {

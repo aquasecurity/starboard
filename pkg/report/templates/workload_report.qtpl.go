@@ -150,7 +150,7 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                             <ul>
                               `)
 //line pkg/report/templates/workload_report.qtpl:61
-		for container, _ := range p.VulnsReports {
+		for container := range p.VulnsReports {
 //line pkg/report/templates/workload_report.qtpl:61
 			qw422016.N().S(`
                                 <li><a href="#vulns_container_`)
@@ -185,7 +185,7 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                               <li><a href="#ca_pod_checks">Pod Checks</a></li>
                                 `)
 //line pkg/report/templates/workload_report.qtpl:72
-		for container, _ := range p.ConfigAuditReport.Report.ContainerChecks {
+		for container := range p.ConfigAuditReport.Report.ContainerChecks {
 //line pkg/report/templates/workload_report.qtpl:72
 			qw422016.N().S(`
                                   <li><a href="#ca_container_`)

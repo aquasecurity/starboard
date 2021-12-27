@@ -71,7 +71,6 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 // Run is the entry point of the Starboard CLI. It runs the specified
 // command based on the specified args.
 func Run(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
-
 	initFlags()
 
 	return NewRootCmd(version, args, outWriter, errWriter).Execute()

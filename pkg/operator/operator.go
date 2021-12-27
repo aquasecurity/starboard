@@ -21,9 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-var (
-	setupLog = log.Log.WithName("operator")
-)
+var setupLog = log.Log.WithName("operator")
 
 // Start starts all registered reconcilers and blocks until the context is cancelled.
 // Returns an error if there is an error starting any reconciler.

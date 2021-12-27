@@ -13,7 +13,7 @@ import (
 type BasicAuth string
 
 func NewBasicAuth(username, password string) BasicAuth {
-	var v = new(BasicAuth)
+	v := new(BasicAuth)
 	v.Encode(username, password)
 	return *v
 }

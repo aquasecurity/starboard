@@ -1,14 +1,13 @@
 package conftest
 
 import (
+	"context"
 	_ "embed"
+	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"context"
-	"testing"
-	"time"
 
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/itest/starboard-operator/behavior"
@@ -25,13 +24,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-var (
-	buildInfo = starboard.BuildInfo{
-		Version: "dev",
-		Commit:  "none",
-		Date:    "unknown",
-	}
-)
+var buildInfo = starboard.BuildInfo{
+	Version: "dev",
+	Commit:  "none",
+	Date:    "unknown",
+}
 
 var (
 	scheme     *runtime.Scheme
@@ -40,9 +37,7 @@ var (
 	stopFunc   context.CancelFunc
 )
 
-var (
-	inputs behavior.Inputs
-)
+var inputs behavior.Inputs
 
 var (
 	starboardCM *corev1.ConfigMap
@@ -130,7 +125,6 @@ var _ = BeforeSuite(func() {
 		err = operator.Start(startCtx, buildInfo, operatorConfig)
 		Expect(err).ToNot(HaveOccurred())
 	}()
-
 })
 
 var _ = AfterSuite(func() {

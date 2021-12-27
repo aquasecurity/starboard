@@ -1,12 +1,12 @@
 package starboard
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"context"
 	"os"
 	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -76,9 +76,7 @@ var (
 	}
 )
 
-var (
-	customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
-)
+var customResourceDefinitions apiextensions.CustomResourceDefinitionInterface
 
 // TestStarboardCLI is a spec that describes the behavior of Starboard CLI.
 func TestStarboardCLI(t *testing.T) {
