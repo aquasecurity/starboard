@@ -2,6 +2,7 @@ run:
   timeout: 5m
 linters:
   enable:
+    - errcheck
     - errorlint
     - gci
     - gofmt
