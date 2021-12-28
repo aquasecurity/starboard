@@ -4,6 +4,7 @@ linters:
   enable:
     - asciicheck
     - depguard
+    - dogsled
     - errcheck
     - errorlint
     - gci
