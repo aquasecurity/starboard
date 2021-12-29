@@ -35,6 +35,8 @@ operator:
 
   # vulnerabilityScannerEnabled the flag to enable vulnerability scanner
   vulnerabilityScannerEnabled: true
+  # vulnerabilityScannerReportTTL the flag to set how long a vulnerability report should exist. "" means that the vulnerabilityScannerReportTTL feature is disabled
+  vulnerabilityScannerReportTTL: ""
   # configAuditScannerEnabled the flag to enable configuration audit scanner
   configAuditScannerEnabled: true
   # kubernetesBenchmarkEnabled the flag to enable CIS Kubernetes Benchmark scanner

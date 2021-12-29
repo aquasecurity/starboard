@@ -145,6 +145,13 @@ No resources found in default namespace.
 !!! Tip
     Use `vuln` and `configaudit` as short names for `vulnerabilityreports` and `configauditreports` resources.
 
+To be sure that your vulnerabilityreports is is up to date with the latest CVE:s you can define
+how long your vulnerabilityreports should be in the cluster before automatically getting deleted.
+For example setting `OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL=24h` would delete the report after 24 hours.
+When the vulnerabilityreports gets deleted starboard will automatically create a new job and scan the images again.
+Assuming that your image scan solution have updated it's DB the new vulnerabilityreports that gets created will contain the latest CVE:s.
+This feature is disabled by default.
+
 ## Infrastructure Scanning
 
 The operator discovers also Kubernetes nodes and runs CIS Kubernetes Benchmark checks on each of them. The results are
