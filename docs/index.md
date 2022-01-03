@@ -47,7 +47,7 @@ Starboard can be used:
 [Custom Resource Definitions]: ./crds/index.md
 [cli]: cli/index.md
 [Kubernetes operator]: operator/index.md
-[Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard@{{ var.tag }}
+[Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard@{{ git.tag }}
 [Octant Plugin]: ./integrations/octant.md
 [Lens Extension]: integrations/lens.md
 [kubectl]: https://kubernetes.io/docs/reference/kubectl/

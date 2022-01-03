@@ -39,6 +39,7 @@ var (
 			Name: "starboard-itest",
 		},
 	}
+	privateRegistryConfig = &helper.PrivateRegistryConfig{}
 
 	conftestConfigMap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -93,9 +94,12 @@ var _ = BeforeSuite(func() {
 
 	klog.InitFlags(nil)
 
-	if logLevel, ok := os.LookupEnv("STARBOARD_CLI_LOG_LEVEL"); ok {
+	if logLevel, ok := os.LookupEnv("STARBOARD_TEST_CLI_LOG_LEVEL"); ok {
 		starboardCLILogLevel = logLevel
 	}
+
+	err = privateRegistryConfig.Parse()
+	Expect(err).ToNot(HaveOccurred())
 
 	config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	Expect(err).ToNot(HaveOccurred())

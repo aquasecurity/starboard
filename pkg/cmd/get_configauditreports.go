@@ -74,11 +74,11 @@ NAME is the name of a particular Kubernetes resource.
 				WithDefaultOutput(format).
 				ToPrinter()
 			if err != nil {
-				return fmt.Errorf("create printer: %v", err)
+				return fmt.Errorf("create printer: %w", err)
 			}
 
 			if err := printer.PrintObj(report, out); err != nil {
-				return fmt.Errorf("print vulnerability reports: %v", err)
+				return fmt.Errorf("print vulnerability reports: %w", err)
 			}
 
 			return nil

@@ -1,3 +1,9 @@
+---
+# This workflow is triggered whenever we release a new version of Starboard
+# by creating an annotated Git tag and pushing it to the upstream Git repository.
+#
+#    git tag -a v0.0.1 -m 'Release v0.0.1'
+#    git push upstream v0.0.1
 name: Release
 on:
   push:
@@ -62,7 +68,7 @@ jobs:
           make itests-starboard
         env:
           KUBECONFIG: /home/runner/.kube/config
-          STARBOARD_CLI_LOG_LEVEL: "0"
+          STARBOARD_TEST_CLI_LOG_LEVEL: "0"
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
     needs:
@@ -183,7 +189,7 @@ jobs:
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v0.183.0
+          version: v1.1.0
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

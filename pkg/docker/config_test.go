@@ -38,27 +38,52 @@ func TestConfig_Read(t *testing.T) {
 			expectedError: errors.New("unexpected end of JSON input"),
 		},
 		{
-			name: "Should return server credentials with encoded username and password",
+			name: "Should return server credentials stored as username and password encoded in the auth property",
 			givenJSON: `{
-						"auths": {
-							"https://index.docker.io/v1/": {
-							"auth": "ZG9ja2VyOmh1Yg=="
-							},
-							"harbor.domain": {
-							"auth": "YWRtaW46SGFyYm9yMTIzNDU="
+							"auths": {
+								"https://index.docker.io/v1/": {
+									"auth": "ZG9ja2VyOmh1Yg=="
+								},
+								"harbor.domain": {
+									"auth": "YWRtaW46SGFyYm9yMTIzNDU="
+								}
 							}
-						}
 						}`,
 			expectedAuth: map[string]docker.Auth{
+				"https://index.docker.io/v1/": {
+					Auth:     "ZG9ja2VyOmh1Yg==",
+					Username: "docker",
+					Password: "hub",
+				},
 				"harbor.domain": {
 					Auth:     "YWRtaW46SGFyYm9yMTIzNDU=",
 					Username: "admin",
 					Password: "Harbor12345",
 				},
+			},
+		},
+		{
+			name: "Should return server credentials stored in username and password properties",
+			givenJSON: `{
+							"auths": {
+								"https://index.docker.io/v1/": {
+									"auth": "ZG9ja2VyOmh1Yg=="
+								},
+								"harbor.domain": {
+									"username": "admin",
+									"password": "Harbor12345"
+								}
+							}
+						}`,
+			expectedAuth: map[string]docker.Auth{
 				"https://index.docker.io/v1/": {
 					Auth:     "ZG9ja2VyOmh1Yg==",
 					Username: "docker",
 					Password: "hub",
+				},
+				"harbor.domain": {
+					Username: "admin",
+					Password: "Harbor12345",
 				},
 			},
 		},
