@@ -110,6 +110,12 @@ trivy:
   #
   ignoreUnfixed: "false"
 
+  # ignoreFile can be used to tell Trivy to ignore vulnerabilities by ID (one per line)
+  #
+  # ignoreFile: |
+  #   CVE-1970-0001
+  #   CVE-1970-0002
+
   # resources resource requests and limits
   resources:
     requests:
