@@ -50,6 +50,9 @@ data:
   {{- if .noProxy }}
   trivy.noProxy: {{ .noProxy | quote }}
   {{- end }}
+  {{- range $key, $registry := .nonSslRegistries }}
+  trivy.nonSslRegistry.{{ $key }}: {{ $registry | quote }}
+  {{- end }}
   trivy.severity: {{ .severity | quote }}
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
