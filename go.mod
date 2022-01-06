@@ -3,7 +3,7 @@ module github.com/aquasecurity/starboard
 go 1.16
 
 require (
-	github.com/caarlos0/env/v6 v6.8.0
+	github.com/caarlos0/env/v6 v6.9.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-logr/logr v0.4.0
 	github.com/google/go-containerregistry v0.7.0
@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/go-version v1.3.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/quicktemplate v1.7.0

@@ -57,6 +57,10 @@ data:
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
   {{- end }}
+  {{- with .ignoreFile }}
+  trivy.ignoreFile: |
+{{- . | trim | nindent 4 }}
+  {{- end }}
   {{- if eq .mode "ClientServer" }}
   trivy.serverURL: {{ required ".Values.trivy.serverURL is required" .serverURL | quote }}
   {{- end }}
