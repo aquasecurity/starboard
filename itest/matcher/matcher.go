@@ -109,7 +109,7 @@ func (m *vulnerabilityReportMatcher) objectToLabelsAsMatchKeys(obj client.Object
 		kind = gvk.Kind
 	}
 
-	labels := kube.PartialObjectToLabels(kube.Object{
+	labels := kube.ObjectRefToLabels(kube.ObjectRef{
 		Kind:      kube.Kind(kind),
 		Name:      obj.GetName(),
 		Namespace: obj.GetNamespace(),

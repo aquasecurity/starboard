@@ -222,7 +222,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
 					Namespace: pod.Namespace,
@@ -266,7 +266,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
 					Namespace: pod.Namespace,
@@ -476,7 +476,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      rs.Name,
 					Namespace: rs.Namespace,
@@ -541,7 +541,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicationController,
 					Name:      rc.Name,
 					Namespace: rc.Namespace,
@@ -595,7 +595,7 @@ var _ = Describe("Starboard CLI", func() {
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
 					Namespace: revision.Namespace,
@@ -649,7 +649,7 @@ var _ = Describe("Starboard CLI", func() {
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
 					Namespace: revision.Namespace,
@@ -716,7 +716,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindStatefulSet,
 					Name:      sts.Name,
 					Namespace: sts.Namespace,
@@ -782,7 +782,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.Object{
+				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindDaemonSet,
 					Name:      ds.Name,
 					Namespace: ds.Namespace,

@@ -133,10 +133,10 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
 
-		resourcePartial := kube.GetPartialObjectFromKindAndNamespacedName(resourceKind, req.NamespacedName)
+		resourcePartial := kube.ObjectRefFromKindAndNamespacedName(resourceKind, req.NamespacedName)
 
 		log.V(1).Info("Getting resource from cache")
-		resource, err := r.GetObjectFromPartialObject(ctx, resourcePartial)
+		resource, err := r.ObjectFromObjectRef(ctx, resourcePartial)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.V(1).Info("Ignoring cached resource that must have been deleted")
@@ -286,7 +286,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 	}
 }
 
-func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
+func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string) (bool, error) {
 	if kube.IsClusterScopedKind(string(owner.Kind)) {
 		return r.hasClusterReport(ctx, owner, podSpecHash, pluginConfigHash)
 	}
@@ -302,7 +302,7 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 	return false, nil
 }
 
-func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.Object, podSpecHash string, pluginConfigHash string) (bool, error) {
+func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string) (bool, error) {
 	report, err := r.ReadWriter.FindClusterReportByOwner(ctx, owner)
 	if err != nil {
 		return false, err
@@ -367,18 +367,18 @@ func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
-	ownerRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
+	ownerRef, err := kube.ObjectRefFromObjectMeta(job.ObjectMeta)
 	if err != nil {
 		return fmt.Errorf("getting owner ref from scan job metadata: %w", err)
 	}
 
-	owner, err := r.GetObjectFromPartialObject(ctx, ownerRef)
+	owner, err := r.ObjectFromObjectRef(ctx, ownerRef)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.V(1).Info("Report owner must have been deleted", "owner", owner)
 			return r.deleteJob(ctx, job)
 		}
-		return fmt.Errorf("getting object from partial object: %w", err)
+		return fmt.Errorf("getting object from object ref: %w", err)
 	}
 
 	resourceSpecHash, ok := job.Labels[starboard.LabelResourceSpecHash]

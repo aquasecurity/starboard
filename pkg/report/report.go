@@ -8,16 +8,16 @@ import (
 )
 
 type WorkloadReporter interface {
-	RetrieveData(workload kube.Object) (templates.WorkloadReport, error)
-	Generate(workload kube.Object, out io.Writer) error
+	RetrieveData(workload kube.ObjectRef) (templates.WorkloadReport, error)
+	Generate(workload kube.ObjectRef, out io.Writer) error
 }
 
 type NamespaceReporter interface {
-	RetrieveData(namespace kube.Object) (templates.NamespaceReport, error)
-	Generate(namespace kube.Object, out io.Writer) error
+	RetrieveData(namespace kube.ObjectRef) (templates.NamespaceReport, error)
+	Generate(namespace kube.ObjectRef, out io.Writer) error
 }
 
 type NodeReporter interface {
-	RetrieveData(node kube.Object) (templates.NodeReport, error)
-	Generate(node kube.Object, out io.Writer) error
+	RetrieveData(node kube.ObjectRef) (templates.NodeReport, error)
+	Generate(node kube.ObjectRef, out io.Writer) error
 }

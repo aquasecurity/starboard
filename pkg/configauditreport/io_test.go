@@ -167,7 +167,7 @@ func TestReadWriter(t *testing.T) {
 			}).Build()
 
 		readWriter := configauditreport.NewReadWriter(client)
-		found, err := readWriter.FindReportByOwner(context.TODO(), kube.Object{
+		found, err := readWriter.FindReportByOwner(context.TODO(), kube.ObjectRef{
 			Kind:      kube.KindDeployment,
 			Name:      "my-deploy",
 			Namespace: "my-namespace",
@@ -223,7 +223,7 @@ func TestReadWriter(t *testing.T) {
 			}).Build()
 
 		readWriter := configauditreport.NewReadWriter(client)
-		found, err := readWriter.FindReportByOwner(context.TODO(), kube.Object{
+		found, err := readWriter.FindReportByOwner(context.TODO(), kube.ObjectRef{
 			Kind:      kube.KindRole,
 			Name:      "system:controller:token-cleaner",
 			Namespace: "kube-system",
@@ -392,7 +392,7 @@ func TestReadWriter(t *testing.T) {
 			Build()
 
 		readWriter := configauditreport.NewReadWriter(client)
-		found, err := readWriter.FindClusterReportByOwner(context.TODO(), kube.Object{
+		found, err := readWriter.FindClusterReportByOwner(context.TODO(), kube.ObjectRef{
 			Kind: "ClusterRole",
 			Name: "editor",
 		})

@@ -45,11 +45,11 @@ func NewScanner(
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, partial kube.Object) (*ReportBuilder, error) {
+func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuilder, error) {
 	if !s.supportsKind(partial.Kind) {
 		return nil, fmt.Errorf("kind %s is not supported by %s plugin", partial.Kind, s.pluginContext.GetName())
 	}
-	obj, err := s.objectResolver.GetObjectFromPartialObject(ctx, partial)
+	obj, err := s.objectResolver.ObjectFromObjectRef(ctx, partial)
 	if err != nil {
 		return nil, err
 	}

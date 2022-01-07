@@ -444,7 +444,7 @@ func (h *Helper) GetActiveReplicaSetForDeployment(namespace, name string) (*apps
 
 func (h *Helper) HasCISKubeBenchReportOwnedBy(node corev1.Node) func() (bool, error) {
 	return func() (bool, error) {
-		report, err := h.kubeBenchReportReader.FindByOwner(context.Background(), kube.Object{Kind: kube.KindNode, Name: node.Name})
+		report, err := h.kubeBenchReportReader.FindByOwner(context.Background(), kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
 		if err != nil {
 			return false, err
 		}
