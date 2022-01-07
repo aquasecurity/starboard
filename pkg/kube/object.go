@@ -57,9 +57,10 @@ const (
 	KindRole                  Kind = "Role"
 	KindRoleBinding           Kind = "RoleBinding"
 
-	KindClusterRole              Kind = "ClusterRole"
-	KindClusterRoleBindings      Kind = "ClusterRoleBinding"
-	KindCustomResourceDefinition Kind = "CustomResourceDefinition"
+	KindClusterRole              Kind   = "ClusterRole"
+	KindClusterRoleBindings      Kind   = "ClusterRoleBinding"
+	KindCustomResourceDefinition Kind   = "CustomResourceDefinition"
+	deploymentAnnotation         string = "deployment.kubernetes.io/revision"
 )
 
 // IsBuiltInWorkload returns true if the specified v1.OwnerReference
@@ -487,4 +488,22 @@ func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object Object) 
 		return "", fmt.Errorf("pod %q is controlled by a %q, want replicaset", object.Name, controller.Kind)
 	}
 	return controller.Name, nil
+}
+
+func (o *ObjectResolver) IsActiveReplicaSet(ctx context.Context, workloadObj client.Object, controller *metav1.OwnerReference) (bool, error) {
+	if controller != nil && controller.Kind == string(KindDeployment) {
+		deploymentObject := &appsv1.Deployment{}
+
+		err := o.Client.Get(ctx, client.ObjectKey{
+			Namespace: workloadObj.GetNamespace(),
+			Name:      controller.Name,
+		}, deploymentObject)
+		if err != nil {
+			return false, err
+		}
+		deploymentRevisionAnnotation := deploymentObject.GetAnnotations()
+		replicasetRevisionAnnotation := workloadObj.GetAnnotations()
+		return replicasetRevisionAnnotation[deploymentAnnotation] == deploymentRevisionAnnotation[deploymentAnnotation], nil
+	}
+	return true, nil
 }
