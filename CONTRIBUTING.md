@@ -69,7 +69,7 @@ These guidelines will help you get started with the Starboard project.
 ## Build Binaries
 
 | Binary                   | Image                                          | Description                                                   |
-| ------------------------ | ---------------------------------------------- |  ------------------------------------------------------------ |
+| ------------------------ | ---------------------------------------------- | ------------------------------------------------------------- |
 | `starboard`              | `docker.io/aquasec/starboard:dev`              | Starboard command-line interface                              |
 | `starboard-operator`     | `docker.io/aquasec/starboard-operator:dev`     | Starboard Operator                                            |
 | `starboard-scanner-aqua` | `docker.io/aquasec/starboard-scanner-aqua:dev` | Starboard plugin to integrate with Aqua vulnerability scanner |
@@ -237,6 +237,7 @@ basic development workflow. For other install modes see [Operator Multitenancy w
      OPERATOR_LOG_DEV_MODE=true \
      OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED=true \
      OPERATOR_VULNERABILITY_SCANNER_ENABLED=true \
+     OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS=false \
      OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED=true \
      OPERATOR_BATCH_DELETE_LIMIT=3 \
      OPERATOR_BATCH_DELETE_DELAY="30s" \

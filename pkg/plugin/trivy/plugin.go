@@ -31,6 +31,7 @@ const (
 	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
 	keyTrivyIgnoreFile             = "trivy.ignoreFile"
 	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
+	keyTrivyNonSslRegistryPrefix   = "trivy.nonSslRegistry."
 	keyTrivyMirrorPrefix           = "trivy.registry.mirror."
 	keyTrivyHTTPProxy              = "trivy.httpProxy"
 	keyTrivyHTTPSProxy             = "trivy.httpsProxy"
@@ -104,6 +105,17 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	}
 
 	return insecureRegistries
+}
+
+func (c Config) GetNonSslRegistries() map[string]bool {
+	nonSslRegistries := make(map[string]bool)
+	for key, val := range c.Data {
+		if strings.HasPrefix(key, keyTrivyNonSslRegistryPrefix) {
+			nonSslRegistries[val] = true
+		}
+	}
+
+	return nonSslRegistries
 }
 
 func (c Config) GetMirrors() map[string]string {
@@ -513,6 +525,11 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			return corev1.PodSpec{}, nil, err
 		}
 
+		env, err = p.appendTrivyNonSslEnv(config, c.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		resourceRequirements, err := config.GetResourceRequirements()
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
@@ -755,6 +772,11 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			return corev1.PodSpec{}, nil, err
 		}
 
+		env, err = p.appendTrivyNonSslEnv(config, container.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
 		if config.IgnoreFileExists() {
 			volumes = []corev1.Volume{
 				{
@@ -842,6 +864,23 @@ func (p *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev
 	if insecureRegistries[ref.Context().RegistryStr()] {
 		env = append(env, corev1.EnvVar{
 			Name:  "TRIVY_INSECURE",
+			Value: "true",
+		})
+	}
+
+	return env, nil
+}
+
+func (p *plugin) appendTrivyNonSslEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+	ref, err := name.ParseReference(image)
+	if err != nil {
+		return nil, err
+	}
+
+	nonSslRegistries := config.GetNonSslRegistries()
+	if nonSslRegistries[ref.Context().RegistryStr()] {
+		env = append(env, corev1.EnvVar{
+			Name:  "TRIVY_NON_SSL",
 			Value: "true",
 		})
 	}

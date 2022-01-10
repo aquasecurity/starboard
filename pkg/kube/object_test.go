@@ -957,3 +957,184 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		})
 	}
 }
+
+func TestObjectResolver_IsActiveReplicaSet(t *testing.T) {
+	nginxDeploy := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx",
+			Labels: map[string]string{
+				"app": "nginx",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/revision": "1",
+			},
+			UID: "734c1370-2281-4946-9b5f-940b33f3e4b8",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: pointer.Int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "nginx",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: corev1.NamespaceDefault,
+					Name:      "nginx",
+					Labels: map[string]string{
+						"app": "nginx",
+					},
+					Annotations: map[string]string{
+						"deployment.kubernetes.io/revision": "1",
+					},
+				},
+			},
+		},
+	}
+	nginxReplicaSet := &appsv1.ReplicaSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "ReplicaSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx-6d4cf56db6",
+			Labels: map[string]string{
+				"app":               "nginx",
+				"pod-template-hash": "6d4cf56db6",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/desired-replicas": "1",
+				"deployment.kubernetes.io/max-replicas":     "4",
+				"deployment.kubernetes.io/revision":         "1",
+			},
+			UID: "ecfff877-784c-4f05-8b70-abe441ca1976",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "apps/v1",
+					Kind:               "Deployment",
+					Name:               "nginx",
+					UID:                "734c1370-2281-4946-9b5f-940b33f3e4b8",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
+				},
+			},
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Replicas: pointer.Int32(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "6d4cf56db6",
+				},
+			},
+		},
+	}
+	notActiveNginxReplicaSet := &appsv1.ReplicaSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "ReplicaSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx-f88799b98",
+			Labels: map[string]string{
+				"app":               "nginx",
+				"pod-template-hash": "f88799b98",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/desired-replicas": "1",
+				"deployment.kubernetes.io/max-replicas":     "4",
+				"deployment.kubernetes.io/revision":         "2",
+			},
+			UID: "6fd87db4-d557-4b84-92b7-653c3f4e5c7d",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "apps/v1",
+					Kind:               "Deployment",
+					Name:               "nginx",
+					UID:                "734c1370-2281-4946-9b5f-940b33f3e4b8",
+					Controller:         pointer.BoolPtr(true),
+					BlockOwnerDeletion: pointer.BoolPtr(true),
+				},
+			},
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Replicas: pointer.Int32(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "f88799b98",
+				},
+			},
+		},
+	}
+	standAloneNginxReplicaSet := &appsv1.ReplicaSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "ReplicaSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: corev1.NamespaceDefault,
+			Name:      "nginx-d54df7dc7",
+			Labels: map[string]string{
+				"app":               "nginx",
+				"pod-template-hash": "d54df7dc7",
+			},
+			Annotations: map[string]string{
+				"deployment.kubernetes.io/desired-replicas": "1",
+				"deployment.kubernetes.io/max-replicas":     "4",
+			},
+			UID: "0eed5ccf-4518-4ae7-933e-cafded6cf356",
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Replicas: pointer.Int32(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":               "nginx",
+					"pod-template-hash": "d54df7dc7",
+				},
+			},
+		},
+	}
+	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+		nginxDeploy,
+		nginxReplicaSet,
+		notActiveNginxReplicaSet,
+	).Build()
+	testCases := []struct {
+		name     string
+		resource *appsv1.ReplicaSet
+		result   bool
+	}{
+		{
+			name:     "activeReplicaset",
+			resource: nginxReplicaSet,
+			result:   true,
+		},
+		{
+			name:     "noneActiveReplicaset",
+			resource: notActiveNginxReplicaSet,
+			result:   false,
+		},
+		{
+			name:     "standAloneReplicaset",
+			resource: standAloneNginxReplicaSet,
+			result:   true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			or := kube.ObjectResolver{Client: testClient}
+			controller := metav1.GetControllerOf(tc.resource)
+			isActive, err := or.IsActiveReplicaSet(context.TODO(), tc.resource, controller)
+			require.NoError(t, err)
+			assert.Equal(t, isActive, tc.result)
+		})
+	}
+}

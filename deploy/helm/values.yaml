@@ -41,6 +41,8 @@ operator:
   kubernetesBenchmarkEnabled: true
   # batchDeleteLimit the maximum number of config audit reports deleted by the operator when the plugin's config has changed.
   batchDeleteLimit: 10
+  # vulnerabilityScannerScanOnlyCurrentRevisions the flag to only create vulnerability scans on the current revision of a deployment.
+  vulnerabilityScannerScanOnlyCurrentRevisions: false
   # batchDeleteDelay the duration to wait before deleting another batch of config audit reports.
   batchDeleteDelay: 10s
 image:
@@ -102,6 +104,12 @@ trivy:
   #
   # noProxy:
 
+  # Registries without SSL. There can be multiple registries with different keys.
+  nonSslRegistries: {}
+  #  pocRegistry: poc.myregistry.harbor.com.pl
+  #  qaRegistry: qa.registry.aquasec.com
+  #  internalRegistry: registry.registry.svc:5000
+
   # severity is a comma separated list of severity levels reported by Trivy.
   severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
 
@@ -109,6 +117,12 @@ trivy:
   # vulnerabilities reported by Trivy. Set to "true" to enable it.
   #
   ignoreUnfixed: "false"
+
+  # ignoreFile can be used to tell Trivy to ignore vulnerabilities by ID (one per line)
+  #
+  # ignoreFile: |
+  #   CVE-1970-0001
+  #   CVE-1970-0002
 
   # resources resource requests and limits
   resources:

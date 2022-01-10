@@ -132,6 +132,9 @@ collection. For example, when the previous ReplicaSet named `nginx-6d4cf56db6` i
 `replicaset-nginx-6d4cf56db6-nginx` as well as the ConfigAuditReport named `replicaset-nginx-6d4cf56db6` are
 automatically garbage collected.
 
+If you only want the latest replicaset in your deployment to be scanned for vulnerabilities you can define `OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS=true`
+in your operator deployment. This can be useful if you only want to know about vulnerability that is currently a potential issue.
+
 !!! tip
     You can get and describe `vulnerabilityreports` and `configauditreports` as built-in Kubernetes objects:
     ```

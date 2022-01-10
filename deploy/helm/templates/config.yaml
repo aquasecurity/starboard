@@ -50,9 +50,16 @@ data:
   {{- if .noProxy }}
   trivy.noProxy: {{ .noProxy | quote }}
   {{- end }}
+  {{- range $key, $registry := .nonSslRegistries }}
+  trivy.nonSslRegistry.{{ $key }}: {{ $registry | quote }}
+  {{- end }}
   trivy.severity: {{ .severity | quote }}
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
+  {{- end }}
+  {{- with .ignoreFile }}
+  trivy.ignoreFile: |
+{{- . | trim | nindent 4 }}
   {{- end }}
   {{- if eq .mode "ClientServer" }}
   trivy.serverURL: {{ required ".Values.trivy.serverURL is required" .serverURL | quote }}
