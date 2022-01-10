@@ -175,7 +175,7 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scan-configauditreport-fcc9884cb",
+				Name:      "scan-configauditreport-64d65c457",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
 					starboard.LabelResourceSpecHash:         "58b8989656",
@@ -235,7 +235,7 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(job).NotTo(BeNil())
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "scan-configauditreport-58ddcc9dcb",
+				Name:      "scan-configauditreport-5bfbdd65c9",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
 					starboard.LabelResourceSpecHash:         "7c48697ccf",

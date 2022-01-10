@@ -20,7 +20,7 @@ func SetGlobalFlags(cf *genericclioptions.ConfigFlags, cmd *cobra.Command) {
 	}
 }
 
-func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (workload kube.Object, gvk schema.GroupVersionKind, err error) {
+func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (workload kube.ObjectRef, gvk schema.GroupVersionKind, err error) {
 	if len(args) < 1 {
 		err = errors.New("required workload kind and name not specified")
 		return
@@ -44,7 +44,7 @@ func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (
 		err = errors.New("required workload name is blank")
 		return
 	}
-	workload = kube.Object{
+	workload = kube.ObjectRef{
 		Namespace: namespace,
 		Kind:      kube.Kind(gvk.Kind),
 		Name:      resourceName,

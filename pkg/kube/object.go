@@ -25,17 +25,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-// TODO Rename from Object to PartialObject (consider embedding types.NamespacedName struct)
-// Object is a simplified representation of a Kubernetes object.
-// Each object has kind, which designates the type of the entity it represents.
+// ObjectRef is a simplified representation of a Kubernetes client.Object.
+// Each object has Kind, which designates the type of the entity it represents.
 // Objects have names and many of them live in namespaces.
-type Object struct {
+type ObjectRef struct {
 	Kind      Kind
 	Name      string
 	Namespace string
 }
 
-// Kind represents the type of a Kubernetes Object.
+// Kind represents the type of Kubernetes client.Object.
 type Kind string
 
 const (
@@ -83,13 +82,13 @@ func IsClusterScopedKind(k string) bool {
 	}
 }
 
-// PartialObjectToLabels encodes the specified Object as a set of labels.
+// ObjectRefToLabels encodes the specified ObjectRef as a set of labels.
 //
 // If Object's name cannot be used as the value of the
 // starboard.LabelResourceName label, as a fallback, this method will calculate
 // a hash of the Object's name and use it as the value of the
 // starboard.LabelResourceNameHash label.
-func PartialObjectToLabels(obj Object) map[string]string {
+func ObjectRefToLabels(obj ObjectRef) map[string]string {
 	labels := map[string]string{
 		starboard.LabelResourceKind:      string(obj.Kind),
 		starboard.LabelResourceNamespace: obj.Namespace,
@@ -122,21 +121,21 @@ func ObjectToObjectMetadata(obj client.Object, meta *metav1.ObjectMeta) error {
 	return nil
 }
 
-func PartialObjectFromObjectMetadata(objectMeta metav1.ObjectMeta) (Object, error) {
+func ObjectRefFromObjectMeta(objectMeta metav1.ObjectMeta) (ObjectRef, error) {
 	if _, found := objectMeta.Labels[starboard.LabelResourceKind]; !found {
-		return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
+		return ObjectRef{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
 	}
 	var objname string
 	if _, found := objectMeta.Labels[starboard.LabelResourceName]; !found {
 		if _, found := objectMeta.Annotations[starboard.LabelResourceName]; found {
 			objname = objectMeta.Annotations[starboard.LabelResourceName]
 		} else {
-			return Object{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
+			return ObjectRef{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
 		}
 	} else {
 		objname = objectMeta.Labels[starboard.LabelResourceName]
 	}
-	return Object{
+	return ObjectRef{
 		Kind:      Kind(objectMeta.Labels[starboard.LabelResourceKind]),
 		Name:      objname,
 		Namespace: objectMeta.Labels[starboard.LabelResourceNamespace],
@@ -188,8 +187,8 @@ func KindForObject(object metav1.Object, scheme *runtime.Scheme) (string, error)
 	return gvk.Kind, nil
 }
 
-func GetPartialObjectFromKindAndNamespacedName(kind Kind, name types.NamespacedName) Object {
-	return Object{
+func ObjectRefFromKindAndNamespacedName(kind Kind, name types.NamespacedName) ObjectRef {
+	return ObjectRef{
 		Kind:      kind,
 		Name:      name.Name,
 		Namespace: name.Namespace,
@@ -257,7 +256,7 @@ type ObjectResolver struct {
 	client.Client
 }
 
-func (o *ObjectResolver) GetObjectFromPartialObject(ctx context.Context, workload Object) (client.Object, error) {
+func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, workload ObjectRef) (client.Object, error) {
 	var obj client.Object
 	switch workload.Kind {
 	case KindPod:
@@ -436,7 +435,7 @@ func (o *ObjectResolver) ensureGVK(obj client.Object) (client.Object, error) {
 // the given owner. If the owner is a Deployment, it will look for a ReplicaSet
 // that is controlled by the Deployment. If the owner is a Pod, it will look for
 // the ReplicaSet that owns the Pod.
-func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Object) (string, error) {
+func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object ObjectRef) (string, error) {
 	switch object.Kind {
 	case KindDeployment:
 		return o.getActiveReplicaSetByDeployment(ctx, object)
@@ -446,7 +445,7 @@ func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Ob
 	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
 }
 
-func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object Object) (string, error) {
+func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object ObjectRef) (string, error) {
 	deploy := &appsv1.Deployment{}
 	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, deploy)
 	if err != nil {
@@ -465,8 +464,7 @@ func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, ob
 		return "", fmt.Errorf("no replicasets associated with deployment %q", object.Name)
 	}
 	for _, rs := range rsList.Items {
-		if deploy.Annotations["deployment.kubernetes.io/revision"] !=
-			rs.Annotations["deployment.kubernetes.io/revision"] {
+		if deploy.Annotations[deploymentAnnotation] != rs.Annotations[deploymentAnnotation] {
 			continue
 		}
 		return rs.Name, nil
@@ -474,7 +472,7 @@ func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, ob
 	return "", fmt.Errorf("did not find an active replicaset associated with deployment %q", object.Name)
 }
 
-func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object Object) (string, error) {
+func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object ObjectRef) (string, error) {
 	pod := &corev1.Pod{}
 	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, pod)
 	if err != nil {

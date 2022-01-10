@@ -32,7 +32,7 @@ func NewWorkloadReporter(clock ext.Clock, client client.Client) WorkloadReporter
 	}
 }
 
-func (h *workloadReporter) RetrieveData(workload kube.Object) (templates.WorkloadReport, error) {
+func (h *workloadReporter) RetrieveData(workload kube.ObjectRef) (templates.WorkloadReport, error) {
 	ctx := context.Background()
 	configAuditReport, err := h.configAuditReportsReader.FindReportByOwnerInHierarchy(ctx, workload)
 	if err != nil {
@@ -66,7 +66,7 @@ func (h *workloadReporter) RetrieveData(workload kube.Object) (templates.Workloa
 	}, nil
 }
 
-func (h *workloadReporter) Generate(workload kube.Object, writer io.Writer) error {
+func (h *workloadReporter) Generate(workload kube.ObjectRef, writer io.Writer) error {
 	data, err := h.RetrieveData(workload)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func NewNamespaceReporter(clock ext.Clock, client client.Client) NamespaceReport
 	}
 }
 
-func (r *namespaceReporter) RetrieveData(namespace kube.Object) (templates.NamespaceReport, error) {
+func (r *namespaceReporter) RetrieveData(namespace kube.ObjectRef) (templates.NamespaceReport, error) {
 	var vulnerabilityReportList v1alpha1.VulnerabilityReportList
 	err := r.client.List(context.Background(), &vulnerabilityReportList, client.InNamespace(namespace.Name))
 	if err != nil {
@@ -229,7 +229,7 @@ func (r *namespaceReporter) topNVulnerabilitiesByScore(reports []v1alpha1.Vulner
 	return vulnerabilities[:ext.MinInt(N, len(vulnerabilities))]
 }
 
-func (r *namespaceReporter) Generate(namespace kube.Object, out io.Writer) error {
+func (r *namespaceReporter) Generate(namespace kube.ObjectRef, out io.Writer) error {
 	data, err := r.RetrieveData(namespace)
 	if err != nil {
 		return err
@@ -253,7 +253,7 @@ func NewNodeReporter(clock ext.Clock, client client.Client) NodeReporter {
 	}
 }
 
-func (r *nodeReporter) Generate(node kube.Object, out io.Writer) error {
+func (r *nodeReporter) Generate(node kube.ObjectRef, out io.Writer) error {
 	data, err := r.RetrieveData(node)
 	if err != nil {
 		return err
@@ -262,7 +262,7 @@ func (r *nodeReporter) Generate(node kube.Object, out io.Writer) error {
 	return nil
 }
 
-func (r *nodeReporter) RetrieveData(node kube.Object) (templates.NodeReport, error) {
+func (r *nodeReporter) RetrieveData(node kube.ObjectRef) (templates.NodeReport, error) {
 	found := &v1alpha1.CISKubeBenchReport{}
 	err := r.client.Get(context.Background(), types.NamespacedName{Name: node.Name}, found)
 	if err != nil {

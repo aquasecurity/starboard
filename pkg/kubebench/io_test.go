@@ -214,7 +214,7 @@ func TestReadWriter(t *testing.T) {
 			Build()
 		instance := kubebench.NewReadWriter(client)
 
-		found, err := instance.FindByOwner(context.Background(), kube.Object{Name: "worker"})
+		found, err := instance.FindByOwner(context.Background(), kube.ObjectRef{Name: "worker"})
 		require.NoError(t, err)
 
 		assert.Equal(t, &v1alpha1.CISKubeBenchReport{

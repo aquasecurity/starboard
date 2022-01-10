@@ -94,15 +94,15 @@ func TestIsClusterScopedKind(t *testing.T) {
 	}
 }
 
-func TestPartialObjectToLabels(t *testing.T) {
+func TestObjectRefToLabels(t *testing.T) {
 	testCases := []struct {
 		name   string
-		object kube.Object
+		object kube.ObjectRef
 		labels map[string]string
 	}{
 		{
 			name: "Should map object with simple name",
-			object: kube.Object{
+			object: kube.ObjectRef{
 				Kind:      kube.KindPod,
 				Name:      "my-pod",
 				Namespace: "production",
@@ -115,7 +115,7 @@ func TestPartialObjectToLabels(t *testing.T) {
 		},
 		{
 			name: "Should map object with name that is not a valid label",
-			object: kube.Object{
+			object: kube.ObjectRef{
 				Kind: kube.KindClusterRole,
 				Name: "system:controller:namespace-controller",
 			},
@@ -128,7 +128,7 @@ func TestPartialObjectToLabels(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.labels, kube.PartialObjectToLabels(tc.object))
+			assert.Equal(t, tc.labels, kube.ObjectRefToLabels(tc.object))
 		})
 	}
 }
@@ -242,12 +242,12 @@ func TestContainerImages_AsJSON_And_FromJSON(t *testing.T) {
 	assert.Equal(t, containerImages, newContainerImages)
 }
 
-func TestGetPartialObjectFromKindAndNamespacedName(t *testing.T) {
-	partial := kube.GetPartialObjectFromKindAndNamespacedName(kube.KindReplicaSet, types.NamespacedName{
+func TestObjectRefFromKindAndNamespacedName(t *testing.T) {
+	partial := kube.ObjectRefFromKindAndNamespacedName(kube.KindReplicaSet, types.NamespacedName{
 		Namespace: "prod",
 		Name:      "wordpress",
 	})
-	assert.Equal(t, kube.Object{
+	assert.Equal(t, kube.ObjectRef{
 		Kind:      kube.KindReplicaSet,
 		Name:      "wordpress",
 		Namespace: "prod",
@@ -568,7 +568,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	).Build()}
 
 	t.Run("Should return error for unsupported kind", func(t *testing.T) {
-		_, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+		_, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindStatefulSet,
 			Name:      "statefulapp",
 			Namespace: corev1.NamespaceDefault,
@@ -577,7 +577,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	})
 
 	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
-		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindDeployment,
 			Name:      "nginx",
 			Namespace: corev1.NamespaceDefault,
@@ -587,7 +587,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	})
 
 	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
-		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.Object{
+		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindPod,
 			Name:      "nginx-549f5fcb58-7cr5b",
 			Namespace: corev1.NamespaceDefault,
@@ -598,11 +598,11 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 
 }
 
-func TestPartialObjectFromObjectMetadata(t *testing.T) {
+func TestObjectRefFromObjectMeta(t *testing.T) {
 	testCases := []struct {
 		name          string
 		object        metav1.ObjectMeta
-		expected      kube.Object
+		expected      kube.ObjectRef
 		expectedError string
 	}{
 		{
@@ -617,7 +617,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName: "system:admin",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindRole, Name: "system:admin", Namespace: "kube-system"},
+			expected: kube.ObjectRef{Kind: kube.KindRole, Name: "system:admin", Namespace: "kube-system"},
 		},
 		{
 			name: "Test RoleBinding",
@@ -631,7 +631,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName: "system:admin:binding",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindRoleBinding, Name: "system:admin:binding", Namespace: "kube-system"},
+			expected: kube.ObjectRef{Kind: kube.KindRoleBinding, Name: "system:admin:binding", Namespace: "kube-system"},
 		},
 		{
 			name: "Kind ClusterRole",
@@ -645,7 +645,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName: "system:netnode",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindClusterRole, Name: "system:netnode"},
+			expected: kube.ObjectRef{Kind: kube.KindClusterRole, Name: "system:netnode"},
 		},
 		{
 			name: "Kind ClusterRoleBinding",
@@ -659,7 +659,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName: "system:netnode:binding",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindClusterRoleBindings, Name: "system:netnode:binding"},
+			expected: kube.ObjectRef{Kind: kube.KindClusterRoleBindings, Name: "system:netnode:binding"},
 		},
 		{
 			name: "Kind Pod",
@@ -670,7 +670,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName:      "nginx-pod",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindPod, Name: "nginx-pod", Namespace: "default"},
+			expected: kube.ObjectRef{Kind: kube.KindPod, Name: "nginx-pod", Namespace: "default"},
 		},
 		{
 			name: "Kind Deployment",
@@ -681,7 +681,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName:      "nginx-deployment",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindDeployment, Name: "nginx-deployment", Namespace: "default"},
+			expected: kube.ObjectRef{Kind: kube.KindDeployment, Name: "nginx-deployment", Namespace: "default"},
 		},
 		{
 			name: "Kind DaemonSet",
@@ -692,7 +692,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 					starboard.LabelResourceName:      "nginx-ds",
 				},
 			},
-			expected: kube.Object{Kind: kube.KindDaemonSet, Name: "nginx-ds", Namespace: "default"},
+			expected: kube.ObjectRef{Kind: kube.KindDaemonSet, Name: "nginx-ds", Namespace: "default"},
 		},
 		{
 			name: fmt.Sprintf("Should return error when %s label is missing", starboard.LabelResourceKind),
@@ -708,7 +708,7 @@ func TestPartialObjectFromObjectMetadata(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := kube.PartialObjectFromObjectMetadata(tc.object)
+			actual, err := kube.ObjectRefFromObjectMeta(tc.object)
 			if tc.expectedError == "" {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expected, actual)

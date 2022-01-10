@@ -130,7 +130,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 }
 
 func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *corev1.Node) (bool, error) {
-	report, err := r.ReadWriter.FindByOwner(ctx, kube.Object{Kind: kube.KindNode, Name: node.Name})
+	report, err := r.ReadWriter.FindByOwner(ctx, kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
 	if err != nil {
 		return false, err
 	}
@@ -240,7 +240,7 @@ func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
-	nodeRef, err := kube.PartialObjectFromObjectMetadata(job.ObjectMeta)
+	nodeRef, err := kube.ObjectRefFromObjectMeta(job.ObjectMeta)
 	if err != nil {
 		return fmt.Errorf("getting owner ref from scan job metadata: %w", err)
 	}

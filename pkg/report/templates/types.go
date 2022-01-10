@@ -10,7 +10,7 @@ import (
 // WorkloadReport is a structure that holds data to render
 // an HTML report for a specified K8s workload.
 type WorkloadReport struct {
-	Workload    kube.Object
+	Workload    kube.ObjectRef
 	GeneratedAt time.Time
 
 	// FIXME Do not use map as the order of iteration is unpredictable.
@@ -21,7 +21,7 @@ type WorkloadReport struct {
 // NamespaceReport is a structure that holds data to render
 // an HTML report for a specified K8s namespace.
 type NamespaceReport struct {
-	Namespace   kube.Object
+	Namespace   kube.ObjectRef
 	GeneratedAt time.Time
 
 	Top5VulnerableImages []v1alpha1.VulnerabilityReport
@@ -42,7 +42,7 @@ type CheckWithCount struct {
 // NodeReport is a structure that holds data to render
 // an HTML report for a specified K8s node.
 type NodeReport struct {
-	Node        kube.Object
+	Node        kube.ObjectRef
 	GeneratedAt time.Time
 
 	CisKubeBenchReport *v1alpha1.CISKubeBenchReport

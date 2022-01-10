@@ -28,18 +28,18 @@ type Writer interface {
 type Reader interface {
 
 	// FindReportByOwner returns a v1alpha1.ConfigAuditReport owned by the given
-	// kube.Object or nil if the report is not found.
-	FindReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
+	// kube.ObjectRef or nil if the report is not found.
+	FindReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ConfigAuditReport, error)
 
-	// FindReportByOwnerInHierarchy is similar to FindReportByOwner except that it tries to lookup
+	// FindReportByOwnerInHierarchy is similar to FindReportByOwner except that it tries to find
 	// a v1alpha1.ConfigAuditReport object owned by related Kubernetes objects.
 	// For example, if the given owner is a Deployment, but a report is owned by the
 	// active ReplicaSet (current revision) this method will return the report.
-	FindReportByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error)
+	FindReportByOwnerInHierarchy(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ConfigAuditReport, error)
 
 	// FindClusterReportByOwner returns a v1alpha1.ClusterConfigAuditReport owned by the given
-	// kube.Object or nil if the report is not found.
-	FindClusterReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ClusterConfigAuditReport, error)
+	// kube.ObjectRef or nil if the report is not found.
+	FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ClusterConfigAuditReport, error)
 }
 
 type ReadWriter interface {
@@ -103,10 +103,10 @@ func (r *readWriter) WriteClusterReport(ctx context.Context, report v1alpha1.Clu
 	return err
 }
 
-func (r *readWriter) FindReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
+func (r *readWriter) FindReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ConfigAuditReport, error) {
 	var list v1alpha1.ConfigAuditReportList
 
-	labels := client.MatchingLabels(kube.PartialObjectToLabels(owner))
+	labels := client.MatchingLabels(kube.ObjectRefToLabels(owner))
 
 	err := r.List(ctx, &list, labels, client.InNamespace(owner.Namespace))
 	if err != nil {
@@ -120,7 +120,7 @@ func (r *readWriter) FindReportByOwner(ctx context.Context, owner kube.Object) (
 	return nil, nil
 }
 
-func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
+func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ConfigAuditReport, error) {
 	report, err := r.FindReportByOwner(ctx, owner)
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kub
 		if err != nil {
 			return nil, fmt.Errorf("getting replicaset related to %s/%s: %w", owner.Kind, owner.Name, err)
 		}
-		report, err = r.FindReportByOwner(ctx, kube.Object{
+		report, err = r.FindReportByOwner(ctx, kube.ObjectRef{
 			Kind:      kube.KindReplicaSet,
 			Name:      rsName,
 			Namespace: owner.Namespace,
@@ -146,10 +146,10 @@ func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kub
 	return nil, nil
 }
 
-func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ClusterConfigAuditReport, error) {
+func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ClusterConfigAuditReport, error) {
 	var list v1alpha1.ClusterConfigAuditReportList
 
-	labels := client.MatchingLabels(kube.PartialObjectToLabels(owner))
+	labels := client.MatchingLabels(kube.ObjectRefToLabels(owner))
 
 	err := r.List(ctx, &list, labels)
 	if err != nil {
