@@ -256,13 +256,13 @@ const (
 // volume shared with main containers. In other words, the init container runs
 // the following Trivy command:
 //
-//     trivy --download-db-only --cache-dir /var/lib/trivy
+//     trivy --cache-dir /var/lib/trivy image --download-db-only
 //
 // The number of main containers correspond to the number of containers
 // defined for the scanned workload. Each container runs the Trivy image scan
 // command and skips the database download:
 //
-//     trivy --skip-update --cache-dir /var/lib/trivy \
+//     trivy --cache-dir /var/lib/trivy image --skip-update \
 //       --format json <container image>
 func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
@@ -344,9 +344,10 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			"trivy",
 		},
 		Args: []string{
-			"--download-db-only",
 			"--cache-dir",
 			"/var/lib/trivy",
+			"image",
+			"--download-db-only",
 		},
 		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
@@ -556,10 +557,11 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 				"trivy",
 			},
 			Args: []string{
-				"--skip-update",
 				"--cache-dir",
 				"/var/lib/trivy",
 				"--quiet",
+				"image",
+				"--skip-update",
 				"--format",
 				"json",
 				optionalMirroredImage,

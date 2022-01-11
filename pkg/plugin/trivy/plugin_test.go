@@ -558,8 +558,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--download-db-only",
 							"--cache-dir", "/var/lib/trivy",
+							"image",
+							"--download-db-only",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -676,9 +677,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--skip-update",
 							"--cache-dir", "/var/lib/trivy",
 							"--quiet",
+							"image",
+							"--skip-update",
 							"--format", "json",
 							"nginx:1.16",
 						},
@@ -816,8 +818,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--download-db-only",
 							"--cache-dir", "/var/lib/trivy",
+							"image",
+							"--download-db-only",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -938,9 +941,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--skip-update",
 							"--cache-dir", "/var/lib/trivy",
 							"--quiet",
+							"image",
+							"--skip-update",
 							"--format", "json",
 							"poc.myregistry.harbor.com.pl/nginx:1.16",
 						},
@@ -1078,8 +1082,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--download-db-only",
 							"--cache-dir", "/var/lib/trivy",
+							"image",
+							"--download-db-only",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1200,9 +1205,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--skip-update",
 							"--cache-dir", "/var/lib/trivy",
 							"--quiet",
+							"image",
+							"--skip-update",
 							"--format", "json",
 							"poc.myregistry.harbor.com.pl/nginx:1.16",
 						},
@@ -1361,8 +1367,9 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--download-db-only",
 							"--cache-dir", "/var/lib/trivy",
+							"image",
+							"--download-db-only",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1483,9 +1490,10 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--skip-update",
 							"--cache-dir", "/var/lib/trivy",
 							"--quiet",
+							"image",
+							"--skip-update",
 							"--format", "json",
 							"nginx:1.16",
 						},
@@ -1631,8 +1639,9 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--download-db-only",
 							"--cache-dir", "/var/lib/trivy",
+							"image",
+							"--download-db-only",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1749,9 +1758,10 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--skip-update",
 							"--cache-dir", "/var/lib/trivy",
 							"--quiet",
+							"image",
+							"--skip-update",
 							"--format", "json",
 							"mirror.io/library/nginx:1.16",
 						},
