@@ -14,11 +14,13 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -442,7 +444,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		name string
 
 		config       map[string]string
-		workloadSpec corev1.PodSpec
+		workloadSpec client.Object
 
 		expectedSecrets []corev1.Secret
 		expectedJobSpec corev1.PodSpec
@@ -458,11 +460,25 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx:1.16",
+			workloadSpec: &appsv1.ReplicaSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ReplicaSet",
+					APIVersion: "apps/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx-6799fc88d8",
+					Namespace: "prod-ns",
+				},
+				Spec: appsv1.ReplicaSetSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:  "nginx",
+									Image: "nginx:1.16",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -708,14 +724,23 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
-					},
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
 				},
-			},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+						},
+					},
+				}},
 			expectedJobSpec: corev1.PodSpec{
 				Affinity:                     starboard.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
@@ -960,11 +985,21 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.resources.limits.cpu":       "500m",
 				"trivy.resources.limits.memory":    "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+						},
 					},
 				},
 			},
@@ -1216,11 +1251,21 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx:1.16",
+						},
 					},
 				},
 			},
@@ -1492,11 +1537,21 @@ CVE-2019-1543`,
 
 				"trivy.registry.mirror.index.docker.io": "mirror.io",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx:1.16",
+						},
 					},
 				},
 			},
@@ -1741,11 +1796,21 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx:1.16",
+						},
 					},
 				},
 			},
@@ -1920,11 +1985,21 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":         "500m",
 				"trivy.resources.limits.memory":      "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+						},
 					},
 				},
 			},
@@ -2103,11 +2178,21 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":       "500m",
 				"trivy.resources.limits.memory":    "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "poc.myregistry.harbor.com.pl/nginx:1.16",
+						},
 					},
 				},
 			},
@@ -2290,11 +2375,21 @@ CVE-2019-1543`,
 				"trivy.resources.limits.cpu":      "500m",
 				"trivy.resources.limits.memory":   "500M",
 			},
-			workloadSpec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx:1.16",
+			workloadSpec: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "nginx",
+					Namespace: "prod-ns",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx:1.16",
+						},
 					},
 				},
 			},

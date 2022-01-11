@@ -8,11 +8,13 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type plugin struct {
@@ -37,7 +39,12 @@ func (s *plugin) Init(_ starboard.PluginContext) error {
 	return nil
 }
 
-func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, spec corev1.PodSpec, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Object, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	spec, err := kube.GetPodSpec(workload)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
 	initContainerName := s.idGenerator.GenerateID()
 
 	aquaImageRef, err := s.getImageRef(ctx)
