@@ -239,6 +239,7 @@ basic development workflow. For other install modes see [Operator Multitenancy w
      OPERATOR_VULNERABILITY_SCANNER_ENABLED=true \
      OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS=false \
      OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED=true \
+     OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL="" \
      OPERATOR_BATCH_DELETE_LIMIT=3 \
      OPERATOR_BATCH_DELETE_DELAY="30s" \
      go run cmd/starboard-operator/main.go

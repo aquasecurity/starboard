@@ -1,5 +1,9 @@
 package v1alpha1
 
+const (
+	TTLReportAnnotation = "starboard.aquasecurity.github.io/report-ttl"
+)
+
 // Scanner is the spec for a scanner generating a security assessment report.
 type Scanner struct {
 	// Name the name of the scanner.

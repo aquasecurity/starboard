@@ -27,6 +27,7 @@ type Config struct {
 	LeaderElectionEnabled                        bool          `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
 	LeaderElectionID                             string        `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-lock"`
 	VulnerabilityScannerScanOnlyCurrentRevisions bool          `env:"OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS" envDefault:"false"`
+	VulnerabilityScannerReportTTL                *time.Duration `env:"OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL"`
 }
 
 // GetOperatorConfig loads Config from environment variables.

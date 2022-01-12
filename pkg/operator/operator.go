@@ -160,6 +160,16 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 		}
+
+		if operatorConfig.VulnerabilityScannerReportTTL != nil {
+			if err = (&controller.TTLReportReconciler{
+				Logger: ctrl.Log.WithName("reconciler").WithName("ttlreport"),
+				Config: operatorConfig,
+				Client: mgr.GetClient(),
+			}).SetupWithManager(mgr); err != nil {
+				return fmt.Errorf("unable to setup TTLreport reconciler: %w", err)
+			}
+		}
 	}
 
 	if operatorConfig.ConfigAuditScannerEnabled {
