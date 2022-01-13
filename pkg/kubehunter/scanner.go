@@ -117,7 +117,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 		return nil, err
 	}
 
-	scanJobTemplateLabels, err := s.config.GetScanJobTemplateLabels()
+	scanJobPodTemplateLabels, err := s.config.GetScanJobPodTemplateLabels()
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: scanJobAnnotations,
-					Labels:      scanJobTemplateLabels,
+					Labels:      scanJobPodTemplateLabels,
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: starboard.ServiceAccountName,

@@ -120,7 +120,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		return nil, err
 	}
 
-	scanJobTemplateLabels, err := s.config.GetScanJobTemplateLabels()
+	scanJobPodTemplateLabels, err := s.config.GetScanJobPodTemplateLabels()
 	if err != nil {
 		return nil, err
 	}
@@ -130,12 +130,12 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		starboard.LabelResourceName: node.Name,
 	}
 
-	templateLabelsSet := make(labels.Set)
+	podTemplateLabelsSet := make(labels.Set)
 	for index, element := range labelsSet {
-		templateLabelsSet[index] = element
+		podTemplateLabelsSet[index] = element
 	}
-	for index, element := range scanJobTemplateLabels {
-		templateLabelsSet[index] = element
+	for index, element := range scanJobPodTemplateLabels {
+		podTemplateLabelsSet[index] = element
 	}
 
 	return &batchv1.Job{
@@ -150,7 +150,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      templateLabelsSet,
+					Labels:      podTemplateLabelsSet,
 					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,

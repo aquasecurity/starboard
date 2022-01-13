@@ -496,7 +496,7 @@ func TestGetScanJobAnnotations(t *testing.T) {
 	}
 }
 
-func TestGetScanJobTemplateLabels(t *testing.T) {
+func TestGetScanJobPodTemplateLabels(t *testing.T) {
 	testCases := []struct {
 		name        string
 		config      starboard.ConfigData
@@ -506,7 +506,7 @@ func TestGetScanJobTemplateLabels(t *testing.T) {
 		{
 			name: "scan job template labels can be fetched successfully",
 			config: starboard.ConfigData{
-				"scanJob.templateLabels": "a.b=c.d/e,foo=bar",
+				"scanJob.podTemplateLabels": "a.b=c.d/e,foo=bar",
 			},
 			expected: labels.Set{
 				"foo": "bar",
@@ -521,7 +521,7 @@ func TestGetScanJobTemplateLabels(t *testing.T) {
 		{
 			name: "raise an error on being provided with annotations in wrong format",
 			config: starboard.ConfigData{
-				"scanJob.templateLabels": "foo",
+				"scanJob.podTemplateLabels": "foo",
 			},
 			expected:    labels.Set{},
 			expectError: "custom template labels found to be wrongfully provided: foo",
@@ -529,7 +529,7 @@ func TestGetScanJobTemplateLabels(t *testing.T) {
 		{
 			name: "raise an error on being provided with template labels in wrong format",
 			config: starboard.ConfigData{
-				"scanJob.templateLabels": "foo=bar,a=b=c",
+				"scanJob.podTemplateLabels": "foo=bar,a=b=c",
 			},
 			expected:    labels.Set{},
 			expectError: "custom template labels found to be wrongfully provided: foo=bar,a=b=c",
@@ -538,13 +538,13 @@ func TestGetScanJobTemplateLabels(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			scanJobTemplateLabels, err := tc.config.GetScanJobTemplateLabels()
+			scanJobPodTemplateLabels, err := tc.config.GetScanJobPodTemplateLabels()
 			if tc.expectError != "" {
 				assert.Error(t, err, tc.expectError, tc.name)
 			} else {
 				assert.NoError(t, err, tc.name)
 			}
-			assert.Equal(t, tc.expected, scanJobTemplateLabels, tc.name)
+			assert.Equal(t, tc.expected, scanJobPodTemplateLabels, tc.name)
 		})
 	}
 }

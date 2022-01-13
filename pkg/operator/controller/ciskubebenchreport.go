@@ -169,7 +169,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 		return nil, err
 	}
 
-	scanJobTemplateLabels, err := r.ConfigData.GetScanJobTemplateLabels()
+	scanJobPodTemplateLabels, err := r.ConfigData.GetScanJobPodTemplateLabels()
 	if err != nil {
 		return nil, err
 	}
@@ -181,12 +181,12 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 		starboard.LabelKubeBenchReportScanner: "true",
 	}
 
-	templateLabelsSet := make(labels.Set)
+	podTemplateLabelsSet := make(labels.Set)
 	for index, element := range labelsSet {
-		templateLabelsSet[index] = element
+		podTemplateLabelsSet[index] = element
 	}
-	for index, element := range scanJobTemplateLabels {
-		templateLabelsSet[index] = element
+	for index, element := range scanJobPodTemplateLabels {
+		podTemplateLabelsSet[index] = element
 	}
 
 	return &batchv1.Job{
@@ -201,7 +201,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(r.Config.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      templateLabelsSet,
+					Labels:      podTemplateLabelsSet,
 					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,

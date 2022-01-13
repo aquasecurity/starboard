@@ -237,7 +237,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			return ctrl.Result{}, fmt.Errorf("getting scan job annotations: %w", err)
 		}
 
-		scanJobTemplateLabels, err := r.GetScanJobTemplateLabels()
+		scanJobPodTemplateLabels, err := r.GetScanJobPodTemplateLabels()
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("getting scan job template labels: %w", err)
 		}
@@ -249,7 +249,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			WithObject(resource).
 			WithTolerations(scanJobTolerations).
 			WithAnnotations(scanJobAnnotations).
-			WithTemplateLabels(scanJobTemplateLabels).
+			WithPodTemplateLabels(scanJobPodTemplateLabels).
 			Get()
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("constructing scan job: %w", err)

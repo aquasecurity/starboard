@@ -146,23 +146,23 @@ func (c ConfigData) GetScanJobAnnotations() (map[string]string, error) {
 	return scanJobAnnotationsMap, nil
 }
 
-func (c ConfigData) GetScanJobTemplateLabels() (labels.Set, error) {
-	scanJobTemplateLabelsStr, found := c[AnnotationScanJobTemplateLabels]
-	if !found || strings.TrimSpace(scanJobTemplateLabelsStr) == "" {
+func (c ConfigData) GetScanJobPodTemplateLabels() (labels.Set, error) {
+	scanJobPodTemplateLabelsStr, found := c[AnnotationScanJobPodTemplateLabels]
+	if !found || strings.TrimSpace(scanJobPodTemplateLabelsStr) == "" {
 		return labels.Set{}, nil
 	}
 
-	scanJobTemplateLabelsMap := map[string]string{}
-	for _, annotation := range strings.Split(scanJobTemplateLabelsStr, ",") {
+	scanJobPodTemplateLabelsMap := map[string]string{}
+	for _, annotation := range strings.Split(scanJobPodTemplateLabelsStr, ",") {
 		sepByEqual := strings.Split(annotation, "=")
 		if len(sepByEqual) != 2 {
-			return labels.Set{}, fmt.Errorf("custom template labels found to be wrongfully provided: %s", scanJobTemplateLabelsStr)
+			return labels.Set{}, fmt.Errorf("custom template labels found to be wrongfully provided: %s", scanJobPodTemplateLabelsStr)
 		}
 		key, value := sepByEqual[0], sepByEqual[1]
-		scanJobTemplateLabelsMap[key] = value
+		scanJobPodTemplateLabelsMap[key] = value
 	}
 
-	return scanJobTemplateLabelsMap, nil
+	return scanJobPodTemplateLabelsMap, nil
 }
 
 func (c ConfigData) GetKubeBenchImageRef() (string, error) {

@@ -21,13 +21,13 @@ import (
 )
 
 type ScanJobBuilder struct {
-	plugin         Plugin
-	pluginContext  starboard.PluginContext
-	timeout        time.Duration
-	object         client.Object
-	tolerations    []corev1.Toleration
-	annotations    map[string]string
-	templateLabels labels.Set
+	plugin            Plugin
+	pluginContext     starboard.PluginContext
+	timeout           time.Duration
+	object            client.Object
+	tolerations       []corev1.Toleration
+	annotations       map[string]string
+	podTemplateLabels labels.Set
 }
 
 func NewScanJobBuilder() *ScanJobBuilder {
@@ -64,8 +64,8 @@ func (s *ScanJobBuilder) WithAnnotations(annotations map[string]string) *ScanJob
 	return s
 }
 
-func (s *ScanJobBuilder) WithTemplateLabels(templateLabels labels.Set) *ScanJobBuilder {
-	s.templateLabels = templateLabels
+func (s *ScanJobBuilder) WithPodTemplateLabels(podTemplateLabels labels.Set) *ScanJobBuilder {
+	s.podTemplateLabels = podTemplateLabels
 	return s
 }
 
@@ -94,12 +94,12 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		starboard.LabelK8SAppManagedBy:          starboard.AppStarboard,
 	}
 
-	templateLabelsSet := make(labels.Set)
+	podTemplateLabelsSet := make(labels.Set)
 	for index, element := range labelsSet {
-		templateLabelsSet[index] = element
+		podTemplateLabelsSet[index] = element
 	}
-	for index, element := range s.templateLabels {
-		templateLabelsSet[index] = element
+	for index, element := range s.podTemplateLabels {
+		podTemplateLabelsSet[index] = element
 	}
 
 	job := &batchv1.Job{
@@ -115,7 +115,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.timeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      templateLabelsSet,
+					Labels:      podTemplateLabelsSet,
 					Annotations: s.annotations,
 				},
 				Spec: jobSpec,
