@@ -12,6 +12,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/utils/pointer"
@@ -20,12 +21,13 @@ import (
 )
 
 type ScanJobBuilder struct {
-	plugin        Plugin
-	pluginContext starboard.PluginContext
-	timeout       time.Duration
-	object        client.Object
-	tolerations   []corev1.Toleration
-	annotations   map[string]string
+	plugin         Plugin
+	pluginContext  starboard.PluginContext
+	timeout        time.Duration
+	object         client.Object
+	tolerations    []corev1.Toleration
+	annotations    map[string]string
+	templateLabels labels.Set
 }
 
 func NewScanJobBuilder() *ScanJobBuilder {
@@ -62,6 +64,11 @@ func (s *ScanJobBuilder) WithAnnotations(annotations map[string]string) *ScanJob
 	return s
 }
 
+func (s *ScanJobBuilder) WithTemplateLabels(templateLabels labels.Set) *ScanJobBuilder {
+	s.templateLabels = templateLabels
+	return s
+}
+
 func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, s.object)
 	if err != nil {
@@ -80,18 +87,26 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		return nil, nil, err
 	}
 
-	labels := map[string]string{
+	labelsSet := labels.Set{
 		starboard.LabelResourceSpecHash:         resourceSpecHash,
 		starboard.LabelPluginConfigHash:         pluginConfigHash,
 		starboard.LabelConfigAuditReportScanner: s.pluginContext.GetName(),
 		starboard.LabelK8SAppManagedBy:          starboard.AppStarboard,
 	}
 
+	templateLabelsSet := make(labels.Set)
+	for index, element := range labelsSet {
+		templateLabelsSet[index] = element
+	}
+	for index, element := range s.templateLabels {
+		templateLabelsSet[index] = element
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        GetScanJobName(s.object),
 			Namespace:   s.pluginContext.GetNamespace(),
-			Labels:      labels,
+			Labels:      labelsSet,
 			Annotations: s.annotations,
 		},
 		Spec: batchv1.JobSpec{
@@ -100,7 +115,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.timeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
+					Labels:      templateLabelsSet,
 					Annotations: s.annotations,
 				},
 				Spec: jobSpec,
@@ -122,7 +137,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		if secret.Labels == nil {
 			secret.Labels = make(map[string]string)
 		}
-		for k, v := range labels {
+		for k, v := range labelsSet {
 			secret.Labels[k] = v
 		}
 		err = kube.ObjectToObjectMetadata(s.object, &secret.ObjectMeta)
@@ -184,18 +199,18 @@ func (b *ReportBuilder) reportName() string {
 }
 
 func (b *ReportBuilder) GetClusterReport() (v1alpha1.ClusterConfigAuditReport, error) {
-	labels := make(map[string]string)
+	labelsSet := make(labels.Set)
 	if b.resourceSpecHash != "" {
-		labels[starboard.LabelResourceSpecHash] = b.resourceSpecHash
+		labelsSet[starboard.LabelResourceSpecHash] = b.resourceSpecHash
 	}
 	if b.pluginConfigHash != "" {
-		labels[starboard.LabelPluginConfigHash] = b.pluginConfigHash
+		labelsSet[starboard.LabelPluginConfigHash] = b.pluginConfigHash
 	}
 
 	report := v1alpha1.ClusterConfigAuditReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   b.reportName(),
-			Labels: labels,
+			Labels: labelsSet,
 		},
 		Report: b.data,
 	}
@@ -220,19 +235,19 @@ func (b *ReportBuilder) GetClusterReport() (v1alpha1.ClusterConfigAuditReport, e
 }
 
 func (b *ReportBuilder) GetReport() (v1alpha1.ConfigAuditReport, error) {
-	labels := make(map[string]string)
+	labelsSet := make(labels.Set)
 	if b.resourceSpecHash != "" {
-		labels[starboard.LabelResourceSpecHash] = b.resourceSpecHash
+		labelsSet[starboard.LabelResourceSpecHash] = b.resourceSpecHash
 	}
 	if b.pluginConfigHash != "" {
-		labels[starboard.LabelPluginConfigHash] = b.pluginConfigHash
+		labelsSet[starboard.LabelPluginConfigHash] = b.pluginConfigHash
 	}
 
 	report := v1alpha1.ConfigAuditReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.reportName(),
 			Namespace: b.controller.GetNamespace(),
-			Labels:    labels,
+			Labels:    labelsSet,
 		},
 		Report: b.data,
 	}

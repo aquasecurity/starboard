@@ -146,6 +146,25 @@ func (c ConfigData) GetScanJobAnnotations() (map[string]string, error) {
 	return scanJobAnnotationsMap, nil
 }
 
+func (c ConfigData) GetScanJobTemplateLabels() (labels.Set, error) {
+	scanJobTemplateLabelsStr, found := c[AnnotationScanJobTemplateLabels]
+	if !found || strings.TrimSpace(scanJobTemplateLabelsStr) == "" {
+		return labels.Set{}, nil
+	}
+
+	scanJobTemplateLabelsMap := map[string]string{}
+	for _, annotation := range strings.Split(scanJobTemplateLabelsStr, ",") {
+		sepByEqual := strings.Split(annotation, "=")
+		if len(sepByEqual) != 2 {
+			return labels.Set{}, fmt.Errorf("custom template labels found to be wrongfully provided: %s", scanJobTemplateLabelsStr)
+		}
+		key, value := sepByEqual[0], sepByEqual[1]
+		scanJobTemplateLabelsMap[key] = value
+	}
+
+	return scanJobTemplateLabelsMap, nil
+}
+
 func (c ConfigData) GetKubeBenchImageRef() (string, error) {
 	return c.GetRequiredData("kube-bench.imageRef")
 }

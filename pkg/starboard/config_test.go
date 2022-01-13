@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -491,6 +492,59 @@ func TestGetScanJobAnnotations(t *testing.T) {
 				assert.NoError(t, err, tc.name)
 			}
 			assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
+		})
+	}
+}
+
+func TestGetScanJobTemplateLabels(t *testing.T) {
+	testCases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    labels.Set
+		expectError string
+	}{
+		{
+			name: "scan job template labels can be fetched successfully",
+			config: starboard.ConfigData{
+				"scanJob.templateLabels": "a.b=c.d/e,foo=bar",
+			},
+			expected: labels.Set{
+				"foo": "bar",
+				"a.b": "c.d/e",
+			},
+		},
+		{
+			name:     "gracefully deal with unprovided annotations",
+			config:   starboard.ConfigData{},
+			expected: labels.Set{},
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.templateLabels": "foo",
+			},
+			expected:    labels.Set{},
+			expectError: "custom template labels found to be wrongfully provided: foo",
+		},
+		{
+			name: "raise an error on being provided with template labels in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.templateLabels": "foo=bar,a=b=c",
+			},
+			expected:    labels.Set{},
+			expectError: "custom template labels found to be wrongfully provided: foo=bar,a=b=c",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanJobTemplateLabels, err := tc.config.GetScanJobTemplateLabels()
+			if tc.expectError != "" {
+				assert.Error(t, err, tc.expectError, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+			assert.Equal(t, tc.expected, scanJobTemplateLabels, tc.name)
 		})
 	}
 }
