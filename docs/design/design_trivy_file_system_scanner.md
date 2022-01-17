@@ -180,14 +180,17 @@ Trivy must run as root so the scan Job defined the `securityContext` with the `r
 
 ## Remarks
 
-1. We cannot scan K8s workloads scaled down to 0 replicas because we cannot infer on which cluster node a scan Job should
+1. The proposed solution won't work with the [AlwaysPullImages] admission controller, which might be enabled in
+   a multitenant cluster so that users can be assured that their private images can only be used by those who
+   have the credentials to pull them. (Thanks [kfox1111] for pointing this out!)
+2. We cannot scan K8s workloads scaled down to 0 replicas because we cannot infer on which cluster node a scan Job should
    run. (In general, a node name is only set on a running Pod.) But once a workload is scaled up, Starboard Operator
    will receive the update event and will have another chance to scan it.
-2. It's hard to identify Pods managed by the CronJob controller, therefore we'll skip them.
-3. Trivy filesystem command does not work in [ClientServer] mode. Therefore, this solution is subject to the limits of
+3. It's hard to identify Pods managed by the CronJob controller, therefore we'll skip them.
+4. Trivy filesystem command does not work in [ClientServer] mode. Therefore, this solution is subject to the limits of
    the [Standalone] mode. We plan to extend Trivy filesystem command to work in ClientServer mode and improve the
    implementation of Starboard once it's available.
-4. Trivy must run as root and this may be blocked by some Admission Controllers such as PodSecurityPolicy.
+5. Trivy must run as root and this may be blocked by some Admission Controllers such as PodSecurityPolicy.
 
 [Devendra Turkar]: https://github.com/deven0t
 [Daniel Pacak]: https://github.com/danielpacak
@@ -195,3 +198,6 @@ Trivy must run as root so the scan Job defined the `securityContext` with the `r
 [ClientServer]: https://aquasecurity.github.io/starboard/v0.13.2/integrations/vulnerability-scanners/trivy/#clientserver
 [Configuring nodes to authenticate to a private registry]: https://kubernetes.io/docs/concepts/containers/images/#configuring-nodes-to-authenticate-to-a-private-registry
 [AWS ECR Private registry authentication]: https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html
+[AlwaysPullImages]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages
+[kfox1111]: https://github.com/kfox1111
+
