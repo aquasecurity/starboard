@@ -169,16 +169,31 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 		return nil, err
 	}
 
+	scanJobPodTemplateLabels, err := r.ConfigData.GetScanJobPodTemplateLabels()
+	if err != nil {
+		return nil, err
+	}
+
+	labelsSet := labels.Set{
+		starboard.LabelResourceKind:           string(kube.KindNode),
+		starboard.LabelResourceName:           node.Name,
+		starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
+		starboard.LabelKubeBenchReportScanner: "true",
+	}
+
+	podTemplateLabelsSet := make(labels.Set)
+	for index, element := range labelsSet {
+		podTemplateLabelsSet[index] = element
+	}
+	for index, element := range scanJobPodTemplateLabels {
+		podTemplateLabelsSet[index] = element
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.getScanJobName(node),
 			Namespace: r.Config.Namespace,
-			Labels: labels.Set{
-				starboard.LabelResourceKind:           string(kube.KindNode),
-				starboard.LabelResourceName:           node.Name,
-				starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
-				starboard.LabelKubeBenchReportScanner: "true",
-			},
+			Labels:    labelsSet,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
@@ -186,12 +201,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(r.Config.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels.Set{
-						starboard.LabelResourceKind:           string(kube.KindNode),
-						starboard.LabelResourceName:           node.Name,
-						starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
-						starboard.LabelKubeBenchReportScanner: "true",
-					},
+					Labels:      podTemplateLabelsSet,
 					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,

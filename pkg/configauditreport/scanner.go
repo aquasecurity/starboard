@@ -77,6 +77,11 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuil
 		return nil, fmt.Errorf("getting scan job annotations: %w", err)
 	}
 
+	scanJobPodTemplateLabels, err := s.config.GetScanJobPodTemplateLabels()
+	if err != nil {
+		return nil, fmt.Errorf("getting scan job template labels: %w", err)
+	}
+
 	klog.V(3).Infof("Scanning with options: %+v", s.opts)
 	job, secrets, err := NewScanJobBuilder().
 		WithPlugin(s.plugin).
@@ -85,6 +90,7 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuil
 		WithObject(owner).
 		WithTolerations(scanJobTolerations).
 		WithAnnotations(scanJobAnnotations).
+		WithPodTemplateLabels(scanJobPodTemplateLabels).
 		Get()
 	if err != nil {
 		return nil, fmt.Errorf("constructing scan job: %w", err)

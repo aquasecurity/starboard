@@ -12,6 +12,9 @@ data:
   {{- with .Values.starboard.scanJobAnnotations }}
   scanJob.annotations: {{ . | quote }}
   {{- end }}
+  {{- with .Values.starboard.scanJobPodTemplateLabels }}
+  scanJob.podTemplateLabels: {{ . | quote }}
+  {{- end }}
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
   vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
   {{- end }}

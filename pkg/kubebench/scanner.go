@@ -120,14 +120,29 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 		return nil, err
 	}
 
+	scanJobPodTemplateLabels, err := s.config.GetScanJobPodTemplateLabels()
+	if err != nil {
+		return nil, err
+	}
+
+	labelsSet := labels.Set{
+		starboard.LabelResourceKind: string(kube.KindNode),
+		starboard.LabelResourceName: node.Name,
+	}
+
+	podTemplateLabelsSet := make(labels.Set)
+	for index, element := range labelsSet {
+		podTemplateLabelsSet[index] = element
+	}
+	for index, element := range scanJobPodTemplateLabels {
+		podTemplateLabelsSet[index] = element
+	}
+
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "scan-cisbenchmark-" + kube.ComputeHash(node.Name),
 			Namespace: starboard.NamespaceName,
-			Labels: labels.Set{
-				starboard.LabelResourceKind: string(kube.KindNode),
-				starboard.LabelResourceName: node.Name,
-			},
+			Labels:    labelsSet,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
@@ -135,10 +150,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 			ActiveDeadlineSeconds: kube.GetActiveDeadlineSeconds(s.opts.ScanJobTimeout),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels.Set{
-						starboard.LabelResourceKind: string(kube.KindNode),
-						starboard.LabelResourceName: node.Name,
-					},
+					Labels:      podTemplateLabelsSet,
 					Annotations: scanJobAnnotations,
 				},
 				Spec: templateSpec,
