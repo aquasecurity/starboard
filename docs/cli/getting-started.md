@@ -106,17 +106,16 @@ starboard get configauditreports deployment/nginx -o yaml
 
 or
 
-```console
-kubectl get configauditreport -o wide \
-    -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+```
+kubectl get configauditreport -o wide
 ```
 
 <details>
 <summary>Result</summary>
 
 ```
-NAME               SCANNER   AGE   DANGER   WARNING   PASS
-deployment-nginx   Polaris   5s    0        8         9
+NAME                          SCANNER   AGE    DANGER   WARNING   PASS
+replicaset-nginx-6d4cf56db6   Polaris   155m   1        9         7
 ```
 </details>
 
