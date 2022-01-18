@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.0-rc1"
+    app.kubernetes.io/version: "0.14.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -17,7 +17,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.0-rc1"
+    app.kubernetes.io/version: "0.14.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 rules:
   - apiGroups:
@@ -139,7 +139,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.0-rc1"
+    app.kubernetes.io/version: "0.14.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 roleRef:
   apiGroup: rbac.authorization.k8s.io

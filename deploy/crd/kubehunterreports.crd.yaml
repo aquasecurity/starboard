@@ -4,6 +4,7 @@ metadata:
   name: kubehunterreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
