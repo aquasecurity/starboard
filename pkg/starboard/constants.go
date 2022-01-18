@@ -42,7 +42,5 @@ const (
 )
 
 const (
-	AnnotationContainerImages          = "starboard.container-images"
-	AnnotationScanJobAnnotations       = "scanJob.annotations"
-	AnnotationScanJobPodTemplateLabels = "scanJob.podTemplateLabels"
+	AnnotationContainerImages = "starboard.container-images"
 )
