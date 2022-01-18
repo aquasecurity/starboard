@@ -15,37 +15,271 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestGetVersionFromImageRef(t *testing.T) {
+func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 	testCases := []struct {
-		imageRef        string
-		expectedVersion string
+		name            string
+		configData      starboard.ConfigData
+		expectedError   string
+		expectedScanner starboard.Scanner
 	}{
 		{
-			imageRef:        "docker.io/aquasec/trivy:0.9.1",
-			expectedVersion: "0.9.1",
+			name: "Should return Trivy",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Trivy",
+			},
+			expectedScanner: starboard.Trivy,
 		},
 		{
-			imageRef:        "docker.io/aquasec/trivy@sha256:5020dac24a63ef4f24452a0c63ebbfe93a5309e40f6353d1ee8221d2184ee954",
-			expectedVersion: "sha256:5020dac24a63ef4f24452a0c63ebbfe93a5309e40f6353d1ee8221d2184ee954",
+			name: "Should return Aqua",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Aqua",
+			},
+			expectedScanner: starboard.Aqua,
 		},
 		{
-			imageRef:        "aquasec/trivy:0.9.1",
-			expectedVersion: "0.9.1",
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property vulnerabilityReports.scanner not set",
 		},
 		{
-			imageRef:        "aquasec/trivy:latest",
-			expectedVersion: "latest",
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"vulnerabilityReports.scanner": "Clair",
+			},
+			expectedError: "invalid value (Clair) of vulnerabilityReports.scanner; allowed values (Trivy, Aqua)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanner, err := tc.configData.GetVulnerabilityReportsScanner()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedScanner, scanner)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetConfigAuditReportsScanner(t *testing.T) {
+	testCases := []struct {
+		name            string
+		configData      starboard.ConfigData
+		expectedError   string
+		expectedScanner starboard.Scanner
+	}{
+		{
+			name: "Should return Polaris",
+			configData: starboard.ConfigData{
+				"configAuditReports.scanner": "Polaris",
+			},
+			expectedScanner: starboard.Polaris,
 		},
 		{
-			imageRef:        "aquasec/trivy",
-			expectedVersion: "latest",
+			name: "Should return Conftest",
+			configData: starboard.ConfigData{
+				"configAuditReports.scanner": "Conftest",
+			},
+			expectedScanner: starboard.Conftest,
+		},
+		{
+			name:          "Should return error when value is not set",
+			configData:    starboard.ConfigData{},
+			expectedError: "property configAuditReports.scanner not set",
+		},
+		{
+			name: "Should return error when value is not allowed",
+			configData: starboard.ConfigData{
+				"configAuditReports.scanner": "KubeScan",
+			},
+			expectedError: "invalid value (KubeScan) of configAuditReports.scanner; allowed values (Polaris, Conftest)",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanner, err := tc.configData.GetConfigAuditReportsScanner()
+			if tc.expectedError != "" {
+				require.EqualError(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedScanner, scanner)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetScanJobTolerations(t *testing.T) {
+	testCases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    []corev1.Toleration
+		expectError string
+	}{
+		{
+			name:     "no scanJob.tolerations in ConfigData",
+			config:   starboard.ConfigData{},
+			expected: []corev1.Toleration(nil),
+		},
+		{
+			name:        "scanJob.tolerations value is not json",
+			config:      starboard.ConfigData{"scanJob.tolerations": `lolwut`},
+			expected:    []corev1.Toleration(nil),
+			expectError: "invalid character 'l' looking for beginning of value",
+		},
+		{
+			name:     "empty JSON array",
+			config:   starboard.ConfigData{"scanJob.tolerations": `[]`},
+			expected: []corev1.Toleration{},
+		},
+		{
+			name: "one valid toleration",
+			config: starboard.ConfigData{
+				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`},
+			expected: []corev1.Toleration{{
+				Key:      "key1",
+				Operator: "Equal",
+				Value:    "value1",
+				Effect:   "NoSchedule",
+			}},
+		},
+		{
+			name: "multiple valid tolerations",
+			config: starboard.ConfigData{
+				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"},
+					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`},
+			expected: []corev1.Toleration{
+				{
+					Key:      "key1",
+					Operator: "Equal",
+					Value:    "value1",
+					Effect:   "NoSchedule",
+				},
+				{
+					Key:      "key2",
+					Operator: "Equal",
+					Value:    "value2",
+					Effect:   "NoSchedule",
+				},
+			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.imageRef, func(t *testing.T) {
-			version, _ := starboard.GetVersionFromImageRef(tc.imageRef)
-			assert.Equal(t, tc.expectedVersion, version)
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := tc.config.GetScanJobTolerations()
+			if tc.expectError != "" {
+				assert.Error(t, err, "unexpected end of JSON input", tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+			assert.Equal(t, tc.expected, got, tc.name)
+		})
+	}
+}
+
+func TestConfigData_GetScanJobAnnotations(t *testing.T) {
+	testCases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    map[string]string
+		expectError string
+	}{
+		{
+			name: "scan job annotations can be fetched successfully",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "a.b=c.d/e,foo=bar",
+			},
+			expected: map[string]string{
+				"foo": "bar",
+				"a.b": "c.d/e",
+			},
+		},
+		{
+			name:     "gracefully deal with unprovided annotations",
+			config:   starboard.ConfigData{},
+			expected: map[string]string{},
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "foo",
+			},
+			expected:    map[string]string{},
+			expectError: "failed parsing incorrectly formatted custom scan job annotations: foo",
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.annotations": "foo=bar,a=b=c",
+			},
+			expected:    map[string]string{},
+			expectError: "failed parsing incorrectly formatted custom scan job annotations: foo=bar,a=b=c",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanJobAnnotations, err := tc.config.GetScanJobAnnotations()
+			if tc.expectError != "" {
+				assert.EqualError(t, err, tc.expectError, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+				assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
+			}
+		})
+	}
+}
+
+func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
+	testCases := []struct {
+		name        string
+		config      starboard.ConfigData
+		expected    labels.Set
+		expectError string
+	}{
+		{
+			name: "scan job template labels can be fetched successfully",
+			config: starboard.ConfigData{
+				"scanJob.podTemplateLabels": "a.b=c.d/e,foo=bar",
+			},
+			expected: labels.Set{
+				"foo": "bar",
+				"a.b": "c.d/e",
+			},
+		},
+		{
+			name:     "gracefully deal with unprovided annotations",
+			config:   starboard.ConfigData{},
+			expected: labels.Set{},
+		},
+		{
+			name: "raise an error on being provided with annotations in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.podTemplateLabels": "foo",
+			},
+			expected:    labels.Set{},
+			expectError: "failed parsing incorrectly formatted custom scan pod template labels: foo",
+		},
+		{
+			name: "raise an error on being provided with template labels in wrong format",
+			config: starboard.ConfigData{
+				"scanJob.podTemplateLabels": "foo=bar,a=b=c",
+			},
+			expected:    labels.Set{},
+			expectError: "failed parsing incorrectly formatted custom scan pod template labels: foo=bar,a=b=c",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			scanJobPodTemplateLabels, err := tc.config.GetScanJobPodTemplateLabels()
+			if tc.expectError != "" {
+				assert.EqualError(t, err, tc.expectError, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+				assert.Equal(t, tc.expected, scanJobPodTemplateLabels, tc.name)
+			}
 		})
 	}
 }
@@ -164,49 +398,37 @@ func TestConfigData_GetKubeHunterQuick(t *testing.T) {
 	}
 }
 
-func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
+func TestGetVersionFromImageRef(t *testing.T) {
 	testCases := []struct {
-		name            string
-		configData      starboard.ConfigData
-		expectedError   string
-		expectedScanner starboard.Scanner
+		imageRef        string
+		expectedVersion string
 	}{
 		{
-			name: "Should return Trivy",
-			configData: starboard.ConfigData{
-				"vulnerabilityReports.scanner": "Trivy",
-			},
-			expectedScanner: starboard.Trivy,
+			imageRef:        "docker.io/aquasec/trivy:0.9.1",
+			expectedVersion: "0.9.1",
 		},
 		{
-			name: "Should return Aqua",
-			configData: starboard.ConfigData{
-				"vulnerabilityReports.scanner": "Aqua",
-			},
-			expectedScanner: starboard.Aqua,
+			imageRef:        "docker.io/aquasec/trivy@sha256:5020dac24a63ef4f24452a0c63ebbfe93a5309e40f6353d1ee8221d2184ee954",
+			expectedVersion: "sha256:5020dac24a63ef4f24452a0c63ebbfe93a5309e40f6353d1ee8221d2184ee954",
 		},
 		{
-			name:          "Should return error when value is not set",
-			configData:    starboard.ConfigData{},
-			expectedError: "property vulnerabilityReports.scanner not set",
+			imageRef:        "aquasec/trivy:0.9.1",
+			expectedVersion: "0.9.1",
 		},
 		{
-			name: "Should return error when value is not allowed",
-			configData: starboard.ConfigData{
-				"vulnerabilityReports.scanner": "Clair",
-			},
-			expectedError: "invalid value (Clair) of vulnerabilityReports.scanner; allowed values (Trivy, Aqua)",
+			imageRef:        "aquasec/trivy:latest",
+			expectedVersion: "latest",
+		},
+		{
+			imageRef:        "aquasec/trivy",
+			expectedVersion: "latest",
 		},
 	}
+
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			scanner, err := tc.configData.GetVulnerabilityReportsScanner()
-			if tc.expectedError != "" {
-				require.EqualError(t, err, tc.expectedError)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedScanner, scanner)
-			}
+		t.Run(tc.imageRef, func(t *testing.T) {
+			version, _ := starboard.GetVersionFromImageRef(tc.imageRef)
+			assert.Equal(t, tc.expectedVersion, version)
 		})
 	}
 }
@@ -372,179 +594,4 @@ func TestConfigManager_Delete(t *testing.T) {
 			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
 		assert.True(t, errors.IsNotFound(err))
 	})
-}
-
-func TestGetScanJobTolerations(t *testing.T) {
-	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    []corev1.Toleration
-		expectError string
-	}{
-		{
-			name:     "no scanJob.tolerations in ConfigData",
-			config:   starboard.ConfigData{},
-			expected: []corev1.Toleration{},
-		},
-		{
-			name:        "scanJob.tolerations value is not json",
-			config:      starboard.ConfigData{"scanJob.tolerations": `lolwut`},
-			expected:    []corev1.Toleration{},
-			expectError: "invalid character 'l' looking for beginning of value",
-		},
-		{
-			name:     "empty JSON array",
-			config:   starboard.ConfigData{"scanJob.tolerations": `[]`},
-			expected: []corev1.Toleration{},
-		},
-		{
-			name: "one valid toleration",
-			config: starboard.ConfigData{
-				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`},
-			expected: []corev1.Toleration{{
-				Key:      "key1",
-				Operator: "Equal",
-				Value:    "value1",
-				Effect:   "NoSchedule",
-			}},
-		},
-		{
-			name: "multiple valid tolerations",
-			config: starboard.ConfigData{
-				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"},
-					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`},
-			expected: []corev1.Toleration{
-				{
-					Key:      "key1",
-					Operator: "Equal",
-					Value:    "value1",
-					Effect:   "NoSchedule",
-				},
-				{
-					Key:      "key2",
-					Operator: "Equal",
-					Value:    "value2",
-					Effect:   "NoSchedule",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := tc.config.GetScanJobTolerations()
-			if tc.expectError != "" {
-				assert.Error(t, err, "unexpected end of JSON input", tc.name)
-			} else {
-				assert.NoError(t, err, tc.name)
-			}
-			assert.Equal(t, tc.expected, got, tc.name)
-		})
-	}
-}
-
-func TestGetScanJobAnnotations(t *testing.T) {
-	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    map[string]string
-		expectError string
-	}{
-		{
-			name: "scan job annotations can be fetched successfully",
-			config: starboard.ConfigData{
-				"scanJob.annotations": "a.b=c.d/e,foo=bar",
-			},
-			expected: map[string]string{
-				"foo": "bar",
-				"a.b": "c.d/e",
-			},
-		},
-		{
-			name:     "gracefully deal with unprovided annotations",
-			config:   starboard.ConfigData{},
-			expected: map[string]string{},
-		},
-		{
-			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
-				"scanJob.annotations": "foo",
-			},
-			expected:    map[string]string{},
-			expectError: "custom annotations found to be wrongfully provided: foo",
-		},
-		{
-			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
-				"scanJob.annotations": "foo=bar,a=b=c",
-			},
-			expected:    map[string]string{},
-			expectError: "custom annotations found to be wrongfully provided: foo=bar,a=b=c",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			scanJobAnnotations, err := tc.config.GetScanJobAnnotations()
-			if tc.expectError != "" {
-				assert.Error(t, err, tc.expectError, tc.name)
-			} else {
-				assert.NoError(t, err, tc.name)
-			}
-			assert.Equal(t, tc.expected, scanJobAnnotations, tc.name)
-		})
-	}
-}
-
-func TestGetScanJobPodTemplateLabels(t *testing.T) {
-	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    labels.Set
-		expectError string
-	}{
-		{
-			name: "scan job template labels can be fetched successfully",
-			config: starboard.ConfigData{
-				"scanJob.podTemplateLabels": "a.b=c.d/e,foo=bar",
-			},
-			expected: labels.Set{
-				"foo": "bar",
-				"a.b": "c.d/e",
-			},
-		},
-		{
-			name:     "gracefully deal with unprovided annotations",
-			config:   starboard.ConfigData{},
-			expected: labels.Set{},
-		},
-		{
-			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
-				"scanJob.podTemplateLabels": "foo",
-			},
-			expected:    labels.Set{},
-			expectError: "custom template labels found to be wrongfully provided: foo",
-		},
-		{
-			name: "raise an error on being provided with template labels in wrong format",
-			config: starboard.ConfigData{
-				"scanJob.podTemplateLabels": "foo=bar,a=b=c",
-			},
-			expected:    labels.Set{},
-			expectError: "custom template labels found to be wrongfully provided: foo=bar,a=b=c",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			scanJobPodTemplateLabels, err := tc.config.GetScanJobPodTemplateLabels()
-			if tc.expectError != "" {
-				assert.Error(t, err, tc.expectError, tc.name)
-			} else {
-				assert.NoError(t, err, tc.name)
-			}
-			assert.Equal(t, tc.expected, scanJobPodTemplateLabels, tc.name)
-		})
-	}
 }
