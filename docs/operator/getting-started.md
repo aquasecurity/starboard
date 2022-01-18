@@ -10,7 +10,7 @@ of these Kubernetes playgrounds:
 * [Play with Kubernetes]
 
 You also need the Starboard Operator to be installed in the `starboard-system` namespace, e.g. with
-[static YAML manifests](./installation/kubectl.md) or [Helm](./installation/helm.md).
+[kubectl](./installation/kubectl.md) or [Helm](./installation/helm.md).
 
 ## Workloads Scanning
 
@@ -26,7 +26,7 @@ creates the Kubernetes Job in the `starboard-system` namespace to scan the `ngin
 It also creates the Job to audit the Deployment's configuration for common pitfalls such as running the `nginx`
 container as root:
 
-```console
+```
 kubectl get job -n starboard-operator
 ```
 
@@ -46,7 +46,7 @@ If everything goes fine, the scan Jobs are deleted, and the operator saves scan 
 a VulnerabilityReport for each different container defined in the active ReplicaSet. In this example there is just one
 container image called `nginx`:
 
-```console
+```
 kubectl get vulnerabilityreports -o wide
 ```
 <details>
@@ -105,7 +105,7 @@ kubectl set image deployment nginx nginx=nginx:1.17
 
 Even this time the operator will pick up changes and rescan our Deployment with updated configuration:
 
-```console
+```
 kubectl tree deploy nginx
 ```
 
@@ -132,8 +132,10 @@ collection. For example, when the previous ReplicaSet named `nginx-6d4cf56db6` i
 `replicaset-nginx-6d4cf56db6-nginx` as well as the ConfigAuditReport named `replicaset-nginx-6d4cf56db6` are
 automatically garbage collected.
 
-If you only want the latest replicaset in your deployment to be scanned for vulnerabilities you can define `OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS=true`
-in your operator deployment. This can be useful if you only want to know about vulnerability that is currently a potential issue.
+!!! tip
+    If you only want the latest ReplicaSet in your Deployment to be scanned for vulnerabilities you can set the value
+    of the `OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS` environment variable to `true` in the operator's
+    deployment descriptor. This is useful to identify vulnerabilities that impact only the running workloads.
 
 !!! tip
     You can get and describe `vulnerabilityreports` and `configauditreports` as built-in Kubernetes objects:
@@ -193,12 +195,12 @@ No resources found in default namespace.
 !!! Tip
     Use `vuln` and `configaudit` as short names for `vulnerabilityreports` and `configauditreports` resources.
 
-To be sure that your vulnerabilityreports is is up to date with the latest CVE:s you can define
-how long your vulnerabilityreports should be in the cluster before automatically getting deleted.
-For example setting `OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL=24h` would delete the report after 24 hours.
-When the vulnerabilityreports gets deleted starboard will automatically create a new job and scan the images again.
-Assuming that your image scan solution have updated it's DB the new vulnerabilityreports that gets created will contain the latest CVE:s.
-This feature is disabled by default.
+!!! Note
+    You can define the validity period for VulnerabilityReports by setting the duration as the value of the
+    `OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL` environment variable. For example, setting the value to `24h`
+    would delete reports after 24 hours. When a VulnerabilityReport gets deleted Starboard Operator will automatically
+    rescan the underlying workload. Assuming that the vulnerability scanner has updated its vulnerability database,
+    new VulnerabilityReports will contain the latest vulnerabilities.
 
 ## Infrastructure Scanning
 
