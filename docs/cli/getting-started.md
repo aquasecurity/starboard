@@ -28,7 +28,13 @@ scans. It also sends custom security resources definitions to the Kubernetes API
 objects:
 
 ```console
-$ kubectl api-resources --api-group aquasecurity.github.io
+kubectl api-resources --api-group aquasecurity.github.io
+```
+
+<details>
+<summary>Result</summary>
+
+```
 NAME                          SHORTNAMES                 APIVERSION                        NAMESPACED   KIND
 ciskubebenchreports           kubebench                  aquasecurity.github.io/v1alpha1   false        CISKubeBenchReport
 clusterconfigauditreports     clusterconfigaudit         aquasecurity.github.io/v1alpha1   false        ClusterConfigAuditReport
@@ -37,6 +43,7 @@ configauditreports            configaudit                aquasecurity.github.io/
 kubehunterreports             kubehunter                 aquasecurity.github.io/v1alpha1   false        KubeHunterReport
 vulnerabilityreports          vuln,vulns                 aquasecurity.github.io/v1alpha1   true         VulnerabilityReport
 ```
+</details>
 
 !!! tip
     There's also a `starboard uninstall` subcommand, which can be used to remove all resources created by Starboard.
@@ -96,6 +103,22 @@ Retrieve the configuration audit report:
 ```
 starboard get configauditreports deployment/nginx -o yaml
 ```
+
+or
+
+```console
+kubectl get configauditreport -o wide \
+    -l starboard.resource.kind=Deployment,starboard.resource.name=nginx
+```
+
+<details>
+<summary>Result</summary>
+
+```
+NAME               SCANNER   AGE   DANGER   WARNING   PASS
+deployment-nginx   Polaris   5s    0        8         9
+```
+</details>
 
 ## Generating HTML Reports
 
