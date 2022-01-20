@@ -72,7 +72,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 
 	switch scanner {
 	case starboard.Trivy:
-		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator()), pluginContext, nil
+		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.client), pluginContext, nil
 	case starboard.Aqua:
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo), pluginContext, nil
 	}
