@@ -111,332 +111,44 @@ to support the following tracked resources kind by NSA plugin with (get,list and
 
 ### NSA CRD:
   - a new CRD `nsareports.crd.yaml` will be added to include nsa check report
-  - CRD structure TBD
+  - CRD structure (TBD)
 
 ### NSA Tool Analysis
 
-<table cellspacing=0 border=1>
-					<tr>
-  					</tr>
-					<tr>
- 					</tr>
-					<tr>
-  					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>Num</td>
-						<td style=min-width:50px>Test</td>
-						<td style=min-width:50px>Description</td>
-						<td style=min-width:50px>Kind</td>
-						<td style=min-width:50px>Tool</td>
-						<td style=min-width:50px>Check supported</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>1</td>
-						<td style=min-width:50px>Non-root containers</td>
-						<td style=min-width:50px>Check that container is not running as root</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield : kubernetes/policies/pss/restricted/3_runs_as_root.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>2</td>
-						<td style=min-width:50px>Immutable container file systems</td>
-						<td style=min-width:50px>check that container root file system is immutable</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/general/file_system_not_read_only.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>3</td>
-						<td style=min-width:50px>Scan container images for possible vulnerabilities or misconfigurations</td>
-						<td style=min-width:50px>can container for vulnerabilities and misconfiguration</td>
-						<td style=min-width:50px>Workload</td>
-						<td style=min-width:50px>Trivy</td>
-						<td style=min-width:50px>Trivy</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>4</td>
-						<td style=min-width:50px>Privileged container</td>
-						<td style=min-width:50px>Controls whether Pods can run privileged containers.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/2_privileged.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>5</td>
-						<td style=min-width:50px>hostIPC</td>
-						<td style=min-width:50px>Controls whether containers can share host process namespaces.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/1_host_ipc.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>6</td>
-						<td style=min-width:50px>hostPID</td>
-						<td style=min-width:50px></td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/1_host_pid.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>7</td>
-						<td style=min-width:50px>hostNetwork</td>
-						<td style=min-width:50px>Controls whether containers can use the host network.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/1_host_network.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>8</td>
-						<td style=min-width:50px>allowedHostPaths</td>
-						<td style=min-width:50px>Limits containers to specific paths of the host file system.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px;color:darkorange>Need to be added to appshield : https://kubernetes.io/docs/concepts/policy/pod-security-policy/#volumes-and-file-systems</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>9</td>
-						<td style=min-width:50px>readOnlyRootFilesystem</td>
-						<td style=min-width:50px>Requires the use of a read only root file system</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/general/file_system_not_read_only.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>10</td>
-						<td style=min-width:50px>runAsUser : MustRunAsNonRoot</td>
-						<td style=min-width:50px></td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px;color:darkorange>Need to be added to appshield : https://kubernetes.io/docs/concepts/policy/pod-security-policy/</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>11</td>
-						<td style=min-width:50px>runAsUser , runAsGroup ,supplementalGroups</td>
-						<td style=min-width:50px></td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: appshield/kubernetes/policies/pss/restricted/4_runs_with_a_root_gid.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>12</td>
-						<td style=min-width:50px>allowPrivilegeEscalation</td>
-						<td style=min-width:50px>Restricts escalation to root privileges.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/restricted/2_can_elevate_its_own_privileges.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>13</td>
-						<td style=min-width:50px>seLinux</td>
-						<td style=min-width:50px>Sets the SELinux context of the container.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/7_selinux_custom_options_set.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>14</td>
-						<td style=min-width:50px>AppArmor annotations</td>
-						<td style=min-width:50px>Sets the seccomp profile used to sandbox containers.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/baseline/6_apparmor_policy_disabled.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>15</td>
-						<td style=min-width:50px>seccomp annotations</td>
-						<td style=min-width:50px>Sets the seccomp profile used to sandbox containers.</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>appshield: kubernetes/policies/pss/restricted/5_runtime_default_seccomp_profile_not_set.rego</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>16</td>
-						<td style=min-width:50px>Protecting Pod service account tokens</td>
-						<td style=min-width:50px>disable secret token been mount</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px>Need to be added to appshield: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ automountServiceAccountToken: false</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>17</td>
-						<td style=min-width:50px>kube-systm or kube-public</td>
-						<td style=min-width:50px>Domain should should not be used by users</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px;color:darkorange>Need to be added to appshield:</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>18</td>
-						<td style=min-width:50px>Use CNI plugin that supports NetworkPolicy API</td>
-						<td style=min-width:50px>check cni plugin installed</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>5.3.1 Ensure that the CNI in use supports Network Policies (need to be fixed)</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>19</td>
-						<td style=min-width:50px>Create policies that select Pods using podSelector and/or the namespaceSelector</td>
-						<td style=min-width:50px>Create policies that select Pods using podSelector and/or the namespaceSelector</td>
-						<td style=max-width:50px>Pod,ReplicationController,ReplicaSet,StatefulSet,DaemonSet,Job,CronJob</td>
-						<td style=min-width:50px>Conftest</td>
-						<td style=min-width:50px;color:darkorange>Need to be added to appshield: https://kubernetes.io/docs/concepts/services-networking/network-policies/</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>20</td>
-						<td style=min-width:50px>use a default policy to deny all ingress and egress traffic. Ensures unselected Pods are isolated to all namespaces except kube-system</td>
-						<td style=min-width:50px>check that netowork policy deny all exist</td>
-						<td style=min-width:50px>NetworkPolicy</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px;color:darkorange>Add logic to kube-bench https://kubernetes.io/docs/concepts/services-networking/network-policies/</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>21</td>
-						<td style=min-width:50px>Use LimitRange and ResourceQuota policies to limit resources on a namespace or Pod level</td>
-						<td style=min-width:50px>check the limit range resource has been define</td>
-						<td style=min-width:50px>LimitRange</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px;color:darkorange>Add Logic to kube-bench https://kubernetes.io/docs/concepts/policy/limit-range/</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>22</td>
-						<td style=min-width:50px>TLS encryption</td>
-						<td style=min-width:50px>control plan disable insecure port</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.19 Ensure that the --insecure-port argument is set to 0</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>23</td>
-						<td style=min-width:50px>Etcd encryption</td>
-						<td style=min-width:50px>encrypt etcd communication</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>2.1 Ensure that the --cert-file and --key-file arguments are set as appropriate</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>24</td>
-						<td style=min-width:50px>Kubeconfig files</td>
-						<td style=min-width:50px>ensure file permission</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>4.1.3, 4.1.4</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>25</td>
-						<td style=min-width:50px>Worker node segmentation</td>
-						<td style=min-width:50px>node segmentation</td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>Note sure can be tested</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>26</td>
-						<td style=min-width:50px>Encryption</td>
-						<td style=min-width:50px>check that encyption resource has been set</td>
-						<td style=min-width:50px>EncryptionConfiguration</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px;color:darkorange>Add Logic to kube-bench https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>27</td>
-						<td style=min-width:50px>Encryption / secrets</td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.33 Ensure that the --encryption-provider-config argument is set as</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>28</td>
-						<td style=min-width:50px>authentication</td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.1 Ensure that the --anonymous-auth argument is set to false</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>29</td>
-						<td style=min-width:50px>Role-based access control</td>
-						<td style=min-width:50px>--authorization-mode=RBAC</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.7/1.2.8 Ensure that the --authorization-mode argument is not set to AlwaysAllow</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>30</td>
-						<td style=min-width:50px>Audit policy file</td>
-						<td style=min-width:50px>check that policy is configure</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>3.2.1 Ensure that a minimal audit policy is created</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>31</td>
-						<td style=min-width:50px>Audit log path</td>
-						<td style=min-width:50px>check that log path is configure</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.22 Ensure that the --audit-log-path argument is set</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>32</td>
-						<td style=min-width:50px>Audit log max age</td>
-						<td style=min-width:50px>check audit log againg</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px>1.2.23 Ensure that the --audit-log-maxage argument is set to 30 or as appropriate</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px>33</td>
-						<td style=min-width:50px>service mesh usage</td>
-						<td style=min-width:50px>check serive mesh is used in cluster</td>
-						<td style=min-width:50px>Node</td>
-						<td style=min-width:50px>Kube-bench</td>
-						<td style=min-width:50px;color:darkorange>Add Logic to kube-bench check service mesh existenace</td>
-					</tr>
-					<tr>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-						<td style=min-width:50px></td>
-					</tr>
-				</table>
+| Test                                                                                          | Description                                                                                             | Kind                                                                        | Tool        | Test                                                                                                                          |
+|-----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Non-root containers                                                                           | Check that container is not running as root                                                             | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield : <br/>kubernetes/policies/pss/restricted/3_runs_as_root.rego                                                       |
+| Immutable container file systems                                                              | check that container root <br/>file system is immutable                                                 | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/general/file_system_not_read_only.rego                                                         |
+| Scan container images vulnerabilities                                                         | scan container for vulnerabilities<br/> and misconfiguration                                            | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Trivy       | Trivy                                                                                                                         |
+| Privileged container                                                                          | Controls whether Pods can run privileged containers.                                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/2_privileged.rego                                                                 |
+| hostIPC                                                                                       | Controls whether containers can share<br/> host process namespaces                                      | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/1_host_ipc.rego                                                                   |
+| hostPID                                                                                       | Controls whether containers can share host process namespaces.                                          | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/1_host_pid.rego                                                                   |
+| hostNetwork                                                                                   | Controls whether containers can use the host network.                                                   | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/1_host_network.rego                                                               |
+| allowedHostPaths                                                                              | Limits containers to specific paths of the host file system.                                            | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield :<br/> https://kubernetes.io/docs/concepts/policy/pod-security-policy/#volumes-and-file-systems |
+| readOnlyRootFilesystem                                                                        | Requires the use of a read only root file system                                                        | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/general/file_system_not_read_only.rego                                                         |
+| runAsUser : MustRunAsNonRoot                                                                  | Controls whether container applications can run <br/>with root privileges or with root group membership | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield :<br/> https://kubernetes.io/docs/concepts/policy/pod-security-policy                           |
+| runAsUser , runAsGroup <br/>and supplementalGroups                                            | Controls whether container applications can run <br/>with root privileges or with root group membership | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/4_runs_with_a_root_gid.rego                                                     |
+| allowPrivilegeEscalation                                                                      | Restricts escalation to root privileges.                                                                | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/2_can_elevate_its_own_privileges.rego                                           |
+| seLinux                                                                                       | Sets the SELinux context of the container.                                                              | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/7_selinux_custom_options_set.rego                                                 |
+| AppArmor annotations                                                                          | Sets the seccomp profile used to sandbox containers.                                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/6_apparmor_policy_disabled.rego                                                   |
+| seccomp annotations                                                                           | Sets the seccomp profile used to sandbox containers.                                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/5_runtime_default_seccomp_profile_not_set.rego                                  |
+| Protecting Pod service account tokens                                                         | disable secret token been mount ,automountServiceAccountToken: false                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield: <br/>https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/       |
+| kube-systm or kube-public                                                                     | Domain should should not be used by users                                                               | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield                                                                                                 |
+| Use CNI plugin that supports NetworkPolicy API                                                | check cni plugin installed                                                                              | Node                                                                        | Kube-bench  | 5.3.1 Ensure that the CNI in use supports Network Policies (need to be fixed)                                                 |
+| Create policies that select <br/>Pods using podSelector and/or the namespaceSelector          | Create policies that select Pods using podSelector<br/> and/or the namespaceSelector                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield: <br/>https://kubernetes.io/docs/concepts/services-networking/network-policies/                 |
+| use a default policy to deny all ingress and egress traffic                                   | check that network policy deny all exist                                                                | NetworkPolicy                                                               | Kube-bench  | Add logic to kube-bench <br/>https://kubernetes.io/docs/concepts/services-networking/network-policies/                        |
+| Use LimitRange and ResourceQuota<br/> policies to limit resources on a namespace or Pod level | check the limit range resource has been define                                                          | LimitRange                                                                  | Kube-bench  | Add Logic to kube-bench <br/>https://kubernetes.io/docs/concepts/policy/limit-range/                                          |
+| TLS encryption                                                                                | control plan disable insecure port                                                                      | Node                                                                        | Kube-bench  | 1.2.19 Ensure that the --insecure-port argument is set to 0                                                                   |
+| Etcd encryption                                                                               | encrypt etcd communication                                                                              | Node                                                                        | Kube-bench  | 2.1 Ensure that the --cert-file and --key-file arguments are set as appropriate                                               |
+| Kubeconfig files                                                                              | ensure file permission                                                                                  | Node                                                                        | Kube-bench  | 4.1.3, 4.1.4                                                                                                                  |
+| Worker node segmentation                                                                      | node segmentation                                                                                       | Node                                                                        | Kube-bench  | Note sure can be tested                                                                                                       |
+| Encryption                                                                                    | check that encryption resource has been set                                                             | EncryptionConfiguration                                                     | Kube-bench  | Add Logic to kube-bench https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/                                     |
+| Encryption / secrets                                                                          | check encryption provider                                                                               | Node                                                                        | Kube-bench  | 1.2.33 Ensure that the --encryption-provider-config argument is set as                                                        |
+| authentication                                                                                | make sure anonymous-auth is unset                                                                       | Node                                                                        | Kube-bench  | 1.2.1 Ensure that the --anonymous-auth argument is set to false                                                               |~~
+| Role-based access control                                                                     | make sure -authorization-mode=RBAC                                                                      | Node                                                                        | Kube-bench  | 1.2.7/1.2.8 Ensure that the --authorization-mode argument is not set to AlwaysAllow                                           |
+| Audit policy file                                                                             | check that policy is configure                                                                          | Node                                                                        | Kube-bench  | 3.2.1 Ensure that a minimal audit policy is created                                                                           |
+| Audit log path                                                                                | check that log path is configure                                                                        | Node                                                                        | Kube-bench  | 1.2.22 Ensure that the --audit-log-path argument is set                                                                       |
+| Audit log max age                                                                             | check audit log aging                                                                                   | Node                                                                        | Kube-bench  | 1.2.23 Ensure that the --audit-log-maxage argument is set to 30 or as appropriate                                             |~~
+| service mesh usage                                                                            | check service mesh is used in cluster                                                                   | Node                                                                        | Kube-bench  | Add Logic to kube-bench check service mesh existenace                                                                         |
 
 ```
