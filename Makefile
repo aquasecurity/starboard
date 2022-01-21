@@ -40,7 +40,7 @@ build-starboard-scanner-aqua: $(SOURCES)
 .PHONY: get-ginkgo
 ## Installs Ginkgo CLI
 get-ginkgo:
-	@go install github.com/onsi/ginkgo/ginkgo
+	@go install github.com/onsi/ginkgo/v2/ginkgo
 
 .PHONY: get-qtc
 ## Installs quicktemplate compiler
