@@ -27,7 +27,7 @@ Code Changes:
 - conftest - the following rego check need to be added to appshield :
   - new
     - `allowedHostPaths` for Limits containers to specific paths of the host file system.
-    - `Set runAsUser to MustRunAsNonRoot` Controls whether container applications can run with root privileges
+    - `Protecting Pod service account tokens` Controls whether container applications can run with root privileges
     - `ube-systm or kube-public` Domain should should not be used by users (need to confirm it can be done)
     - `policies that select Pods using podSelector and/or the namespaceSelector`
 
@@ -103,15 +103,95 @@ data:
 
 ### Permission changes:
 
-it is required to update `02-starboard-operator.rbac.yaml` to include new permissions 
+it is required to update `02-starboard-operator.rbac.yaml` rules to include new permissions 
 to support the following tracked resources kind by NSA plugin with (get,list and watch):
-  - NetworkPolicy
-  - EncryptionConfiguration
-  - LimitRange
+ ```yaml
+- apiGroups: ["networking.k8s.io"]
+  resources:
+    - networkpolicies
+  verbs:
+    - get
+    - list
+    - watch
+```
+```yaml
+- apiGroups: ["apiserver.config.k8s.io"]
+  resources:
+    - encryptionconfigurations
+  verbs:
+    - get
+    - list
+    - watch
+```
+```yaml
+- apiGroups:
+      - ""
+    resources:
+      - limitranges
+    verbs:
+      - get
+      - list
+      - watch
+```
 
-### NSA CRD:
+### NationalSecurityAgency CRD (maybe use short name nsa for crd?):
   - a new CRD `nsareports.crd.yaml` will be added to include nsa check report
-  - CRD structure (TBD)
+  - CRD structure (proposal):
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusternsareports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.0"
+spec:
+  group: aquasecurity.github.io
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .report.scanner.name
+          type: string
+          name: Scanner
+          description: The name of the national security agency scanner
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .report.summary.dangerCount
+          type: integer
+          name: Danger
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .report.summary.warningCount
+          type: integer
+          name: Warning
+          priority: 1
+          description: The number of checks that failed with Warning status
+        - jsonPath: .report.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          x-kubernetes-preserve-unknown-fields: true
+          type: object
+  scope: Cluster
+  names:
+    singular: clusternsareport
+    plural: clusternsareports
+    kind: ClusterNsaReport
+    listKind: NsaReportList
+    categories:
+      - all
+    shortNames:
+      - clusternsa
+
+```
 
 ### NSA Tool Analysis
 
@@ -126,14 +206,13 @@ to support the following tracked resources kind by NSA plugin with (get,list and
 | hostNetwork                                                                                   | Controls whether containers can use the host network.                                                   | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/1_host_network.rego                                                               |
 | allowedHostPaths                                                                              | Limits containers to specific paths of the host file system.                                            | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield :<br/> https://kubernetes.io/docs/concepts/policy/pod-security-policy/#volumes-and-file-systems |
 | readOnlyRootFilesystem                                                                        | Requires the use of a read only root file system                                                        | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/general/file_system_not_read_only.rego                                                         |
-| runAsUser : MustRunAsNonRoot                                                                  | Controls whether container applications can run <br/>with root privileges or with root group membership | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield :<br/> https://kubernetes.io/docs/concepts/policy/pod-security-policy                           |
 | runAsUser , runAsGroup <br/>and supplementalGroups                                            | Controls whether container applications can run <br/>with root privileges or with root group membership | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/4_runs_with_a_root_gid.rego                                                     |
 | allowPrivilegeEscalation                                                                      | Restricts escalation to root privileges.                                                                | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/2_can_elevate_its_own_privileges.rego                                           |
 | seLinux                                                                                       | Sets the SELinux context of the container.                                                              | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/7_selinux_custom_options_set.rego                                                 |
 | AppArmor annotations                                                                          | Sets the seccomp profile used to sandbox containers.                                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/baseline/6_apparmor_policy_disabled.rego                                                   |
 | seccomp annotations                                                                           | Sets the seccomp profile used to sandbox containers.                                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/pss/restricted/5_runtime_default_seccomp_profile_not_set.rego                                  |
-| Protecting Pod service account tokens                                                         | disable secret token been mount ,automountServiceAccountToken: false                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield: <br/>https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/       |
-| kube-systm or kube-public                                                                     | Domain should should not be used by users                                                               | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield                                                                                                 |
+| Protecting Pod service account tokens                                                         | disable secret token been mount ,automountServiceAccountToken: false                                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/advance/protecting_pod_service_account_tokens.rego                                             |
+| kube-system or kube-public                                                                    | namespace kube-system should should not be used by users                                                | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | appshield: kubernetes/policies/advance/protect_core_components_namespace.rego                                                 |
 | Use CNI plugin that supports NetworkPolicy API                                                | check cni plugin installed                                                                              | Node                                                                        | Kube-bench  | 5.3.1 Ensure that the CNI in use supports Network Policies (need to be fixed)                                                 |
 | Create policies that select <br/>Pods using podSelector and/or the namespaceSelector          | Create policies that select Pods using podSelector<br/> and/or the namespaceSelector                    | Pod,ReplicationController,ReplicaSet,<br/>StatefulSet,DaemonSet,Job,CronJob | Conftest    | Need to be added to appshield: <br/>https://kubernetes.io/docs/concepts/services-networking/network-policies/                 |
 | use a default policy to deny all ingress and egress traffic                                   | check that network policy deny all exist                                                                | NetworkPolicy                                                               | Kube-bench  | Add logic to kube-bench <br/>https://kubernetes.io/docs/concepts/services-networking/network-policies/                        |
@@ -152,3 +231,6 @@ to support the following tracked resources kind by NSA plugin with (get,list and
 | service mesh usage                                                                            | check service mesh is used in cluster                                                                   | Node                                                                        | Kube-bench  | Add Logic to kube-bench check service mesh existenace                                                                         |
 
 ```
+
+### Open item
+ - nsa supprt for CLI (need to discuss implementation)
