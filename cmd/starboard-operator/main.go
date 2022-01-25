@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aquasecurity/starboard/pkg/operator"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
@@ -31,7 +32,8 @@ var (
 // main is the entrypoint of the Starboard Operator executable command.
 func main() {
 	if err := run(); err != nil {
-		setupLog.Error(err, "Unable to run starboard operator")
+		fmt.Fprintf(os.Stderr, "unable to run starboard operator: %v\n", err)
+		os.Exit(1)
 	}
 }
 
