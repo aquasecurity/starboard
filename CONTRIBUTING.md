@@ -51,7 +51,7 @@ These guidelines will help you get started with the Starboard project.
 
 1. Install Go
 
-   The project requires [Go 1.16][go-download] or later. We also assume that you're familiar with
+   The project requires [Go 1.17][go-download] or later. We also assume that you're familiar with
    Go's [GOPATH workspace][go-code] convention, and have the appropriate environment variables set.
 2. Get the source code:
 
