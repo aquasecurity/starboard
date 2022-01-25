@@ -178,7 +178,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Name:      "scan-configauditreport-64d65c457",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "58b8989656",
+					starboard.LabelResourceSpecHash:         "755877d4bb",
 					starboard.LabelPluginConfigHash:         "hash-test",
 					starboard.LabelConfigAuditReportScanner: "plugin-test",
 					starboard.LabelK8SAppManagedBy:          "starboard",
@@ -194,7 +194,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "58b8989656",
+							starboard.LabelResourceSpecHash:         "755877d4bb",
 							starboard.LabelPluginConfigHash:         "hash-test",
 							starboard.LabelConfigAuditReportScanner: "plugin-test",
 							starboard.LabelK8SAppManagedBy:          "starboard",
