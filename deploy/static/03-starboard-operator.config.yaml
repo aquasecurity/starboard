@@ -47,7 +47,7 @@ metadata:
     app.kubernetes.io/version: "0.14.0"
     app.kubernetes.io/managed-by: kubectl
 data:
-  trivy.imageRef: "docker.io/aquasec/trivy:0.20.0"
+  trivy.imageRef: "docker.io/aquasec/trivy:0.22.0"
   trivy.mode: "Standalone"
   trivy.severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
   trivy.resources.requests.cpu: 100m
