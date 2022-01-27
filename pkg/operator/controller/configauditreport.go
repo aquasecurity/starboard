@@ -40,6 +40,11 @@ type ConfigAuditReportReconciler struct {
 	configauditreport.ReadWriter
 }
 
+func (r *ConfigAuditReportReconciler) AddJobMiddleName() string {
+	//no need to add middle name for cis-benchmark classic scan
+	return ""
+}
+
 func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	installModePredicate, err := InstallModePredicate(r.Config)
 	if err != nil {
@@ -87,7 +92,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				installModePredicate,
 			)).
 			Owns(resource.ownsObject).
-			Complete(r.reconcileResource(resource.kind))
+			Complete(r.reconcileResource(resource.kind, r))
 		if err != nil {
 			return fmt.Errorf("constructing controller for %s: %w", resource.kind, err)
 		}
@@ -104,7 +109,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				Not(IsBeingTerminated),
 			)).
 			Owns(resource.ownsObject).
-			Complete(r.reconcileResource(resource.kind))
+			Complete(r.reconcileResource(resource.kind, r))
 		if err != nil {
 			return fmt.Errorf("constructing controller for %s: %w", resource.kind, err)
 		}
@@ -117,7 +122,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			IsConfigAuditReportScan,
 			JobHasAnyCondition,
 		)).
-		Complete(r.reconcileJobs())
+		Complete(r.reconcileJobs(r))
 }
 
 func (r *ConfigAuditReportReconciler) supportsKind(kind kube.Kind) bool {
@@ -129,7 +134,7 @@ func (r *ConfigAuditReportReconciler) supportsKind(kind kube.Kind) bool {
 	return false
 }
 
-func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) reconcile.Func {
+func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind, conductor Conductor) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
 
@@ -192,7 +197,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 		log = log.WithValues("resourceSpecHash", resourceSpecHash, "pluginConfigHash", pluginConfigHash)
 
 		log.V(1).Info("Checking whether configuration audit report exists")
-		hasReport, err := r.hasReport(ctx, resourcePartial, resourceSpecHash, pluginConfigHash)
+		hasReport, err := r.hasReport(ctx, resourcePartial, resourceSpecHash, pluginConfigHash, conductor)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -287,14 +292,13 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 				return ctrl.Result{}, fmt.Errorf("updating secret: %w", err)
 			}
 		}
-
 		return ctrl.Result{}, nil
 	}
 }
 
-func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string) (bool, error) {
+func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string, conductor Conductor) (bool, error) {
 	if kube.IsClusterScopedKind(string(owner.Kind)) {
-		return r.hasClusterReport(ctx, owner, podSpecHash, pluginConfigHash)
+		return r.hasClusterReport(ctx, owner, podSpecHash, pluginConfigHash, conductor)
 	}
 	// TODO FindByOwner should accept optional label selector to further narrow down search results
 	report, err := r.ReadWriter.FindReportByOwner(ctx, owner)
@@ -308,16 +312,22 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 	return false, nil
 }
 
-func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string) (bool, error) {
-	report, err := r.ReadWriter.FindClusterReportByOwner(ctx, owner)
+func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string, conductor Conductor) (bool, error) {
+	report, err := conductor.FindByOwner(ctx, owner)
 	if err != nil {
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		if car, ok := report.(*v1alpha1.ClusterConfigAuditReport); ok {
+			return car.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
+				car.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		}
 	}
 	return false, nil
+}
+
+func (r *ConfigAuditReportReconciler) FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{}, error) {
+	return r.ReadWriter.FindClusterReportByOwner(ctx, node)
 }
 
 func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj client.Object, hash string) (bool, *batchv1.Job, error) {
@@ -336,41 +346,41 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj 
 	return false, nil, nil
 }
 
-func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
+func (r *ConfigAuditReportReconciler) reconcileJobs(conductor Conductor) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("job", req.NamespacedName)
-
-		job := &batchv1.Job{}
-		log.V(1).Info("Getting job from cache")
-		err := r.Client.Get(ctx, req.NamespacedName, job)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached job that must have been deleted")
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
-		}
-
-		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Ignoring job without conditions")
-			return ctrl.Result{}, nil
-		}
-
-		switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
-		case batchv1.JobComplete:
-			err = r.processCompleteScanJob(ctx, job)
-		case batchv1.JobFailed:
-			err = r.processFailedScanJob(ctx, job)
-		default:
-			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
-		}
-
-		return ctrl.Result{}, err
+		return r.reconcileConfigAudit(ctx, req, conductor)
 	}
-
 }
 
-func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
+func (r *ConfigAuditReportReconciler) reconcileConfigAudit(ctx context.Context, req ctrl.Request, conductor Conductor) (ctrl.Result, error) {
+	log := r.Logger.WithValues("job", req.NamespacedName)
+	job, err := findJob(ctx, req, r.Client)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring cached job that must have been deleted")
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
+	}
+
+	if len(job.Status.Conditions) == 0 {
+		log.V(1).Info("Ignoring job without conditions")
+		return ctrl.Result{}, nil
+	}
+
+	switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
+	case batchv1.JobComplete:
+		err = r.processCompleteScanJob(ctx, job, conductor)
+	case batchv1.JobFailed:
+		err = r.processFailedScanJob(ctx, job)
+	default:
+		err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
+	}
+
+	return ctrl.Result{}, err
+}
+
+func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job, conductor Conductor) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
 	ownerRef, err := kube.ObjectRefFromObjectMeta(job.ObjectMeta)
@@ -396,7 +406,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
 	}
 
-	hasReport, err := r.hasReport(ctx, ownerRef, resourceSpecHash, pluginConfigHash)
+	hasReport, err := r.hasReport(ctx, ownerRef, resourceSpecHash, pluginConfigHash, conductor)
 	if err != nil {
 		return err
 	}
@@ -425,13 +435,23 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
 		Data(reportData)
-	err = reportBuilder.Write(ctx, r.ReadWriter)
+	report, err := reportBuilder.GetConfigAuditReport()
 	if err != nil {
 		return err
 	}
-
+	conductor.ApplyReport(ctx, r.Logger, report)
 	log.V(1).Info("Deleting complete scan job", "owner", owner)
 	return r.deleteJob(ctx, job)
+}
+
+func (r *ConfigAuditReportReconciler) ApplyReport(ctx context.Context, log logr.Logger, report interface{}) error {
+	if ccr, ok := report.(v1alpha1.ClusterConfigAuditReport); ok {
+		return r.ReadWriter.WriteClusterReport(ctx, ccr)
+	}
+	if ccr, ok := report.(v1alpha1.ConfigAuditReport); ok {
+		return r.ReadWriter.WriteReport(ctx, ccr)
+	}
+	return fmt.Errorf("unable to apply report found wrong nsa report type")
 }
 
 func (r *ConfigAuditReportReconciler) processFailedScanJob(ctx context.Context, scanJob *batchv1.Job) error {

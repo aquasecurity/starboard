@@ -44,11 +44,16 @@ type CISKubeBenchReportReconciler struct {
 	starboard.ConfigData
 }
 
+func (r *CISKubeBenchReportReconciler) AddJobMiddleName() string {
+	//no need to add middle name for cis-benchmark classic scan
+	return ""
+}
+
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Node{}, builder.WithPredicates(IsLinuxNode)).
 		Owns(&v1alpha1.CISKubeBenchReport{}).
-		Complete(r.reconcileNodes())
+		Complete(r.reconcileNodes(r))
 	if err != nil {
 		return err
 	}
@@ -59,10 +64,10 @@ func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error 
 			IsKubeBenchReportScan,
 			JobHasAnyCondition,
 		)).
-		Complete(r.reconcileJobs())
+		Complete(r.reconcileJobs(r))
 }
 
-func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
+func (r *CISKubeBenchReportReconciler) reconcileNodes(conductor Conductor) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("node", req.NamespacedName)
 
@@ -79,7 +84,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		}
 
 		log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
-		hasReport, err := r.hasReport(ctx, node)
+		hasReport, err := r.hasReport(ctx, node, conductor)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("checking whether report exists: %w", err)
 		}
@@ -90,7 +95,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 		}
 
 		log.V(1).Info("Checking whether CIS Kubernetes Benchmark checks have been scheduled")
-		_, job, err := r.hasScanJob(ctx, node)
+		_, job, err := r.hasScanJob(ctx, node, conductor)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("checking whether scan job has been scheduled: %w", err)
 		}
@@ -111,7 +116,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
 		}
 
-		job, err = r.newScanJob(node)
+		job, err = r.newScanJob(node, conductor)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("preparing job: %w", err)
 		}
@@ -129,16 +134,16 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 	}
 }
 
-func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *corev1.Node) (bool, error) {
-	report, err := r.ReadWriter.FindByOwner(ctx, kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
+func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *corev1.Node, conductor Conductor) (bool, error) {
+	report, err := conductor.FindByOwner(ctx, kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
 	if err != nil {
 		return false, err
 	}
 	return report != nil, nil
 }
 
-func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *corev1.Node) (bool, *batchv1.Job, error) {
-	jobName := r.getScanJobName(node)
+func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *corev1.Node, conductor Conductor) (bool, *batchv1.Job, error) {
+	jobName := r.getScanJobName(node, conductor)
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: r.Config.Namespace, Name: jobName}, job)
 	if err != nil {
@@ -150,7 +155,7 @@ func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *cor
 	return true, job, nil
 }
 
-func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.Job, error) {
+func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node, conductor Conductor) (*batchv1.Job, error) {
 	templateSpec, err := r.Plugin.GetScanJobSpec(*node)
 	if err != nil {
 		return nil, err
@@ -191,7 +196,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.getScanJobName(node),
+			Name:      r.getScanJobName(node, conductor),
 			Namespace: r.Config.Namespace,
 			Labels:    labelsSet,
 		},
@@ -210,44 +215,45 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 	}, nil
 }
 
-func (r *CISKubeBenchReportReconciler) getScanJobName(node *corev1.Node) string {
-	return "scan-cisbenchmark-" + kube.ComputeHash(node.Name)
+func (r *CISKubeBenchReportReconciler) getScanJobName(node *corev1.Node, conductor Conductor) string {
+	return fmt.Sprintf("scan-%scisbenchmark-%s", conductor.AddJobMiddleName(), kube.ComputeHash(node.Name))
 }
 
-func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
+func (r *CISKubeBenchReportReconciler) reconcileJobs(conductor Conductor) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("job", req.NamespacedName)
-
-		job := &batchv1.Job{}
-		log.V(1).Info("Getting job from cache")
-		err := r.Client.Get(ctx, req.NamespacedName, job)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached job that must have been deleted")
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
-		}
-
-		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Ignoring job without conditions")
-			return ctrl.Result{}, nil
-		}
-
-		switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
-		case batchv1.JobComplete:
-			err = r.processCompleteScanJob(ctx, job)
-		case batchv1.JobFailed:
-			err = r.processFailedScanJob(ctx, job)
-		default:
-			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
-		}
-
-		return ctrl.Result{}, err
+		return r.reconcileKubeBench(ctx, req, conductor)
 	}
 }
 
-func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
+func (r *CISKubeBenchReportReconciler) reconcileKubeBench(ctx context.Context, req ctrl.Request, conductor Conductor) (ctrl.Result, error) {
+	log := r.Logger.WithValues("job", req.NamespacedName)
+	job, err := findJob(ctx, req, r.Client)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring cached job that must have been deleted")
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
+	}
+	if len(job.Status.Conditions) == 0 {
+		log.V(1).Info("Ignoring job without conditions")
+		return ctrl.Result{}, nil
+	}
+
+	switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
+	case batchv1.JobComplete:
+		err = r.processCompleteScanJob(ctx, job, conductor)
+	case batchv1.JobFailed:
+		err = r.processFailedScanJob(ctx, job)
+	default:
+		err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
+	}
+
+	return ctrl.Result{}, err
+}
+
+func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job,
+	conductor Conductor) error {
 	log := r.Logger.WithValues("job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 
 	nodeRef, err := kube.ObjectRefFromObjectMeta(job.ObjectMeta)
@@ -267,7 +273,7 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 	}
 
 	log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
-	hasReport, err := r.hasReport(ctx, node)
+	hasReport, err := r.hasReport(ctx, node, conductor)
 	if err != nil {
 		return fmt.Errorf("checking whether report exists: %w", err)
 	}
@@ -295,14 +301,22 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("building report: %w", err)
 	}
-
-	log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", report.Name)
-	err = r.ReadWriter.Write(ctx, report)
+	err = conductor.ApplyReport(ctx, log, report)
 	if err != nil {
 		return fmt.Errorf("writing report: %w", err)
 	}
 	log.V(1).Info("Deleting complete scan job")
 	return r.deleteJob(ctx, job)
+}
+
+func (r *CISKubeBenchReportReconciler) ApplyReport(ctx context.Context, log logr.Logger, report interface{}) error {
+	cbr, ok := report.(v1alpha1.CISKubeBenchReport)
+	if !ok {
+		return fmt.Errorf("report is not CISKubeBenchReport")
+	}
+	log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", cbr.Name)
+	err := r.ReadWriter.Write(ctx, cbr)
+	return err
 }
 
 func (r *CISKubeBenchReportReconciler) deleteJob(ctx context.Context, job *batchv1.Job) error {

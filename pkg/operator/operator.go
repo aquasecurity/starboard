@@ -3,11 +3,11 @@ package operator
 import (
 	"context"
 	"fmt"
-
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubebench"
+	"github.com/aquasecurity/starboard/pkg/nsa"
 	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/plugin"
@@ -227,6 +227,18 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
+		}
+	}
+	if operatorConfig.NsaEnabled {
+		if controller.NewNsaReportReconciler(operatorConfig,
+			ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
+			starboardConfig, mgr.GetClient(),
+			logsReader,
+			limitChecker,
+			nsa.NewReadWriter(mgr.GetClient()),
+			kubebench.NewKubeBenchPlugin(ext.NewSystemClock(),
+				starboardConfig)).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup nsa reconciler: %w", err)
 		}
 	}
 

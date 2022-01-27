@@ -1,7 +1,6 @@
 package configauditreport
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -271,18 +270,9 @@ func (b *ReportBuilder) GetReport() (v1alpha1.ConfigAuditReport, error) {
 	return report, nil
 }
 
-func (b *ReportBuilder) Write(ctx context.Context, writer Writer) error {
+func (b *ReportBuilder) GetConfigAuditReport() (interface{}, error) {
 	if kube.IsClusterScopedKind(b.controller.GetObjectKind().GroupVersionKind().Kind) {
-		report, err := b.GetClusterReport()
-		if err != nil {
-			return err
-		}
-		return writer.WriteClusterReport(ctx, report)
-	} else {
-		report, err := b.GetReport()
-		if err != nil {
-			return err
-		}
-		return writer.WriteReport(ctx, report)
+		return b.GetClusterReport()
 	}
+	return b.GetReport()
 }

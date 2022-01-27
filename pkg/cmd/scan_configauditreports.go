@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/plugin"
@@ -78,6 +79,17 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 			return err
 		}
 		writer := configauditreport.NewReadWriter(kubeClient)
-		return reportBuilder.Write(ctx, writer)
+		report, err := reportBuilder.GetConfigAuditReport()
+		if err != nil {
+			return err
+		}
+		if ccr, ok := report.(v1alpha1.ClusterConfigAuditReport); ok {
+			err = writer.WriteClusterReport(ctx, ccr)
+		} else {
+			if ccr, ok := report.(v1alpha1.ConfigAuditReport); ok {
+				err = writer.WriteReport(ctx, ccr)
+			}
+		}
+		return err
 	}
 }
