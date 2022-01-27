@@ -41,7 +41,14 @@ func (w *rw) WriteConfig(ctx context.Context, report v1alpha1.ClusterConfigAudit
 		return w.client.Update(ctx, copied)
 	}
 	if errors.IsNotFound(err) {
-		return w.client.Create(ctx, &report)
+		new := v1alpha1.ClusterNsaReport{}
+		new.Namespace = report.Namespace
+		new.Name = report.Name
+		new.CreationTimestamp = report.CreationTimestamp
+		new.Annotations = report.Annotations
+		new.Labels = report.Labels
+		new.Report = ConfigAuditDataToNsaReportData(report.Report)
+		return w.client.Create(ctx, &new)
 	}
 	return nil
 }
@@ -97,8 +104,9 @@ func (w *rw) FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{},
 
 func CisReportDataToNsaReportData(reportData v1alpha1.CISKubeBenchReportData) v1alpha1.ClusterNsaReportData {
 	crd := v1alpha1.ClusterNsaReportData{}
-	checks := make([]v1alpha1.NsaCheck, 0)
-	crd.Scanner = reportData.Scanner
+	crd.Checks = make([]v1alpha1.NsaCheck, 0)
+	crd.Scanner = v1alpha1.Scanner{Name: "nsa-infra", Vendor: reportData.Scanner.Vendor, Version: reportData.Scanner.Version}
+	crd.UpdateTimestamp = reportData.UpdateTimestamp
 	crd.Summary.DangerCount = reportData.Summary.FailCount
 	crd.Summary.WarningCount = reportData.Summary.WarnCount
 	crd.Summary.PassCount = reportData.Summary.PassCount
@@ -114,7 +122,7 @@ func CisReportDataToNsaReportData(reportData v1alpha1.CISKubeBenchReportData) v1
 				case "PASS":
 					success = true
 				}
-				checks = append(checks, v1alpha1.NsaCheck{ID: result.TestNumber, Message: result.TestDesc, Remediation: result.Remediation, Success: success})
+				crd.Checks = append(crd.Checks, v1alpha1.NsaCheck{ID: result.TestNumber, Message: result.TestDesc, Remediation: result.Remediation, Success: success})
 			}
 		}
 	}
@@ -124,7 +132,7 @@ func CisReportDataToNsaReportData(reportData v1alpha1.CISKubeBenchReportData) v1
 func ConfigAuditDataToNsaReportData(reportData v1alpha1.ConfigAuditReportData) v1alpha1.ClusterNsaReportData {
 	crd := v1alpha1.ClusterNsaReportData{}
 	checks := make([]v1alpha1.NsaCheck, 0)
-	crd.Scanner = reportData.Scanner
+	crd.Scanner = v1alpha1.Scanner{Name: "nsa-config", Vendor: reportData.Scanner.Vendor, Version: reportData.Scanner.Version}
 	crd.Summary.DangerCount = reportData.Summary.DangerCount
 	crd.Summary.WarningCount = reportData.Summary.WarningCount
 	crd.Summary.PassCount = reportData.Summary.PassCount

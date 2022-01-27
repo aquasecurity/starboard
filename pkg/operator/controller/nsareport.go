@@ -1,26 +1,24 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/nsa"
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
-	"strings"
-
 	"context"
+	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/kubebench"
+	"github.com/aquasecurity/starboard/pkg/nsa"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 )
 
 // NsaReportReconciler  is encapsulation of cis-benchmark scanner and configaudit tools
@@ -37,37 +35,10 @@ type NsaReportReconciler struct {
 }
 
 func NewNsaReportReconciler(operatorConfig etc.Config,
-	objectResolver kube.ObjectResolver,
-	confPlugin configauditreport.Plugin,
-	logr logr.Logger,
-	starboardConfig starboard.ConfigData,
-	client client.Client,
-	logsReader kube.LogsReader,
-	limitChecker LimitChecker,
-	rw nsa.ReadWriter,
-	plugin kubebench.Plugin) *NsaReportReconciler {
+	cisKubeBenchReportReconciler *CISKubeBenchReportReconciler, configAuditReportReconciler *ConfigAuditReportReconciler, logr logr.Logger,
+	starboardConfig starboard.ConfigData, client client.Client, rw nsa.ReadWriter,
+) *NsaReportReconciler {
 
-	// construct cisBenchmark reconciler
-	cisKubeBenchReportReconciler := &CISKubeBenchReportReconciler{
-		Logger:       logr,
-		Config:       operatorConfig,
-		ConfigData:   starboardConfig,
-		Client:       client,
-		LogsReader:   logsReader,
-		LimitChecker: limitChecker,
-		Plugin:       plugin,
-	}
-	// construct audit-config reconciler
-	configAuditReportReconciler := &ConfigAuditReportReconciler{
-		Logger:         logr,
-		Config:         operatorConfig,
-		ConfigData:     starboardConfig,
-		Client:         client,
-		LogsReader:     logsReader,
-		LimitChecker:   limitChecker,
-		Plugin:         confPlugin,
-		ObjectResolver: objectResolver,
-	}
 	return &NsaReportReconciler{cisKubeBenchReportReconciler: cisKubeBenchReportReconciler,
 		configAuditReportReconciler: configAuditReportReconciler,
 		ReadWriter:                  rw,
@@ -80,19 +51,54 @@ func NewNsaReportReconciler(operatorConfig etc.Config,
 func (r *NsaReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Node{}, builder.WithPredicates(IsLinuxNode)).
-		Owns(&v1alpha1.CISKubeBenchReport{}).
+		Owns(&v1alpha1.ClusterNsaReport{}).
 		Complete(r.reconcileNodes(r))
 	if err != nil {
 		return err
+	}
+
+	clusterResources := []struct {
+		kind       kube.Kind
+		forObject  client.Object
+		ownsObject client.Object
+	}{
+		{kind: kube.KindClusterRole, forObject: &rbacv1.ClusterRole{}, ownsObject: &v1alpha1.ClusterNsaReport{}},
+		{kind: kube.KindClusterRoleBindings, forObject: &rbacv1.ClusterRoleBinding{}, ownsObject: &v1alpha1.ClusterNsaReport{}},
+	}
+
+	for _, resource := range clusterResources {
+		if !r.supportsKind(resource.kind) {
+			r.Logger.Info("Skipping unsupported kind", "pluginName", r.configAuditReportReconciler.PluginContext.GetName(), "kind", resource.kind)
+			continue
+		}
+		err = ctrl.NewControllerManagedBy(mgr).
+			For(resource.forObject, builder.WithPredicates(
+				Not(ManagedByStarboardOperator),
+				Not(IsBeingTerminated),
+			)).
+			Owns(resource.ownsObject).
+			Complete(r.reconcileResource(resource.kind, r))
+		if err != nil {
+			return fmt.Errorf("constructing controller for %s: %w", resource.kind, err)
+		}
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.Job{}, builder.WithPredicates(
 			InNamespace(r.Config.Namespace),
 			ManagedByStarboardOperator,
-			IsKubeBenchReportScan,
+			IsNsaReportScan,
 			JobHasAnyCondition,
 		)).
 		Complete(r.reconcileJobs(r))
+}
+
+func (r *NsaReportReconciler) supportsKind(kind kube.Kind) bool {
+	for _, k := range r.configAuditReportReconciler.Plugin.SupportedKinds() {
+		if k == kind {
+			return true
+		}
+	}
+	return false
 }
 
 type Conductor interface {
@@ -145,4 +151,8 @@ func (r *NsaReportReconciler) ApplyReport(ctx context.Context, log logr.Logger, 
 		return err
 	}
 	return fmt.Errorf("wrong Nsa report type")
+}
+
+func (r *NsaReportReconciler) reconcileResource(kind kube.Kind, conduct Conductor) reconcile.Func {
+	return r.configAuditReportReconciler.reconcileResource(kind, conduct)
 }

@@ -177,26 +177,10 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err != nil {
 			return err
 		}
-		err = plugin.Init(pluginContext)
-		if err != nil {
-			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
-		}
-
-		if err = (&controller.ConfigAuditReportReconciler{
-			Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
-			Config:         operatorConfig,
-			ConfigData:     starboardConfig,
-			Client:         mgr.GetClient(),
-			ObjectResolver: objectResolver,
-			LimitChecker:   limitChecker,
-			LogsReader:     logsReader,
-			Plugin:         plugin,
-			PluginContext:  pluginContext,
-			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
-		}).SetupWithManager(mgr); err != nil {
+		confAuditController := createConfAuditController(operatorConfig, starboardConfig, mgr, objectResolver, limitChecker, logsReader, plugin, pluginContext)
+		if err = confAuditController.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
-
 		if err = (&controller.PluginsConfigReconciler{
 			Logger:        ctrl.Log.WithName("reconciler").WithName("pluginsconfig"),
 			Config:        operatorConfig,
@@ -208,32 +192,33 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}
 	}
 
-	if !operatorConfig.CISKubernetesBenchmarkEnabled {
-		if err = (&controller.CISKubeBenchReportReconciler{
-			Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
-			Config:       operatorConfig,
-			ConfigData:   starboardConfig,
-			Client:       mgr.GetClient(),
-			LogsReader:   logsReader,
-			LimitChecker: limitChecker,
-			ReadWriter:   kubebench.NewReadWriter(mgr.GetClient()),
-			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
-		}).SetupWithManager(mgr); err != nil {
+	if operatorConfig.CISKubernetesBenchmarkEnabled {
+		cisBenchmarkController := createCisBenchmarkController(operatorConfig, starboardConfig, mgr, logsReader, limitChecker)
+		if err = cisBenchmarkController.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
 		}
 	}
+
 	if operatorConfig.NsaEnabled {
-		confPlugin, _, _ := createConfPlugin(buildInfo, operatorNamespace, operatorConfig, starboardConfig, mgr)
-		if controller.NewNsaReportReconciler(
+		// create conf audit controller
+		plugin, pluginContext, err := createConfPlugin(buildInfo, operatorNamespace, operatorConfig, starboardConfig, mgr)
+		if err != nil {
+			return err
+		}
+		confAuditController := createConfAuditController(operatorConfig, starboardConfig, mgr, objectResolver, limitChecker, logsReader, plugin, pluginContext)
+		if err = confAuditController.SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
+		}
+		// create cis-benchmark controller
+		cisBenchmarkController := createCisBenchmarkController(operatorConfig, starboardConfig, mgr, logsReader, limitChecker)
+
+		if err := controller.NewNsaReportReconciler(
 			operatorConfig,
-			objectResolver, confPlugin,
-			ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
+			cisBenchmarkController,
+			confAuditController,
+			ctrl.Log.WithName("reconciler").WithName("nsareport"),
 			starboardConfig, mgr.GetClient(),
-			logsReader,
-			limitChecker,
-			nsa.NewReadWriter(mgr.GetClient()),
-			kubebench.NewKubeBenchPlugin(ext.NewSystemClock(),
-				starboardConfig)).SetupWithManager(mgr); err != nil {
+			nsa.NewReadWriter(mgr.GetClient())).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup nsa reconciler: %w", err)
 		}
 	}
@@ -245,6 +230,35 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 
 	return nil
 }
+
+func createCisBenchmarkController(operatorConfig etc.Config, starboardConfig starboard.ConfigData, mgr ctrl.Manager, logsReader kube.LogsReader, limitChecker controller.LimitChecker) *controller.CISKubeBenchReportReconciler {
+	return &controller.CISKubeBenchReportReconciler{
+		Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
+		Config:       operatorConfig,
+		ConfigData:   starboardConfig,
+		Client:       mgr.GetClient(),
+		LogsReader:   logsReader,
+		LimitChecker: limitChecker,
+		ReadWriter:   kubebench.NewReadWriter(mgr.GetClient()),
+		Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
+	}
+}
+
+func createConfAuditController(operatorConfig etc.Config, starboardConfig starboard.ConfigData, mgr ctrl.Manager, objectResolver kube.ObjectResolver, limitChecker controller.LimitChecker, logsReader kube.LogsReader, plugin configauditreport.Plugin, pluginContext starboard.PluginContext) *controller.ConfigAuditReportReconciler {
+	pluginController := &controller.ConfigAuditReportReconciler{
+		Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
+		Config:         operatorConfig,
+		ConfigData:     starboardConfig,
+		Client:         mgr.GetClient(),
+		ObjectResolver: objectResolver,
+		LimitChecker:   limitChecker,
+		LogsReader:     logsReader,
+		Plugin:         plugin,
+		PluginContext:  pluginContext,
+		ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+	}
+	return pluginController
+}
 func createConfPlugin(buildInfo starboard.BuildInfo, operatorNamespace string, operatorConfig etc.Config, starboardConfig starboard.ConfigData, manager ctrl.Manager) (configauditreport.Plugin, starboard.PluginContext, error) {
 	plugin, pluginContext, err := plugin.NewResolver().
 		WithBuildInfo(buildInfo).
@@ -253,5 +267,9 @@ func createConfPlugin(buildInfo starboard.BuildInfo, operatorNamespace string, o
 		WithConfig(starboardConfig).
 		WithClient(manager.GetClient()).
 		GetConfigAuditPlugin()
+	err = plugin.Init(pluginContext)
+	if err != nil {
+		return plugin, pluginContext, fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
+	}
 	return plugin, pluginContext, err
 }

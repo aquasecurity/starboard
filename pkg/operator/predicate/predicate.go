@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"strings"
 )
 
 // InstallModePredicate is a predicate.Predicate that determines whether to
@@ -95,17 +96,23 @@ var IsVulnerabilityReportScan = predicate.NewPredicateFuncs(func(obj client.Obje
 })
 
 var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]; ok && !strings.Contains(obj.GetName(), "nsa-") {
 		return true
 	}
 	return false
 })
 
 var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok {
+	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok && !strings.Contains(obj.GetName(), "nsa-") {
 		return true
 	}
 	return false
+})
+
+var IsNsaReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	_, okCis := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]
+	_, okConfig := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]
+	return (okCis || okConfig) && strings.Contains(obj.GetName(), "nsa-")
 })
 
 var IsLinuxNode = predicate.NewPredicateFuncs(func(obj client.Object) bool {

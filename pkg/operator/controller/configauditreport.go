@@ -42,7 +42,7 @@ type ConfigAuditReportReconciler struct {
 }
 
 func (r *ConfigAuditReportReconciler) AddJobMiddleName() string {
-	//no need to add middle name for cis-benchmark classic scan
+	//no need to add middle name to config-audit scan
 	return ""
 }
 
@@ -306,7 +306,7 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 	if err != nil {
 		return false, err
 	}
-	if report != nil {
+	if report != nil && !reflect.ValueOf(report).IsNil() {
 		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
 			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
@@ -440,7 +440,10 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 	if err != nil {
 		return err
 	}
-	conductor.ApplyReport(ctx, r.Logger, report)
+	err = conductor.ApplyReport(ctx, r.Logger, report)
+	if err != nil {
+		return err
+	}
 	log.V(1).Info("Deleting complete scan job", "owner", owner)
 	return r.deleteJob(ctx, job)
 }
@@ -452,7 +455,7 @@ func (r *ConfigAuditReportReconciler) ApplyReport(ctx context.Context, log logr.
 	if ccr, ok := report.(v1alpha1.ConfigAuditReport); ok {
 		return r.ReadWriter.WriteReport(ctx, ccr)
 	}
-	return fmt.Errorf("unable to apply report found wrong nsa report type")
+	return fmt.Errorf("unable to apply report found wrong config audit report type")
 }
 
 func (r *ConfigAuditReportReconciler) processFailedScanJob(ctx context.Context, scanJob *batchv1.Job) error {

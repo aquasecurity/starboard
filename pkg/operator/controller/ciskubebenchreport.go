@@ -45,7 +45,7 @@ type CISKubeBenchReportReconciler struct {
 }
 
 func (r *CISKubeBenchReportReconciler) AddJobMiddleName() string {
-	//no need to add middle name for cis-benchmark classic scan
+	//no need to add middle name for cis-benchmark scan
 	return ""
 }
 
