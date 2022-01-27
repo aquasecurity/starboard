@@ -68,7 +68,14 @@ func (w *rw) WriteInfra(ctx context.Context, report v1alpha1.CISKubeBenchReport)
 	}
 
 	if errors.IsNotFound(err) {
-		return w.client.Create(ctx, &report)
+		new := v1alpha1.ClusterNsaReport{}
+		new.Namespace = report.Namespace
+		new.Name = report.Name
+		new.CreationTimestamp = report.CreationTimestamp
+		new.Annotations = report.Annotations
+		new.Labels = report.Labels
+		new.Report = CisReportDataToNsaReportData(report.Report)
+		return w.client.Create(ctx, &new)
 	}
 
 	return err
