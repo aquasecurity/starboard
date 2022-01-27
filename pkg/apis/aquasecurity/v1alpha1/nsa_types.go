@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ClusterNsaReportCRName = "clusterconfigauditreports.aquasecurity.github.io"
+	ClusterNsaReportCRName = "clusternsareports.aquasecurity.github.io"
 )
 
 const (

@@ -173,17 +173,10 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 
 	if operatorConfig.ConfigAuditScannerEnabled {
-		plugin, pluginContext, err := plugin.NewResolver().
-			WithBuildInfo(buildInfo).
-			WithNamespace(operatorNamespace).
-			WithServiceAccountName(operatorConfig.ServiceAccount).
-			WithConfig(starboardConfig).
-			WithClient(mgr.GetClient()).
-			GetConfigAuditPlugin()
+		plugin, pluginContext, err := createConfPlugin(buildInfo, operatorNamespace, operatorConfig, starboardConfig, mgr)
 		if err != nil {
 			return err
 		}
-
 		err = plugin.Init(pluginContext)
 		if err != nil {
 			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
@@ -215,7 +208,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}
 	}
 
-	if operatorConfig.CISKubernetesBenchmarkEnabled {
+	if !operatorConfig.CISKubernetesBenchmarkEnabled {
 		if err = (&controller.CISKubeBenchReportReconciler{
 			Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
 			Config:       operatorConfig,
@@ -230,7 +223,10 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}
 	}
 	if operatorConfig.NsaEnabled {
-		if controller.NewNsaReportReconciler(operatorConfig,
+		confPlugin, _, _ := createConfPlugin(buildInfo, operatorNamespace, operatorConfig, starboardConfig, mgr)
+		if controller.NewNsaReportReconciler(
+			operatorConfig,
+			objectResolver, confPlugin,
 			ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
 			starboardConfig, mgr.GetClient(),
 			logsReader,
@@ -248,4 +244,14 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 
 	return nil
+}
+func createConfPlugin(buildInfo starboard.BuildInfo, operatorNamespace string, operatorConfig etc.Config, starboardConfig starboard.ConfigData, manager ctrl.Manager) (configauditreport.Plugin, starboard.PluginContext, error) {
+	plugin, pluginContext, err := plugin.NewResolver().
+		WithBuildInfo(buildInfo).
+		WithNamespace(operatorNamespace).
+		WithServiceAccountName(operatorConfig.ServiceAccount).
+		WithConfig(starboardConfig).
+		WithClient(manager.GetClient()).
+		GetConfigAuditPlugin()
+	return plugin, pluginContext, err
 }

@@ -29,8 +29,21 @@ type rw struct {
 }
 
 func (w *rw) WriteConfig(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error {
-	//TODO implement me
-	panic("implement me")
+	var existing v1alpha1.ClusterNsaReport
+	err := w.client.Get(ctx, types.NamespacedName{
+		Name: report.Name,
+	}, &existing)
+
+	if err == nil {
+		copied := existing.DeepCopy()
+		copied.Labels = report.Labels
+		copied.Report = ConfigAuditDataToNsaReportData(report.Report)
+		return w.client.Update(ctx, copied)
+	}
+	if errors.IsNotFound(err) {
+		return w.client.Create(ctx, &report)
+	}
+	return nil
 }
 
 func NewReadWriter(client client.Client) ReadWriter {
@@ -97,6 +110,19 @@ func CisReportDataToNsaReportData(reportData v1alpha1.CISKubeBenchReportData) v1
 				checks = append(checks, v1alpha1.NsaCheck{ID: result.TestNumber, Message: result.TestDesc, Remediation: result.Remediation, Success: success})
 			}
 		}
+	}
+	return crd
+}
+
+func ConfigAuditDataToNsaReportData(reportData v1alpha1.ConfigAuditReportData) v1alpha1.ClusterNsaReportData {
+	crd := v1alpha1.ClusterNsaReportData{}
+	checks := make([]v1alpha1.NsaCheck, 0)
+	crd.Scanner = reportData.Scanner
+	crd.Summary.DangerCount = reportData.Summary.DangerCount
+	crd.Summary.WarningCount = reportData.Summary.WarningCount
+	crd.Summary.PassCount = reportData.Summary.PassCount
+	for _, check := range reportData.Checks {
+		checks = append(checks, v1alpha1.NsaCheck{ID: check.ID, Message: check.Message, Remediation: check.Remediation, Success: check.Success})
 	}
 	return crd
 }

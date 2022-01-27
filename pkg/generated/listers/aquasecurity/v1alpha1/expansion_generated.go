@@ -10,6 +10,10 @@ type CISKubeBenchReportListerExpansion interface{}
 // ClusterConfigAuditReportLister.
 type ClusterConfigAuditReportListerExpansion interface{}
 
+// ClusterNsaReportListerExpansion allows custom methods to be added to
+// ClusterNsaReportLister.
+type ClusterNsaReportListerExpansion interface{}
+
 // ClusterVulnerabilityReportListerExpansion allows custom methods to be added to
 // ClusterVulnerabilityReportLister.
 type ClusterVulnerabilityReportListerExpansion interface{}

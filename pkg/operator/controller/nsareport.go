@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/nsa"
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"strings"
@@ -22,29 +23,31 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// NsaReportReconciler reconciles corev1.Node and corev1.Job objects
-// to check cluster nodes configuration with CIS Kubernetes Benchmark and saves
-// results as v1alpha1.CISKubeBenchReport objects.
-// Each v1alpha1.CISKubeBenchReport is controlled by the corev1.Node for which
-// it was generated. Additionally, the NsaReportReconciler.SetupWithManager
-// method informs the ctrl.Manager that this controller reconciles nodes that
-// own benchmark reports, so that it will automatically call the reconcile
-// callback on the underlying corev1.Node when a v1alpha1.NsaReportReconciler
-// changes, is deleted, etc.
+// NsaReportReconciler  is encapsulation of cis-benchmark scanner and configaudit tools
+// the nsa controller listen to nodes and variuose config objects and activate the relevant tools for security scanning
+// all scanning jobs reconciliation produce NSA report (which follow the nsa specification)
 type NsaReportReconciler struct {
 	logr.Logger
+	nsa.ReadWriter
+	starboard.ConfigData
 	etc.Config
 	client.Client
-	kube.LogsReader
-	LimitChecker
-	nsa.ReadWriter
-	kubebench.Plugin
-	starboard.ConfigData
-	*CISKubeBenchReportReconciler
-	*ConfigAuditReportReconciler
+	cisKubeBenchReportReconciler *CISKubeBenchReportReconciler
+	configAuditReportReconciler  *ConfigAuditReportReconciler
 }
 
-func NewNsaReportReconciler(operatorConfig etc.Config, logr logr.Logger, starboardConfig starboard.ConfigData, client client.Client, logsReader kube.LogsReader, limitChecker LimitChecker, rw nsa.ReadWriter, plugin kubebench.Plugin) *NsaReportReconciler {
+func NewNsaReportReconciler(operatorConfig etc.Config,
+	objectResolver kube.ObjectResolver,
+	confPlugin configauditreport.Plugin,
+	logr logr.Logger,
+	starboardConfig starboard.ConfigData,
+	client client.Client,
+	logsReader kube.LogsReader,
+	limitChecker LimitChecker,
+	rw nsa.ReadWriter,
+	plugin kubebench.Plugin) *NsaReportReconciler {
+
+	// construct cisBenchmark reconciler
 	cisKubeBenchReportReconciler := &CISKubeBenchReportReconciler{
 		Logger:       logr,
 		Config:       operatorConfig,
@@ -54,13 +57,30 @@ func NewNsaReportReconciler(operatorConfig etc.Config, logr logr.Logger, starboa
 		LimitChecker: limitChecker,
 		Plugin:       plugin,
 	}
-	return &NsaReportReconciler{CISKubeBenchReportReconciler: cisKubeBenchReportReconciler, ReadWriter: rw}
+	// construct audit-config reconciler
+	configAuditReportReconciler := &ConfigAuditReportReconciler{
+		Logger:         logr,
+		Config:         operatorConfig,
+		ConfigData:     starboardConfig,
+		Client:         client,
+		LogsReader:     logsReader,
+		LimitChecker:   limitChecker,
+		Plugin:         confPlugin,
+		ObjectResolver: objectResolver,
+	}
+	return &NsaReportReconciler{cisKubeBenchReportReconciler: cisKubeBenchReportReconciler,
+		configAuditReportReconciler: configAuditReportReconciler,
+		ReadWriter:                  rw,
+		Config:                      operatorConfig,
+		Client:                      client,
+		ConfigData:                  starboardConfig,
+		Logger:                      logr}
 }
 
 func (r *NsaReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Node{}, builder.WithPredicates(IsLinuxNode)).
-		Owns(&v1alpha1.ClusterNsaReport{}).
+		Owns(&v1alpha1.CISKubeBenchReport{}).
 		Complete(r.reconcileNodes(r))
 	if err != nil {
 		return err
@@ -81,13 +101,19 @@ type Conductor interface {
 	AddJobMiddleName() string
 }
 
+func (r *NsaReportReconciler) FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{}, error) {
+	return r.ReadWriter.FindByOwner(ctx, node)
+}
+
 func (r *NsaReportReconciler) AddJobMiddleName() string {
 	//add nsa middle name cis-benchmark classic scan
 	return "nsa-"
 }
 
 func (r *NsaReportReconciler) reconcileNodes(conduct Conductor) reconcile.Func {
-	return r.CISKubeBenchReportReconciler.reconcileNodes(conduct)
+	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+		return r.cisKubeBenchReportReconciler.reconcileNodeEvent(ctx, req, conduct)
+	}
 }
 
 func (r *NsaReportReconciler) reconcileJobs(conduct Conductor) reconcile.Func {
@@ -102,15 +128,15 @@ func (r *NsaReportReconciler) reconcileJobs(conduct Conductor) reconcile.Func {
 			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 		}
 		if strings.Contains(job.Name, "cisbenchmark") {
-			return r.reconcileKubeBench(ctx, req, conduct)
+			return r.cisKubeBenchReportReconciler.reconcileKubeBench(ctx, req, conduct)
 		}
-		return r.reconcileConfigAudit(ctx, req, conduct)
+		return r.configAuditReportReconciler.reconcileConfigAudit(ctx, req, conduct)
 	}
 }
 
 func (r *NsaReportReconciler) ApplyReport(ctx context.Context, log logr.Logger, report interface{}) error {
 	if cbr, ok := report.(v1alpha1.CISKubeBenchReport); ok {
-		log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", cbr.Name)
+		log.V(1).Info("Writing NSA report", "reportName", cbr.Name)
 		err := r.ReadWriter.WriteInfra(ctx, cbr)
 		return err
 	}

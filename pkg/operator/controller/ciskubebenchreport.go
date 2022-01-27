@@ -52,7 +52,7 @@ func (r *CISKubeBenchReportReconciler) AddJobMiddleName() string {
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Node{}, builder.WithPredicates(IsLinuxNode)).
-		Owns(&v1alpha1.CISKubeBenchReport{}).
+		Owns(&v1alpha1.ClusterNsaReport{}).
 		Complete(r.reconcileNodes(r))
 	if err != nil {
 		return err
@@ -69,69 +69,73 @@ func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error 
 
 func (r *CISKubeBenchReportReconciler) reconcileNodes(conductor Conductor) reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("node", req.NamespacedName)
+		return r.reconcileNodeEvent(ctx, req, conductor)
+	}
+}
 
-		node := &corev1.Node{}
+func (r *CISKubeBenchReportReconciler) reconcileNodeEvent(ctx context.Context, req ctrl.Request, conductor Conductor) (ctrl.Result, error) {
+	log := r.Logger.WithValues("node", req.NamespacedName)
 
-		log.V(1).Info("Getting node from cache")
-		err := r.Client.Get(ctx, req.NamespacedName, node)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached node that must have been deleted")
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("getting node from cache: %w", err)
-		}
+	node := &corev1.Node{}
 
-		log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
-		hasReport, err := r.hasReport(ctx, node, conductor)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("checking whether report exists: %w", err)
-		}
-
-		if hasReport {
-			log.V(1).Info("CIS Kubernetes Benchmark report exists")
+	log.V(1).Info("Getting node from cache")
+	err := r.Client.Get(ctx, req.NamespacedName, node)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring cached node that must have been deleted")
 			return ctrl.Result{}, nil
 		}
+		return ctrl.Result{}, fmt.Errorf("getting node from cache: %w", err)
+	}
 
-		log.V(1).Info("Checking whether CIS Kubernetes Benchmark checks have been scheduled")
-		_, job, err := r.hasScanJob(ctx, node, conductor)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("checking whether scan job has been scheduled: %w", err)
-		}
-		if job != nil {
-			log.V(1).Info("CIS Kubernetes Benchmark have been scheduled",
-				"job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
-			return ctrl.Result{}, nil
-		}
+	log.V(1).Info("Checking whether CIS Kubernetes Benchmark report exists")
+	hasReport, err := r.hasReport(ctx, node, conductor)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("checking whether report exists: %w", err)
+	}
 
-		limitExceeded, jobsCount, err := r.LimitChecker.Check(ctx)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		log.V(1).Info("Checking scan jobs limit", "count", jobsCount, "limit", r.ConcurrentScanJobsLimit)
-
-		if limitExceeded {
-			log.V(1).Info("Pushing back scan job", "count", jobsCount, "retryAfter", r.ScanJobRetryAfter)
-			return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
-		}
-
-		job, err = r.newScanJob(node, conductor)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("preparing job: %w", err)
-		}
-
-		log.V(1).Info("Scheduling CIS Kubernetes Benchmark checks")
-		err = r.Client.Create(ctx, job)
-		if err != nil {
-			if errors.IsAlreadyExists(err) {
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
-		}
-
+	if hasReport {
+		log.V(1).Info("CIS Kubernetes Benchmark report exists")
 		return ctrl.Result{}, nil
 	}
+
+	log.V(1).Info("Checking whether CIS Kubernetes Benchmark checks have been scheduled")
+	_, job, err := r.hasScanJob(ctx, node, conductor)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("checking whether scan job has been scheduled: %w", err)
+	}
+	if job != nil {
+		log.V(1).Info("CIS Kubernetes Benchmark have been scheduled",
+			"job", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
+		return ctrl.Result{}, nil
+	}
+
+	limitExceeded, jobsCount, err := r.LimitChecker.Check(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	log.V(1).Info("Checking scan jobs limit", "count", jobsCount, "limit", r.ConcurrentScanJobsLimit)
+
+	if limitExceeded {
+		log.V(1).Info("Pushing back scan job", "count", jobsCount, "retryAfter", r.ScanJobRetryAfter)
+		return ctrl.Result{RequeueAfter: r.Config.ScanJobRetryAfter}, nil
+	}
+
+	job, err = r.newScanJob(node, conductor)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("preparing job: %w", err)
+	}
+
+	log.V(1).Info("Scheduling CIS Kubernetes Benchmark checks")
+	err = r.Client.Create(ctx, job)
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("creating job: %w", err)
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *corev1.Node, conductor Conductor) (bool, error) {

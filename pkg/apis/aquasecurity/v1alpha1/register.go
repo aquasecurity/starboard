@@ -42,6 +42,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ConfigAuditReportList{},
 		&ClusterConfigAuditReport{},
 		&ClusterConfigAuditReportList{},
+		&ClusterNsaReport{},
 		&ClusterNsaReportList{},
 	)
 	meta.AddToGroupVersion(scheme, SchemeGroupVersion)

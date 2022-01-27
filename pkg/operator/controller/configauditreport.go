@@ -2,6 +2,7 @@ package controller
 
 import (
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+	"reflect"
 
 	"context"
 	"fmt"
@@ -317,7 +318,7 @@ func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owne
 	if err != nil {
 		return false, err
 	}
-	if report != nil {
+	if report != nil && !reflect.ValueOf(report).IsNil() {
 		if car, ok := report.(*v1alpha1.ClusterConfigAuditReport); ok {
 			return car.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
 				car.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
