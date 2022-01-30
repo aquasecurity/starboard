@@ -68,7 +68,7 @@ func (s *ScanJobBuilder) WithPodTemplateLabels(podTemplateLabels labels.Set) *Sc
 	return s
 }
 
-func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
+func (s *ScanJobBuilder) Get(jobMidName string) (*batchv1.Job, []*corev1.Secret, error) {
 	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, s.object)
 	if err != nil {
 		return nil, nil, err
@@ -103,7 +103,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        GetScanJobName(s.object),
+			Name:        GetScanJobName(s.object, jobMidName),
 			Namespace:   s.pluginContext.GetNamespace(),
 			Labels:      labelsSet,
 			Annotations: s.annotations,
@@ -145,8 +145,8 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 	return job, secrets, nil
 }
 
-func GetScanJobName(obj client.Object) string {
-	return fmt.Sprintf("scan-configauditreport-%s", kube.ComputeHash(kube.ObjectRef{
+func GetScanJobName(obj client.Object, MidName string) string {
+	return fmt.Sprintf("scan-configauditreport-%s%s", MidName, kube.ComputeHash(kube.ObjectRef{
 		Kind:      kube.Kind(obj.GetObjectKind().GroupVersionKind().Kind),
 		Namespace: obj.GetNamespace(),
 		Name:      obj.GetName(),

@@ -209,7 +209,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind, 
 		}
 
 		log.V(1).Info("Checking whether configuration audit has been scheduled")
-		_, job, err := r.hasActiveScanJob(ctx, resource, resourceSpecHash)
+		_, job, err := r.hasActiveScanJob(ctx, resource, resourceSpecHash, conductor)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -256,7 +256,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind, 
 			WithTolerations(scanJobTolerations).
 			WithAnnotations(scanJobAnnotations).
 			WithPodTemplateLabels(scanJobPodTemplateLabels).
-			Get()
+			Get(conductor.AddJobMiddleName())
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("constructing scan job: %w", err)
 		}
@@ -331,8 +331,8 @@ func (r *ConfigAuditReportReconciler) FindByOwner(ctx context.Context, node kube
 	return r.ReadWriter.FindClusterReportByOwner(ctx, node)
 }
 
-func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj client.Object, hash string) (bool, *batchv1.Job, error) {
-	jobName := configauditreport.GetScanJobName(obj)
+func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj client.Object, hash string, conductor Conductor) (bool, *batchv1.Job, error) {
+	jobName := configauditreport.GetScanJobName(obj, conductor.AddJobMiddleName())
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: r.Config.Namespace, Name: jobName}, job)
 	if err != nil {

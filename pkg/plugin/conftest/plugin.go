@@ -260,7 +260,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 	var volumeMounts []corev1.VolumeMount
 	var volumeItems []corev1.KeyToPath
 
-	secretName := configauditreport.GetScanJobName(obj) + "-volume"
+	secretName := configauditreport.GetScanJobName(obj, "") + "-volume"
 	secretData := make(map[string]string)
 
 	for module, script := range modules {

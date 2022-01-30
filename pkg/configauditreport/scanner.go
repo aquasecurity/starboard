@@ -91,7 +91,7 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuil
 		WithTolerations(scanJobTolerations).
 		WithAnnotations(scanJobAnnotations).
 		WithPodTemplateLabels(scanJobPodTemplateLabels).
-		Get()
+		Get("")
 	if err != nil {
 		return nil, fmt.Errorf("constructing scan job: %w", err)
 	}
