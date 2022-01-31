@@ -300,6 +300,8 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, workload Objec
 }
 
 var ErrReplicaSetNotFound = errors.New("replicaset not found")
+var ErrNoRunningPods = errors.New("no active pods for controller")
+var ErrUnSupportedKind = errors.New("unsupported workload kind")
 
 // ReportOwner resolves the owner of a security report for the specified object.
 func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (client.Object, error) {
@@ -445,6 +447,61 @@ func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Ob
 	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
 }
 
+// GetNodeName will return the nodeName from one of the running pod of any kubernetes kind
+// if there are no running pods then ErrNoRunningPods will be returned.
+// if there are not active replicaset for deployment then ErrReplicaSetNotFound will be returned.
+func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (string, error) {
+	switch obj.(type) {
+	case *corev1.Pod:
+		return (obj.(*corev1.Pod)).Spec.NodeName, nil
+	case *appsv1.Deployment:
+		replicaSet, err := o.ReplicaSetByDeployment(ctx, obj.(*appsv1.Deployment))
+		if err != nil {
+			return "", err
+		}
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), replicaSet.Spec.Selector.MatchLabels)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	case *appsv1.ReplicaSet:
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*appsv1.ReplicaSet).Spec.Selector.MatchLabels)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	case *corev1.ReplicationController:
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*corev1.ReplicationController).Spec.Selector)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	case *appsv1.StatefulSet:
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*appsv1.StatefulSet).Spec.Selector.MatchLabels)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	case *appsv1.DaemonSet:
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*appsv1.DaemonSet).Spec.Selector.MatchLabels)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	case *batchv1beta1.CronJob:
+		//Todo handle cronjob
+		return "", ErrUnSupportedKind
+	case *batchv1.Job:
+		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*batchv1.Job).Spec.Selector.MatchLabels)
+		if err != nil {
+			return "", err
+		}
+		return pods[0].Spec.NodeName, nil
+	default:
+		return "", ErrUnSupportedKind
+	}
+}
+
 func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object ObjectRef) (string, error) {
 	deploy := &appsv1.Deployment{}
 	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, deploy)
@@ -504,4 +561,28 @@ func (o *ObjectResolver) IsActiveReplicaSet(ctx context.Context, workloadObj cli
 		return replicasetRevisionAnnotation[deploymentAnnotation] == deploymentRevisionAnnotation[deploymentAnnotation], nil
 	}
 	return true, nil
+}
+
+func (o *ObjectResolver) GetPodsByLabelSelector(ctx context.Context, namespace string,
+	labelSelector labels.Set) ([]corev1.Pod, error) {
+	podList := &corev1.PodList{}
+	err := o.Client.List(ctx, podList, client.InNamespace(namespace),
+		client.MatchingLabelsSelector{Selector: labels.SelectorFromSet(labelSelector)})
+	if err != nil {
+		return podList.Items, fmt.Errorf("listing pods in namespace %s for labelselector %v: %w", namespace,
+			labelSelector, err)
+	}
+	return podList.Items, err
+}
+
+func (o *ObjectResolver) getActivePodsByLabelSelector(ctx context.Context, namespace string,
+	labelSelector labels.Set) ([]corev1.Pod, error) {
+	pods, err := o.GetPodsByLabelSelector(ctx, namespace, labelSelector)
+	if err != nil {
+		return pods, err
+	}
+	if len(pods) == 0 {
+		return pods, ErrNoRunningPods
+	}
+	return pods, nil
 }
