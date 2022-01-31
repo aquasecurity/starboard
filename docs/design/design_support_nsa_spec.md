@@ -9,6 +9,9 @@ It is required to extend starboard security tools capabilities by supporting the
     and will trigger the relevant tool (conftest and kube-bench) based on the relevant kind 
 3. A CRD will be introduced to represent the NSA checks report
 
+
+<br><img src="./nsa-design.png" width="600" alt="nsa-design"><br>
+
 ## Solution
 
 ### TL;DR;
