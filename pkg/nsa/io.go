@@ -139,5 +139,6 @@ func ConfigAuditDataToNsaReportData(reportData v1alpha1.ConfigAuditReportData) v
 	for _, check := range reportData.Checks {
 		checks = append(checks, v1alpha1.NsaCheck{ID: check.ID, Message: check.Message, Remediation: check.Remediation, Success: check.Success})
 	}
+	crd.Checks = checks
 	return crd
 }

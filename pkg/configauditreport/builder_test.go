@@ -171,7 +171,7 @@ func TestScanJobBuilder(t *testing.T) {
 					Namespace: "prod-ns",
 				},
 			}).
-			Get()
+			Get("")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -230,7 +230,7 @@ func TestScanJobBuilder(t *testing.T) {
 					Name: "system:controller:node-controller",
 				},
 			}).
-			Get()
+			Get("")
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).NotTo(BeNil())
 		g.Expect(job).To(Equal(&batchv1.Job{
