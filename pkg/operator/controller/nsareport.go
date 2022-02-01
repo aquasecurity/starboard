@@ -93,11 +93,15 @@ func (r *NsaReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *NsaReportReconciler) reconcileNodes() reconcile.Func {
-	return r.cisKubeBenchReportReconciler.reconcileNodes()
+	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+		return ctrl.Result{}, nil
+	}
 }
 
 func (r *NsaReportReconciler) reconcileResource(kind kube.Kind) reconcile.Func {
-	return r.configAuditReportReconciler.reconcileResource(kind)
+	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+		return ctrl.Result{}, nil
+	}
 }
 
 func (r *NsaReportReconciler) reconcileJobs() reconcile.Func {
