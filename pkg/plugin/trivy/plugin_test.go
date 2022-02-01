@@ -2961,6 +2961,320 @@ CVE-2019-1543`,
 		})
 	}
 
+	testCases = []struct {
+		name            string
+		config          map[string]string
+		workloadSpec    client.Object
+		expectedSecrets []corev1.Secret
+		expectedJobSpec corev1.PodSpec
+	}{{
+		name: "Trivy fs scan command in Standalone mode",
+		config: map[string]string{
+			"trivy.imageRef":                  "docker.io/aquasec/trivy:0.22.0",
+			"trivy.mode":                      string(trivy.Standalone),
+			"trivy.command":                   string(trivy.Filesystem),
+			"trivy.resources.requests.cpu":    "100m",
+			"trivy.resources.requests.memory": "100M",
+			"trivy.resources.limits.cpu":      "500m",
+			"trivy.resources.limits.memory":   "500M",
+		},
+		workloadSpec: &corev1.Pod{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Pod",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx",
+				Namespace: "prod-ns",
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "nginx",
+						Image: "nginx:1.9.1",
+					},
+				},
+				NodeName:           "kind-control-pane",
+				ServiceAccountName: "nginx-sa",
+			}},
+		expectedJobSpec: corev1.PodSpec{
+			Affinity:                     starboard.LinuxNodeAffinity(),
+			RestartPolicy:                corev1.RestartPolicyNever,
+			ServiceAccountName:           "starboard-sa",
+			AutomountServiceAccountToken: pointer.BoolPtr(false),
+			Volumes: []corev1.Volume{
+				{
+					Name: trivy.FsSharedVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{
+							Medium: corev1.StorageMediumDefault,
+						},
+					},
+				},
+			},
+			InitContainers: []corev1.Container{
+				{
+					Name:                     "00000000-0000-0000-0000-000000000001",
+					Image:                    "docker.io/aquasec/trivy:0.22.0",
+					ImagePullPolicy:          corev1.PullIfNotPresent,
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+					Command: []string{
+						"cp",
+						"-v",
+						"/usr/local/bin/trivy",
+						trivy.SharedVolumeLocationOfTrivy,
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("100m"),
+							corev1.ResourceMemory: resource.MustParse("100M"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("500m"),
+							corev1.ResourceMemory: resource.MustParse("500M"),
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      trivy.FsSharedVolumeName,
+							ReadOnly:  false,
+							MountPath: "/var/starboard",
+						},
+					},
+				},
+				{
+					Name:                     "00000000-0000-0000-0000-000000000002",
+					Image:                    "docker.io/aquasec/trivy:0.22.0",
+					ImagePullPolicy:          corev1.PullIfNotPresent,
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+					Env: []corev1.EnvVar{
+						{
+							Name: "HTTP_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.httpProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "HTTPS_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.httpsProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "NO_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.noProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+
+						{
+							Name: "GITHUB_TOKEN",
+							ValueFrom: &corev1.EnvVarSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.githubToken",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+					},
+					Command: []string{
+						"trivy",
+					},
+					Args: []string{
+						"--download-db-only",
+						"--cache-dir",
+						"/var/starboard/trivy-db",
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("100m"),
+							corev1.ResourceMemory: resource.MustParse("100M"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("500m"),
+							corev1.ResourceMemory: resource.MustParse("500M"),
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      trivy.FsSharedVolumeName,
+							ReadOnly:  false,
+							MountPath: "/var/starboard",
+						},
+					},
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					Name:                     "nginx",
+					Image:                    "nginx:1.9.1",
+					ImagePullPolicy:          corev1.PullIfNotPresent,
+					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+					Env: []corev1.EnvVar{
+						{
+							Name: "TRIVY_SEVERITY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.severity",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "TRIVY_SKIP_FILES",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.skipFiles",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "TRIVY_SKIP_DIRS",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.skipDirs",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "HTTP_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.httpProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "HTTPS_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.httpsProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+						{
+							Name: "NO_PROXY",
+							ValueFrom: &corev1.EnvVarSource{
+								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "starboard-trivy-config",
+									},
+									Key:      "trivy.noProxy",
+									Optional: pointer.BoolPtr(true),
+								},
+							},
+						},
+					},
+					Command: []string{
+						trivy.SharedVolumeLocationOfTrivy,
+					},
+					Args: []string{
+						"--skip-update",
+						"--cache-dir",
+						"/var/starboard/trivy-db",
+						"--quiet",
+						"fs",
+						"--format",
+						"json",
+						"/",
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("100m"),
+							corev1.ResourceMemory: resource.MustParse("100M"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("500m"),
+							corev1.ResourceMemory: resource.MustParse("500M"),
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      trivy.FsSharedVolumeName,
+							ReadOnly:  false,
+							MountPath: "/var/starboard",
+						},
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged:               pointer.BoolPtr(false),
+						AllowPrivilegeEscalation: pointer.BoolPtr(false),
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"all"},
+						},
+						ReadOnlyRootFilesystem: pointer.BoolPtr(true),
+						RunAsUser:              pointer.Int64(0),
+					},
+				},
+			},
+			SecurityContext: &corev1.PodSecurityContext{},
+		},
+	}}
+	// Test cases when starboard is enabled with option to run job in the namespace of workload
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeclient := fake.NewClientBuilder().WithObjects(
+				&corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "starboard-trivy-config",
+						Namespace: "starboard-ns",
+					},
+					Data: tc.config,
+				},
+			).Build()
+			pluginContext := starboard.NewPluginContext().
+				WithName(trivy.Plugin).
+				WithNamespace("starboard-ns").
+				WithServiceAccountName("starboard-sa").
+				WithClient(fakeclient).
+				WithStarboardConfig(map[string]string{starboard.KeyVulnerabilityScansInSameNamespace: "true"}).
+				Get()
+			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
+			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
+			require.NoError(t, err)
+			assert.Empty(t, secrets)
+			assert.Equal(t, tc.expectedJobSpec, jobSpec)
+		})
+	}
 }
 
 var (

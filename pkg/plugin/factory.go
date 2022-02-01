@@ -75,6 +75,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 		WithNamespace(r.namespace).
 		WithServiceAccountName(r.serviceAccountName).
 		WithClient(r.client).
+		WithStarboardConfig(r.config).
 		Get()
 
 	switch scanner {

@@ -956,10 +956,17 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
-	// get nodeName from running pods.
-	spec.NodeName, err = p.objectResolver.GetNodeName(context.Background(), workload)
-	if err != nil {
-		return corev1.PodSpec{}, nil, err
+	pullPolicy := corev1.PullIfNotPresent
+	// nodeName to schedule scan job explicitly on specific node.
+	var nodeName string
+	if !ctx.GetStarboardConfig().VulnerabilityScanJobsInSameNamespace() {
+		// get nodeName from running pods.
+		nodeName, err = p.objectResolver.GetNodeName(context.Background(), workload)
+		if err != nil {
+			return corev1.PodSpec{}, nil, fmt.Errorf("failed resolving node name for workload %q: %w",
+				workload.GetNamespace()+"/"+workload.GetName(), err)
+		}
+		pullPolicy = corev1.PullNever
 	}
 
 	trivyImageRef, err := config.GetImageRef()
@@ -1103,7 +1110,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		containers = append(containers, corev1.Container{
 			Name:                     c.Name,
 			Image:                    c.Image,
-			ImagePullPolicy:          corev1.PullNever,
+			ImagePullPolicy:          pullPolicy,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env:                      env,
 			Command: []string{
@@ -1135,7 +1142,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		})
 	}
 
-	return corev1.PodSpec{
+	podSpec := corev1.PodSpec{
 		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		ServiceAccountName:           ctx.GetServiceAccountName(),
@@ -1144,8 +1151,14 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		InitContainers:               []corev1.Container{initContainerCopyBinary, initContainerDB},
 		Containers:                   containers,
 		SecurityContext:              &corev1.PodSecurityContext{},
-		NodeName:                     spec.NodeName,
-	}, secrets, nil
+	}
+
+	if !ctx.GetStarboardConfig().VulnerabilityScanJobsInSameNamespace() {
+		// schedule scan job explicitly on specific node.
+		podSpec.NodeName = nodeName
+	}
+
+	return podSpec, secrets, nil
 }
 
 func (p *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {

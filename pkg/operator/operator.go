@@ -124,7 +124,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 
 	objectResolver := kube.ObjectResolver{Client: mgr.GetClient()}
-	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient())
+	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient(), starboardConfig)
 	logsReader := kube.NewLogsReader(kubeClientset)
 	secretsReader := kube.NewSecretsReader(mgr.GetClient())
 
