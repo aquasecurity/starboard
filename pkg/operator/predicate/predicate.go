@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"strings"
 )
 
 // InstallModePredicate is a predicate.Predicate that determines whether to
@@ -78,6 +79,26 @@ var IsBeingTerminated = predicate.NewPredicateFuncs(func(obj client.Object) bool
 	return obj.GetDeletionTimestamp() != nil
 })
 
+var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]; ok && !strings.Contains(obj.GetName(), "nsa-") {
+		return true
+	}
+	return false
+})
+
+var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok && !strings.Contains(obj.GetName(), "nsa-") {
+		return true
+	}
+	return false
+})
+
+var IsNsaReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	_, okCis := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]
+	_, okConfig := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]
+	return (okCis || okConfig) && strings.Contains(obj.GetName(), "nsa-")
+})
+
 // JobHasAnyCondition is a predicate.Predicate that returns true if the
 // specified client.Object is a v1.Job with any v1.JobConditionType.
 var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) bool {
@@ -89,20 +110,6 @@ var JobHasAnyCondition = predicate.NewPredicateFuncs(func(obj client.Object) boo
 
 var IsVulnerabilityReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if _, ok := obj.GetLabels()[starboard.LabelVulnerabilityReportScanner]; ok {
-		return true
-	}
-	return false
-})
-
-var IsConfigAuditReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelConfigAuditReportScanner]; ok {
-		return true
-	}
-	return false
-})
-
-var IsKubeBenchReportScan = predicate.NewPredicateFuncs(func(obj client.Object) bool {
-	if _, ok := obj.GetLabels()[starboard.LabelKubeBenchReportScanner]; ok {
 		return true
 	}
 	return false

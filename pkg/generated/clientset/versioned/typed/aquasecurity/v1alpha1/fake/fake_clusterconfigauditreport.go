@@ -83,7 +83,7 @@ func (c *FakeClusterConfigAuditReports) Update(ctx context.Context, clusterConfi
 // Delete takes name of the clusterConfigAuditReport and deletes it. Returns an error if one occurs.
 func (c *FakeClusterConfigAuditReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(clusterconfigauditreportsResource, name), &v1alpha1.ClusterConfigAuditReport{})
+		Invokes(testing.NewRootDeleteActionWithOptions(clusterconfigauditreportsResource, name, opts), &v1alpha1.ClusterConfigAuditReport{})
 	return err
 }
 

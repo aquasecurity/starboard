@@ -20,6 +20,10 @@ func (c *FakeAquasecurityV1alpha1) ClusterConfigAuditReports() v1alpha1.ClusterC
 	return &FakeClusterConfigAuditReports{c}
 }
 
+func (c *FakeAquasecurityV1alpha1) ClusterNsaReports() v1alpha1.ClusterNsaReportInterface {
+	return &FakeClusterNsaReports{c}
+}
+
 func (c *FakeAquasecurityV1alpha1) ClusterVulnerabilityReports() v1alpha1.ClusterVulnerabilityReportInterface {
 	return &FakeClusterVulnerabilityReports{c}
 }
