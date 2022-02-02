@@ -15,7 +15,7 @@ type Writer interface {
 }
 
 type Reader interface {
-	FindByOwner(ctx context.Context, node kube.ObjectRef) (*v1alpha1.CISKubeBenchReport, error)
+	FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{}, error)
 }
 
 type ReadWriter interface {
@@ -55,7 +55,7 @@ func (w *rw) Write(ctx context.Context, report v1alpha1.CISKubeBenchReport) erro
 	return err
 }
 
-func (w *rw) FindByOwner(ctx context.Context, node kube.ObjectRef) (*v1alpha1.CISKubeBenchReport, error) {
+func (w *rw) FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{}, error) {
 	report := &v1alpha1.CISKubeBenchReport{}
 	err := w.client.Get(ctx, types.NamespacedName{
 		Name: node.Name,

@@ -2,6 +2,7 @@ package controller
 
 import (
 	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
+	"reflect"
 
 	"context"
 	"fmt"
@@ -38,6 +39,9 @@ type ConfigAuditReportReconciler struct {
 	configauditreport.Plugin
 	starboard.PluginContext
 	configauditreport.ReadWriter
+	JobNameFunc   func(obj client.Object) string
+	WriteFunc     func(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error
+	FindOwnerFunc func(ctx context.Context, owner kube.ObjectRef) (interface{}, error)
 }
 
 func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -127,6 +131,10 @@ func (r *ConfigAuditReportReconciler) supportsKind(kind kube.Kind) bool {
 		}
 	}
 	return false
+}
+
+func ConfigAuditJobName(obj client.Object) string {
+	return configauditreport.GetScanJobName(obj)
 }
 
 func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) reconcile.Func {
@@ -250,6 +258,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			WithTolerations(scanJobTolerations).
 			WithAnnotations(scanJobAnnotations).
 			WithPodTemplateLabels(scanJobPodTemplateLabels).
+			WithName(r.JobNameFunc(resource)).
 			Get()
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("constructing scan job: %w", err)
@@ -309,19 +318,20 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 }
 
 func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owner kube.ObjectRef, podSpecHash string, pluginConfigHash string) (bool, error) {
-	report, err := r.ReadWriter.FindClusterReportByOwner(ctx, owner)
+	report, err := r.FindOwnerFunc(ctx, owner)
 	if err != nil {
 		return false, err
 	}
-	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+	if report != nil && !reflect.ValueOf(report).IsNil() {
+		om := report.(metav1.ObjectMeta)
+		return om.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
+			om.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
 
 func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj client.Object, hash string) (bool, *batchv1.Job, error) {
-	jobName := configauditreport.GetScanJobName(obj)
+	jobName := r.JobNameFunc(obj)
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: r.Config.Namespace, Name: jobName}, job)
 	if err != nil {
@@ -338,36 +348,39 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj 
 
 func (r *ConfigAuditReportReconciler) reconcileJobs() reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("job", req.NamespacedName)
+		return r.reconcileConfigAuditJob(ctx, req)
+	}
+}
 
-		job := &batchv1.Job{}
-		log.V(1).Info("Getting job from cache")
-		err := r.Client.Get(ctx, req.NamespacedName, job)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached job that must have been deleted")
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
-		}
+func (r *ConfigAuditReportReconciler) reconcileConfigAuditJob(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := r.Logger.WithValues("job", req.NamespacedName)
 
-		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Ignoring job without conditions")
+	job := &batchv1.Job{}
+	log.V(1).Info("Getting job from cache")
+	err := r.Client.Get(ctx, req.NamespacedName, job)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring cached job that must have been deleted")
 			return ctrl.Result{}, nil
 		}
-
-		switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
-		case batchv1.JobComplete:
-			err = r.processCompleteScanJob(ctx, job)
-		case batchv1.JobFailed:
-			err = r.processFailedScanJob(ctx, job)
-		default:
-			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
-		}
-
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 	}
 
+	if len(job.Status.Conditions) == 0 {
+		log.V(1).Info("Ignoring job without conditions")
+		return ctrl.Result{}, nil
+	}
+
+	switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
+	case batchv1.JobComplete:
+		err = r.processCompleteScanJob(ctx, job)
+	case batchv1.JobFailed:
+		err = r.processFailedScanJob(ctx, job)
+	default:
+		err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
+	}
+
+	return ctrl.Result{}, err
 }
 
 func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
@@ -425,7 +438,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		ResourceSpecHash(resourceSpecHash).
 		PluginConfigHash(pluginConfigHash).
 		Data(reportData)
-	err = reportBuilder.Write(ctx, r.ReadWriter)
+	err = reportBuilder.Write(ctx, r.WriteReport, r.WriteFunc)
 	if err != nil {
 		return err
 	}

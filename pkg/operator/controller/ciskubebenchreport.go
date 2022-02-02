@@ -1,10 +1,9 @@
 package controller
 
 import (
-	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
-
 	"context"
 	"fmt"
+	. "github.com/aquasecurity/starboard/pkg/operator/predicate"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -42,6 +41,9 @@ type CISKubeBenchReportReconciler struct {
 	kubebench.ReadWriter
 	kubebench.Plugin
 	starboard.ConfigData
+	JobNameFunc   func(node *corev1.Node, f func(node *corev1.Node) string) string
+	WriteFunc     func(ctx context.Context, report v1alpha1.CISKubeBenchReport) error
+	FindOwnerFunc func(ctx context.Context, node kube.ObjectRef) (interface{}, error)
 }
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -130,7 +132,7 @@ func (r *CISKubeBenchReportReconciler) reconcileNodes() reconcile.Func {
 }
 
 func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *corev1.Node) (bool, error) {
-	report, err := r.ReadWriter.FindByOwner(ctx, kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
+	report, err := r.FindOwnerFunc(ctx, kube.ObjectRef{Kind: kube.KindNode, Name: node.Name})
 	if err != nil {
 		return false, err
 	}
@@ -138,7 +140,7 @@ func (r *CISKubeBenchReportReconciler) hasReport(ctx context.Context, node *core
 }
 
 func (r *CISKubeBenchReportReconciler) hasScanJob(ctx context.Context, node *corev1.Node) (bool, *batchv1.Job, error) {
-	jobName := r.getScanJobName(node)
+	jobName := r.JobNameFunc(node, r.getScanJobName)
 	job := &batchv1.Job{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: r.Config.Namespace, Name: jobName}, job)
 	if err != nil {
@@ -191,7 +193,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.getScanJobName(node),
+			Name:      r.JobNameFunc(node, r.getScanJobName),
 			Namespace: r.Config.Namespace,
 			Labels:    labelsSet,
 		},
@@ -210,41 +212,50 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 	}, nil
 }
 
+func KubeBenchJobName(node *corev1.Node, f func(node *corev1.Node) string) string {
+	return f(node)
+}
+
 func (r *CISKubeBenchReportReconciler) getScanJobName(node *corev1.Node) string {
 	return "scan-cisbenchmark-" + kube.ComputeHash(node.Name)
 }
 
 func (r *CISKubeBenchReportReconciler) reconcileJobs() reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		log := r.Logger.WithValues("job", req.NamespacedName)
+		return r.reconcileKubeBenchJobs(ctx, req)
+	}
+}
 
-		job := &batchv1.Job{}
-		log.V(1).Info("Getting job from cache")
-		err := r.Client.Get(ctx, req.NamespacedName, job)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				log.V(1).Info("Ignoring cached job that must have been deleted")
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
-		}
+func (r *CISKubeBenchReportReconciler) reconcileKubeBenchJobs(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
-		if len(job.Status.Conditions) == 0 {
-			log.V(1).Info("Ignoring job without conditions")
+	log := r.Logger.WithValues("job", req.NamespacedName)
+
+	job := &batchv1.Job{}
+	log.V(1).Info("Getting job from cache")
+	err := r.Client.Get(ctx, req.NamespacedName, job)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring cached job that must have been deleted")
 			return ctrl.Result{}, nil
 		}
-
-		switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
-		case batchv1.JobComplete:
-			err = r.processCompleteScanJob(ctx, job)
-		case batchv1.JobFailed:
-			err = r.processFailedScanJob(ctx, job)
-		default:
-			err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
-		}
-
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("getting job from cache: %w", err)
 	}
+
+	if len(job.Status.Conditions) == 0 {
+		log.V(1).Info("Ignoring job without conditions")
+		return ctrl.Result{}, nil
+	}
+
+	switch jobCondition := job.Status.Conditions[0].Type; jobCondition {
+	case batchv1.JobComplete:
+		err = r.processCompleteScanJob(ctx, job)
+	case batchv1.JobFailed:
+		err = r.processFailedScanJob(ctx, job)
+	default:
+		err = fmt.Errorf("unrecognized job condition: %v", jobCondition)
+	}
+
+	return ctrl.Result{}, err
 }
 
 func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Context, job *batchv1.Job) error {
@@ -297,7 +308,7 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 	}
 
 	log.V(1).Info("Writing CIS Kubernetes Benchmark report", "reportName", report.Name)
-	err = r.ReadWriter.Write(ctx, report)
+	err = r.WriteFunc(ctx, report)
 	if err != nil {
 		return fmt.Errorf("writing report: %w", err)
 	}

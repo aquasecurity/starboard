@@ -88,17 +88,17 @@ func (w *rw) WriteInfra(ctx context.Context, report v1alpha1.CISKubeBenchReport)
 }
 
 func (w *rw) FindByOwner(ctx context.Context, node kube.ObjectRef) (interface{}, error) {
-	report := &v1alpha1.ClusterNsaReport{}
+	report := v1alpha1.ClusterNsaReport{}
 	err := w.client.Get(ctx, types.NamespacedName{
 		Name: node.Name,
-	}, report)
+	}, &report)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return report, nil
+	return &report, nil
 }
 
 func cisReportDataToNsaReportData(reportData v1alpha1.CISKubeBenchReportData) v1alpha1.ClusterNsaReportData {

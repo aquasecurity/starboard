@@ -78,6 +78,6 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 			return err
 		}
 		writer := configauditreport.NewReadWriter(kubeClient)
-		return reportBuilder.Write(ctx, writer)
+		return reportBuilder.Write(ctx, writer.WriteReport, writer.WriteClusterReport)
 	}
 }

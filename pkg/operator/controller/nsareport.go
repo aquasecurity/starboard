@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/nsa"
@@ -13,10 +14,12 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 )
 
 // NsaReportReconciler  is encapsulation of cis-benchmark scanner and configaudit tools
@@ -36,7 +39,6 @@ func NewNsaReportReconciler(operatorConfig etc.Config,
 	cisKubeBenchReportReconciler *CISKubeBenchReportReconciler, configAuditReportReconciler *ConfigAuditReportReconciler, logr logr.Logger,
 	starboardConfig starboard.ConfigData, client client.Client, nsaReadWriter nsa.ReadWriter,
 ) *NsaReportReconciler {
-
 	return &NsaReportReconciler{cisKubeBenchReportReconciler: cisKubeBenchReportReconciler,
 		configAuditReportReconciler: configAuditReportReconciler,
 		Config:                      operatorConfig,
@@ -44,6 +46,15 @@ func NewNsaReportReconciler(operatorConfig etc.Config,
 		ConfigData:                  starboardConfig,
 		ReadWriter:                  nsaReadWriter,
 		Logger:                      logr}
+}
+
+func NsaKubeBenchJobName(node *corev1.Node, f func(node *corev1.Node) string) string {
+	commonName := KubeBenchJobName(node, f)
+	return strings.Replace(commonName, "scan-cisbenchmark-", "scan-nsa-cisbenchmark-", -1)
+}
+
+func NsaConfigAuditJobName(obj client.Object) string {
+	return strings.Replace(ConfigAuditJobName(obj), "scan-configauditreport-", "scan-nsa-configauditreport-", -1)
 }
 
 func (r *NsaReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -93,19 +104,36 @@ func (r *NsaReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *NsaReportReconciler) reconcileNodes() reconcile.Func {
-	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		return ctrl.Result{}, nil
-	}
+	return r.cisKubeBenchReportReconciler.reconcileJobs()
 }
 
 func (r *NsaReportReconciler) reconcileResource(kind kube.Kind) reconcile.Func {
-	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		return ctrl.Result{}, nil
-	}
+	return r.configAuditReportReconciler.reconcileResource(kind)
 }
 
 func (r *NsaReportReconciler) reconcileJobs() reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-		return ctrl.Result{}, nil
+		job, err := getJobs(ctx, req, r)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				r.Logger.V(1).Info("Ignoring cached job that must have been deleted")
+				return ctrl.Result{}, nil
+			}
+		}
+		if strings.Contains(job.Name, "nsa-cisbenchmark") {
+			return r.cisKubeBenchReportReconciler.reconcileKubeBenchJobs(ctx, req)
+		}
+		return r.configAuditReportReconciler.reconcileConfigAuditJob(ctx, req)
 	}
+}
+
+func getJobs(ctx context.Context, req ctrl.Request, r *NsaReportReconciler) (*batchv1.Job, error) {
+	log := r.Logger.WithValues("job", req.NamespacedName)
+	job := &batchv1.Job{}
+	log.V(1).Info("Getting job from cache")
+	err := r.Client.Get(ctx, req.NamespacedName, job)
+	if err != nil {
+		return nil, fmt.Errorf("getting job from cache: %w", err)
+	}
+	return job, nil
 }

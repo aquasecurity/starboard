@@ -39,7 +39,7 @@ type Reader interface {
 
 	// FindClusterReportByOwner returns a v1alpha1.ClusterConfigAuditReport owned by the given
 	// kube.ObjectRef or nil if the report is not found.
-	FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ClusterConfigAuditReport, error)
+	FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (interface{}, error)
 }
 
 type ReadWriter interface {
@@ -146,7 +146,7 @@ func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kub
 	return nil, nil
 }
 
-func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (*v1alpha1.ClusterConfigAuditReport, error) {
+func (r *readWriter) FindClusterReportByOwner(ctx context.Context, owner kube.ObjectRef) (interface{}, error) {
 	var list v1alpha1.ClusterConfigAuditReportList
 
 	labels := client.MatchingLabels(kube.ObjectRefToLabels(owner))

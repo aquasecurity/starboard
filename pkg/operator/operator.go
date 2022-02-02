@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -13,9 +14,11 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -177,7 +180,8 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err != nil {
 			return err
 		}
-		confAuditController := createConfAuditController(operatorConfig, starboardConfig, mgr, objectResolver, limitChecker, logsReader, plugin, pluginContext)
+		rw := configauditreport.NewReadWriter(mgr.GetClient())
+		confAuditController := createConfAuditController(operatorConfig, starboardConfig, mgr, objectResolver, limitChecker, logsReader, plugin, controller.ConfigAuditJobName, rw.WriteClusterReport, rw.FindClusterReportByOwner, pluginContext)
 		if err = confAuditController.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
@@ -193,7 +197,8 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 
 	if operatorConfig.CISKubernetesBenchmarkEnabled {
-		cisBenchmarkController := createCisBenchmarkController(operatorConfig, starboardConfig, mgr, logsReader, limitChecker)
+		rw := kubebench.NewReadWriter(mgr.GetClient())
+		cisBenchmarkController := createCisBenchmarkController(operatorConfig, starboardConfig, mgr, logsReader, controller.KubeBenchJobName, rw.Write, rw.FindByOwner, limitChecker)
 		if err = cisBenchmarkController.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
 		}
@@ -205,19 +210,37 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		if err != nil {
 			return err
 		}
-		confAuditController := createConfAuditController(operatorConfig, starboardConfig, mgr, objectResolver, limitChecker, logsReader, plugin, pluginContext)
+		writer := nsa.NewReadWriter(mgr.GetClient())
+		confAuditController := createConfAuditController(operatorConfig,
+			starboardConfig,
+			mgr,
+			objectResolver,
+			limitChecker,
+			logsReader,
+			plugin,
+			controller.NsaConfigAuditJobName,
+			writer.WriteConfig,
+			writer.FindByOwner,
+			pluginContext)
 		if err = confAuditController.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
 		// create cis-benchmark controller
-		cisBenchmarkController := createCisBenchmarkController(operatorConfig, starboardConfig, mgr, logsReader, limitChecker)
+		cisBenchmarkController := createCisBenchmarkController(operatorConfig,
+			starboardConfig,
+			mgr,
+			logsReader,
+			controller.NsaKubeBenchJobName,
+			writer.WriteInfra,
+			writer.FindByOwner,
+			limitChecker)
 
 		if err := controller.NewNsaReportReconciler(
 			operatorConfig,
 			cisBenchmarkController,
 			confAuditController,
 			ctrl.Log.WithName("reconciler").WithName("nsareport"),
-			starboardConfig, mgr.GetClient(), nsa.NewReadWriter(mgr.GetClient())).SetupWithManager(mgr); err != nil {
+			starboardConfig, mgr.GetClient(), writer).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup nsa reconciler: %w", err)
 		}
 	}
@@ -230,20 +253,41 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	return nil
 }
 
-func createCisBenchmarkController(operatorConfig etc.Config, starboardConfig starboard.ConfigData, mgr ctrl.Manager, logsReader kube.LogsReader, limitChecker controller.LimitChecker) *controller.CISKubeBenchReportReconciler {
+func createCisBenchmarkController(operatorConfig etc.Config,
+	starboardConfig starboard.ConfigData,
+	mgr ctrl.Manager,
+	logsReader kube.LogsReader,
+	jobNameFunc func(node *corev1.Node, f func(node *corev1.Node) string) string,
+	writeFunc func(ctx context.Context, report v1alpha1.CISKubeBenchReport) error,
+	findOwnerFunc func(ctx context.Context, node kube.ObjectRef) (interface{}, error),
+	limitChecker controller.LimitChecker,
+) *controller.CISKubeBenchReportReconciler {
 	return &controller.CISKubeBenchReportReconciler{
-		Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
-		Config:       operatorConfig,
-		ConfigData:   starboardConfig,
-		Client:       mgr.GetClient(),
-		LogsReader:   logsReader,
-		LimitChecker: limitChecker,
-		ReadWriter:   kubebench.NewReadWriter(mgr.GetClient()),
-		Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
+		Logger:        ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
+		Config:        operatorConfig,
+		ConfigData:    starboardConfig,
+		Client:        mgr.GetClient(),
+		LogsReader:    logsReader,
+		LimitChecker:  limitChecker,
+		ReadWriter:    kubebench.NewReadWriter(mgr.GetClient()),
+		Plugin:        kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
+		JobNameFunc:   jobNameFunc,
+		WriteFunc:     writeFunc,
+		FindOwnerFunc: findOwnerFunc,
 	}
 }
 
-func createConfAuditController(operatorConfig etc.Config, starboardConfig starboard.ConfigData, mgr ctrl.Manager, objectResolver kube.ObjectResolver, limitChecker controller.LimitChecker, logsReader kube.LogsReader, plugin configauditreport.Plugin, pluginContext starboard.PluginContext) *controller.ConfigAuditReportReconciler {
+func createConfAuditController(operatorConfig etc.Config,
+	starboardConfig starboard.ConfigData,
+	mgr ctrl.Manager,
+	objectResolver kube.ObjectResolver,
+	limitChecker controller.LimitChecker,
+	logsReader kube.LogsReader,
+	plugin configauditreport.Plugin,
+	jobNameFunc func(obj client.Object) string,
+	writeFunc func(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error,
+	findOwnerFunc func(ctx context.Context, node kube.ObjectRef) (interface{}, error),
+	pluginContext starboard.PluginContext) *controller.ConfigAuditReportReconciler {
 	pluginController := &controller.ConfigAuditReportReconciler{
 		Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
 		Config:         operatorConfig,
@@ -255,6 +299,9 @@ func createConfAuditController(operatorConfig etc.Config, starboardConfig starbo
 		Plugin:         plugin,
 		PluginContext:  pluginContext,
 		ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+		JobNameFunc:    jobNameFunc,
+		FindOwnerFunc:  findOwnerFunc,
+		WriteFunc:      writeFunc,
 	}
 	return pluginController
 }

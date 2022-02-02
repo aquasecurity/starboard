@@ -28,6 +28,7 @@ type ScanJobBuilder struct {
 	tolerations       []corev1.Toleration
 	annotations       map[string]string
 	podTemplateLabels labels.Set
+	name              string
 }
 
 func NewScanJobBuilder() *ScanJobBuilder {
@@ -69,6 +70,11 @@ func (s *ScanJobBuilder) WithPodTemplateLabels(podTemplateLabels labels.Set) *Sc
 	return s
 }
 
+func (s *ScanJobBuilder) WithName(name string) *ScanJobBuilder {
+	s.name = name
+	return s
+}
+
 func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 	jobSpec, secrets, err := s.plugin.GetScanJobSpec(s.pluginContext, s.object)
 	if err != nil {
@@ -104,7 +110,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        GetScanJobName(s.object),
+			Name:        s.name,
 			Namespace:   s.pluginContext.GetNamespace(),
 			Labels:      labelsSet,
 			Annotations: s.annotations,
@@ -271,18 +277,18 @@ func (b *ReportBuilder) GetReport() (v1alpha1.ConfigAuditReport, error) {
 	return report, nil
 }
 
-func (b *ReportBuilder) Write(ctx context.Context, writer Writer) error {
+func (b *ReportBuilder) Write(ctx context.Context, write func(ctx context.Context, report v1alpha1.ConfigAuditReport) error, writeCluster func(ctx context.Context, report v1alpha1.ClusterConfigAuditReport) error) error {
 	if kube.IsClusterScopedKind(b.controller.GetObjectKind().GroupVersionKind().Kind) {
 		report, err := b.GetClusterReport()
 		if err != nil {
 			return err
 		}
-		return writer.WriteClusterReport(ctx, report)
+		return writeCluster(ctx, report)
 	} else {
 		report, err := b.GetReport()
 		if err != nil {
 			return err
 		}
-		return writer.WriteReport(ctx, report)
+		return write(ctx, report)
 	}
 }
