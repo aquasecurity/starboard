@@ -3,7 +3,6 @@ package configauditreport
 import (
 	"context"
 	"fmt"
-
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/runner"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -91,6 +90,7 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuil
 		WithTolerations(scanJobTolerations).
 		WithAnnotations(scanJobAnnotations).
 		WithPodTemplateLabels(scanJobPodTemplateLabels).
+		WithName(GetScanJobName(owner)).
 		Get()
 	if err != nil {
 		return nil, fmt.Errorf("constructing scan job: %w", err)

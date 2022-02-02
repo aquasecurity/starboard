@@ -157,7 +157,7 @@ jobs:
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
             -f deploy/crd/configauditreports.crd.yaml \
             -f deploy/crd/clusterconfigauditreports.crd.yaml \
-            -f deploy/crd/nsareports.crd.yaml \
+            -f deploy/crd/clusternsareports.crd.yaml \
             -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.rbac.yaml
@@ -205,6 +205,7 @@ jobs:
           kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
             -f deploy/crd/configauditreports.crd.yaml \
             -f deploy/crd/clusterconfigauditreports.crd.yaml \
+            -f deploy/crd/clusternsareports.crd.yaml \
             -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.rbac.yaml

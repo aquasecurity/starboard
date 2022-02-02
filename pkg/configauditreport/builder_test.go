@@ -1,6 +1,7 @@
 package configauditreport_test
 
 import (
+	"github.com/aquasecurity/starboard/pkg/operator/controller"
 	. "github.com/onsi/gomega"
 
 	"io"
@@ -151,6 +152,16 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with simple name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
+		object := &appsv1.ReplicaSet{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ReplicaSet",
+				APIVersion: "apps/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-6799fc88d8",
+				Namespace: "prod-ns",
+			},
+		}
 		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
@@ -161,16 +172,7 @@ func TestScanJobBuilder(t *testing.T) {
 				WithServiceAccountName("starboard-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
-			WithObject(&appsv1.ReplicaSet{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ReplicaSet",
-					APIVersion: "apps/v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "nginx-6799fc88d8",
-					Namespace: "prod-ns",
-				},
-			}).
+			WithObject(object).WithName(controller.ConfigAuditJobName(object)).
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).To(Equal(&batchv1.Job{
@@ -211,6 +213,15 @@ func TestScanJobBuilder(t *testing.T) {
 
 	t.Run("Should build scan job for resource with special name", func(t *testing.T) {
 		g := NewGomegaWithT(t)
+		object := &rbacv1.ClusterRole{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ClusterRole",
+				APIVersion: "rbac.authorization.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "system:controller:node-controller",
+			},
+		}
 		job, _, err := configauditreport.NewScanJobBuilder().
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
@@ -221,15 +232,8 @@ func TestScanJobBuilder(t *testing.T) {
 				WithServiceAccountName("starboard-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
-			WithObject(&rbacv1.ClusterRole{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ClusterRole",
-					APIVersion: "rbac.authorization.k8s.io/v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "system:controller:node-controller",
-				},
-			}).
+			WithObject(object).
+			WithName(controller.ConfigAuditJobName(object)).
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).NotTo(BeNil())
