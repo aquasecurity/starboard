@@ -409,7 +409,12 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 
 	logsStream, err := r.LogsReader.GetLogsByJobAndContainerName(ctx, job, r.Plugin.GetContainerName())
 	if err != nil {
-		return fmt.Errorf("getting logs: %w", err)
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Ignoring not found job", "job", fmt.Sprintf("%s/%s", job.Namespace, job.Name), "owner", owner)
+			log.V(1).Info("Deleting complete scan job", "owner", owner)
+			return r.deleteJob(ctx, job)
+		}
+		return fmt.Errorf("getting pod controlled by job: %q: %w", job.Namespace+"/"+job.Name, err)
 	}
 
 	reportData, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
