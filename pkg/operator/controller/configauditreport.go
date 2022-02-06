@@ -414,7 +414,7 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 			log.V(1).Info("Deleting complete scan job", "owner", owner)
 			return r.deleteJob(ctx, job)
 		}
-		return fmt.Errorf("getting pod controlled by job: %q: %w", job.Namespace+"/"+job.Name, err)
+		return fmt.Errorf("getting logs for pod %q: %w", job.Namespace+"/"+job.Name, err)
 	}
 
 	reportData, err := r.Plugin.ParseConfigAuditReportData(r.PluginContext, logsStream)
