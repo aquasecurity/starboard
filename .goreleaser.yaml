@@ -17,6 +17,10 @@ builds:
       - windows
     goarch:
       - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
   - id: starboard-operator
     main: ./cmd/starboard-operator/main.go
     binary: starboard-operator
@@ -31,12 +35,18 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     builds:
       - starboard
     replacements:
       amd64: x86_64
+      arm: ARM
+      arm64: ARM64
     format_overrides:
       - goos: windows
         format: zip
@@ -52,10 +62,13 @@ changelog:
       - '^test'
       - '^release'
 dockers:
-  - dockerfile: build/starboard/Dockerfile
-    image_templates:
-      - "docker.io/aquasec/starboard:{{ .Version }}"
-      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}"
+  - image_templates:
+      - "docker.io/aquasec/starboard:{{ .Version }}-amd64"
+      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-amd64"
+    use: buildx
+    goos: linux
+    dockerfile: build/starboard/Dockerfile
+    goarch: amd64
     ids:
       - starboard
     build_flag_templates:
@@ -67,10 +80,11 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
-  - dockerfile: build/starboard-operator/Dockerfile
-    image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}"
-      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}"
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-amd64"
+      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-amd64"
+    dockerfile: build/starboard-operator/Dockerfile
     ids:
       - starboard-operator
     build_flag_templates:
@@ -82,10 +96,11 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
-  - dockerfile: build/scanner-aqua/Dockerfile
-    image_templates:
-      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
-      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}"
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
+      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64"
+    dockerfile: build/scanner-aqua/Dockerfile
     ids:
       - starboard-scanner-aqua
     build_flag_templates:
@@ -97,3 +112,80 @@ dockers:
       - "--label=org.label-schema.build-date={{ .Date }}"
       - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
       - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "docker.io/aquasec/starboard:{{ .Version }}-arm64"
+      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-arm64"
+    use: buildx
+    goos: linux
+    dockerfile: build/starboard/Dockerfile
+    goarch: amd64
+    ids:
+      - starboard
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name={{ .ProjectName }}"
+      - "--label=org.label-schema.description=Command line interface for Starboard"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
+      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-arm64"
+    dockerfile: build/starboard-operator/Dockerfile
+    ids:
+      - starboard-operator
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name=starboard-operator"
+      - "--label=org.label-schema.description=Keeps Starboard resources updated"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-arm64"
+      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-arm64"
+    dockerfile: build/scanner-aqua/Dockerfile
+    ids:
+      - starboard-scanner-aqua
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.name=starboard-scanner-aqua"
+      - "--label=org.label-schema.description=Aqua scanner for Starboard"
+      - "--label=org.label-schema.vendor=Aqua Security"
+      - "--label=org.label-schema.version={{ .Version }}"
+      - "--label=org.label-schema.build-date={{ .Date }}"
+      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
+      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--platform=linux/arm64"
+docker_manifests:
+  - name_template: 'aquasec/starboard:{{ .Version }}'
+    image_templates:
+      - 'aquasec/starboard:{{ .Version }}-amd64'
+      - 'aquasec/starboard:{{ .Version }}-arm64'
+  - name_template: 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}'
+    image_templates:
+      - 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}-amd64'
+      - 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}-arm64'
+  - name_template: 'aquasec/starboard-operator:{{ .Version }}'
+    image_templates:
+      - 'aquasec/starboard-operator:{{ .Version }}-amd64'
+      - 'aquasec/starboard-operator:{{ .Version }}-arm64'
+  - name_template: 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}'
+    image_templates:
+      - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-amd64'
+      - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-arm64'
+  - name_template: 'aquasec/starboard-operator:{{ .Version }}'
+    image_templates:
+      - 'aquasec/starboard-scanner-aqua:{{ .Version }}-amd64'
+      - 'aquasec/starboard-scanner-aqua:{{ .Version }}-arm64'
+  - name_template: 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}'
+    image_templates:
+      - 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64'
+      - 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-arm64'
