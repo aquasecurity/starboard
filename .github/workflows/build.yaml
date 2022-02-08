@@ -234,7 +234,7 @@ jobs:
         with:
           version: v3.5.0
       - name: Set up python
-        uses: actions/setup-python@f38219332975fe8f9c04cca981d674bf22aea1d3 #v2.3.0
+        uses: actions/setup-python@7f80679172b057fc5e90d70d197929d454754a5a #v2.3.0
         with:
           python-version: 3.7
       - name: Setup Chart Linting
