@@ -280,6 +280,10 @@ func (r *CISKubeBenchReportReconciler) processCompleteScanJob(ctx context.Contex
 
 	logsStream, err := r.LogsReader.GetLogsByJobAndContainerName(ctx, job, r.Plugin.GetContainerName())
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Cached job must have been deleted")
+			return nil
+		}
 		if kube.IsPodControlledByJobNotFound(err) {
 			log.V(1).Info("Pod must have been deleted")
 			return r.deleteJob(ctx, job)
@@ -325,6 +329,10 @@ func (r *CISKubeBenchReportReconciler) processFailedScanJob(ctx context.Context,
 
 	statuses, err := r.LogsReader.GetTerminatedContainersStatusesByJob(ctx, job)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Cached job must have been deleted")
+			return nil
+		}
 		if kube.IsPodControlledByJobNotFound(err) {
 			log.V(1).Info("Pod must have been deleted")
 			return r.deleteJob(ctx, job)
