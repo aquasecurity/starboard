@@ -227,13 +227,7 @@ controls:
      description: ''
      id: '1.0'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -242,13 +236,7 @@ controls:
      description: ''
      id: '1.1'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -257,13 +245,7 @@ controls:
      description: ''
      id: '1.2'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -272,13 +254,7 @@ controls:
      description: ''
      id: '1.3'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -287,13 +263,7 @@ controls:
      description: ''
      id: '1.4'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -301,13 +271,7 @@ controls:
    - name: use the host network
      id: '1.5'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -316,13 +280,7 @@ controls:
      description: ''
      id: '1.6'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -331,13 +289,7 @@ controls:
      description: ''
      id: '1.7'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -346,13 +298,7 @@ controls:
      description: ''
      id: '1.8'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -361,13 +307,7 @@ controls:
      description: ''
      id: '1.9'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -376,13 +316,7 @@ controls:
      description: ''
      id: '1.10'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -391,13 +325,7 @@ controls:
      description: ''
      id: '1.11'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -406,13 +334,7 @@ controls:
      description: ''
      id: '1.12'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -421,13 +343,7 @@ controls:
      description: ''
      id: '1.13'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
@@ -436,13 +352,7 @@ controls:
      description: ''
      id: '2.0'
      resources:
-        - Pod
-        - ReplicationController
-        - ReplicaSet
-        - StatefulSet
-        - DaemonSet
-        - Job
-        - CronJob
+        - Workload
      mapping:
         tool: config-audit
         checks:
