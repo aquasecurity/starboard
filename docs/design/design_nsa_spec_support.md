@@ -220,186 +220,332 @@ spec:
 ## Compliance  Configuration File
 ```yaml
 ---
-spec_id: NSA
-spec_description: National Security Agency - Kubernetes Hardening Guidance
+name: NSA
+description: National Security Agency - Kubernetes Hardening Guidance
 controls:
-  - control_name: Non-root containers
-    description: ''
-    control_id: '1.0'
-    checks:
-      - tool_name: audit-config
-        check_id: KSV012
-  - control_name: Immutable container file systems
-    description: ''
-    control_id: '1.1'
-    checks:
-      - tool_name: audit-config
-        check_id: KSV014
-  - control_name: Preventing privileged containers
-    description: ''
-    control_id: '1.2'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV017
-  - control_name: share host process namespaces
-    description: ''
-    control_id: '1.3'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV008
-  - control_name: share host process namespaces.
-    description: ''
-    control_id: '1.4'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV009
-  - control_name: use the host network
-    control_id: '1.5'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV010
-  - control_name: Requires the use of a read only root file system
-    description: ''
-    control_id: '1.6'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV014
-  - control_name: applications can run with root privileges or with root group membership
-    description: ''
-    control_id: '1.7'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV029
-  - control_name: Restricts escalation to root privileges.
-    description: ''
-    control_id: '1.8'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV001
-  - control_name: Sets the SELinux context of the container.
-    description: ''
-    control_id: '1.9'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV002
-  - control_name: Restrict a container's access to resources with AppArmor
-    description: ''
-    control_id: '1.10'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV030
-  - control_name: Sets the seccomp profile used to sandbox containers.
-    description: ''
-    control_id: '1.11'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV036
-  - control_name: Protecting Pod service account tokens
-    description: ''
-    control_id: '1.12'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV037
-  - control_name: Namespace kube-system should should not be used by users
-    description: ''
-    control_id: '1.12'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV038
-  - control_name: pod and/or namespace Selectors usage
-    description: ''
-    control_id: '2.0'
-    checks:
-      - tool_name: config-audit
-        check_id: KSV038
-  - control_name: Use CNI plugin that supports NetworkPolicy API
-    description: ''
-    control_id: '3.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: 5.3.1
-  - control_name: Use a default policy to deny all ingress and egress traffic
-    description: ''
-    control_id: '3.1'
-    checks:
-      - tool_name: kube-bench
-        check_id: "<check need to be added>"
-  - control_name: Use LimitRange and ResourceQuota policies to limit resources
-    description: ''
-    control_id: '4.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: "<check need to be added>"
-  - control_name: Control plan disable insecure port
-    description: ''
-    control_id: '5.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.19
-  - control_name: Encrypt etcd communication
-    description: ''
-    control_id: '5.1'
-    checks:
-      - tool_name: kube-bench
-        check_id: '2.1'
-  - control_name: Ensure kube config file permission
-    description: ''
-    control_id: '6.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: 4.1.3
-      - tool_name: kube-bench
-        check_id: 4.1.4
-  - control_name: Check that encryption resource has been set
-    description: ''
-    control_id: '6.1'
-    checks:
-      - tool_name: kube-bench
-        check_id: "<check need to be added>"
-  - control_name: Check encryption provider
-    description: ''
-    control_id: '6.2'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.3
-  - control_name: Make sure anonymous-auth is unset
-    description: ''
-    control_id: '7.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.1
-  - control_name: Make sure -authorization-mode=RBAC
-    description: ''
-    control_id: '7.1'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.7
-      - tool_name: kube-bench
-        check_id: 1.2.8
-  - control_name: Audit policy is configure
-    description: ''
-    control_id: '8.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: 3.2.1
-  - control_name: Audit log path is configure
-    description: ''
-    control_id: '8.1'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.22
-  - control_name: Audit log aging
-    description: ''
-    control_id: '8.2'
-    checks:
-      - tool_name: kube-bench
-        check_id: 1.2.23
-  - control_name: service mesh is configure
-    description: ''
-    control_id: '9.0'
-    checks:
-      - tool_name: kube-bench
-        check_id: "<check need to be added>"
+   - name: Non-root containers
+     description: ''
+     id: '1.0'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV012
+   - name: Immutable container file systems
+     description: ''
+     id: '1.1'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV014
+   - name: Preventing privileged containers
+     description: ''
+     id: '1.2'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV017
+   - name: share host process namespaces
+     description: ''
+     id: '1.3'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV008
+   - name: share host process namespaces.
+     description: ''
+     id: '1.4'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV009
+   - name: use the host network
+     id: '1.5'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV010
+   - name: Requires the use of a read only root file system
+     description: ''
+     id: '1.6'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV014
+   - name: applications can run with root privileges or with root group membership
+     description: ''
+     id: '1.7'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV029
+   - name: Restricts escalation to root privileges.
+     description: ''
+     id: '1.8'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV001
+   - name: Sets the SELinux context of the container.
+     description: ''
+     id: '1.9'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV002
+   - name: Restrict a container's access to resources with AppArmor
+     description: ''
+     id: '1.10'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV030
+   - name: Sets the seccomp profile used to sandbox containers.
+     description: ''
+     id: '1.11'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV036
+   - name: Protecting Pod service account tokens
+     description: ''
+     id: '1.12'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV037
+   - name: Namespace kube-system should should not be used by users
+     description: ''
+     id: '1.13'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV038
+   - name: pod and/or namespace Selectors usage
+     description: ''
+     id: '2.0'
+     resources:
+        - Pod
+        - ReplicationController
+        - ReplicaSet
+        - StatefulSet
+        - DaemonSet
+        - Job
+        - CronJob
+     tool: config-audit
+     checks:
+        - id: KSV038
+   - name: Use CNI plugin that supports NetworkPolicy API
+     description: ''
+     id: '3.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 5.3.1
+   - name: Use a default policy to deny all ingress and egress traffic
+     description: ''
+     id: '3.1'
+     resources:
+        - NetworkPolicy
+     tool: kube-bench
+     checks:
+        - id: "<check need to be added>"
+   - name: Use LimitRange and ResourceQuota policies to limit resources
+     description: ''
+     id: '4.0'
+     resources:
+        - LimitRange
+     tool: kube-bench
+     checks:
+        - id: "<check need to be added>"
+   - name: Control plan disable insecure port
+     description: ''
+     id: '5.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.19
+   - name: Encrypt etcd communication
+     description: ''
+     id: '5.1'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: '2.1'
+   - name: Ensure kube config file permission
+     description: ''
+     id: '6.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 4.1.3
+        - id: 4.1.4
+   - name: Check that encryption resource has been set
+     description: ''
+     id: '6.1'
+     resources:
+        - EncryptionConfiguration
+     tool: kube-bench
+     checks:
+        - id: "<check need to be added>"
+   - name: Check encryption provider
+     description: ''
+     id: '6.2'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.3
+   - name: Make sure anonymous-auth is unset
+     description: ''
+     id: '7.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.1
+   - name: Make sure -authorization-mode=RBAC
+     description: ''
+     id: '7.1'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.7
+        - id: 1.2.8
+   - name: Audit policy is configure
+     description: ''
+     id: '8.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 3.2.1
+   - name: Audit log path is configure
+     description: ''
+     id: '8.1'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.22
+   - name: Audit log aging
+     description: ''
+     id: '8.2'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: 1.2.23
+   - name: service mesh is configure
+     description: ''
+     id: '9.0'
+     resources:
+        - Node
+     tool: kube-bench
+     checks:
+        - id: "<check need to be added>"
 ```
 
 ### Next Steps
