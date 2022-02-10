@@ -489,6 +489,10 @@ controls:
 
 ### Next Steps
 - POC NSA controller
+- need to solve a bug to log conftest ID , it is logging title instead
+- inconsistency between cis-kube-bench and conf-audit check tests 
+  - conf-audit only show pass summary and do not log pass check
+  - cis-kube-bench log pass checks and summary
 - Enhance POC code and make it production ready
 - Fix and Add tests
 - Completed all missing check from appshield - Done
