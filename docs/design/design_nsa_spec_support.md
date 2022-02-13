@@ -17,7 +17,7 @@ It is required to extend starboard security tools capabilities by supporting the
 
 ### TL;DR;
 
-Add a new starboard controller to support the NSA specification checks to enhance our Kubernetes Hardening capabilities.
+Add a new starboard controller to support the generation of the compliance report , a.k.a NSA
 The controller will ClusterComplianceReport CRD and generate a new report after pre-define interval
 
 1. A new Compliance folder will be introduced to compliance configuration files
@@ -30,6 +30,14 @@ The controller will ClusterComplianceReport CRD and generate a new report after 
 ### Deep Dive
 The below  [NSA Tool Analysis](#nsa-tool-analysis) provides us with the separation of tool to be triggered based on resource kind for the NSA specification.
 As seen with the analysis below, in order to make the NSA specification completed, checks need to be used and added to the relevant tools.
+
+### details
+
+- On startup a new compliance controller will be generated with designated RW object and plugin mapper
+- After control is created a new compliance report wll be generated an initial report to triggering reconcile loop for ClusterComplianceReport
+- The cluster report will be generated with predefine interval , we will use the controller requeue capabilities to generate the report after interval has exceeded
+- the compliance report definition/mapping will be defined in a spec file which will be persisted to file system 
+
 
 Code Changes:
 - kube-bench - a new kube-bench config check `nsa-1.0` need to be added with the following checks for `Node` resource kind:
@@ -125,10 +133,10 @@ to support the following tracked resources kind by NSA plugin with (get,list and
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: clusternsareports.aquasecurity.github.io
+  name: clustercompliancereports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.0"
+    app.kubernetes.io/version: "0.14.1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -136,24 +144,19 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .report.scanner.name
+        - jsonPath: .report.type.kind
           type: string
-          name: Scanner
-          description: The name of the national security agency scanner
+          name: report
+          description: The name of the complience report
         - jsonPath: .metadata.creationTimestamp
           type: date
           name: Age
           description: The age of the report
-        - jsonPath: .report.summary.dangerCount
+        - jsonPath: .report.summary.failCount
           type: integer
-          name: Danger
+          name: Fail
           priority: 1
           description: The number of checks that failed with Danger status
-        - jsonPath: .report.summary.warningCount
-          type: integer
-          name: Warning
-          priority: 1
-          description: The number of checks that failed with Warning status
         - jsonPath: .report.summary.passCount
           type: integer
           name: Pass
@@ -165,16 +168,132 @@ spec:
           type: object
   scope: Cluster
   names:
-    singular: clusternsareport
-    plural: clusternsareports
-    kind: ClusterNsaReport
-    listKind: NsaReportList
-    categories:
-      - all
+    singular: clustercompliancereport
+    plural: clustercompliancereports
+    kind: ClusterComplianceReport
+    listKind: ClusterComplianceReportList
+    categories: []
     shortNames:
-      - clusternsa
+      - compliance
+```
+
+### 2 types of compliance reports:
+
+- compliance summary report
+
+```json
+{
+    "apiVersion": "aquasecurity.github.io/v1alpha1",
+    "kind": "ClusterComplianceReport",
+    "metadata": {
+        "annotations": {
+            "starboard.aquasecurity.github.io/report-next-generation": "3s"
+        },
+        "creationTimestamp": "2022-02-13T11:25:28Z",
+        "generation": 3,
+        "name": "nsa",
+        "resourceVersion": "485633",
+        "uid": "80049b23-efbe-46a7-b670-9b4b52ddee72"
+    },
+    "report": {
+        "control_check": [
+            {
+                "failTotal": 9,
+                "id": "1.0",
+                "name": "Non-root containers",
+                "passTotal": 0,
+                "severity": ""
+            },
+            {
+                "failTotal": 0,
+                "id": "6.0",
+                "name": "Ensure kube config file permission",
+                "passTotal": 2,
+                "severity": ""
+            }
+            .
+            .
+            .
+        ],
+        "summary": {
+            "failCount": 25,
+            "passCount": 3
+        },
+        "type": {
+            "description": "national security agency - kubernetes hardening guidance",
+            "kind": "compliance",
+            "name": "nsa",
+            "version": "1.0"
+        },
+        "updateTimestamp": "2022-02-13T11:32:23Z"
+    }
+}
 
 ```
+- compliance granular  report
+```json
+{
+  "apiVersion": "aquasecurity.github.io/v1alpha1",
+  "kind": "ClusterComplianceReport",
+  "metadata": {
+    "annotations": {
+      "starboard.aquasecurity.github.io/report-next-generation": "3s"
+    },
+    "creationTimestamp": "2022-02-13T11:25:28Z",
+    "generation": 3,
+    "name": "nsa",
+    "resourceVersion": "485633",
+    "uid": "80049b23-efbe-46a7-b670-9b4b52ddee72"
+  },
+  "report": {
+    "control_check": [
+      {
+        "id": "1.0",
+        "name": "Non-root containers",
+        "checkResults": [
+          {
+            "objectKind": "DaemonSet",
+            "remediation": "fix a b c",
+            "details": [
+              {
+                "name": "daemonset-kindnet-kindnet-cni",
+                "namespace": "kube-system",
+                "status": "fail"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "6.0",
+        "name": "Ensure kube config file permission",
+        "checkResults": [
+          {
+            "objectKind": "Pod",
+            "remediation": "fix d e f",
+            "details": [
+              {
+                "name": "pod-kube-apiserver-local-control-plane-kube-apiserver",
+                "namespace": "kube-system",
+                "status": "fail"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "type": {
+      "description": "national security agency - kubernetes hardening guidance",
+      "kind": "compliance",
+      "name": "nsa",
+      "version": "1.0"
+    },
+    "updateTimestamp": "2022-02-13T11:32:23Z"
+  }
+}
+```
+
+
 
 ### NSA Tool Analysis
 
@@ -486,7 +605,35 @@ controls:
         checks:
            - id: "<check need to be added>"
 ```
-
+### spec file example
+```yaml
+---
+kind: compliance
+name: NSA
+description: National Security Agency - Kubernetes Hardening Guidance
+version: 1.0
+generationInterval : 6h
+controls:
+  - name: Non-root containers
+    description: ''
+    id: '1.0'
+    resources:
+      - Workload
+    mapping:
+      tool: config-audit
+      checks:
+        - id: KSV012
+  - name: Immutable container file systems
+    description: ''
+    id: '1.1'
+    resources:
+      - Workload
+    mapping:
+      tool: config-audit
+      checks:
+        - id: KSV014
+ ....
+```
 ### Next Steps
 - POC NSA controller
 - need to solve a bug to log conftest ID , it is logging title instead
