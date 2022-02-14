@@ -119,7 +119,7 @@ dockers:
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
-    goarch: amd64
+    goarch: arm64
     ids:
       - starboard
     build_flag_templates:
