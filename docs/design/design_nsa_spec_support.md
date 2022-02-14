@@ -125,9 +125,8 @@ to support the following tracked resources kind by NSA plugin with (get,list and
       - watch
 ```
 
-### NationalSecurityAgency CRD (maybe use short name nsa for crd?):
-- a new CRD `nsareports.crd.yaml` will be added to include nsa check report
-- CRD structure (proposal):
+### ClusterComplianceReport CRD :
+- a new CRD `clustercompliancereports.crd.yaml` will be added to include compliance check report
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -176,6 +175,58 @@ spec:
     shortNames:
       - compliance
 ```
+
+### ClusterComplianceDetailReport CRD :
+- a new CRD `clustercompliancedetailreports.crd.yaml` will be added to include compliance detail check report
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustercompliancedetailreports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.1"
+spec:
+  group: aquasecurity.github.io
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .report.type.kind
+          type: string
+          name: report
+          description: The name of the complience report
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .report.summary.failCount
+          type: integer
+          name: Fail
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .report.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          x-kubernetes-preserve-unknown-fields: true
+          type: object
+  scope: Cluster
+  names:
+    singular: clustercompliancedetailreport
+    plural: clustercompliancedetailreports
+    kind: ClusterComplianceDetailReport
+    listKind: ClusterComplianceDetailReportList
+    categories: []
+    shortNames:
+      - compliancedetail
+```
+
 
 ### 2 types of compliance reports:
 
@@ -293,8 +344,6 @@ spec:
 }
 ```
 
-
-
 ### NSA Tool Analysis
 
 | Test                                                                                          | Description                                                                                             | Kind                                                                        | Tool        | Test                                                                                                                          |
@@ -334,277 +383,8 @@ spec:
 
 
 ## Open Items
-- nsa supprt for CLI (need to discuss implementation)
+- nsa support for CLI (need to discuss implementation)
 
-## Compliance  Configuration File
-```yaml
----
-name: NSA
-description: National Security Agency - Kubernetes Hardening Guidance
-controls:
-   - name: Non-root containers
-     description: ''
-     id: '1.0'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV012
-   - name: Immutable container file systems
-     description: ''
-     id: '1.1'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV014
-   - name: Preventing privileged containers
-     description: ''
-     id: '1.2'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV017
-   - name: share host process namespaces
-     description: ''
-     id: '1.3'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV008
-   - name: share host process namespaces.
-     description: ''
-     id: '1.4'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV009
-   - name: use the host network
-     id: '1.5'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV010
-   - name: Requires the use of a read only root file system
-     description: ''
-     id: '1.6'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV014
-   - name: applications can run with root privileges or with root group membership
-     description: ''
-     id: '1.7'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV029
-   - name: Restricts escalation to root privileges.
-     description: ''
-     id: '1.8'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV001
-   - name: Sets the SELinux context of the container.
-     description: ''
-     id: '1.9'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV002
-   - name: Restrict a container's access to resources with AppArmor
-     description: ''
-     id: '1.10'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV030
-   - name: Sets the seccomp profile used to sandbox containers.
-     description: ''
-     id: '1.11'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV036
-   - name: Protecting Pod service account tokens
-     description: ''
-     id: '1.12'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV037
-   - name: Namespace kube-system should should not be used by users
-     description: ''
-     id: '1.13'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV038
-   - name: pod and/or namespace Selectors usage
-     description: ''
-     id: '2.0'
-     resources:
-        - Workload
-     mapping:
-        tool: config-audit
-        checks:
-           - id: KSV038
-   - name: Use CNI plugin that supports NetworkPolicy API
-     description: ''
-     id: '3.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 5.3.1
-   - name: Use a default policy to deny all ingress and egress traffic
-     description: ''
-     id: '3.1'
-     resources:
-        - NetworkPolicy
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: "<check need to be added>"
-   - name: Use LimitRange and ResourceQuota policies to limit resources
-     description: ''
-     id: '4.0'
-     resources:
-        - LimitRange
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: "<check need to be added>"
-   - name: Control plan disable insecure port
-     description: ''
-     id: '5.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.19
-   - name: Encrypt etcd communication
-     description: ''
-     id: '5.1'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: '2.1'
-   - name: Ensure kube config file permission
-     description: ''
-     id: '6.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 4.1.3
-           - id: 4.1.4
-   - name: Check that encryption resource has been set
-     description: ''
-     id: '6.1'
-     resources:
-        - EncryptionConfiguration
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: "<check need to be added>"
-   - name: Check encryption provider
-     description: ''
-     id: '6.2'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.3
-   - name: Make sure anonymous-auth is unset
-     description: ''
-     id: '7.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.1
-   - name: Make sure -authorization-mode=RBAC
-     description: ''
-     id: '7.1'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.7
-           - id: 1.2.8
-   - name: Audit policy is configure
-     description: ''
-     id: '8.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 3.2.1
-   - name: Audit log path is configure
-     description: ''
-     id: '8.1'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.22
-   - name: Audit log aging
-     description: ''
-     id: '8.2'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: 1.2.23
-   - name: service mesh is configure
-     description: ''
-     id: '9.0'
-     resources:
-        - Node
-     mapping:
-        tool: kube-bench
-        checks:
-           - id: "<check need to be added>"
-```
 ### spec file example
 ```yaml
 ---
