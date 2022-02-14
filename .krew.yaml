@@ -56,7 +56,7 @@ spec:
         matchLabels:
           os: darwin
           arch: arm64
-        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_darwin_ARM64.tar.gz" .TagName | indent 6}}
+        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_darwin_ARM_64.tar.gz" .TagName | indent 6}}
         files:
           - from: starboard
             to: .
@@ -67,7 +67,7 @@ spec:
         matchLabels:
           os: linux
           arch: arm64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_ARM64.tar.gz" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_ARM_64.tar.gz" .TagName | indent 6}}
       files:
         - from: starboard
           to: .
@@ -78,7 +78,7 @@ spec:
         matchLabels:
           os: windows
           arch: arm64
-        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM64.zip" .TagName | indent 6}}
+        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM_64.zip" .TagName | indent 6}}
         files:
           - from: starboard.exe
             to: .
