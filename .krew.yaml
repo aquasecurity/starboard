@@ -45,7 +45,7 @@ spec:
         matchLabels:
           os: windows
           arch: amd64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_x8664.zip" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_x86_64.zip" .TagName | indent 6}}
       files:
         - from: starboard.exe
           to: .
@@ -78,7 +78,7 @@ spec:
         matchLabels:
           os: windows
           arch: arm64
-        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM_64.zip" .TagName | indent 6}}
+        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM64.zip" .TagName | indent 6}}
         files:
           - from: starboard.exe
             to: .
