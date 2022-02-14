@@ -84,7 +84,10 @@ dockers:
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-amd64"
       - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-amd64"
+    use: buildx
+    goos: linux
     dockerfile: build/starboard-operator/Dockerfile
+    goarch: amd64
     ids:
       - starboard-operator
     build_flag_templates:
@@ -100,7 +103,10 @@ dockers:
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
       - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64"
+    use: buildx
+    goos: linux
     dockerfile: build/scanner-aqua/Dockerfile
+    goarch: amd64
     ids:
       - starboard-scanner-aqua
     build_flag_templates:
@@ -118,7 +124,7 @@ dockers:
       - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-arm64"
     use: buildx
     goos: linux
-    dockerfile: build/starboard/Dockerfile
+    dockerfile: build/starboard/Dockerfile_arm64
     goarch: arm64
     ids:
       - starboard
@@ -135,7 +141,10 @@ dockers:
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
       - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-arm64"
-    dockerfile: build/starboard-operator/Dockerfile
+    use: buildx
+    goos: linux
+    dockerfile: build/starboard-operator/Dockerfile_arm64
+    goarch: arm64
     ids:
       - starboard-operator
     build_flag_templates:
@@ -151,7 +160,10 @@ dockers:
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-arm64"
       - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-arm64"
-    dockerfile: build/scanner-aqua/Dockerfile
+    use: buildx
+    goos: linux
+    dockerfile: build/scanner-aqua/Dockerfile_arm64
+    goarch: arm64
     ids:
       - starboard-scanner-aqua
     build_flag_templates:
