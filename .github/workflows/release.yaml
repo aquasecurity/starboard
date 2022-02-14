@@ -160,6 +160,8 @@ jobs:
       - itest-starboard-operator
       - integration-operator-conftest
     runs-on: ubuntu-20.04
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"    # support multi arch
     steps:
       - name: Setup Go
         uses: actions/setup-go@v2
