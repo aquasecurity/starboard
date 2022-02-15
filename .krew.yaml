@@ -12,10 +12,10 @@ spec:
     and configuration benchmark tests to be incorporated into Kubernetes CRDs
     (Custom Resource Definitions) and from there, accessed through the 
     Kubernetes API. 
-    
+  
     Users familiar with kubectl or with a dashboard tool like Octant can find
     security risk information at their fingertips.
-    
+
   caveats: |
     The plugin requires access to create Jobs and CustomResources.
   platforms:
@@ -52,3 +52,36 @@ spec:
         - from: LICENSE
           to: .
       bin: starboard.exe
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_darwin_ARM64.tar.gz" .TagName | indent 6}}
+        files:
+          - from: starboard
+            to: .
+          - from: LICENSE
+            to: .
+        bin: starboard
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_ARM64.tar.gz" .TagName | indent 6}}
+      files:
+        - from: starboard
+          to: .
+        - from: LICENSE
+          to: .
+      bin: starboard
+    - selector:
+        matchLabels:
+          os: windows
+          arch: arm64
+        {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM64.zip" .TagName | indent 6}}
+        files:
+          - from: starboard.exe
+            to: .
+          - from: LICENSE
+            to: .
+        bin: starboard.exe

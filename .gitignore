@@ -17,3 +17,5 @@ site/
 ## helm chart
 output/*
 .cr-release-packages/*
+## idea files
+*.iml
