@@ -21,3 +21,58 @@ eksctl create iamserviceaccount \
   --approve \
   --override-existing-serviceaccounts
 ```
+
+## Azure Container Registry (ACR)
+
+Before you can start, you need to install `aad-pod-identity` inside your cluster, see installation instructions:
+https://azure.github.io/aad-pod-identity/docs/getting-started/installation/
+
+Create a managed identity and assign the permission to the ACR.
+```sh
+export IDENTITY_NAME=starboard-identity
+export AZURE_RESOURCE_GROUP=<my_resource_group>
+export AZURE_LOCATION=westeurope
+export ACR_NAME=<my_azure_container_registry>
+
+az identity create --name ${IDENTITY_NAME} --resource-group ${AZURE_RESOURCE_GROUP} --location ${AZURE_LOCATION}
+
+export IDENTITY_ID=(az identity show --name ${IDENTITY_NAME} --resource-group ${AZURE_RESOURCE_GROUP} --query id -o tsv)
+export IDENTITY_CLIENT_ID=$(az identity show --name ${IDENTITY_NAME} --resource-group ${AZURE_RESOURCE_GROUP} --query clientId -o tsv)
+export ACR_ID=$(az acr show --name ${ACR_NAME} --query id -o tsv)
+
+az role assignment create --assignee ${IDENTITY_CLIENT_ID} --role 'AcrPull' --scope ${ACR_ID}
+```
+
+create an `AzureIdentity` and `AzureIdentityBinding` resource inside your kubernetes cluster:
+```yaml
+apiVersion: aadpodidentity.k8s.io/v1
+kind: AzureIdentity
+metadata:
+  name: starboard-identity
+  namespace: starboard
+spec:
+  clientID: ${IDENTITY_ID}
+  resourceID: ${IDENTITY_CLIENT_ID}
+  type: 0
+```
+
+```yaml
+ apiVersion: aadpodidentity.k8s.io/v1
+ kind: AzureIdentityBinding
+ metadata:
+   name: starboard-id-binding
+   namespace: starboard
+ spec:
+   azureIdentity: starboard-identity
+   selector: starboard-label
+```
+
+add `scanJob.podTemplateLabels` to the starboard config map, the value must match the `AzureIdentityBinding` selector.
+
+```sh
+kubectl -n starboard edit cm starboard
+# Insert scanJob.podTemplateLabels: aadpodidbinding=starboard-label in data block
+
+# validate
+starboard config --get scanJob.podTemplateLabels
+```
