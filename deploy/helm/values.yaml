@@ -372,7 +372,7 @@ conftest:
   createConfig: true
 
   # imageRef the image reference
-  imageRef: docker.io/openpolicyagent/conftest:v0.28.2
+  imageRef: docker.io/openpolicyagent/conftest:v0.30.0
 
   # resources resource requests and limits
   resources:
