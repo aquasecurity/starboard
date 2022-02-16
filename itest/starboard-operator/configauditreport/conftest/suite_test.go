@@ -99,7 +99,7 @@ var _ = BeforeSuite(func() {
 		},
 		Data: map[string]string{
 			"configAuditReports.scanner": "Conftest",
-			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.28.2",
+			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.30.0",
 		},
 	}
 	err = kubeClient.Create(context.Background(), starboardCM)
@@ -111,7 +111,7 @@ var _ = BeforeSuite(func() {
 			Name:      starboard.GetPluginConfigMapName("Conftest"),
 		},
 		Data: map[string]string{
-			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.28.2",
+			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.30.0",
 
 			"conftest.policy.runs_as_root.rego":              runAsRootPolicy,
 			"conftest.policy.runs_as_root.kinds":             "Workload",

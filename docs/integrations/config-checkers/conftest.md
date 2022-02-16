@@ -64,7 +64,7 @@ STARBOARD_NAMESPACE=<starboard_namespace>
 ```
 ```
 kubectl create configmap starboard-conftest-config --namespace $STARBOARD_NAMESPACE \
-  --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.28.2 \
+  --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.30.0 \
   --from-file=conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego \
   --from-file=conftest.library.utils.rego=kubernetes/lib/utils.rego \
   --from-file=conftest.policy.file_system_not_read_only.rego=kubernetes/policies/general/file_system_not_read_only.rego \
@@ -160,15 +160,15 @@ report:
 
 ## Settings
 
-| CONFIGMAP KEY                        | DEFAULT                                      | DESCRIPTION |
-| ------------------------------------ | -------------------------------------------- | ----------- |
-| `conftest.imageRef`                  | `docker.io/openpolicyagent/conftest:v0.28.2` | Conftest image reference |
-| `conftest.resources.requests.cpu`    | `50m`                                        | The minimum amount of CPU required to run Conftest scanner pod. |
-| `conftest.resources.requests.memory` | `50M`                                        | The minimum amount of memory required to run Conftest scanner pod. |
-| `conftest.resources.limits.cpu`      | `300m`                                       | The maximum amount of CPU allowed to run Conftest scanner pod. |
-| `conftest.resources.limits.memory`   | `300M`                                       | The maximum amount of memory allowed to run Conftest scanner pod. |
-| `conftest.library.<name>.rego`       | N/A                                          | Rego library with helper functions |
-| `conftest.policy.<name>.rego`        | N/A                                          | Rego policy with the specified name |
+| CONFIGMAP KEY                        | DEFAULT                                      | DESCRIPTION                                                                                                                                                                               |
+|--------------------------------------|----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `conftest.imageRef`                  | `docker.io/openpolicyagent/conftest:v0.30.0` | Conftest image reference                                                                                                                                                                  |
+| `conftest.resources.requests.cpu`    | `50m`                                        | The minimum amount of CPU required to run Conftest scanner pod.                                                                                                                           |
+| `conftest.resources.requests.memory` | `50M`                                        | The minimum amount of memory required to run Conftest scanner pod.                                                                                                                        |
+| `conftest.resources.limits.cpu`      | `300m`                                       | The maximum amount of CPU allowed to run Conftest scanner pod.                                                                                                                            |
+| `conftest.resources.limits.memory`   | `300M`                                       | The maximum amount of memory allowed to run Conftest scanner pod.                                                                                                                         |
+| `conftest.library.<name>.rego`       | N/A                                          | Rego library with helper functions                                                                                                                                                        |
+| `conftest.policy.<name>.rego`        | N/A                                          | Rego policy with the specified name                                                                                                                                                       |
 | `conftest.policy.<name>.kinds`       | N/A                                          | A comma-separated list of Kubernetes kinds applicable to the policy with a given name. You can use `Workload` or `*` as special kinds to represent any Kubernetes workload or any object. |
 
 [Open Policy Agent]: https://www.openpolicyagent.org
