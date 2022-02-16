@@ -8,6 +8,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,7 +162,7 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	}
 
 	scanner := polarisScanner
-	if m.scanner == starboard.Conftest {
+	if m.scanner == plugin.Conftest {
 		scanner = conftestScanner
 	}
 

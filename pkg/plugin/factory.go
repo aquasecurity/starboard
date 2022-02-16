@@ -14,6 +14,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	Trivy    starboard.Scanner = "Trivy"
+	Aqua     starboard.Scanner = "Aqua"
+	Polaris  starboard.Scanner = "Polaris"
+	Conftest starboard.Scanner = "Conftest"
+)
+
 type Resolver struct {
 	buildInfo          starboard.BuildInfo
 	config             starboard.ConfigData
@@ -71,9 +78,9 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 		Get()
 
 	switch scanner {
-	case starboard.Trivy:
+	case Trivy:
 		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.client), pluginContext, nil
-	case starboard.Aqua:
+	case Aqua:
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo), pluginContext, nil
 	}
 	return nil, nil, fmt.Errorf("unsupported vulnerability scanner plugin: %s", scanner)
@@ -98,9 +105,9 @@ func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.P
 		Get()
 
 	switch scanner {
-	case starboard.Polaris:
+	case Polaris:
 		return polaris.NewPlugin(ext.NewSystemClock()), pluginContext, nil
-	case starboard.Conftest:
+	case Conftest:
 		return conftest.NewPlugin(ext.NewGoogleUUIDGenerator(), ext.NewSystemClock()), pluginContext, nil
 	}
 	return nil, nil, fmt.Errorf("unsupported configuration audit scanner plugin: %s", scanner)

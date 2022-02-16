@@ -35,8 +35,8 @@ func NewScheme() *runtime.Scheme {
 	return scheme
 }
 
-// BuildInfo holds build info such as Git revision, Git SHA-1,
-// build datetime, and the name of the executable binary.
+// BuildInfo holds build info such as Git revision, Git SHA-1, build datetime,
+// and the name of the executable binary.
 type BuildInfo struct {
 	Version    string
 	Commit     string
@@ -46,13 +46,6 @@ type BuildInfo struct {
 
 // Scanner represents unique, human-readable identifier of a security scanner.
 type Scanner string
-
-const (
-	Trivy    Scanner = "Trivy"
-	Aqua     Scanner = "Aqua"
-	Polaris  Scanner = "Polaris"
-	Conftest Scanner = "Conftest"
-)
 
 const (
 	keyVulnerabilityReportsScanner = "vulnerabilityReports.scanner"
@@ -65,8 +58,8 @@ const (
 	keyScanJobPodTemplateLabels    = "scanJob.podTemplateLabels"
 )
 
-// ConfigData holds Starboard configuration settings as a set
-// of key-value pairs.
+// ConfigData holds Starboard configuration settings as a set of key-value
+// pairs.
 type ConfigData map[string]string
 
 // ConfigManager defines methods for managing ConfigData.
@@ -79,8 +72,8 @@ type ConfigManager interface {
 // GetDefaultConfig returns the default configuration settings.
 func GetDefaultConfig() ConfigData {
 	return map[string]string{
-		keyVulnerabilityReportsScanner: string(Trivy),
-		keyConfigAuditReportsScanner:   string(Polaris),
+		keyVulnerabilityReportsScanner: "Trivy",
+		keyConfigAuditReportsScanner:   "Polaris",
 
 		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.5",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.6.3",
@@ -94,16 +87,7 @@ func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
 	if value, ok = c[keyVulnerabilityReportsScanner]; !ok {
 		return "", fmt.Errorf("property %s not set", keyVulnerabilityReportsScanner)
 	}
-
-	switch Scanner(value) {
-	case Trivy:
-		return Trivy, nil
-	case Aqua:
-		return Aqua, nil
-	}
-
-	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
-		value, keyVulnerabilityReportsScanner, Trivy, Aqua)
+	return Scanner(value), nil
 }
 
 func (c ConfigData) GetConfigAuditReportsScanner() (Scanner, error) {
@@ -112,15 +96,7 @@ func (c ConfigData) GetConfigAuditReportsScanner() (Scanner, error) {
 	if value, ok = c[keyConfigAuditReportsScanner]; !ok {
 		return "", fmt.Errorf("property %s not set", keyConfigAuditReportsScanner)
 	}
-
-	switch Scanner(value) {
-	case Polaris:
-		return Polaris, nil
-	case Conftest:
-		return Conftest, nil
-	}
-	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
-		value, keyConfigAuditReportsScanner, Polaris, Conftest)
+	return Scanner(value), nil
 }
 
 func (c ConfigData) GetScanJobTolerations() ([]corev1.Toleration, error) {
@@ -199,7 +175,8 @@ func (c ConfigData) GetRequiredData(key string) (string, error) {
 	return value, nil
 }
 
-// GetVersionFromImageRef returns the image identifier for the specified image reference.
+// GetVersionFromImageRef returns the image identifier for the specified image
+// reference.
 func GetVersionFromImageRef(imageRef string) (string, error) {
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
@@ -298,7 +275,7 @@ func (c *configManager) Delete(ctx context.Context) error {
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
-	err = c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, GetPluginConfigMapName(string(Polaris)), metav1.DeleteOptions{})
+	err = c.client.CoreV1().ConfigMaps(c.namespace).Delete(ctx, GetPluginConfigMapName("Polaris"), metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
