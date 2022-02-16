@@ -3,7 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
-
+	"github.com/aquasecurity/starboard/pkg/compliance"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -13,12 +13,16 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/robfig/cron/v3"
 	"k8s.io/client-go/kubernetes"
+	"os"
+	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"syscall"
 )
 
 var (
@@ -227,6 +231,39 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
+		}
+	}
+
+	if operatorConfig.ClusterComplianceEnabled {
+		logger := ctrl.Log.WithName("job").WithName("compliance-report")
+		// load compliance specs
+		specs, err := compliance.LoadClusterComplianceSpecs(logger)
+		if err != nil {
+			logger.V(1).Error(err, "failed to load compliance reports")
+		}
+		// generate cron jobs
+		if len(specs) > 0 {
+			entries := make([]cron.EntryID, 0)
+			c := cron.New()
+			for _, spec := range specs {
+				job := compliance.NewJob(mgr.GetClient(), context.Background(), spec, logger)
+				entryID, err := c.AddFunc(spec.Cron, job.Compliance)
+				if err != nil {
+					logger.V(1).Error(err, "failed to schedule cron job")
+				}
+				entries = append(entries, entryID)
+			}
+			c.Start()
+			// Handle sigterm and await termChan signal
+			termChan := make(chan os.Signal)
+			signal.Notify(termChan, syscall.SIGTERM, syscall.SIGINT)
+			go func() {
+				<-termChan //
+				logger.V(1).Info("shutting down scheduled cron jobs")
+				for _, entry := range entries {
+					c.Remove(entry)
+				}
+			}()
 		}
 	}
 

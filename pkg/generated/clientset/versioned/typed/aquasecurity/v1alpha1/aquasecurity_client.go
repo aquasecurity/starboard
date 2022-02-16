@@ -3,6 +3,8 @@
 package v1alpha1
 
 import (
+	"net/http"
+
 	v1alpha1 "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
@@ -11,6 +13,8 @@ import (
 type AquasecurityV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	CISKubeBenchReportsGetter
+	ClusterComplianceDetailReportsGetter
+	ClusterComplianceReportsGetter
 	ClusterConfigAuditReportsGetter
 	ClusterVulnerabilityReportsGetter
 	ConfigAuditReportsGetter
@@ -25,6 +29,14 @@ type AquasecurityV1alpha1Client struct {
 
 func (c *AquasecurityV1alpha1Client) CISKubeBenchReports() CISKubeBenchReportInterface {
 	return newCISKubeBenchReports(c)
+}
+
+func (c *AquasecurityV1alpha1Client) ClusterComplianceDetailReports(namespace string) ClusterComplianceDetailReportInterface {
+	return newClusterComplianceDetailReports(c, namespace)
+}
+
+func (c *AquasecurityV1alpha1Client) ClusterComplianceReports(namespace string) ClusterComplianceReportInterface {
+	return newClusterComplianceReports(c, namespace)
 }
 
 func (c *AquasecurityV1alpha1Client) ClusterConfigAuditReports() ClusterConfigAuditReportInterface {
@@ -48,12 +60,28 @@ func (c *AquasecurityV1alpha1Client) VulnerabilityReports(namespace string) Vuln
 }
 
 // NewForConfig creates a new AquasecurityV1alpha1Client for the given config.
+// NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
+// where httpClient was generated with rest.HTTPClientFor(c).
 func NewForConfig(c *rest.Config) (*AquasecurityV1alpha1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
 	}
-	client, err := rest.RESTClientFor(&config)
+	httpClient, err := rest.HTTPClientFor(&config)
+	if err != nil {
+		return nil, err
+	}
+	return NewForConfigAndClient(&config, httpClient)
+}
+
+// NewForConfigAndClient creates a new AquasecurityV1alpha1Client for the given config and http client.
+// Note the http client provided takes precedence over the configured transport values.
+func NewForConfigAndClient(c *rest.Config, h *http.Client) (*AquasecurityV1alpha1Client, error) {
+	config := *c
+	if err := setConfigDefaults(&config); err != nil {
+		return nil, err
+	}
+	client, err := rest.RESTClientForConfigAndClient(&config, h)
 	if err != nil {
 		return nil, err
 	}

@@ -83,7 +83,7 @@ func (c *FakeKubeHunterReports) Update(ctx context.Context, kubeHunterReport *v1
 // Delete takes name of the kubeHunterReport and deletes it. Returns an error if one occurs.
 func (c *FakeKubeHunterReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(kubehunterreportsResource, name), &v1alpha1.KubeHunterReport{})
+		Invokes(testing.NewRootDeleteActionWithOptions(kubehunterreportsResource, name, opts), &v1alpha1.KubeHunterReport{})
 	return err
 }
 
