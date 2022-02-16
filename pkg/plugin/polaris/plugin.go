@@ -19,6 +19,11 @@ import (
 )
 
 const (
+	// Plugin the name of this plugin.
+	Plugin = "Polaris"
+)
+
+const (
 	polarisContainerName = "polaris"
 	configVolume         = "config"
 )

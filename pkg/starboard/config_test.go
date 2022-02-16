@@ -27,26 +27,19 @@ func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 			configData: starboard.ConfigData{
 				"vulnerabilityReports.scanner": "Trivy",
 			},
-			expectedScanner: starboard.Trivy,
+			expectedScanner: "Trivy",
 		},
 		{
 			name: "Should return Aqua",
 			configData: starboard.ConfigData{
 				"vulnerabilityReports.scanner": "Aqua",
 			},
-			expectedScanner: starboard.Aqua,
+			expectedScanner: "Aqua",
 		},
 		{
 			name:          "Should return error when value is not set",
 			configData:    starboard.ConfigData{},
 			expectedError: "property vulnerabilityReports.scanner not set",
-		},
-		{
-			name: "Should return error when value is not allowed",
-			configData: starboard.ConfigData{
-				"vulnerabilityReports.scanner": "Clair",
-			},
-			expectedError: "invalid value (Clair) of vulnerabilityReports.scanner; allowed values (Trivy, Aqua)",
 		},
 	}
 	for _, tc := range testCases {
@@ -74,26 +67,19 @@ func TestConfigData_GetConfigAuditReportsScanner(t *testing.T) {
 			configData: starboard.ConfigData{
 				"configAuditReports.scanner": "Polaris",
 			},
-			expectedScanner: starboard.Polaris,
+			expectedScanner: "Polaris",
 		},
 		{
 			name: "Should return Conftest",
 			configData: starboard.ConfigData{
 				"configAuditReports.scanner": "Conftest",
 			},
-			expectedScanner: starboard.Conftest,
+			expectedScanner: "Conftest",
 		},
 		{
 			name:          "Should return error when value is not set",
 			configData:    starboard.ConfigData{},
 			expectedError: "property configAuditReports.scanner not set",
-		},
-		{
-			name: "Should return error when value is not allowed",
-			configData: starboard.ConfigData{
-				"configAuditReports.scanner": "KubeScan",
-			},
-			expectedError: "invalid value (KubeScan) of configAuditReports.scanner; allowed values (Polaris, Conftest)",
 		},
 	}
 	for _, tc := range testCases {
@@ -498,7 +484,7 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 				},
 				Data: map[string]string{
 					"foo":                        "bar",
-					"configAuditReports.scanner": string(starboard.Conftest),
+					"configAuditReports.scanner": "Conftest",
 				},
 			},
 			&corev1.Secret{
@@ -513,7 +499,7 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: namespace,
-					Name:      starboard.GetPluginConfigMapName(string(starboard.Conftest)),
+					Name:      starboard.GetPluginConfigMapName("Conftest"),
 				},
 				Data: map[string]string{
 					"conftest.policy.my-check.rego": "<REGO>",
@@ -540,14 +526,14 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 		}))
 
 		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Conftest)), metav1.GetOptions{})
+			Get(context.TODO(), starboard.GetPluginConfigMapName("Conftest"), metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(pluginConfig.Data).To(gomega.Equal(map[string]string{
 			"conftest.policy.my-check.rego": "<REGO>",
 		}))
 
 		_, err = clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName(string(starboard.Polaris)), metav1.GetOptions{})
+			Get(context.TODO(), starboard.GetPluginConfigMapName("Polaris"), metav1.GetOptions{})
 		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-polaris-config" not found`))
 	})
 

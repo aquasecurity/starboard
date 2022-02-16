@@ -110,7 +110,7 @@ func TestPlugin_IsApplicable(t *testing.T) {
 		client := fake.NewClientBuilder().Build()
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(string(starboard.Polaris)).
+			WithName(polaris.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -131,7 +131,7 @@ func TestPlugin_Init(t *testing.T) {
 		client := fake.NewClientBuilder().Build()
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(string(starboard.Polaris)).
+			WithName(polaris.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -188,7 +188,7 @@ func TestPlugin_Init(t *testing.T) {
 		}).Build()
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(string(starboard.Polaris)).
+			WithName(polaris.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -263,7 +263,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: starboard.GetPluginConfigMapName(string(starboard.Polaris)),
+									Name: starboard.GetPluginConfigMapName(polaris.Plugin),
 								},
 							},
 						},
@@ -316,7 +316,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			g := NewGomegaWithT(t)
 
 			pluginContext := starboard.NewPluginContext().
-				WithName(string(starboard.Polaris)).
+				WithName(polaris.Plugin).
 				WithNamespace("starboard-ns").
 				WithServiceAccountName("starboard-sa").
 				WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -353,7 +353,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}()
 
 	pluginContext := starboard.NewPluginContext().
-		WithName(string(starboard.Polaris)).
+		WithName(polaris.Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -422,7 +422,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
 		return starboard.NewPluginContext().
-			WithName(string(starboard.Polaris)).
+			WithName(polaris.Plugin).
 			WithNamespace("starboard-ns").
 			WithClient(fake.NewClientBuilder().
 				WithObjects(&corev1.ConfigMap{

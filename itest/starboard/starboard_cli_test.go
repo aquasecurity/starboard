@@ -15,6 +15,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
@@ -1097,11 +1098,11 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Polaris, kube.KindPod)
+				assertConfigAuditReportCreated(plugin.Polaris, kube.KindPod)
 			})
 
 			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Conftest, kube.KindPod)
+				assertConfigAuditReportCreated(plugin.Conftest, kube.KindPod)
 			})
 
 			AfterEach(func() {
@@ -1127,11 +1128,11 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Polaris, kube.KindPod)
+				assertConfigAuditReportCreated(plugin.Polaris, kube.KindPod)
 			})
 
 			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Conftest, kube.KindPod)
+				assertConfigAuditReportCreated(plugin.Conftest, kube.KindPod)
 			})
 
 			AfterEach(func() {
@@ -1180,11 +1181,11 @@ var _ = Describe("Starboard CLI", func() {
 			})
 
 			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Polaris, kube.KindCronJob)
+				assertConfigAuditReportCreated(plugin.Polaris, kube.KindCronJob)
 			})
 
 			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(starboard.Conftest, kube.KindCronJob)
+				assertConfigAuditReportCreated(plugin.Conftest, kube.KindCronJob)
 			})
 
 			AfterEach(func() {

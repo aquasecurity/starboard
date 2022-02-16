@@ -257,7 +257,7 @@ func TestPlugin_Init(t *testing.T) {
 		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(string(starboard.Conftest)).
+			WithName(conftest.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -347,7 +347,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g := NewGomegaWithT(t)
 	sequence := ext.NewSimpleIDGenerator()
 	pluginContext := starboard.NewPluginContext().
-		WithName(string(starboard.Conftest)).
+		WithName(conftest.Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -598,7 +598,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 ]`))
 
 	pluginContext := starboard.NewPluginContext().
-		WithName(string(starboard.Conftest)).
+		WithName(conftest.Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
