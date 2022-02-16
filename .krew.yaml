@@ -85,3 +85,14 @@ spec:
           - from: LICENSE
             to: .
         bin: starboard.exe
+    - selector:
+        matchLabels:
+          os: linux
+          arch: s390x
+      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_s390x.tar.gz" .TagName | indent 6}}
+      files:
+        - from: starboard
+          to: .
+        - from: LICENSE
+          to: .
+      bin: starboard
