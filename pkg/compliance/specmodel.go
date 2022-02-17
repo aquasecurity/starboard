@@ -44,7 +44,7 @@ func (at *Control) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	updatedResources := make([]string, 0)
 	for _, resource := range at.Resources {
 		if resource == "Workload" {
-			set.Add("Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "Job", "CronJob")
+			set.Add("Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "ComplianceMgr", "CronJob")
 		} else {
 			set.Add(resource)
 		}

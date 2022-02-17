@@ -14,14 +14,12 @@ import (
 	"strings"
 )
 
-type Job interface {
-	Compliance()
+type Mgr interface {
+	GenerateComplianceReport(ctx context.Context, spec Spec) error
 }
 
-type cj struct {
+type cm struct {
 	client client.Client
-	ctx    context.Context
-	spec   Spec
 	log    logr.Logger
 }
 
@@ -37,34 +35,36 @@ type SpecDataMapping struct {
 	controlCheckIds        map[string][]string
 }
 
-func (w *cj) Compliance() {
+func (w *cm) GenerateComplianceReport(ctx context.Context, spec Spec) error {
 	// map specs to key/value map for easy processing
-	smd := w.populateSpecDataToMaps(w.spec)
+	smd := w.populateSpecDataToMaps(spec)
 	// map compliance tool to resource data
-	toolResourceMap := mapComplianceToolToResource(w.client, w.ctx, smd.toolResourceListNames)
+	toolResourceMap := mapComplianceToolToResource(w.client, ctx, smd.toolResourceListNames)
 	// organized data by check id and it aggregated results
 	checkIdsToResults, err := w.checkIdsToResults(toolResourceMap)
 	if err != nil {
-		w.log.V(1).Error(err, "failed to organized report results id")
-		return
+		return err
+
 	}
 	// map tool checks results to control check results
 	controlChecks := w.controlChecksByToolChecks(smd, checkIdsToResults)
 	// publish compliance report
-	err = w.createComplianceReport(w.ctx, w.spec, controlChecks)
+	err = w.createComplianceReport(ctx, spec, controlChecks)
 	if err != nil {
 		w.log.V(1).Error(err, "failed to create compliance report")
-		return
+		return err
 	}
 	controlCheckDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
-	err = w.createComplianceDetailReport(w.ctx, w.spec, controlChecks, controlCheckDetails)
+	err = w.createComplianceDetailReport(ctx, spec, controlChecks, controlCheckDetails)
 	if err != nil {
 		w.log.V(1).Error(err, "failed to create compliance report detail")
-		return
+		return err
+
 	}
+	return nil
 }
 
-func (w *cj) createComplianceReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck) error {
+func (w *cm) createComplianceReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck) error {
 	var totalFail, totalPass int
 	if len(controlChecks) > 0 {
 		for _, controlCheck := range controlChecks {
@@ -99,7 +99,7 @@ func (w *cj) createComplianceReport(ctx context.Context, spec Spec, controlCheck
 	return nil
 }
 
-func (w *cj) createComplianceDetailReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck, controlChecksDetails []v1alpha1.ControlCheckDetails) error {
+func (w *cm) createComplianceDetailReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck, controlChecksDetails []v1alpha1.ControlCheckDetails) error {
 	var totalFail, totalPass int
 	if len(controlChecks) > 0 {
 		for _, controlCheck := range controlChecks {
@@ -141,7 +141,7 @@ func generatingReportFirstTime(err error) bool {
 	return false
 }
 
-func (w *cj) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
+func (w *cm) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
 	controlChecks := make([]v1alpha1.ControlCheck, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		var passTotal, failTotal, total int
@@ -167,7 +167,7 @@ func (w *cj) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults m
 	return controlChecks
 }
 
-func (w *cj) controlChecksDetailsByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
+func (w *cm) controlChecksDetailsByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		for _, checkId := range checkIds {
@@ -189,7 +189,7 @@ func (w *cj) controlChecksDetailsByToolChecks(smd *SpecDataMapping, checkIdsToRe
 	return controlChecks
 }
 
-func (w *cj) checkIdsToResults(toolResourceMap map[string]map[string]client.ObjectList) (map[string][]*ToolCheckResult, error) {
+func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.ObjectList) (map[string][]*ToolCheckResult, error) {
 	checkIdsToResults := make(map[string][]*ToolCheckResult)
 	for tool, resourceListMap := range toolResourceMap {
 		for resourceName, resourceList := range resourceListMap {
@@ -212,7 +212,7 @@ func (w *cj) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 	return checkIdsToResults, nil
 }
 
-func (w *cj) populateSpecDataToMaps(spec Spec) *SpecDataMapping {
+func (w *cm) populateSpecDataToMaps(spec Spec) *SpecDataMapping {
 	//control to resource list map
 	controlIDControlObject := make(map[string]Control)
 	//control to checks map
@@ -241,11 +241,9 @@ func (w *cj) populateSpecDataToMaps(spec Spec) *SpecDataMapping {
 		controlCheckIds:        controlCheckIds}
 }
 
-func NewJob(client client.Client, ctx context.Context, spec Spec, log logr.Logger) Job {
-	return &cj{
+func NewMgr(client client.Client, log logr.Logger) Mgr {
+	return &cm{
 		client: client,
-		ctx:    ctx,
-		spec:   spec,
 		log:    log,
 	}
 }

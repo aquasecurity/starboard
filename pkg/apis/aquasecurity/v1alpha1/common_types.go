@@ -1,7 +1,8 @@
 package v1alpha1
 
 const (
-	TTLReportAnnotation = "starboard.aquasecurity.github.io/report-ttl"
+	TTLReportAnnotation            = "starboard.aquasecurity.github.io/report-ttl"
+	ComplianceReportNextGeneration = "starboard.aquasecurity.github.io/report-next-generation"
 )
 
 // Scanner is the spec for a scanner generating a security assessment report.
