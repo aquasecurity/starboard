@@ -25,15 +25,31 @@ type Config struct {
 	VulnerabilityScannerEnabled                  bool           `env:"OPERATOR_VULNERABILITY_SCANNER_ENABLED" envDefault:"true"`
 	VulnerabilityScannerScanOnlyCurrentRevisions bool           `env:"OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS" envDefault:"false"`
 	VulnerabilityScannerReportTTL                *time.Duration `env:"OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL"`
-	ConfigAuditScannerEnabled                    bool           `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"true"`
-	LeaderElectionEnabled                        bool           `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
-	LeaderElectionID                             string         `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-lock"`
+	ConfigAuditScannerEnabled                    bool           `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"false"`
+
+	// ConfigAuditScannerBuiltIn tells Starboard to use the built-in
+	// configuration audit scanner instead of Polaris or Conftest
+	// plugins.
+	//
+	// You cannot use Polaris or Conftest and the built-in scanner at the same
+	// time. The built-in scanners is much faster and does not create Kubernetes
+	// Job objects to perform scans asynchronously. Instead, it evaluates OPA
+	// Rego policies synchronously within the reconciliation loop.
+	ConfigAuditScannerBuiltIn bool `env:"OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN" envDefault:"true"`
+
+	LeaderElectionEnabled bool   `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
+	LeaderElectionID      string `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-lock"`
 }
 
 // GetOperatorConfig loads Config from environment variables.
 func GetOperatorConfig() (Config, error) {
 	var config Config
 	err := env.Parse(&config)
+
+	if config.ConfigAuditScannerEnabled && config.ConfigAuditScannerBuiltIn {
+		return Config{}, fmt.Errorf("plugin-based and built-in configuration audit scanners cannot be enabled at the same time")
+	}
+
 	return config, err
 }
 

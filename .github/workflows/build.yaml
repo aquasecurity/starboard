@@ -160,7 +160,8 @@ jobs:
             -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.rbac.yaml
-          kubectl apply -f deploy/static/03-starboard-operator.config.yaml
+          kubectl apply -f deploy/static/03-starboard-operator.config.yaml \
+            -f deploy/static/04-starboard-operator.policies.yaml
           make itests-starboard-operator
         env:
           KUBECONFIG: /home/runner/.kube/config

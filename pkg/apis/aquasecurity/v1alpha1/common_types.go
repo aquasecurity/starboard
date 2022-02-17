@@ -40,7 +40,7 @@ func StringToSeverity(name string) (Severity, error) {
 	case "WARNING":
 		return SeverityLow, nil
 	default:
-		return "", fmt.Errorf("unrecognized severity name literal: %s", name)
+		return "", fmt.Errorf("unrecognized name literal: %s", name)
 	}
 }
 

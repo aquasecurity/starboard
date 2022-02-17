@@ -27,6 +27,7 @@ rules:
       - pods/log
       - replicationcontrollers
       - services
+      - resourcequotas
     verbs:
       - get
       - list
@@ -109,6 +110,23 @@ rules:
     verbs:
       - create
       - delete
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - policy
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - aquasecurity.github.io
     resources:

@@ -84,6 +84,8 @@ spec:
             - name: OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL
               value: ""
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
+              value: "false"
+            - name: OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN
               value: "true"
           ports:
             - name: metrics

@@ -230,6 +230,21 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}
 	}
 
+	if operatorConfig.ConfigAuditScannerBuiltIn {
+		setupLog.Info("Enabling built-in configuration audit scanner")
+		if err = (&configauditreport.ResourceController{
+			Logger:         ctrl.Log.WithName("resourcecontroller"),
+			Config:         operatorConfig,
+			ConfigData:     starboardConfig,
+			Client:         mgr.GetClient(),
+			ObjectResolver: objectResolver,
+			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+			BuildInfo:      buildInfo,
+		}).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup resource controller: %w", err)
+		}
+	}
+
 	setupLog.Info("Starting controllers manager")
 	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("starting controllers manager: %w", err)

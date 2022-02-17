@@ -135,6 +135,10 @@ func TestIsClusterScopedKind(t *testing.T) {
 			want: true,
 		},
 		{
+			kind: "PodSecurityPolicy",
+			want: true,
+		},
+		{
 			kind: "Pod",
 			want: false,
 		},

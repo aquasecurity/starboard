@@ -124,3 +124,25 @@ type Check struct {
 	// +optional
 	Scope *CheckScope `json:"scope,omitempty"`
 }
+
+func ConfigAuditSummaryFromChecks(checks []Check) ConfigAuditSummary {
+	summary := ConfigAuditSummary{}
+
+	for _, check := range checks {
+		if check.Success {
+			continue
+		}
+		switch check.Severity {
+		case SeverityCritical:
+			summary.CriticalCount++
+		case SeverityHigh:
+			summary.HighCount++
+		case SeverityMedium:
+			summary.MediumCount++
+		case SeverityLow:
+			summary.LowCount++
+		}
+	}
+
+	return summary
+}
