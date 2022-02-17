@@ -132,23 +132,23 @@ func TestConfig_GetCommand(t *testing.T) {
 					"trivy.command": "image",
 				},
 			}},
-			expectedCommand: trivy.ImageScan,
+			expectedCommand: trivy.Image,
 		},
 		{
 			name: "Should return image when value is not set",
 			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{},
 			}},
-			expectedCommand: trivy.ImageScan,
+			expectedCommand: trivy.Image,
 		},
 		{
-			name: "Should return fs",
+			name: "Should return filesystem",
 			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"trivy.command": "fs",
+					"trivy.command": "filesystem",
 				},
 			}},
-			expectedCommand: trivy.FileSystemScan,
+			expectedCommand: trivy.Filesystem,
 		},
 		{
 			name: "Should return error when value is not allowed",
@@ -157,7 +157,7 @@ func TestConfig_GetCommand(t *testing.T) {
 					"trivy.command": "ls",
 				},
 			}},
-			expectedError: "invalid value (ls) of trivy.command; allowed values (image, fs)",
+			expectedError: "invalid value (ls) of trivy.command; allowed values (image, filesystem)",
 		},
 	}
 	for _, tc := range testCases {
@@ -362,7 +362,7 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 	}
 }
 
-func TestConfig_GetNonSslRegistries(t *testing.T) {
+func TestConfig_GetNonSSLRegistries(t *testing.T) {
 	testCases := []struct {
 		name           string
 		configData     trivy.Config
@@ -395,7 +395,7 @@ func TestConfig_GetNonSslRegistries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			nonSslRegistries := tc.configData.GetNonSslRegistries()
+			nonSslRegistries := tc.configData.GetNonSSLRegistries()
 			assert.Equal(t, tc.expectedOutput, nonSslRegistries)
 		})
 	}
@@ -539,6 +539,21 @@ func TestPlugin_Init(t *testing.T) {
 
 func TestPlugin_GetScanJobSpec(t *testing.T) {
 
+	tmpVolume := corev1.Volume{
+		Name: "tmp",
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{
+				Medium: corev1.StorageMediumDefault,
+			},
+		},
+	}
+
+	tmpVolumeMount := corev1.VolumeMount{
+		Name:      "tmp",
+		MountPath: "/tmp",
+		ReadOnly:  false,
+	}
+
 	testCases := []struct {
 		name string
 
@@ -587,14 +602,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				ServiceAccountName:           "starboard-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
-					{
-						Name: "data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								Medium: corev1.StorageMediumDefault,
-							},
-						},
-					},
+					tmpVolume,
 				},
 				InitContainers: []corev1.Container{
 					{
@@ -657,7 +665,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
 						},
@@ -672,11 +680,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								MountPath: "/var/lib/trivy",
-								ReadOnly:  false,
-							},
+							tmpVolumeMount,
 						},
 					},
 				},
@@ -776,7 +780,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"--quiet",
 							"image",
 							"--skip-update",
@@ -794,11 +798,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								ReadOnly:  false,
-								MountPath: "/var/lib/trivy",
-							},
+							tmpVolumeMount,
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -848,14 +848,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				ServiceAccountName:           "starboard-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
-					{
-						Name: "data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								Medium: corev1.StorageMediumDefault,
-							},
-						},
-					},
+					tmpVolume,
 				},
 				InitContainers: []corev1.Container{
 					{
@@ -917,7 +910,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
 						},
@@ -932,11 +925,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								MountPath: "/var/lib/trivy",
-								ReadOnly:  false,
-							},
+							tmpVolumeMount,
 						},
 					},
 				},
@@ -1040,7 +1029,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"--quiet",
 							"image",
 							"--skip-update",
@@ -1058,11 +1047,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								ReadOnly:  false,
-								MountPath: "/var/lib/trivy",
-							},
+							tmpVolumeMount,
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -1112,14 +1097,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				ServiceAccountName:           "starboard-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
-					{
-						Name: "data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								Medium: corev1.StorageMediumDefault,
-							},
-						},
-					},
+					tmpVolume,
 				},
 				InitContainers: []corev1.Container{
 					{
@@ -1181,7 +1159,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
 						},
@@ -1196,11 +1174,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								MountPath: "/var/lib/trivy",
-								ReadOnly:  false,
-							},
+							tmpVolumeMount,
 						},
 					},
 				},
@@ -1304,7 +1278,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"--quiet",
 							"image",
 							"--skip-update",
@@ -1322,11 +1296,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								ReadOnly:  false,
-								MountPath: "/var/lib/trivy",
-							},
+							tmpVolumeMount,
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -1380,14 +1350,7 @@ CVE-2019-1543`,
 				ServiceAccountName:           "starboard-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
-					{
-						Name: "data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								Medium: corev1.StorageMediumDefault,
-							},
-						},
-					},
+					tmpVolume,
 					{
 						Name: "ignorefile",
 						VolumeSource: corev1.VolumeSource{
@@ -1448,7 +1411,6 @@ CVE-2019-1543`,
 									},
 								},
 							},
-
 							{
 								Name: "GITHUB_TOKEN",
 								ValueFrom: &corev1.EnvVarSource{
@@ -1466,7 +1428,7 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
 						},
@@ -1481,11 +1443,7 @@ CVE-2019-1543`,
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								MountPath: "/var/lib/trivy",
-								ReadOnly:  false,
-							},
+							tmpVolumeMount,
 						},
 					},
 				},
@@ -1582,14 +1540,14 @@ CVE-2019-1543`,
 							},
 							{
 								Name:  "TRIVY_IGNOREFILE",
-								Value: "/tmp/trivy/.trivyignore",
+								Value: "/etc/trivy/.trivyignore",
 							},
 						},
 						Command: []string{
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"--quiet",
 							"image",
 							"--skip-update",
@@ -1607,14 +1565,10 @@ CVE-2019-1543`,
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								ReadOnly:  false,
-								MountPath: "/var/lib/trivy",
-							},
+							tmpVolumeMount,
 							{
 								Name:      "ignorefile",
-								MountPath: "/tmp/trivy/.trivyignore",
+								MountPath: "/etc/trivy/.trivyignore",
 								SubPath:   ".trivyignore",
 							},
 						},
@@ -1668,14 +1622,7 @@ CVE-2019-1543`,
 				ServiceAccountName:           "starboard-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
-					{
-						Name: "data",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{
-								Medium: corev1.StorageMediumDefault,
-							},
-						},
-					},
+					tmpVolume,
 				},
 				InitContainers: []corev1.Container{
 					{
@@ -1738,7 +1685,7 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
 						},
@@ -1753,11 +1700,7 @@ CVE-2019-1543`,
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								MountPath: "/var/lib/trivy",
-								ReadOnly:  false,
-							},
+							tmpVolumeMount,
 						},
 					},
 				},
@@ -1857,7 +1800,7 @@ CVE-2019-1543`,
 							"trivy",
 						},
 						Args: []string{
-							"--cache-dir", "/var/lib/trivy",
+							"--cache-dir", "/tmp/trivy/.cache",
 							"--quiet",
 							"image",
 							"--skip-update",
@@ -1875,11 +1818,7 @@ CVE-2019-1543`,
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "data",
-								ReadOnly:  false,
-								MountPath: "/var/lib/trivy",
-							},
+							tmpVolumeMount,
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -2654,7 +2593,7 @@ CVE-2019-1543`,
 							},
 							{
 								Name:  "TRIVY_IGNOREFILE",
-								Value: "/tmp/trivy/.trivyignore",
+								Value: "/etc/trivy/.trivyignore",
 							},
 						},
 						Command: []string{
@@ -2682,7 +2621,7 @@ CVE-2019-1543`,
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "ignorefile",
-								MountPath: "/tmp/trivy/.trivyignore",
+								MountPath: "/etc/trivy/.trivyignore",
 								SubPath:   ".trivyignore",
 							},
 						},
@@ -2695,7 +2634,7 @@ CVE-2019-1543`,
 			config: map[string]string{
 				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.23.0",
 				"trivy.mode":                      string(trivy.Standalone),
-				"trivy.command":                   string(trivy.FileSystemScan),
+				"trivy.command":                   string(trivy.Filesystem),
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",

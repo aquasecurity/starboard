@@ -54,7 +54,7 @@ const (
 	keyResourcesLimitsMemory   = "trivy.resources.limits.memory"
 )
 
-// Mode describes mode in which Trivy client operates.
+// Mode in which Trivy client operates.
 type Mode string
 
 const (
@@ -62,11 +62,12 @@ const (
 	ClientServer Mode = "ClientServer"
 )
 
+// Command to scan image or filesystem.
 type Command string
 
 const (
-	FileSystemScan Command = "fs"
-	ImageScan      Command = "image"
+	Filesystem Command = "filesystem"
+	Image      Command = "image"
 )
 
 // Config defines configuration params for this plugin.
@@ -102,16 +103,16 @@ func (c Config) GetCommand() (Command, error) {
 	var value string
 	if value, ok = c.Data[keyTrivyCommand]; !ok {
 		// for backward compatibility, fallback to ImageScan
-		return ImageScan, nil
+		return Image, nil
 	}
 	switch Command(value) {
-	case ImageScan:
-		return ImageScan, nil
-	case FileSystemScan:
-		return FileSystemScan, nil
+	case Image:
+		return Image, nil
+	case Filesystem:
+		return Filesystem, nil
 	}
 	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
-		value, keyTrivyCommand, ImageScan, FileSystemScan)
+		value, keyTrivyCommand, Image, Filesystem)
 }
 
 func (c Config) GetServerURL() (string, error) {
@@ -139,15 +140,15 @@ func (c Config) GetInsecureRegistries() map[string]bool {
 	return insecureRegistries
 }
 
-func (c Config) GetNonSslRegistries() map[string]bool {
-	nonSslRegistries := make(map[string]bool)
+func (c Config) GetNonSSLRegistries() map[string]bool {
+	nonSSLRegistries := make(map[string]bool)
 	for key, val := range c.Data {
 		if strings.HasPrefix(key, keyTrivyNonSslRegistryPrefix) {
-			nonSslRegistries[val] = true
+			nonSSLRegistries[val] = true
 		}
 	}
 
-	return nonSslRegistries
+	return nonSSLRegistries
 }
 
 func (c Config) GetMirrors() map[string]string {
@@ -212,11 +213,14 @@ type plugin struct {
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
 // upstream Trivy container image to scan Kubernetes workloads.
 //
-// This Plugin supports both Standalone and ClientServer modes depending on
-// the settings returned by Config.GetMode.
+// The plugin supports Image and Filesystem commands. The Filesystem command may
+// be used to scan workload images cached on cluster nodes by scheduling
+// scan jobs on a particular node.
 //
-// The ClientServer mode is usually more performant, however it
-// requires a Trivy server accessible at the configurable Config.GetServerURL.
+// The Image command supports both Standalone and ClientServer modes depending
+// on the settings returned by Config.GetMode. The ClientServer mode is usually
+// more performant, however it requires a Trivy server accessible at the
+// configurable Config.GetServerURL.
 func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, client client.Client) vulnerabilityreport.Plugin {
 	return &plugin{
 		clock:          clock,
@@ -258,24 +262,28 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Obj
 	}
 
 	command, err := config.GetCommand()
-	if command == ImageScan {
+
+	if command == Image {
 		switch mode {
 		case Standalone:
 			return p.getPodSpecForStandaloneMode(ctx, config, spec, credentials)
 		case ClientServer:
 			return p.getPodSpecForClientServerMode(ctx, config, spec, credentials)
 		default:
-			return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode: %v", mode)
+			return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode %q for command %q", mode, command)
 		}
-	} else {
+	}
+
+	if command == Filesystem {
 		switch mode {
 		case Standalone:
 			return p.getPodSpecForStandaloneFSMode(ctx, config, workload)
 		default:
-			return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy file scan mode: %v", mode)
-
+			return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy mode %q for command %q", mode, command)
 		}
 	}
+
+	return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized trivy command %q", command)
 }
 
 func (p *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec, credentials map[string]docker.Auth) *corev1.Secret {
@@ -292,24 +300,24 @@ func (p *plugin) newSecretWithAggregateImagePullCredentials(spec corev1.PodSpec,
 }
 
 const (
-	sharedVolumeName            = "data"
+	tmpVolumeName               = "tmp"
 	ignoreFileVolumeName        = "ignorefile"
 	FsSharedVolumeName          = "starboard"
 	SharedVolumeLocationOfTrivy = "/var/starboard/trivy"
 )
 
 // In the Standalone mode there is the init container responsible for
-// downloading the latest Trivy DB file from GitHub and storing it to the empty
-// volume shared with main containers. In other words, the init container runs
-// the following Trivy command:
+// downloading the latest Trivy DB file from GitHub and storing it to the
+// emptyDir volume shared with main containers. In other words, the init
+// container runs the following Trivy command:
 //
-//     trivy --cache-dir /var/lib/trivy image --download-db-only
+//     trivy --cache-dir /tmp/trivy/.cache image --download-db-only
 //
 // The number of main containers correspond to the number of containers
 // defined for the scanned workload. Each container runs the Trivy image scan
 // command and skips the database download:
 //
-//     trivy --cache-dir /var/lib/trivy image --skip-update \
+//     trivy --cache-dir /tmp/trivy/.cache image --skip-update \
 //       --format json <container image>
 func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
@@ -392,15 +400,15 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		},
 		Args: []string{
 			"--cache-dir",
-			"/var/lib/trivy",
+			"/tmp/trivy/.cache",
 			"image",
 			"--download-db-only",
 		},
 		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      sharedVolumeName,
-				MountPath: "/var/lib/trivy",
+				Name:      tmpVolumeName,
+				MountPath: "/tmp",
 				ReadOnly:  false,
 			},
 		},
@@ -410,14 +418,14 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      sharedVolumeName,
+			Name:      tmpVolumeName,
 			ReadOnly:  false,
-			MountPath: "/var/lib/trivy",
+			MountPath: "/tmp",
 		},
 	}
 	volumes := []corev1.Volume{
 		{
-			Name: sharedVolumeName,
+			Name: tmpVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{
 					Medium: corev1.StorageMediumDefault,
@@ -446,7 +454,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      ignoreFileVolumeName,
-			MountPath: "/tmp/trivy/.trivyignore",
+			MountPath: "/etc/trivy/.trivyignore",
 			SubPath:   ".trivyignore",
 		})
 	}
@@ -543,7 +551,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		if config.IgnoreFileExists() {
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_IGNOREFILE",
-				Value: "/tmp/trivy/.trivyignore",
+				Value: "/etc/trivy/.trivyignore",
 			})
 		}
 
@@ -579,7 +587,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			return corev1.PodSpec{}, nil, err
 		}
 
-		env, err = p.appendTrivyNonSslEnv(config, c.Image, env)
+		env, err = p.appendTrivyNonSSLEnv(config, c.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -605,7 +613,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			},
 			Args: []string{
 				"--cache-dir",
-				"/var/lib/trivy",
+				"/tmp/trivy/.cache",
 				"--quiet",
 				"image",
 				"--skip-update",
@@ -638,13 +646,13 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 	}, secrets, nil
 }
 
-// In the ClientServer mode the number of containers of the pod
-// created by the scan job equals the number of containers defined for the
-// scanned workload. Each container runs Trivy image scan command and refers
-// to Trivy server URL returned by Config.GetServerURL:
+// In the ClientServer mode the number of containers of the pod created by the
+// scan job equals the number of containers defined for the scanned workload.
+// Each container runs Trivy image scan command and refers to Trivy server URL
+// returned by Config.GetServerURL:
 //
 //     trivy client --remote <server URL> \
-//       --format json <container image ref>
+//       --format json <container image>
 func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, config Config, spec corev1.PodSpec, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -827,7 +835,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			return corev1.PodSpec{}, nil, err
 		}
 
-		env, err = p.appendTrivyNonSslEnv(config, container.Image, env)
+		env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -855,14 +863,14 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			volumeMounts = []corev1.VolumeMount{
 				{
 					Name:      ignoreFileVolumeName,
-					MountPath: "/tmp/trivy/.trivyignore",
+					MountPath: "/etc/trivy/.trivyignore",
 					SubPath:   ".trivyignore",
 				},
 			}
 
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_IGNOREFILE",
-				Value: "/tmp/trivy/.trivyignore",
+				Value: "/etc/trivy/.trivyignore",
 			})
 		}
 
@@ -1131,14 +1139,14 @@ func (p *plugin) appendTrivyInsecureEnv(config Config, image string, env []corev
 	return env, nil
 }
 
-func (p *plugin) appendTrivyNonSslEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
+func (p *plugin) appendTrivyNonSSLEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
 	ref, err := name.ParseReference(image)
 	if err != nil {
 		return nil, err
 	}
 
-	nonSslRegistries := config.GetNonSslRegistries()
-	if nonSslRegistries[ref.Context().RegistryStr()] {
+	nonSSLRegistries := config.GetNonSSLRegistries()
+	if nonSSLRegistries[ref.Context().RegistryStr()] {
 		env = append(env, corev1.EnvVar{
 			Name:  "TRIVY_NON_SSL",
 			Value: "true",
