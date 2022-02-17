@@ -123,12 +123,12 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		},
 	}
 
-	err = kube.ObjectToObjectMetadata(s.object, &job.ObjectMeta)
+	err = kube.ObjectToObjectMeta(s.object, &job.ObjectMeta)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = kube.ObjectToObjectMetadata(s.object, &job.Spec.Template.ObjectMeta)
+	err = kube.ObjectToObjectMeta(s.object, &job.Spec.Template.ObjectMeta)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -140,7 +140,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		for k, v := range labelsSet {
 			secret.Labels[k] = v
 		}
-		err = kube.ObjectToObjectMetadata(s.object, &secret.ObjectMeta)
+		err = kube.ObjectToObjectMeta(s.object, &secret.ObjectMeta)
 	}
 
 	return job, secrets, nil
@@ -214,7 +214,7 @@ func (b *ReportBuilder) GetClusterReport() (v1alpha1.ClusterConfigAuditReport, e
 		},
 		Report: b.data,
 	}
-	err := kube.ObjectToObjectMetadata(b.controller, &report.ObjectMeta)
+	err := kube.ObjectToObjectMeta(b.controller, &report.ObjectMeta)
 	if err != nil {
 		return v1alpha1.ClusterConfigAuditReport{}, err
 	}
@@ -251,7 +251,7 @@ func (b *ReportBuilder) GetReport() (v1alpha1.ConfigAuditReport, error) {
 		},
 		Report: b.data,
 	}
-	err := kube.ObjectToObjectMetadata(b.controller, &report.ObjectMeta)
+	err := kube.ObjectToObjectMeta(b.controller, &report.ObjectMeta)
 	if err != nil {
 		return v1alpha1.ConfigAuditReport{}, err
 	}

@@ -132,7 +132,7 @@ func TestObjectRefToLabels(t *testing.T) {
 	}
 }
 
-func TestObjectToObjectMetadata(t *testing.T) {
+func TestObjectToObjectMeta(t *testing.T) {
 	testCases := []struct {
 		name     string
 		meta     metav1.ObjectMeta
@@ -220,7 +220,7 @@ func TestObjectToObjectMetadata(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := kube.ObjectToObjectMetadata(tc.object, &tc.meta)
+			err := kube.ObjectToObjectMeta(tc.object, &tc.meta)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, tc.meta)
 		})
