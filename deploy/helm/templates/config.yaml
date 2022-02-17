@@ -60,6 +60,9 @@ data:
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
   {{- end }}
+  {{- if .timeout }}
+  trivy.timeout: {{ .timeout | quote }}
+  {{- end }}
   {{- with .ignoreFile }}
   trivy.ignoreFile: |
 {{- . | trim | nindent 4 }}

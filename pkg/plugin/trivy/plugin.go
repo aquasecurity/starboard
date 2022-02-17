@@ -32,6 +32,7 @@ const (
 	keyTrivyCommand                = "trivy.command"
 	keyTrivySeverity               = "trivy.severity"
 	keyTrivyIgnoreUnfixed          = "trivy.ignoreUnfixed"
+	keyTrivyTimeout                = "trivy.timeout"
 	keyTrivyIgnoreFile             = "trivy.ignoreFile"
 	keyTrivyInsecureRegistryPrefix = "trivy.insecureRegistry."
 	keyTrivyNonSslRegistryPrefix   = "trivy.nonSslRegistry."
@@ -236,6 +237,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyTrivyImageRef: "docker.io/aquasec/trivy:0.23.0",
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
+			keyTrivyTimeout:  "5m0s",
 
 			keyResourcesRequestsCPU:    "100m",
 			keyResourcesRequestsMemory: "100M",
@@ -482,6 +484,18 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 							Name: trivyConfigName,
 						},
 						Key:      keyTrivyIgnoreUnfixed,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_TIMEOUT",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: trivyConfigName,
+						},
+						Key:      keyTrivyTimeout,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
@@ -737,6 +751,18 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 							Name: trivyConfigName,
 						},
 						Key:      keyTrivyIgnoreUnfixed,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			{
+				Name: "TRIVY_TIMEOUT",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: trivyConfigName,
+						},
+						Key:      keyTrivyTimeout,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
