@@ -13,7 +13,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -241,8 +240,8 @@ func TestContainerImages_AsJSON_And_FromJSON(t *testing.T) {
 	assert.Equal(t, containerImages, newContainerImages)
 }
 
-func TestObjectRefFromKindAndNamespacedName(t *testing.T) {
-	partial := kube.ObjectRefFromKindAndNamespacedName(kube.KindReplicaSet, types.NamespacedName{
+func TestObjectRefFromKindAndObjectKey(t *testing.T) {
+	partial := kube.ObjectRefFromKindAndObjectKey(kube.KindReplicaSet, client.ObjectKey{
 		Namespace: "prod",
 		Name:      "wordpress",
 	})
@@ -481,7 +480,7 @@ func TestGetPodSpec(t *testing.T) {
 	}
 }
 
-func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
+func TestObjectResolver_RelatedReplicaSetName(t *testing.T) {
 
 	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 		&appsv1.Deployment{
@@ -567,7 +566,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	).Build()}
 
 	t.Run("Should return error for unsupported kind", func(t *testing.T) {
-		_, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
+		_, err := instance.RelatedReplicaSetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindStatefulSet,
 			Name:      "statefulapp",
 			Namespace: corev1.NamespaceDefault,
@@ -576,7 +575,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	})
 
 	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
-		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
+		name, err := instance.RelatedReplicaSetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindDeployment,
 			Name:      "nginx",
 			Namespace: corev1.NamespaceDefault,
@@ -586,7 +585,7 @@ func TestObjectResolver_GetRelatedReplicasetName(t *testing.T) {
 	})
 
 	t.Run("Should return ReplicaSet name for the specified Deployment", func(t *testing.T) {
-		name, err := instance.GetRelatedReplicasetName(context.Background(), kube.ObjectRef{
+		name, err := instance.RelatedReplicaSetName(context.Background(), kube.ObjectRef{
 			Kind:      kube.KindPod,
 			Name:      "nginx-549f5fcb58-7cr5b",
 			Namespace: corev1.NamespaceDefault,

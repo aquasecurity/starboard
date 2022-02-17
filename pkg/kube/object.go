@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -191,7 +190,7 @@ func KindForObject(object metav1.Object, scheme *runtime.Scheme) (string, error)
 	return gvk.Kind, nil
 }
 
-func ObjectRefFromKindAndNamespacedName(kind Kind, name types.NamespacedName) ObjectRef {
+func ObjectRefFromKindAndObjectKey(kind Kind, name client.ObjectKey) ObjectRef {
 	return ObjectRef{
 		Kind:      kind,
 		Name:      name.Name,
@@ -299,7 +298,10 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 	default:
 		return nil, fmt.Errorf("unknown kind: %s", ref.Kind)
 	}
-	err := o.Client.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: ref.Namespace}, obj)
+	err := o.Client.Get(ctx, client.ObjectKey{
+		Name:      ref.Name,
+		Namespace: ref.Namespace,
+	}, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -348,49 +350,86 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 	}
 }
 
+// ReplicaSetByDeploymentRef returns the current revision of the specified
+// Deployment reference. If the current revision cannot be found the
+// ErrReplicaSetNotFound error is returned.
+func (o *ObjectResolver) ReplicaSetByDeploymentRef(ctx context.Context, deploymentRef ObjectRef) (*appsv1.ReplicaSet, error) {
+	deployment := &appsv1.Deployment{}
+	err := o.Client.Get(ctx, client.ObjectKey{
+		Namespace: deploymentRef.Namespace,
+		Name:      deploymentRef.Name,
+	}, deployment)
+	if err != nil {
+		return nil, fmt.Errorf("getting deployment %q: %w", deploymentRef.Namespace+"/"+deploymentRef.Name, err)
+	}
+	return o.ReplicaSetByDeployment(ctx, deployment)
+}
+
 // ReplicaSetByDeployment returns the current revision of the specified
 // Deployment. If the current revision cannot be found the ErrReplicaSetNotFound
-// error is returned.
-func (o *ObjectResolver) ReplicaSetByDeployment(ctx context.Context, deploy *appsv1.Deployment) (*appsv1.ReplicaSet, error) {
+//error is returned.
+func (o *ObjectResolver) ReplicaSetByDeployment(ctx context.Context, deployment *appsv1.Deployment) (*appsv1.ReplicaSet, error) {
 	var rsList appsv1.ReplicaSetList
 	err := o.Client.List(ctx, &rsList,
-		client.InNamespace(deploy.Namespace),
+		client.InNamespace(deployment.Namespace),
 		client.MatchingLabelsSelector{
-			Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
+			Selector: labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels),
 		})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("listing replicasets for deployment %q: %w", deployment.Namespace+"/"+deployment.Name, err)
 	}
+
 	if len(rsList.Items) == 0 {
 		return nil, ErrReplicaSetNotFound
 	}
+
 	for _, rs := range rsList.Items {
-		if deploy.Annotations["deployment.kubernetes.io/revision"] !=
-			rs.Annotations["deployment.kubernetes.io/revision"] {
+		if deployment.Annotations[deploymentAnnotation] !=
+			rs.Annotations[deploymentAnnotation] {
 			continue
 		}
-		obj, err := o.ensureGVK(rs.DeepCopy())
-		return obj.(*appsv1.ReplicaSet), err
+		rsCopy := rs.DeepCopy()
+		_, err = o.ensureGVK(rsCopy)
+		return rsCopy, err
 	}
+
 	return nil, ErrReplicaSetNotFound
+}
+
+// ReplicaSetByPodRef returns the controller ReplicaSet of the specified Pod
+// reference.
+func (o *ObjectResolver) ReplicaSetByPodRef(ctx context.Context, object ObjectRef) (*appsv1.ReplicaSet, error) {
+	pod := &corev1.Pod{}
+	err := o.Client.Get(ctx, client.ObjectKey{
+		Namespace: object.Namespace,
+		Name:      object.Name,
+	}, pod)
+	if err != nil {
+		return nil, err
+	}
+	return o.ReplicaSetByPod(ctx, pod)
 }
 
 // ReplicaSetByPod returns the controller ReplicaSet of the specified Pod.
 func (o *ObjectResolver) ReplicaSetByPod(ctx context.Context, pod *corev1.Pod) (*appsv1.ReplicaSet, error) {
 	controller := metav1.GetControllerOf(pod)
 	if controller == nil {
-		return nil, fmt.Errorf("did not find a controller for pod %q", pod.Name)
+		return nil, fmt.Errorf("did not find a controller for pod %q", pod.Namespace+"/"+pod.Name)
 	}
 	if controller.Kind != "ReplicaSet" {
 		return nil, fmt.Errorf("pod %q is controlled by a %q, want replicaset", pod.Name, controller.Kind)
 	}
 	rs := &appsv1.ReplicaSet{}
-	err := o.Client.Get(ctx, client.ObjectKey{Namespace: pod.Namespace, Name: controller.Name}, rs)
+	err := o.Client.Get(ctx, client.ObjectKey{
+		Namespace: pod.Namespace,
+		Name:      controller.Name,
+	}, rs)
 	if err != nil {
 		return nil, err
 	}
-	obj, err := o.ensureGVK(rs)
-	return obj.(*appsv1.ReplicaSet), err
+	rsCopy := rs.DeepCopy()
+	_, err = o.ensureGVK(rsCopy)
+	return rsCopy, err
 }
 
 func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1.CronJob, error) {
@@ -440,12 +479,20 @@ func (o *ObjectResolver) ensureGVK(obj client.Object) (client.Object, error) {
 // the given owner. If the owner is a Deployment, it will look for a ReplicaSet
 // that is controlled by the Deployment. If the owner is a Pod, it will look for
 // the ReplicaSet that owns the Pod.
-func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object ObjectRef) (string, error) {
+func (o *ObjectResolver) RelatedReplicaSetName(ctx context.Context, object ObjectRef) (string, error) {
 	switch object.Kind {
 	case KindDeployment:
-		return o.getActiveReplicaSetByDeployment(ctx, object)
+		rs, err := o.ReplicaSetByDeploymentRef(ctx, object)
+		if err != nil {
+			return "", err
+		}
+		return rs.Name, nil
 	case KindPod:
-		return o.getReplicaSetByPod(ctx, object)
+		rs, err := o.ReplicaSetByPodRef(ctx, object)
+		if err != nil {
+			return "", err
+		}
+		return rs.Name, nil
 	}
 	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
 }
@@ -504,49 +551,6 @@ func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (st
 	default:
 		return "", ErrUnSupportedKind
 	}
-}
-
-func (o *ObjectResolver) getActiveReplicaSetByDeployment(ctx context.Context, object ObjectRef) (string, error) {
-	deploy := &appsv1.Deployment{}
-	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, deploy)
-	if err != nil {
-		return "", fmt.Errorf("getting deployment %q: %w", object.Namespace+"/"+object.Name, err)
-	}
-	var rsList appsv1.ReplicaSetList
-	err = o.Client.List(ctx, &rsList,
-		client.InNamespace(deploy.Namespace),
-		client.MatchingLabelsSelector{
-			Selector: labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels),
-		})
-	if err != nil {
-		return "", fmt.Errorf("listing replicasets for deployment %q: %w", object.Name, err)
-	}
-	if len(rsList.Items) == 0 {
-		return "", fmt.Errorf("no replicasets associated with deployment %q", object.Name)
-	}
-	for _, rs := range rsList.Items {
-		if deploy.Annotations[deploymentAnnotation] != rs.Annotations[deploymentAnnotation] {
-			continue
-		}
-		return rs.Name, nil
-	}
-	return "", fmt.Errorf("did not find an active replicaset associated with deployment %q", object.Name)
-}
-
-func (o *ObjectResolver) getReplicaSetByPod(ctx context.Context, object ObjectRef) (string, error) {
-	pod := &corev1.Pod{}
-	err := o.Client.Get(ctx, types.NamespacedName{Namespace: object.Namespace, Name: object.Name}, pod)
-	if err != nil {
-		return "", err
-	}
-	controller := metav1.GetControllerOf(pod)
-	if controller == nil {
-		return "", fmt.Errorf("did not find a controller for pod %q", object.Name)
-	}
-	if controller.Kind != "ReplicaSet" {
-		return "", fmt.Errorf("pod %q is controlled by a %q, want replicaset", object.Name, controller.Kind)
-	}
-	return controller.Name, nil
 }
 
 func (o *ObjectResolver) IsActiveReplicaSet(ctx context.Context, workloadObj client.Object, controller *metav1.OwnerReference) (bool, error) {

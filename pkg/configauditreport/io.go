@@ -128,7 +128,7 @@ func (r *readWriter) FindReportByOwnerInHierarchy(ctx context.Context, owner kub
 
 	// no reports found for provided owner, look for reports in related replicaset
 	if report == nil && (owner.Kind == kube.KindDeployment || owner.Kind == kube.KindPod) {
-		rsName, err := r.GetRelatedReplicasetName(ctx, owner)
+		rsName, err := r.RelatedReplicaSetName(ctx, owner)
 		if err != nil {
 			return nil, fmt.Errorf("getting replicaset related to %s/%s: %w", owner.Kind, owner.Name, err)
 		}

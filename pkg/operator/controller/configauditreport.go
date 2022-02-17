@@ -132,10 +132,10 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		log := r.Logger.WithValues("kind", resourceKind, "name", req.NamespacedName)
 
-		resourcePartial := kube.ObjectRefFromKindAndNamespacedName(resourceKind, req.NamespacedName)
+		resourceRef := kube.ObjectRefFromKindAndObjectKey(resourceKind, req.NamespacedName)
 
 		log.V(1).Info("Getting resource from cache")
-		resource, err := r.ObjectFromObjectRef(ctx, resourcePartial)
+		resource, err := r.ObjectFromObjectRef(ctx, resourceRef)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.V(1).Info("Ignoring cached resource that must have been deleted")
@@ -191,7 +191,7 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 		log = log.WithValues("resourceSpecHash", resourceSpecHash, "pluginConfigHash", pluginConfigHash)
 
 		log.V(1).Info("Checking whether configuration audit report exists")
-		hasReport, err := r.hasReport(ctx, resourcePartial, resourceSpecHash, pluginConfigHash)
+		hasReport, err := r.hasReport(ctx, resourceRef, resourceSpecHash, pluginConfigHash)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
