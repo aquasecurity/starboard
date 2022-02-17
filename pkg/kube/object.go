@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -201,7 +200,7 @@ func ObjectRefFromKindAndNamespacedName(kind Kind, name types.NamespacedName) Ob
 // label to an instance of a security report.
 func ComputeSpecHash(obj client.Object) (string, error) {
 	switch t := obj.(type) {
-	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.Job:
+	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.CronJob, *batchv1.Job:
 		spec, err := GetPodSpec(obj)
 		if err != nil {
 			return "", err
@@ -243,8 +242,8 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 		return (obj.(*appsv1.StatefulSet)).Spec.Template.Spec, nil
 	case *appsv1.DaemonSet:
 		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
-	case *batchv1beta1.CronJob:
-		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	case *batchv1.CronJob:
+		return (obj.(*batchv1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
 	case *batchv1.Job:
 		return (obj.(*batchv1.Job)).Spec.Template.Spec, nil
 	default:
@@ -272,7 +271,7 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, workload Objec
 	case KindDaemonSet:
 		obj = &appsv1.DaemonSet{}
 	case KindCronJob:
-		obj = &batchv1beta1.CronJob{}
+		obj = &batchv1.CronJob{}
 	case KindJob:
 		obj = &batchv1.Job{}
 	case KindService:
@@ -338,7 +337,7 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 		}
 		// Pod controlled by sth else (usually frameworks)
 		return obj, nil
-	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob:
+	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.CronJob:
 		return obj, nil
 	default:
 		return obj, nil
@@ -390,7 +389,7 @@ func (o *ObjectResolver) ReplicaSetByPod(ctx context.Context, pod *corev1.Pod) (
 	return obj.(*appsv1.ReplicaSet), err
 }
 
-func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1beta1.CronJob, error) {
+func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1.CronJob, error) {
 	controller := metav1.GetControllerOf(job)
 	if controller == nil {
 		return nil, fmt.Errorf("did not find a controller for job %q", job.Name)
@@ -398,13 +397,13 @@ func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*b
 	if controller.Kind != "CronJob" {
 		return nil, fmt.Errorf("pod %q is controlled by a %q, want CronJob", job.Name, controller.Kind)
 	}
-	cj := &batchv1beta1.CronJob{}
+	cj := &batchv1.CronJob{}
 	err := o.Client.Get(ctx, client.ObjectKey{Namespace: job.Namespace, Name: controller.Name}, cj)
 	if err != nil {
 		return nil, err
 	}
 	obj, err := o.ensureGVK(cj)
-	return obj.(*batchv1beta1.CronJob), err
+	return obj.(*batchv1.CronJob), err
 }
 
 func (o *ObjectResolver) JobByPod(ctx context.Context, pod *corev1.Pod) (*batchv1.Job, error) {
@@ -488,8 +487,7 @@ func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (st
 			return "", err
 		}
 		return pods[0].Spec.NodeName, nil
-	case *batchv1beta1.CronJob:
-		//Todo handle cronjob
+	case *batchv1.CronJob:
 		return "", ErrUnSupportedKind
 	case *batchv1.Job:
 		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*batchv1.Job).Spec.Selector.MatchLabels)
