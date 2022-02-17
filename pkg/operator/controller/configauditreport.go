@@ -409,6 +409,14 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 
 	logsStream, err := r.LogsReader.GetLogsByJobAndContainerName(ctx, job, r.Plugin.GetContainerName())
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Cached job must have been deleted")
+			return nil
+		}
+		if kube.IsPodControlledByJobNotFound(err) {
+			log.V(1).Info("Pod must have been deleted")
+			return r.deleteJob(ctx, job)
+		}
 		return fmt.Errorf("getting logs: %w", err)
 	}
 
@@ -439,6 +447,14 @@ func (r *ConfigAuditReportReconciler) processFailedScanJob(ctx context.Context, 
 
 	statuses, err := r.LogsReader.GetTerminatedContainersStatusesByJob(ctx, scanJob)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info("Cached job must have been deleted")
+			return nil
+		}
+		if kube.IsPodControlledByJobNotFound(err) {
+			log.V(1).Info("Pod must have been deleted")
+			return r.deleteJob(ctx, scanJob)
+		}
 		return err
 	}
 	for container, status := range statuses {

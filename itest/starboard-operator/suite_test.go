@@ -66,9 +66,8 @@ var _ = BeforeSuite(func() {
 		AssertTimeout:         3 * time.Minute,
 		PrimaryNamespace:      corev1.NamespaceDefault,
 		PrimaryWorkloadPrefix: "wordpress",
-
-		Client: kubeClient,
-		Helper: helper.NewHelper(kubeClient),
+		Client:                kubeClient,
+		Helper:                helper.NewHelper(kubeClient),
 	}
 
 	startCtx, stopFunc = context.WithCancel(context.Background())

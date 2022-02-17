@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -10,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+var podControlledByJobNotFoundErr = errors.New("pod for job not found")
 
 type LogsReader interface {
 	GetLogsByJobAndContainerName(ctx context.Context, job *batchv1.Job, containerName string) (io.ReadCloser, error)
@@ -32,7 +35,7 @@ func (r *logsReader) GetLogsByJobAndContainerName(ctx context.Context, job *batc
 		return nil, fmt.Errorf("getting pod controlled by job: %q: %w", job.Namespace+"/"+job.Name, err)
 	}
 	if pod == nil {
-		return nil, fmt.Errorf("getting pod controlled by job: %q: pod not found", job.Namespace+"/"+job.Name)
+		return nil, fmt.Errorf("getting pod controlled by job: %q: %w", job.Namespace+"/"+job.Name, podControlledByJobNotFoundErr)
 	}
 
 	return r.clientset.CoreV1().Pods(pod.Namespace).
@@ -86,4 +89,8 @@ func GetTerminatedContainersStatusesByPod(pod *corev1.Pod) map[string]*corev1.Co
 		states[status.Name] = status.State.Terminated
 	}
 	return states
+}
+
+func IsPodControlledByJobNotFound(err error) bool {
+	return errors.Is(err, podControlledByJobNotFoundErr)
 }
