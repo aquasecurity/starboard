@@ -1,20 +1,19 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/aquasecurity/starboard/pkg/compliance"
-	"github.com/aquasecurity/starboard/pkg/operator/predicate"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"time"
-
 	"context"
+	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/compliance"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/operator/predicate"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"time"
 )
 
 type ClusterComplianceReportReconciler struct {
@@ -53,23 +52,16 @@ func (r *ClusterComplianceReportReconciler) reconcileComplianceReport() reconcil
 			}
 			return ctrl.Result{}, fmt.Errorf("getting report from cache: %w", err)
 		}
-		ReportNextGenerationAnnotationStr, ok := report.Annotations[v1alpha1.ComplianceReportNextGeneration]
-		if !ok {
-			log.V(1).Info("Ignoring compliance report without next generation param set")
-			return ctrl.Result{}, nil
-		}
-
-		reportTTLTime, err := time.ParseDuration(ReportNextGenerationAnnotationStr)
+		durationToNextGeneration, err := activationTimeExceeded(report.Spec.Cron, r.reportLastUpdatedTime(report))
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed parsing %v with value %v %w", v1alpha1.ComplianceReportNextGeneration, ReportNextGenerationAnnotationStr, err)
+			return ctrl.Result{}, fmt.Errorf("failed to check report cron expression %v", err)
 		}
-		creationTime := report.Report.UpdateTimestamp
-		generateNewReport, durationToNextGeneration := intervalExceeded(reportTTLTime, creationTime.Time)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		if generateNewReport {
-			err := r.Mgr.GenerateComplianceReport(ctx, compliance.Spec{})
+		if durationExceeded(durationToNextGeneration) {
+			report, err := r.Mgr.GenerateComplianceReport(ctx, report.Spec)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to generate new report %v", err)
+			}
+			err = r.Status().Update(ctx, report)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to generate new report %v", err)
 			}
@@ -78,4 +70,13 @@ func (r *ClusterComplianceReportReconciler) reconcileComplianceReport() reconcil
 		log.V(1).Info("RequeueAfter", "durationToNextGeneration", durationToNextGeneration)
 		return ctrl.Result{RequeueAfter: durationToNextGeneration}, nil
 	}
+}
+
+func (r *ClusterComplianceReportReconciler) reportLastUpdatedTime(report *v1alpha1.ClusterComplianceReport) time.Time {
+	updateTimeStamp := report.Status.UpdateTimestamp.Time
+	lastUpdated := updateTimeStamp
+	if updateTimeStamp.Before(report.ObjectMeta.CreationTimestamp.Time) {
+		lastUpdated = report.ObjectMeta.CreationTimestamp.Time
+	}
+	return lastUpdated
 }

@@ -7,12 +7,23 @@ metadata:
     app.kubernetes.io/version: "0.14.1"
 spec:
   group: aquasecurity.github.io
+  scope: Cluster
+  names:
+    singular: clustercompliancereport
+    plural: clustercompliancereports
+    kind: ClusterComplianceReport
+    listKind: ClusterComplianceReportList
+    categories: [ ]
+    shortNames:
+      - compliance
   versions:
     - name: v1alpha1
       served: true
       storage: true
+      subresources:
+        status: { }
       additionalPrinterColumns:
-        - jsonPath: .report.type.kind
+        - jsonPath: .spec.kind
           type: string
           name: report
           description: The name of the complience report
@@ -20,26 +31,93 @@ spec:
           type: date
           name: Age
           description: The age of the report
-        - jsonPath: .report.summary.failCount
+        - jsonPath: .status.summary.failCount
           type: integer
           name: Fail
           priority: 1
           description: The number of checks that failed with Danger status
-        - jsonPath: .report.summary.passCount
+        - jsonPath: .status.summary.passCount
           type: integer
           name: Pass
           priority: 1
           description: The number of checks that passed
       schema:
         openAPIV3Schema:
-          x-kubernetes-preserve-unknown-fields: true
           type: object
-  scope: Cluster
-  names:
-    singular: clustercompliancereport
-    plural: clustercompliancereports
-    kind: ClusterComplianceReport
-    listKind: ClusterComplianceReportList
-    categories: []
-    shortNames:
-      - compliance
+          required:
+            - apiVersion
+            - kind
+            - metadata
+            - spec
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - kind
+                - name
+                - description
+                - version
+                - cron
+                - controls
+              properties:
+                kind:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                version:
+                  type: string
+                cron:
+                  type: string
+                  pattern: '(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+(\/|-)\d+)|\d+|\*) ?){5,7})'
+                controls:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - id
+                      - resources
+                      - mapping
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      id:
+                        type: string
+                      resources:
+                        type: array
+                        items:
+                          type: string # example Node,Workload
+                      mapping:
+                        type: object
+                        required:
+                          - tool
+                          - checks
+                        properties:
+                          tool:
+                            type: string
+                            pattern: '^config-audit$|^kube-bench$'
+                          checks:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - id
+                              properties:
+                                id:
+                                  type: string
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

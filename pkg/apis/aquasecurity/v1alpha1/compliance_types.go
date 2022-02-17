@@ -16,7 +16,40 @@ type ClusterComplianceSummary struct {
 type ClusterComplianceReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Report            ClusterComplianceReportData `json:"report"`
+
+	Spec ReportSpec `json:"spec,omitempty"`
+
+	Status ReportStatus `json:"status,omitempty"`
+}
+
+//ReportSpec represent the compliance specification
+type ReportSpec struct {
+	Kind        string    `json:"kind"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Cron        string    `json:"cron"`
+	Version     string    `json:"version"`
+	Controls    []Control `json:"controls"`
+}
+
+//Control represent the cps controls data and mapping checks
+type Control struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Resources   []string `json:"resources"`
+	Mapping     Mapping  `json:"mapping"`
+}
+
+//SpecCheck represent the tool who perform the control check
+type SpecCheck struct {
+	ID string `json:"id"`
+}
+
+//Mapping represent the tool who perform the control check
+type Mapping struct {
+	Tool   string      `json:"tool"`
+	Checks []SpecCheck `json:"checks"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -28,7 +61,7 @@ type ClusterComplianceReportList struct {
 	Items           []ClusterComplianceReport `json:"items"`
 }
 
-type ClusterComplianceReportData struct {
+type ReportStatus struct {
 	UpdateTimestamp metav1.Time              `json:"updateTimestamp"`
 	Type            Compliance               `json:"type"`
 	Summary         ClusterComplianceSummary `json:"summary"`

@@ -1,14 +1,32 @@
 package controller
 
-import "time"
+import (
+	"github.com/robfig/cron"
+	"time"
+)
 
-func intervalExceeded(reportTTL time.Duration, creationTime time.Time) (bool, time.Duration) {
-	expiresAt := creationTime.Add(reportTTL)
-	currentTime := time.Now()
-	isExpired := currentTime.After(expiresAt)
-	if isExpired {
-		return true, time.Duration(0)
+// activationTimeExceeded check if next cron activation time has exceeded if so return true
+// if activation time has not reached return false and remaining time
+// in case it failed to parse cron expression return error
+func activationTimeExceeded(cronString string, creationTime time.Time) (time.Duration, error) {
+	schedule, err := cron.Parse(cronString)
+	if err != nil {
+		return time.Duration(0), err
 	}
-	expiresIn := expiresAt.Sub(currentTime)
-	return false, expiresIn
+	return timeToExpiration(schedule.Next(creationTime)), nil
+}
+
+//durationExceeded  check if duration is now meaning zero
+func durationExceeded(duration time.Duration) bool {
+	return duration.Nanoseconds() <= 0
+}
+
+//timeToExpiration  return the duration between time to expiration
+func timeToExpiration(expiresAt time.Time) time.Duration {
+	return expiresAt.Sub(time.Now())
+}
+
+//nextIntervalExceeded  check if interval for given time has exceeded
+func nextIntervalExceeded(interval time.Duration, creationTime time.Time) time.Duration {
+	return timeToExpiration(creationTime.Add(interval))
 }

@@ -15,7 +15,7 @@ import (
 )
 
 type Mgr interface {
-	GenerateComplianceReport(ctx context.Context, spec Spec) error
+	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error)
 }
 
 type cm struct {
@@ -31,11 +31,11 @@ type ControlsSummary struct {
 
 type SpecDataMapping struct {
 	toolResourceListNames  map[string]*hashset.Set
-	controlIDControlObject map[string]Control
+	controlIDControlObject map[string]v1alpha1.Control
 	controlCheckIds        map[string][]string
 }
 
-func (w *cm) GenerateComplianceReport(ctx context.Context, spec Spec) error {
+func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error) {
 	// map specs to key/value map for easy processing
 	smd := w.populateSpecDataToMaps(spec)
 	// map compliance tool to resource data
@@ -43,28 +43,21 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec Spec) error {
 	// organized data by check id and it aggregated results
 	checkIdsToResults, err := w.checkIdsToResults(toolResourceMap)
 	if err != nil {
-		return err
-
+		return nil, err
 	}
 	// map tool checks results to control check results
 	controlChecks := w.controlChecksByToolChecks(smd, checkIdsToResults)
 	// publish compliance report
-	err = w.createComplianceReport(ctx, spec, controlChecks)
-	if err != nil {
-		w.log.V(1).Error(err, "failed to create compliance report")
-		return err
-	}
-	controlCheckDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
+	return w.createComplianceReport(ctx, spec, controlChecks)
+
+	/*controlCheckDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
 	err = w.createComplianceDetailReport(ctx, spec, controlChecks, controlCheckDetails)
 	if err != nil {
-		w.log.V(1).Error(err, "failed to create compliance report detail")
 		return err
-
-	}
-	return nil
+	}*/
 }
 
-func (w *cm) createComplianceReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck) error {
+func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec, controlChecks []v1alpha1.ControlCheck) (*v1alpha1.ClusterComplianceReport, error) {
 	var totalFail, totalPass int
 	if len(controlChecks) > 0 {
 		for _, controlCheck := range controlChecks {
@@ -78,7 +71,7 @@ func (w *cm) createComplianceReport(ctx context.Context, spec Spec, controlCheck
 			Name: strings.ToLower(spec.Name),
 		},
 
-		Report: v1alpha1.ClusterComplianceReportData{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: strings.ToLower(spec.Name), Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecks},
+		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: strings.ToLower(spec.Name), Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecks},
 	}
 	var existing v1alpha1.ClusterComplianceReport
 	err := w.client.Get(ctx, types.NamespacedName{
@@ -88,18 +81,19 @@ func (w *cm) createComplianceReport(ctx context.Context, spec Spec, controlCheck
 	if err == nil {
 		copied := existing.DeepCopy()
 		copied.Labels = report.Labels
-		copied.Report = report.Report
-		copied.Report.UpdateTimestamp = metav1.NewTime(ext.NewSystemClock().Now())
-		return w.client.Update(ctx, copied)
+		copied.Status = report.Status
+		copied.Spec = spec
+		copied.Status.UpdateTimestamp = metav1.NewTime(ext.NewSystemClock().Now())
+		return copied, nil
 	}
 
-	if errors.IsNotFound(err) || generatingReportFirstTime(err) {
-		return w.client.Create(ctx, &report)
+	if errors.IsNotFound(err) {
+		return &report, nil
 	}
-	return nil
+	return nil, err
 }
 
-func (w *cm) createComplianceDetailReport(ctx context.Context, spec Spec, controlChecks []v1alpha1.ControlCheck, controlChecksDetails []v1alpha1.ControlCheckDetails) error {
+func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.ReportSpec, controlChecks []v1alpha1.ControlCheck, controlChecksDetails []v1alpha1.ControlCheckDetails) error {
 	var totalFail, totalPass int
 	if len(controlChecks) > 0 {
 		for _, controlCheck := range controlChecks {
@@ -128,17 +122,10 @@ func (w *cm) createComplianceDetailReport(ctx context.Context, spec Spec, contro
 		return w.client.Update(ctx, copied)
 	}
 
-	if errors.IsNotFound(err) || generatingReportFirstTime(err) {
+	if errors.IsNotFound(err) {
 		return w.client.Create(ctx, &report)
 	}
 	return nil
-}
-
-func generatingReportFirstTime(err error) bool {
-	if ok := strings.Contains(err.Error(), "the cache is not started, can not read objects"); ok {
-		return true
-	}
-	return false
 }
 
 func (w *cm) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
@@ -212,14 +199,15 @@ func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 	return checkIdsToResults, nil
 }
 
-func (w *cm) populateSpecDataToMaps(spec Spec) *SpecDataMapping {
+func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *SpecDataMapping {
 	//control to resource list map
-	controlIDControlObject := make(map[string]Control)
+	controlIDControlObject := make(map[string]v1alpha1.Control)
 	//control to checks map
 	controlCheckIds := make(map[string][]string)
 	//tool to resource list map
 	toolResourceListName := make(map[string]*hashset.Set)
 	for _, control := range spec.Controls {
+		control.Resources = MapResources(control)
 		if _, ok := toolResourceListName[control.Mapping.Tool]; !ok {
 			toolResourceListName[control.Mapping.Tool] = hashset.New()
 		}
