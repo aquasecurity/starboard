@@ -72,8 +72,12 @@ func IsBuiltInWorkload(controller *metav1.OwnerReference) bool {
 			controller.Kind == string(KindJob))
 }
 
-func IsClusterScopedKind(k string) bool {
-	switch k {
+// IsClusterScopedKind returns true if the specified kind is ClusterRole,
+// ClusterRoleBinding, and CustomResourceDefinition.
+//
+// TODO Use discovery client to have a generic implementation.
+func IsClusterScopedKind(kind string) bool {
+	switch kind {
 	case string(KindClusterRole), string(KindClusterRoleBindings), string(KindCustomResourceDefinition):
 		return true
 	default:
@@ -100,9 +104,9 @@ func ObjectRefToLabels(obj ObjectRef) map[string]string {
 	return labels
 }
 
-// ObjectToObjectMetadata encodes the specified client.Object as a set of labels
+// ObjectToObjectMeta encodes the specified client.Object as a set of labels
 // and annotations added to the given ObjectMeta.
-func ObjectToObjectMetadata(obj client.Object, meta *metav1.ObjectMeta) error {
+func ObjectToObjectMeta(obj client.Object, meta *metav1.ObjectMeta) error {
 	if meta.Labels == nil {
 		meta.Labels = make(map[string]string)
 	}
@@ -159,7 +163,8 @@ func GVRForResource(mapper meta.RESTMapper, resource string) (gvr schema.GroupVe
 	return
 }
 
-// ContainerImages is a simple structure to hold the mapping between container names and container image references.
+// ContainerImages is a simple structure to hold the mapping between container
+// names and container image references.
 type ContainerImages map[string]string
 
 func (ci ContainerImages) AsJSON() (string, error) {
@@ -194,10 +199,10 @@ func ObjectRefFromKindAndNamespacedName(kind Kind, name types.NamespacedName) Ob
 	}
 }
 
-// ComputeSpecHash computes hash of the specified K8s client.Object.
-// The hash is used to indicate whether the client.Object should be
-// rescanned or not by adding it as the starboard.LabelResourceSpecHash
-// label to an instance of a security report.
+// ComputeSpecHash computes hash of the specified K8s client.Object. The hash is
+// used to indicate whether the client.Object should be rescanned or not by
+// adding it as the starboard.LabelResourceSpecHash label to an instance of a
+// security report.
 func ComputeSpecHash(obj client.Object) (string, error) {
 	switch t := obj.(type) {
 	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.CronJob, *batchv1.Job:
@@ -225,9 +230,8 @@ func ComputeSpecHash(obj client.Object) (string, error) {
 	}
 }
 
-// GetPodSpec returns v1.PodSpec from the specified Kubernetes
-// client.Object. Returns error if the given client.Object
-// is not a Kubernetes workload.
+// GetPodSpec returns v1.PodSpec from the specified Kubernetes client.Object.
+// Returns error if the given client.Object is not a Kubernetes workload.
 func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	switch t := obj.(type) {
 	case *corev1.Pod:
@@ -251,13 +255,17 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 	}
 }
 
+var ErrReplicaSetNotFound = errors.New("replicaset not found")
+var ErrNoRunningPods = errors.New("no active pods for controller")
+var ErrUnSupportedKind = errors.New("unsupported workload kind")
+
 type ObjectResolver struct {
 	client.Client
 }
 
-func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, workload ObjectRef) (client.Object, error) {
+func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef) (client.Object, error) {
 	var obj client.Object
-	switch workload.Kind {
+	switch ref.Kind {
 	case KindPod:
 		obj = &corev1.Pod{}
 	case KindReplicaSet:
@@ -289,18 +297,14 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, workload Objec
 	case KindCustomResourceDefinition:
 		obj = &apiextensionsv1.CustomResourceDefinition{}
 	default:
-		return nil, fmt.Errorf("unknown kind: %s", workload.Kind)
+		return nil, fmt.Errorf("unknown kind: %s", ref.Kind)
 	}
-	err := o.Client.Get(ctx, types.NamespacedName{Name: workload.Name, Namespace: workload.Namespace}, obj)
+	err := o.Client.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: ref.Namespace}, obj)
 	if err != nil {
 		return nil, err
 	}
 	return o.ensureGVK(obj)
 }
-
-var ErrReplicaSetNotFound = errors.New("replicaset not found")
-var ErrNoRunningPods = errors.New("no active pods for controller")
-var ErrUnSupportedKind = errors.New("unsupported workload kind")
 
 // ReportOwner resolves the owner of a security report for the specified object.
 func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (client.Object, error) {
@@ -344,9 +348,9 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 	}
 }
 
-// ReplicaSetByDeployment returns the current revision of the specified Deployment.
-// If the current revision cannot be found the ErrReplicaSetNotFound error
-// is returned.
+// ReplicaSetByDeployment returns the current revision of the specified
+// Deployment. If the current revision cannot be found the ErrReplicaSetNotFound
+// error is returned.
 func (o *ObjectResolver) ReplicaSetByDeployment(ctx context.Context, deploy *appsv1.Deployment) (*appsv1.ReplicaSet, error) {
 	var rsList appsv1.ReplicaSetList
 	err := o.Client.List(ctx, &rsList,
@@ -446,9 +450,11 @@ func (o *ObjectResolver) GetRelatedReplicasetName(ctx context.Context, object Ob
 	return "", fmt.Errorf("can only get related ReplicaSet for Deployment or Pod, not %q", string(object.Kind))
 }
 
-// GetNodeName will return the nodeName from one of the running pod of any kubernetes kind
-// if there are no running pods then ErrNoRunningPods will be returned.
-// if there are not active replicaset for deployment then ErrReplicaSetNotFound will be returned.
+// GetNodeName returns the name of the node on which the given workload is
+// scheduled. If there are no running pods then the ErrNoRunningPods error is
+// returned. If there are no active ReplicaSets for the Deployment the
+// ErrReplicaSetNotFound error is returned. If the specified workload is a
+// CronJob the ErrUnSupportedKind error is returned.
 func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (string, error) {
 	switch obj.(type) {
 	case *corev1.Pod:
