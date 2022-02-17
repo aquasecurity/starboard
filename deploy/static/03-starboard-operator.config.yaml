@@ -50,6 +50,7 @@ data:
   trivy.imageRef: "docker.io/aquasec/trivy:0.23.0"
   trivy.mode: "Standalone"
   trivy.severity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
+  trivy.timeout: "5m0s"
   trivy.resources.requests.cpu: 100m
   trivy.resources.requests.memory: 100M
   trivy.resources.limits.cpu: 500m

@@ -124,6 +124,9 @@ trivy:
   #
   ignoreUnfixed: "false"
 
+  # timeout is the duration to wait for scan completion.
+  timeout: "5m0s"
+
   # ignoreFile can be used to tell Trivy to ignore vulnerabilities by ID (one per line)
   #
   # ignoreFile: |

@@ -473,6 +473,7 @@ func TestPlugin_Init(t *testing.T) {
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.23.0",
 				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 				"trivy.mode":     "Standalone",
+				"trivy.timeout":  "5m0s",
 
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
@@ -552,6 +553,19 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		Name:      "tmp",
 		MountPath: "/tmp",
 		ReadOnly:  false,
+	}
+
+	timeoutEnv := corev1.EnvVar{
+		Name: "TRIVY_TIMEOUT",
+		ValueFrom: &corev1.EnvVarSource{
+			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "starboard-trivy-config",
+				},
+				Key:      "trivy.timeout",
+				Optional: pointer.BoolPtr(true),
+			},
+		},
 	}
 
 	testCases := []struct {
@@ -715,6 +729,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -960,6 +975,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -1209,6 +1225,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -1478,6 +1495,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -1735,6 +1753,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -1934,6 +1953,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -2123,6 +2143,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -2316,6 +2337,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
@@ -2531,6 +2553,7 @@ CVE-2019-1543`,
 									},
 								},
 							},
+							timeoutEnv,
 							{
 								Name: "TRIVY_SKIP_FILES",
 								ValueFrom: &corev1.EnvVarSource{
