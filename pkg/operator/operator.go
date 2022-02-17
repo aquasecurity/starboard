@@ -235,9 +235,9 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 
 	if operatorConfig.ClusterComplianceEnabled {
-		logger := ctrl.Log.WithName("job").WithName("compliance-report")
+		logger := ctrl.Log.WithName("job").WithName("compliance-report-jobs")
 		// load compliance specs
-		specs, err := compliance.LoadClusterComplianceSpecs(logger)
+		specs, err := compliance.LoadClusterComplianceSpecs()
 		if err != nil {
 			logger.V(1).Error(err, "failed to load compliance reports")
 		}

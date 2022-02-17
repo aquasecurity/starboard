@@ -2,13 +2,11 @@ package compliance
 
 import (
 	"fmt"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
 )
 
 func TestLoadClusterComplianceSpecs(t *testing.T) {
-	log := ctrl.Log.WithName("job").WithName("compliance-report")
-	specs, err := LoadClusterComplianceSpecs(log)
+	specs, err := LoadClusterComplianceSpecs()
 	if err != nil {
 		t.Error(err)
 	}

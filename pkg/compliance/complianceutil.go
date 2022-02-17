@@ -3,7 +3,6 @@ package compliance
 import (
 	"embed"
 	"fmt"
-	"github.com/go-logr/logr"
 	"gopkg.in/yaml.v2"
 )
 
@@ -14,18 +13,18 @@ var (
 	res embed.FS
 )
 
-func LoadClusterComplianceSpecs(log logr.Logger) ([]Spec, error) {
+func LoadClusterComplianceSpecs() ([]Spec, error) {
 	dir, _ := res.ReadDir(SpecsFolder)
 	specs := make([]Spec, 0)
 	for _, r := range dir {
 		file, err := res.Open(fmt.Sprintf("%s/%s", SpecsFolder, r.Name()))
 		if err != nil {
-			log.V(1).Error(err, "failed to load compliance specs")
+			return specs, err
 		}
 		var spec Spec
 		err = yaml.NewDecoder(file).Decode(&spec)
 		if err != nil {
-			log.V(1).Error(err, "failed to decode compliance specs")
+			return specs, err
 		}
 		specs = append(specs, spec)
 	}
