@@ -255,7 +255,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			}
 			c.Start()
 			// Handle sigterm and await termChan signal
-			termChan := make(chan os.Signal)
+			termChan := make(chan os.Signal, 1)
 			signal.Notify(termChan, syscall.SIGTERM, syscall.SIGINT)
 			go func() {
 				<-termChan //

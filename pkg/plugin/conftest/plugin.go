@@ -392,7 +392,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
-				ID:       warning.Metadata["id"].(string),
+				ID:       p.getPolicyTitleFromResult(warning),
 				Severity: v1alpha1.ConfigAuditSeverityWarning,
 				Message:  warning.Message,
 				Category: defaultCheckCategory,
@@ -403,7 +403,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 
 		for _, failure := range cr.Failures {
 			checks = append(checks, v1alpha1.Check{
-				ID:       failure.Metadata["id"].(string),
+				ID:       p.getPolicyTitleFromResult(failure),
 				Severity: v1alpha1.ConfigAuditSeverityDanger,
 				Message:  failure.Message,
 				Category: defaultCheckCategory,
@@ -442,13 +442,17 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 }
 
 func (p *plugin) getPolicyTitleFromResult(result Result) string {
-	if title, ok := result.Metadata["title"]; ok {
-		return title.(string)
+	// we check 1st if id exist
+	if value, ok := result.Metadata["id"]; ok {
+		return value.(string)
+	}
+	// if no id found it fall back to title
+	if value, ok := result.Metadata["title"]; ok {
+		return value.(string)
 	}
 	// Fallback to a unique identifier
 	return p.idGenerator.GenerateID()
 }
-
 func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
