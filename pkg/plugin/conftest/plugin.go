@@ -392,7 +392,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
-				ID:       p.getPolicyTitleFromResult(warning),
+				ID:       warning.Metadata["id"].(string),
 				Severity: v1alpha1.ConfigAuditSeverityWarning,
 				Message:  warning.Message,
 				Category: defaultCheckCategory,
@@ -403,7 +403,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 
 		for _, failure := range cr.Failures {
 			checks = append(checks, v1alpha1.Check{
-				ID:       p.getPolicyTitleFromResult(failure),
+				ID:       failure.Metadata["id"].(string),
 				Severity: v1alpha1.ConfigAuditSeverityDanger,
 				Message:  failure.Message,
 				Category: defaultCheckCategory,
