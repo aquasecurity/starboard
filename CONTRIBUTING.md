@@ -16,7 +16,6 @@ These guidelines will help you get started with the Starboard project.
 - [Custom Resource Definitions](#custom-resource-definitions)
   - [Generate Code](#generate-code)
 - [Test Starboard Operator](#test-starboard-operator)
-  - [Prerequisites](#prerequisites)
   - [In Cluster](#in-cluster)
   - [Out of Cluster](#out-of-cluster)
   - [Uninstall](#uninstall)
@@ -183,54 +182,40 @@ You can deploy the operator in the `starboard-system` namespace and configure it
 In OLM terms such install mode is called *SingleNamespace*. The *SingleNamespace* mode is good to get started with a
 basic development workflow. For other install modes see [Operator Multitenancy with OperatorGroups][olm-operator-groups].
 
-### Prerequisites
-
-1. Send custom resource definitions to the Kubernetes API:
-
-   ```
-   kubectl apply -f deploy/crd/vulnerabilityreports.crd.yaml \
-     -f deploy/crd/configauditreports.crd.yaml \
-     -f deploy/crd/clusterconfigauditreports.crd.yaml \
-     -f deploy/crd/ciskubebenchreports.crd.yaml
-   ```
-2. Send the following Kubernetes objects definitions to the Kubernetes API:
-
-   ```
-   kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-     -f deploy/static/02-starboard-operator.rbac.yaml
-   ```
-
-   This will create the `starboard-system` namespace, and the `starboard-operator` service account. Beyond that,
-   it will create the `starboard-operator` ClusterRole and bind it to the `starboard-operator` service account in the
-   `starboard-system` namespace via the `starboard-operator` ClusterRoleBinding.
-3. (Optional) Create configuration objects:
-
-   ```
-   kubectl apply -f deploy/static/03-starboard-operator.config.yaml
-   ```
-
 ### In cluster
 
-1. Build the operator binary into the Docker image:
-
+1. Build the operator binary into the Docker image and load it from your host into KIND cluster nodes:
    ```
-   make docker-build-starboard-operator
+   make docker-build-starboard-operator && kind load docker-image aquasec/starboard-operator:dev
    ```
-2. Load the Docker image from your host into KIND cluster nodes:
-
-   ```
-   kind load docker-image aquasec/starboard-operator:dev
-   ```
-3. Create the `starboard-operator` Deployment in the `starboard-system` namespace to run the operator's container:
-
+2. Create the `starboard-operator` Deployment in the `starboard-system` namespace to run the operator's container:
    ```
    kubectl apply -k deploy/static
    ```
 
+You can uninstall the operator with:
+
+```
+kubectl delete -k deploy/static
+```
+
 ### Out of cluster
 
-1. Run the main method of the operator program:
-
+1. Deploy the operator in cluster:
+   ```
+   kubectl apply -f deploy/static/starboard.yaml
+   ```
+2. Scale the operator down to zero replicas:
+   ```
+   kubectl scale deployment starboard-operator \
+     -n starboard-system \
+     --replicas 0
+   ```
+3. Delete pending scan jobs with:
+   ```
+   kubectl delete jobs -n starboard-system --all
+   ```
+4. Run the main method of the operator program:
    ```
    OPERATOR_NAMESPACE=starboard-system \
      OPERATOR_TARGET_NAMESPACES=default \
@@ -245,17 +230,10 @@ basic development workflow. For other install modes see [Operator Multitenancy w
      go run cmd/starboard-operator/main.go
    ```
 
-### Uninstall
+You can uninstall the operator with:
 
 ```
-kubectl delete -k deploy/static
-kubectl delete -f deploy/static/03-starboard-operator.config.yaml
-kubectl delete -f deploy/static/02-starboard-operator.rbac.yaml \
-  -f deploy/static/01-starboard-operator.ns.yaml
-kubectl delete -f deploy/crd/vulnerabilityreports.crd.yaml \
-  -f deploy/crd/configauditreports.crd.yaml \
-  -f deploy/crd/clusterconfigauditreports.crd.yaml \
-  -f deploy/crd/ciskubebenchreports.crd.yaml
+kubectl delete -f deploy/static/starboard.yaml
 ```
 
 ## Update Static YAML Manifests
