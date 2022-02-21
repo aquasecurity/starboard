@@ -1,7 +1,7 @@
 Configuration of the operator's Pod is done via environment variables at startup.
 
 | NAME                                                         | DEFAULT              | DESCRIPTION                                                                                                                                                                                                  |
-| ------------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|--------------------------------------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `OPERATOR_NAMESPACE`                                         | N/A                  | See [Install modes](#install-modes)                                                                                                                                                                          |
 | `OPERATOR_TARGET_NAMESPACES`                                 | N/A                  | See [Install modes](#install-modes)                                                                                                                                                                          |
 | `OPERATOR_SERVICE_ACCOUNT`                                   | `starboard-operator` | The name of the service account assigned to the operator's pod                                                                                                                                               |
@@ -27,7 +27,7 @@ The values of the `OPERATOR_NAMESPACE` and `OPERATOR_TARGET_NAMESPACES` determin
 the install mode, which in turn determines the multitenancy support of the operator.
 
 | MODE            | OPERATOR_NAMESPACE | OPERATOR_TARGET_NAMESPACES | DESCRIPTION                                                                                                    |
-| --------------- | ------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------- |
+|-----------------|--------------------|----------------------------|----------------------------------------------------------------------------------------------------------------|
 | OwnNamespace    | `operators`        | `operators`                | The operator can be configured to watch events in the namespace it is deployed in.                             |
 | SingleNamespace | `operators`        | `foo`                      | The operator can be configured to watch for events in a single namespace that the operator is not deployed in. |
 | MultiNamespace  | `operators`        | `foo,bar,baz`              | The operator can be configured to watch for events in more than one namespace.                                 |
