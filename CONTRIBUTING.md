@@ -18,7 +18,6 @@ These guidelines will help you get started with the Starboard project.
 - [Test Starboard Operator](#test-starboard-operator)
   - [In Cluster](#in-cluster)
   - [Out of Cluster](#out-of-cluster)
-  - [Uninstall](#uninstall)
 - [Update Static YAML Manifests](#update-static-yaml-manifests)
 - [Operator Lifecycle Manager (OLM)](#operator-lifecycle-manager-olm)
   - [Install OLM](#install-olm)
@@ -260,19 +259,19 @@ cp $TMPDIR/starboard-helm-template/starboard-operator/templates/deployment.yaml 
 
 ### Install OLM
 
-To install [Operator Lifecycle Manager][olm] (OLM) run:
+To install [Operator Lifecycle Manager] (OLM) run:
 
 ```
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/crds.yaml
-kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/olm.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/crds.yaml
+kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/olm.yaml
 ```
 
 or
 
 ```
-curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/install.sh -o install.sh
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.3/install.sh -o install.sh
 chmod +x install.sh
-./install.sh v0.18.3
+./install.sh v0.20.0
 ```
 
 ### Build the Catalog Image
@@ -358,7 +357,7 @@ You can find more details about testing Operators with Operator Framework [here]
 [kind]: https://github.com/kubernetes-sigs/kind
 [codecov]: https://codecov.io/
 [codecov-merging-reports]: https://docs.codecov.io/docs/merging-reports/
-[olm]: https://github.com/operator-framework/operator-lifecycle-manager
+[Operator Lifecycle Manager]: https://github.com/operator-framework/operator-lifecycle-manager
 [community-operators]: https://github.com/k8s-operatorhub/community-operators
 [olm-operator-groups]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
 [k8s-sample-controller]: https://github.com/kubernetes/sample-controller
