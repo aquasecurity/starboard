@@ -58,6 +58,7 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 	rootCmd.AddCommand(NewReportCmd(buildInfo, cf, outWriter))
 	rootCmd.AddCommand(NewCleanupCmd(buildInfo, cf))
 	rootCmd.AddCommand(NewConfigCmd(cf, outWriter))
+	rootCmd.AddCommand(NewCheckCommand(buildInfo, cf, outWriter))
 
 	SetGlobalFlags(cf, rootCmd)
 
