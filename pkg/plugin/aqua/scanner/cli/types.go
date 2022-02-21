@@ -1,5 +1,7 @@
 package cli
 
+import "github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
+
 type ResourceType int
 
 const (
@@ -7,6 +9,22 @@ const (
 	Library
 	Package
 )
+
+// Command to scan image or filesystem.
+type Command string
+
+const (
+	Filesystem Command = "filesystem"
+	Image      Command = "image"
+)
+
+type Options struct {
+	Version      string
+	BaseURL      string
+	Credentials  client.UsernameAndPassword
+	RegistryName string
+	Command      string
+}
 
 type ScanReport struct {
 	Image          string               `json:"image"`

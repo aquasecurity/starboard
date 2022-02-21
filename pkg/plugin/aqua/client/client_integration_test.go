@@ -12,7 +12,7 @@ func TestClient(t *testing.T) {
 		t.Skip("Run this test manually")
 	}
 
-	c := NewClient("http://aqua.domain", Authorization{
+	c, _ := NewClient("http://aqua.domain", Authorization{
 		Basic: &UsernameAndPassword{"administrator", "Password12345"}})
 
 	t.Run("Should list registries", func(t *testing.T) {

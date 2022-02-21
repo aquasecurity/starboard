@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 type client struct {
 	baseURL       string
+	authHeader    string
 	authorization Authorization
 	httpClient    *http.Client
 }
@@ -30,9 +32,37 @@ func (c *client) newGetRequest(url string) (*http.Request, error) {
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Add("User-Agent", userAgent)
 	if auth := c.authorization.Basic; auth != nil {
-		req.SetBasicAuth(auth.Username, auth.Password)
+		req.Header.Add(c.authHeader, fmt.Sprintf("Basic %s",
+			base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", auth.Username, auth.Password)))))
 	}
 	return req, nil
+}
+
+// Aqua api has custom auth header, auth header can be get using /api endpoint
+func (c *client) getAuthHeader() error {
+	url := fmt.Sprintf("%s/api", c.baseURL)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Add("User-Agent", userAgent)
+	resp, err := c.httpClient.Do(req)
+	if err != nil || resp == nil {
+		return err
+	}
+	var apiInfo map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&apiInfo)
+	if err != nil {
+		return err
+	}
+	if header, ok := apiInfo["authorization_header"].(string); ok {
+		c.authHeader = header
+	} else {
+		// Default fallback
+		c.authHeader = "Authorization"
+	}
+	return nil
 }
 
 // Clientset defines methods of the Aqua API client.
@@ -59,7 +89,7 @@ type Client struct {
 }
 
 // NewClient constructs a new API client with the specified base URL and authorization details.
-func NewClient(baseURL string, authorization Authorization) *Client {
+func NewClient(baseURL string, authorization Authorization) (*Client, error) {
 	httpClient := &http.Client{
 		Timeout: defaultTimeout,
 	}
@@ -67,6 +97,10 @@ func NewClient(baseURL string, authorization Authorization) *Client {
 		baseURL:       baseURL,
 		authorization: authorization,
 		httpClient:    httpClient,
+	}
+	err := client.getAuthHeader()
+	if err != nil {
+		return &Client{}, fmt.Errorf("failed to get authorization header %w", err)
 	}
 
 	return &Client{
@@ -76,7 +110,7 @@ func NewClient(baseURL string, authorization Authorization) *Client {
 		registries: &Registries{
 			client: client,
 		},
-	}
+	}, nil
 }
 
 func (c *Client) Images() ImagesInterface {

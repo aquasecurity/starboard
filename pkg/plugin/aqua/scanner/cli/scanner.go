@@ -9,37 +9,27 @@ import (
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
 	"github.com/google/go-containerregistry/pkg/name"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Scanner struct {
-	version     string
-	baseURL     string
-	credentials client.UsernameAndPassword
+	scanOptions Options
 }
 
-func NewScanner(version string, baseURL string, credentials client.UsernameAndPassword) *Scanner {
+func NewScanner(options Options) *Scanner {
 	return &Scanner{
-		version:     version,
-		baseURL:     baseURL,
-		credentials: credentials,
+		options,
 	}
 }
 
 func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityReportData, err error) {
-	args := []string{
-		"scan",
-		"--checkonly",
-		"--dockerless",
-		fmt.Sprintf("--host=%s", s.baseURL),
-		fmt.Sprintf("--user=%s", s.credentials.Username),
-		fmt.Sprintf("--password=%s", s.credentials.Password),
-		"--local",
-		imageRef,
+	var command *exec.Cmd
+	if Command(s.scanOptions.Command) == Filesystem {
+		command = s.getFSScanCommand(imageRef)
+	} else {
+		command = s.getImageScanCommand(imageRef)
 	}
-	command := exec.Command("scannercli", args...)
 
 	var stderr bytes.Buffer
 	command.Stderr = &stderr
@@ -55,6 +45,38 @@ func (s *Scanner) Scan(imageRef string) (report v1alpha1.VulnerabilityReportData
 		return
 	}
 	return s.convert(imageRef, aquaReport)
+}
+
+func (s *Scanner) getImageScanCommand(imageRef string) *exec.Cmd {
+	args := []string{
+		"scan",
+		"--checkonly",
+		"--dockerless",
+		fmt.Sprintf("--host=%s", s.scanOptions.BaseURL),
+		fmt.Sprintf("--user=%s", s.scanOptions.Credentials.Username),
+		fmt.Sprintf("--password=%s", s.scanOptions.Credentials.Password),
+		"--local",
+		imageRef,
+	}
+	command := exec.Command("scannercli", args...)
+	return command
+}
+
+func (s *Scanner) getFSScanCommand(imageRef string) *exec.Cmd {
+	args := []string{
+		"scan",
+		"--checkonly",
+		fmt.Sprintf("--host=%s", s.scanOptions.BaseURL),
+		fmt.Sprintf("--user=%s", s.scanOptions.Credentials.Username),
+		fmt.Sprintf("--password=%s", s.scanOptions.Credentials.Password),
+		fmt.Sprintf("--registry=%s", s.scanOptions.RegistryName),
+		fmt.Sprintf("--image-name=%s", imageRef),
+		"--register",
+		"--fs-scan",
+		"/",
+	}
+	command := exec.Command("/var/aqua/scannercli", args...)
+	return command
 }
 
 func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alpha1.VulnerabilityReportData, err error) {
@@ -103,7 +125,7 @@ func (s *Scanner) convert(imageRef string, aquaReport ScanReport) (report v1alph
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",
 			Vendor:  "Aqua Security",
-			Version: s.version,
+			Version: s.scanOptions.Version,
 		},
 		Registry: v1alpha1.Registry{
 			Server: ref.Context().RegistryStr(),

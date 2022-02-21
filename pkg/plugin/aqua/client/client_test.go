@@ -16,11 +16,41 @@ var _ = Describe("The Aqua API client", func() {
 
 	BeforeEach(func() {
 		server = NewServer()
-		aquaClient = client.NewClient(server.URL(), client.Authorization{
+		server.AppendHandlers(
+			CombineHandlers(
+				VerifyRequest("GET", "/api"),
+				RespondWith(http.StatusOK, `{"authorization_header":"Authorization"}`),
+			),
+		)
+		aquaClient, _ = client.NewClient(server.URL(), client.Authorization{
 			Basic: &client.UsernameAndPassword{
 				Username: "administrator",
-				Password: "Password1",
+				Password: "bdclz",
 			},
+		})
+	})
+
+	Describe("get auth header", func() {
+		var server *Server
+		BeforeEach(func() {
+			server = NewServer()
+			server.AppendHandlers(CombineHandlers(
+				VerifyRequest("GET", "/api"),
+				RespondWith(http.StatusOK, `{"authorization_header":"Authorization"}`),
+			),
+			)
+		})
+		Context("when the request succeeds", func() {
+			It("should make a request to fetch registries", func() {
+				_, err := client.NewClient(server.URL(), client.Authorization{
+					Basic: &client.UsernameAndPassword{
+						Username: "administrator",
+						Password: "bdclz",
+					},
+				})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(server.ReceivedRequests()).To(HaveLen(1))
+			})
 		})
 	})
 
@@ -36,7 +66,7 @@ var _ = Describe("The Aqua API client", func() {
 			server.AppendHandlers(
 				CombineHandlers(
 					VerifyRequest("GET", "/api/v1/registries"),
-					VerifyBasicAuth("administrator", "Password1"),
+					VerifyBasicAuth("administrator", "bdclz"),
 					VerifyMimeType("application/json"),
 					VerifyHeader(http.Header{
 						"User-Agent": []string{"StarboardSecurityOperator"},
@@ -55,7 +85,7 @@ var _ = Describe("The Aqua API client", func() {
 				registries, err := aquaClient.Registries().List()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(registries).To(Equal(returnedRegistries))
-				Expect(server.ReceivedRequests()).To(HaveLen(1))
+				Expect(server.ReceivedRequests()).To(HaveLen(2))
 			})
 		})
 
@@ -67,7 +97,7 @@ var _ = Describe("The Aqua API client", func() {
 			It("should return error", func() {
 				_, err := aquaClient.Registries().List()
 				Expect(err).To(MatchError(client.ErrUnauthorized))
-				Expect(server.ReceivedRequests()).To(HaveLen(1))
+				Expect(server.ReceivedRequests()).To(HaveLen(2))
 			})
 		})
 	})
@@ -117,7 +147,7 @@ var _ = Describe("The Aqua API client", func() {
 			server.AppendHandlers(
 				CombineHandlers(
 					VerifyRequest("GET", "/api/v2/images/Harbor/library/nginx/1.17/vulnerabilities"),
-					VerifyBasicAuth("administrator", "Password1"),
+					VerifyBasicAuth("administrator", "bdclz"),
 					VerifyMimeType("application/json"),
 					VerifyHeader(http.Header{
 						"User-Agent": []string{"StarboardSecurityOperator"},
@@ -136,7 +166,7 @@ var _ = Describe("The Aqua API client", func() {
 				vulnerabilities, err := aquaClient.Images().Vulnerabilities("Harbor", "library/nginx", "1.17")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(vulnerabilities).To(Equal(returnedVulnerabilities))
-				Expect(server.ReceivedRequests()).To(HaveLen(1))
+				Expect(server.ReceivedRequests()).To(HaveLen(2))
 			})
 		})
 
@@ -148,7 +178,7 @@ var _ = Describe("The Aqua API client", func() {
 			It("should return error", func() {
 				_, err := aquaClient.Images().Vulnerabilities("Harbor", "library/nginx", "1.17")
 				Expect(err).To(MatchError(client.ErrUnauthorized))
-				Expect(server.ReceivedRequests()).To(HaveLen(1))
+				Expect(server.ReceivedRequests()).To(HaveLen(2))
 			})
 		})
 	})

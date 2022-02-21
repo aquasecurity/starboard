@@ -18,13 +18,9 @@ const (
 	hostFlag     = "host"
 	userFlag     = "user"
 	passwordFlag = "password"
+	registryFlag = "registry"
+	commandFlag  = "command"
 )
-
-type options struct {
-	version     string
-	baseURL     string
-	credentials client.UsernameAndPassword
-}
 
 // main is the entrypoint of the executable command used by Aqua vulnerabilityreport.Plugin.
 func main() {
@@ -34,7 +30,7 @@ func main() {
 }
 
 func run() error {
-	opt := options{}
+	opt := cli.Options{}
 
 	rootCmd := &cobra.Command{
 		Use:           "scanner",
@@ -50,10 +46,12 @@ func run() error {
 		},
 	}
 
-	rootCmd.Flags().StringVarP(&opt.version, versionFlag, "V", "", "Version of Aqua")
-	rootCmd.Flags().StringVarP(&opt.baseURL, hostFlag, "H", "", "Aqua management console address (required)")
-	rootCmd.Flags().StringVarP(&opt.credentials.Username, userFlag, "U", "", "Aqua management console username (required)")
-	rootCmd.Flags().StringVarP(&opt.credentials.Password, passwordFlag, "P", "", "Aqua management console password (required)")
+	rootCmd.Flags().StringVarP(&opt.Version, versionFlag, "V", "", "Version of Aqua")
+	rootCmd.Flags().StringVarP(&opt.BaseURL, hostFlag, "H", "", "Aqua management console address (required)")
+	rootCmd.Flags().StringVarP(&opt.Credentials.Username, userFlag, "U", "", "Aqua management console username (required)")
+	rootCmd.Flags().StringVarP(&opt.Credentials.Password, passwordFlag, "P", "", "Aqua management console password (required)")
+	rootCmd.Flags().StringVarP(&opt.RegistryName, registryFlag, "R", "", "Registry name from Aqua management console")
+	rootCmd.Flags().StringVarP(&opt.Command, commandFlag, "C", "image", "Command mode to use for scanner eg image/fs")
 
 	_ = rootCmd.MarkFlagRequired(versionFlag)
 	_ = rootCmd.MarkFlagRequired(hostFlag)
@@ -65,19 +63,22 @@ func run() error {
 
 // scan scans the specified image reference. Firstly, attempt to download a vulnerability
 // report with Aqua REST API call. If the report is not found, execute the `scannercli scan` command.
-func scan(opt options, imageRef string) (report v1alpha1.VulnerabilityReportData, err error) {
-	clientset := client.NewClient(opt.baseURL, client.Authorization{
-		Basic: &opt.credentials,
+func scan(opt cli.Options, imageRef string) (report v1alpha1.VulnerabilityReportData, err error) {
+	clientset, err := client.NewClient(opt.BaseURL, client.Authorization{
+		Basic: &opt.Credentials,
 	})
+	if err != nil {
+		return
+	}
 
-	report, err = api.NewScanner(opt.version, clientset).Scan(imageRef)
+	report, err = api.NewScanner(opt, clientset).Scan(imageRef)
 	if err == nil {
 		return
 	}
 	if !errors.Is(err, client.ErrNotFound) {
 		return
 	}
-	report, err = cli.NewScanner(opt.version, opt.baseURL, opt.credentials).Scan(imageRef)
+	report, err = cli.NewScanner(opt).Scan(imageRef)
 	if err != nil {
 		return
 	}

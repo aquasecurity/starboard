@@ -6,6 +6,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
+	"github.com/aquasecurity/starboard/pkg/plugin/aqua/scanner/cli"
 	"github.com/google/go-containerregistry/pkg/name"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,21 +16,46 @@ const (
 )
 
 type Scanner struct {
-	version   string
+	options   cli.Options
 	clientset client.Clientset
 }
 
-func NewScanner(version string, clientset client.Clientset) *Scanner {
+func NewScanner(options cli.Options, clientset client.Clientset) *Scanner {
 	return &Scanner{
-		version:   version,
+		options:   options,
 		clientset: clientset,
 	}
 }
 
 func (s *Scanner) Scan(imageRef string) (v1alpha1.VulnerabilityReportData, error) {
-	registries, err := s.clientset.Registries().List()
+	registryName, err := s.getRegistryName(imageRef)
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
+	}
+	reference, err := name.ParseReference(imageRef)
+	if err != nil {
+		return v1alpha1.VulnerabilityReportData{}, err
+	}
+	repo := reference.Context().RepositoryStr()
+	if cli.Command(s.options.Command) == cli.Filesystem {
+		// in case of fs command, full repo name required for Aqua console
+		repo = reference.Context().RegistryStr() + "/" + reference.Context().RepositoryStr()
+	}
+	vulnerabilities, err := s.clientset.Images().Vulnerabilities(registryName, repo, reference.Identifier())
+	if err != nil {
+		return v1alpha1.VulnerabilityReportData{}, err
+	}
+
+	return s.convert(reference, vulnerabilities)
+}
+
+func (s *Scanner) getRegistryName(imageRef string) (string, error) {
+	if s.options.RegistryName != "" {
+		return s.options.RegistryName, nil
+	}
+	registries, err := s.clientset.Registries().List()
+	if err != nil {
+		return "", err
 	}
 
 	var registryName string
@@ -46,18 +72,7 @@ func (s *Scanner) Scan(imageRef string) (v1alpha1.VulnerabilityReportData, error
 		// Fallback to ad hoc scans registry
 		registryName = adHocScansRegistry
 	}
-
-	reference, err := name.ParseReference(imageRef)
-	if err != nil {
-		return v1alpha1.VulnerabilityReportData{}, err
-	}
-
-	vulnerabilities, err := s.clientset.Images().Vulnerabilities(registryName, reference.Context().RepositoryStr(), reference.Identifier())
-	if err != nil {
-		return v1alpha1.VulnerabilityReportData{}, err
-	}
-
-	return s.convert(reference, vulnerabilities)
+	return registryName, nil
 }
 
 func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesResponse) (v1alpha1.VulnerabilityReportData, error) {
@@ -90,7 +105,7 @@ func (s *Scanner) convert(ref name.Reference, response client.VulnerabilitiesRes
 		Scanner: v1alpha1.Scanner{
 			Name:    "Aqua CSP",
 			Vendor:  "Aqua Security",
-			Version: s.version,
+			Version: s.options.Version,
 		},
 		Registry: v1alpha1.Registry{
 			Server: ref.Context().RegistryStr(),
