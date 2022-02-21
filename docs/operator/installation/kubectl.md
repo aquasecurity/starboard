@@ -28,7 +28,7 @@ mode, which is more efficient that the [Standalone] mode, or switch to [Aqua Ent
 scanner.
 
 You can further [configure](./../configuration.md) the operator with environment variables. For example, to change the
-target namespace from the `defaul` namespace to all namespaces set the value of the `OPERATOR_TARGET_NAMESPACES`
+target namespace from the `defaul` namespace to all namespaces update the value of the `OPERATOR_TARGET_NAMESPACES`
 environment variable from `default` to a blank string (i.e., `OPERATOR_TARGET_NAMESPACES=""`).
 
 Static YAML manifests with fixed values have shortcomings. For example, if you want to change the container image or

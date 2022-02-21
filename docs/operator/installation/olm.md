@@ -11,14 +11,14 @@ configure it to watch the `default` namespaces:
 
 1. Install the Operator Lifecycle Manager:
    ```
-   curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/install.sh -o install.sh
+   curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/install.sh -o install.sh
    chmod +x install.sh
-   ./install.sh v0.18.3
+   ./install.sh v0.20.0
    ```
    or
    ```
-   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/crds.yaml
-   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.18.3/olm.yaml
+   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/crds.yaml
+   kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/olm.yaml
    ```
 2. Create the namespace to install the operator in:
    ```
