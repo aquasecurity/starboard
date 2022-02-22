@@ -123,6 +123,8 @@ rules:
       - configauditreports
       - clusterconfigauditreports
       - ciskubebenchreports
+      - clustercompliancereports
+      - clustercompliancedetailreports
     verbs:
       - get
       - list

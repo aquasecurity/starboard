@@ -32,6 +32,7 @@ func (r *ClusterComplianceReportReconciler) SetupWithManager(mgr ctrl.Manager) e
 		For(&v1alpha1.ClusterComplianceReport{}, builder.WithPredicates(
 			predicate.Not(predicate.IsBeingTerminated),
 			installModePredicate)).
+		Owns(&v1alpha1.ClusterComplianceDetailReport{}).
 		Complete(r.reconcileComplianceReport())
 	if err != nil {
 		return err
