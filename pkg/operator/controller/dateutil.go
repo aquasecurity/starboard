@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// activationTimeExceeded check if next cron activation time has exceeded if so return true
+// nextCronDuration check if next cron activation time has exceeded if so return true
 // if activation time has not reached return false and remaining time
 // in case it failed to parse cron expression return error
-func activationTimeExceeded(cronString string, creationTime time.Time) (time.Duration, error) {
+func nextCronDuration(cronString string, creationTime time.Time) (time.Duration, error) {
 	expr, err := cronexpr.Parse(cronString)
 	if err != nil {
 		return time.Duration(0), err

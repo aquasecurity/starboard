@@ -24,7 +24,7 @@ const (
 )
 
 type Mapper interface {
-	MapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult
+	mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult
 }
 
 type kubeBench struct {
@@ -33,7 +33,7 @@ type kubeBench struct {
 type configAudit struct {
 }
 
-func ByTool(tool string) (Mapper, error) {
+func byTool(tool string) (Mapper, error) {
 	switch tool {
 	case KubeBench:
 		return &kubeBench{}, nil
@@ -50,7 +50,7 @@ type CheckDetails struct {
 	Remediation string
 }
 
-func (kb kubeBench) MapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
+func (kb kubeBench) mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
 	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
 	cb := objList.(*v1alpha1.CISKubeBenchReportList)
 	for _, item := range cb.Items {
@@ -71,7 +71,7 @@ func (kb kubeBench) MapReportDataToMap(objType string, objList client.ObjectList
 	return toolCheckResultMap
 }
 
-func (ac configAudit) MapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
+func (ac configAudit) mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
 	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
 	cb := objList.(*v1alpha1.ConfigAuditReportList)
 	if len(cb.Items) == 0 {

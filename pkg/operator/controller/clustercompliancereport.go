@@ -53,7 +53,7 @@ func (r *ClusterComplianceReportReconciler) reconcileComplianceReport() reconcil
 			}
 			return ctrl.Result{}, fmt.Errorf("getting report from cache: %w", err)
 		}
-		durationToNextGeneration, err := activationTimeExceeded(report.Spec.Cron, r.reportLastUpdatedTime(report))
+		durationToNextGeneration, err := nextCronDuration(report.Spec.Cron, r.reportLastUpdatedTime(report))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to check report cron expression %v", err)
 		}
@@ -62,9 +62,10 @@ func (r *ClusterComplianceReportReconciler) reconcileComplianceReport() reconcil
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to generate new report %v", err)
 			}
+			// update compliance report status
 			err = r.Status().Update(ctx, report)
 			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to generate new report %v", err)
+				return ctrl.Result{}, fmt.Errorf("failed to update report status %v", err)
 			}
 			return ctrl.Result{}, nil
 		}

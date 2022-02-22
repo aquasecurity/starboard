@@ -18,18 +18,24 @@ type Mgr interface {
 	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error)
 }
 
+func NewMgr(client client.Client, log logr.Logger) Mgr {
+	return &cm{
+		client: client,
+		log:    log,
+	}
+}
+
 type cm struct {
 	client client.Client
 	log    logr.Logger
 }
 
-type ControlsSummary struct {
-	ID    string
-	Pass  float32
-	Total float32
+type summaryTotal struct {
+	pass int
+	fail int
 }
 
-type SpecDataMapping struct {
+type specDataMapping struct {
 	toolResourceListNames  map[string]*hashset.Set
 	controlIDControlObject map[string]v1alpha1.Control
 	controlCheckIds        map[string][]string
@@ -47,68 +53,55 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportS
 	}
 	// map tool checks results to control check results
 	controlChecks := w.controlChecksByToolChecks(smd, checkIdsToResults)
-	// publish compliance report
-	return w.createComplianceReport(ctx, spec, controlChecks)
-
-	/*controlCheckDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
-	err = w.createComplianceDetailReport(ctx, spec, controlChecks, controlCheckDetails)
+	// find summary totals
+	st := w.getTotals(controlChecks)
+	//publish compliance details report
+	err = w.createComplianceDetailReport(ctx, spec, smd, checkIdsToResults, st)
 	if err != nil {
-		return err
-	}*/
+		return nil, err
+	}
+	//publish compliance details report
+	return w.createComplianceReport(ctx, spec, st, controlChecks)
+
 }
 
-func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec, controlChecks []v1alpha1.ControlCheck) (*v1alpha1.ClusterComplianceReport, error) {
-	var totalFail, totalPass int
-	if len(controlChecks) > 0 {
-		for _, controlCheck := range controlChecks {
-			totalFail = totalFail + controlCheck.FailTotal
-			totalPass = totalPass + controlCheck.PassTotal
-		}
-	}
-	summary := v1alpha1.ClusterComplianceSummary{PassCount: totalPass, FailCount: totalFail}
+//createComplianceReport create compliance report
+func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec, st summaryTotal, controlChecks []v1alpha1.ControlCheck) (*v1alpha1.ClusterComplianceReport, error) {
+	summary := v1alpha1.ClusterComplianceSummary{PassCount: st.pass, FailCount: st.fail}
 	report := v1alpha1.ClusterComplianceReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(spec.Name),
 		},
-
 		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: strings.ToLower(spec.Name), Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecks},
 	}
 	var existing v1alpha1.ClusterComplianceReport
 	err := w.client.Get(ctx, types.NamespacedName{
 		Name: strings.ToLower(spec.Name),
 	}, &existing)
-
-	if err == nil {
-		copied := existing.DeepCopy()
-		copied.Labels = report.Labels
-		copied.Status = report.Status
-		copied.Spec = spec
-		copied.Status.UpdateTimestamp = metav1.NewTime(ext.NewSystemClock().Now())
-		return copied, nil
+	if err != nil {
+		return nil, fmt.Errorf("compliance crd with name %s is missing", "spec.Name")
 	}
-
-	if errors.IsNotFound(err) {
-		return &report, nil
-	}
-	return nil, err
+	copied := existing.DeepCopy()
+	copied.Labels = report.Labels
+	copied.Status = report.Status
+	copied.Spec = spec
+	copied.Status.UpdateTimestamp = metav1.NewTime(ext.NewSystemClock().Now())
+	return copied, nil
 }
 
-func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.ReportSpec, controlChecks []v1alpha1.ControlCheck, controlChecksDetails []v1alpha1.ControlCheckDetails) error {
-	var totalFail, totalPass int
-	if len(controlChecks) > 0 {
-		for _, controlCheck := range controlChecks {
-			totalFail = totalFail + controlCheck.FailTotal
-			totalPass = totalPass + controlCheck.PassTotal
-		}
-	}
-	name := strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "Details"))
-	summary := v1alpha1.ClusterComplianceDetailSummary{PassCount: totalPass, FailCount: totalFail}
+//createComplianceDetailReport create and publish compliance details report
+func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.ReportSpec, smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult, st summaryTotal) error {
+	controlChecksDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
+	name := strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "details"))
+	// compliance details report
+	summary := v1alpha1.ClusterComplianceDetailSummary{PassCount: st.pass, FailCount: st.fail}
 	report := v1alpha1.ClusterComplianceDetailReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 		Report: v1alpha1.ClusterComplianceDetailReportData{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: name, Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecksDetails},
 	}
+
 	var existing v1alpha1.ClusterComplianceDetailReport
 	err := w.client.Get(ctx, types.NamespacedName{
 		Name: name,
@@ -128,7 +121,20 @@ func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.Rep
 	return nil
 }
 
-func (w *cm) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
+// getTotals return control check totals
+func (w *cm) getTotals(controlChecks []v1alpha1.ControlCheck) summaryTotal {
+	var totalFail, totalPass int
+	if len(controlChecks) > 0 {
+		for _, controlCheck := range controlChecks {
+			totalFail = totalFail + controlCheck.FailTotal
+			totalPass = totalPass + controlCheck.PassTotal
+		}
+	}
+	return summaryTotal{fail: totalFail, pass: totalPass}
+}
+
+// controlChecksByToolChecks build control checks list by parsing test results and mapping it to relevant tool
+func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
 	controlChecks := make([]v1alpha1.ControlCheck, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		var passTotal, failTotal, total int
@@ -154,7 +160,8 @@ func (w *cm) controlChecksByToolChecks(smd *SpecDataMapping, checkIdsToResults m
 	return controlChecks
 }
 
-func (w *cm) controlChecksDetailsByToolChecks(smd *SpecDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
+// controlChecksDetailsByToolChecks build control checks with details list by parsing test results and mapping it to relevant tool
+func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		for _, checkId := range checkIds {
@@ -180,11 +187,11 @@ func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 	checkIdsToResults := make(map[string][]*ToolCheckResult)
 	for tool, resourceListMap := range toolResourceMap {
 		for resourceName, resourceList := range resourceListMap {
-			mapper, err := ByTool(tool)
+			mapper, err := byTool(tool)
 			if err != nil {
 				return nil, err
 			}
-			idCheckResultMap := mapper.MapReportDataToMap(resourceName, resourceList)
+			idCheckResultMap := mapper.mapReportDataToMap(resourceName, resourceList)
 			if idCheckResultMap == nil {
 				continue
 			}
@@ -199,7 +206,8 @@ func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 	return checkIdsToResults, nil
 }
 
-func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *SpecDataMapping {
+//populateSpecDataToMaps populate spec data to map structures
+func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 	//control to resource list map
 	controlIDControlObject := make(map[string]v1alpha1.Control)
 	//control to checks map
@@ -223,19 +231,8 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *SpecDataMapping {
 			controlCheckIds[control.ID] = append(controlCheckIds[control.ID], check.ID)
 		}
 	}
-	return &SpecDataMapping{
+	return &specDataMapping{
 		toolResourceListNames:  toolResourceListName,
 		controlIDControlObject: controlIDControlObject,
 		controlCheckIds:        controlCheckIds}
-}
-
-func NewMgr(client client.Client, log logr.Logger) Mgr {
-	return &cm{
-		client: client,
-		log:    log,
-	}
-}
-
-type ToolResource struct {
-	ToolResource map[string]map[string]interface{}
 }
