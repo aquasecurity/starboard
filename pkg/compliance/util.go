@@ -5,13 +5,13 @@ import (
 	"github.com/emirpasic/gods/sets/hashset"
 )
 
-//MapResources map resource data
-func MapResources(control v1alpha1.Control) []string {
+//mapResources map resource data
+func mapResources(control v1alpha1.Control) []string {
 	set := hashset.New()
 	updatedResources := make([]string, 0)
 	for _, resource := range control.Resources {
 		if resource == "Workload" {
-			set.Add("Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "ComplianceMgr", "CronJob")
+			set.Add("Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "CronJob", "Job")
 		} else {
 			set.Add(resource)
 		}

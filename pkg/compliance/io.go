@@ -60,7 +60,7 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportS
 	if err != nil {
 		return nil, err
 	}
-	//publish compliance details report
+	//generate compliance details report
 	return w.createComplianceReport(ctx, spec, st, controlChecks)
 
 }
@@ -164,19 +164,21 @@ func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults m
 func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
+		control := smd.controlIDControlObject[controlID]
 		for _, checkId := range checkIds {
 			results, ok := checkIdsToResults[checkId]
 			if ok {
+				ctta := make([]v1alpha1.ToolCheckResult, 0)
 				for _, checkResult := range results {
 					var ctt v1alpha1.ToolCheckResult
 					rds := make([]v1alpha1.ResultDetails, 0)
 					for _, crd := range checkResult.Details {
-						rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Status: crd.Status})
+						rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
 					}
 					ctt = v1alpha1.ToolCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
-					control := smd.controlIDControlObject[controlID]
-					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ToolCheckResult: ctt})
+					ctta = append(ctta, ctt)
 				}
+				controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ToolCheckResult: ctta})
 			}
 		}
 	}
@@ -191,7 +193,7 @@ func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 			if err != nil {
 				return nil, err
 			}
-			idCheckResultMap := mapper.mapReportDataToMap(resourceName, resourceList)
+			idCheckResultMap := mapper.mapReportData(resourceName, resourceList)
 			if idCheckResultMap == nil {
 				continue
 			}
@@ -215,7 +217,7 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 	//tool to resource list map
 	toolResourceListName := make(map[string]*hashset.Set)
 	for _, control := range spec.Controls {
-		control.Resources = MapResources(control)
+		control.Resources = mapResources(control)
 		if _, ok := toolResourceListName[control.Mapping.Tool]; !ok {
 			toolResourceListName[control.Mapping.Tool] = hashset.New()
 		}

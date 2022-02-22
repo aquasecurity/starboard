@@ -57,7 +57,7 @@ spec:
                 - controls
               properties:
                 kind:
-                  type: string
+                  type: string #type of report example compliance
                 name:
                   type: string
                 description:
@@ -81,7 +81,7 @@ spec:
                         type: string
                       description:
                         type: string
-                      id:
+                      id: # control check id
                         type: string
                       resources:
                         type: array
@@ -93,7 +93,7 @@ spec:
                           - tool
                           - checks
                         properties:
-                          tool:
+                          tool: # tool name currently only config-audit and kube-bench are supported
                             type: string
                             pattern: '^config-audit$|^kube-bench$'
                           checks:
@@ -103,7 +103,7 @@ spec:
                               required:
                                 - id
                               properties:
-                                id:
+                                id: # tool id
                                   type: string
             status:
               x-kubernetes-preserve-unknown-fields: true
@@ -111,7 +111,6 @@ spec:
       subresources:
         # status enables the status subresource.
         status: { }
-        # scale enables the scale subresource.
   names:
     singular: clustercompliancereport
     plural: clustercompliancereports

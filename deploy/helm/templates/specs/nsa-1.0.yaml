@@ -63,18 +63,9 @@ spec:
         tool: config-audit
         checks:
           - id: KSV010
-    - name: Requires the use of a read only root file system
-      description: ''
-      id: '1.6'
-      resources:
-        - Workload
-      mapping:
-        tool: config-audit
-        checks:
-          - id: KSV014
     - name: applications can run with root privileges or with root group membership
       description: ''
-      id: '1.7'
+      id: '1.6'
       resources:
         - Workload
       mapping:
@@ -83,7 +74,7 @@ spec:
           - id: KSV029
     - name: Restricts escalation to root privileges.
       description: ''
-      id: '1.8'
+      id: '1.7'
       resources:
         - Workload
       mapping:
@@ -92,7 +83,7 @@ spec:
           - id: KSV001
     - name: Sets the SELinux context of the container.
       description: ''
-      id: '1.9'
+      id: '1.8'
       resources:
         - Workload
       mapping:
@@ -101,7 +92,7 @@ spec:
           - id: KSV002
     - name: Restrict a container's access to resources with AppArmor
       description: ''
-      id: '1.10'
+      id: '1.9'
       resources:
         - Workload
       mapping:
@@ -110,7 +101,7 @@ spec:
           - id: KSV030
     - name: Sets the seccomp profile used to sandbox containers.
       description: ''
-      id: '1.11'
+      id: '1.10'
       resources:
         - Workload
       mapping:
@@ -119,7 +110,7 @@ spec:
           - id: KSV036
     - name: Protecting Pod service account tokens
       description: ''
-      id: '1.12'
+      id: '1.11'
       resources:
         - Workload
       mapping:
@@ -128,7 +119,7 @@ spec:
           - id: KSV037
     - name: Namespace kube-system should should not be used by users
       description: ''
-      id: '1.13'
+      id: '1.12'
       resources:
         - Workload
       mapping:

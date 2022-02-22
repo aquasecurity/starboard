@@ -16,10 +16,8 @@ type ClusterComplianceSummary struct {
 type ClusterComplianceReport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec ReportSpec `json:"spec,omitempty"`
-
-	Status ReportStatus `json:"status,omitempty"`
+	Spec              ReportSpec   `json:"spec,omitempty"`
+	Status            ReportStatus `json:"status,omitempty"`
 }
 
 //ReportSpec represent the compliance specification

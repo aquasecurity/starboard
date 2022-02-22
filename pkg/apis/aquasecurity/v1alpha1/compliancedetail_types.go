@@ -37,15 +37,16 @@ type ClusterComplianceDetailReportData struct {
 
 // ControlCheckDetails provides the result of conducting a single audit step.
 type ControlCheckDetails struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	Description     string          `json:"description,omitempty"`
-	ToolCheckResult ToolCheckResult `json:"checkResults"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description,omitempty"`
+	ToolCheckResult []ToolCheckResult `json:"checkResults"`
 }
 
 type ResultDetails struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Msg       string `json:"msg"`
 	Status    string `json:"status"`
 }
 

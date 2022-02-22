@@ -24,7 +24,7 @@ const (
 )
 
 type Mapper interface {
-	mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult
+	mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult
 }
 
 type kubeBench struct {
@@ -41,7 +41,7 @@ func byTool(tool string) (Mapper, error) {
 		return &configAudit{}, nil
 	}
 	// tool is not supported
-	return nil, fmt.Errorf("mapper tool is not supported")
+	return nil, fmt.Errorf("mapper tool: %s is not supported", tool)
 }
 
 type CheckDetails struct {
@@ -50,9 +50,12 @@ type CheckDetails struct {
 	Remediation string
 }
 
-func (kb kubeBench) mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
+func (kb kubeBench) mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
 	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
-	cb := objList.(*v1alpha1.CISKubeBenchReportList)
+	cb, ok := objList.(*v1alpha1.CISKubeBenchReportList)
+	if !ok || len(cb.Items) == 0 {
+		return toolCheckResultMap
+	}
 	for _, item := range cb.Items {
 		name := item.GetName()
 		nameSpace := item.Namespace
@@ -71,18 +74,13 @@ func (kb kubeBench) mapReportDataToMap(objType string, objList client.ObjectList
 	return toolCheckResultMap
 }
 
-func (ac configAudit) mapReportDataToMap(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
+func (ac configAudit) mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
 	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
-	cb := objList.(*v1alpha1.ConfigAuditReportList)
-	if len(cb.Items) == 0 {
-		return nil
+	cb, ok := objList.(*v1alpha1.ConfigAuditReportList)
+	if !ok || len(cb.Items) == 0 {
+		return toolCheckResultMap
 	}
 	for _, item := range cb.Items {
-		if item.Report.Scanner.Name != "Conftest" {
-			continue
-		}
-		name := item.GetName()
-		nameSpace := item.Namespace
 		for _, check := range item.Report.Checks {
 			if _, ok := toolCheckResultMap[check.ID]; !ok {
 				toolCheckResultMap[check.ID] = &ToolCheckResult{ID: check.ID, Remediation: check.Remediation, ObjectType: objType}
@@ -92,7 +90,7 @@ func (ac configAudit) mapReportDataToMap(objType string, objList client.ObjectLi
 			if check.Success {
 				status = Pass
 			}
-			toolCheckResultMap[check.ID].Details = append(toolCheckResultMap[check.ID].Details, ResultDetails{Name: name, Namespace: nameSpace, Status: status})
+			toolCheckResultMap[check.ID].Details = append(toolCheckResultMap[check.ID].Details, ResultDetails{Name: item.GetName(), Namespace: item.Namespace, Msg: check.Message, Status: status})
 
 		}
 	}
@@ -139,6 +137,7 @@ func getObjListByName(toolName string) client.ObjectList {
 type ResultDetails struct {
 	Name      string
 	Namespace string
+	Msg       string
 	Status    string
 }
 
