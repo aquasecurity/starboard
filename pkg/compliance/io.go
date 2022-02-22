@@ -72,7 +72,7 @@ func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpe
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(spec.Name),
 		},
-		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: strings.ToLower(spec.Name), Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecks},
+		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, ControlChecks: controlChecks},
 	}
 	var existing v1alpha1.ClusterComplianceReport
 	err := w.client.Get(ctx, types.NamespacedName{

@@ -63,7 +63,6 @@ type ClusterComplianceReportList struct {
 
 type ReportStatus struct {
 	UpdateTimestamp metav1.Time              `json:"updateTimestamp"`
-	Type            Compliance               `json:"type"`
 	Summary         ClusterComplianceSummary `json:"summary"`
 	ControlChecks   []ControlCheck           `json:"control_check"`
 }

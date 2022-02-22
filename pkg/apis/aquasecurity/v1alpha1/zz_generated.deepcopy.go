@@ -900,7 +900,6 @@ func (in *ReportSpec) DeepCopy() *ReportSpec {
 func (in *ReportStatus) DeepCopyInto(out *ReportStatus) {
 	*out = *in
 	in.UpdateTimestamp.DeepCopyInto(&out.UpdateTimestamp)
-	out.Type = in.Type
 	out.Summary = in.Summary
 	if in.ControlChecks != nil {
 		in, out := &in.ControlChecks, &out.ControlChecks
