@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/robfig/cron"
+	"github.com/gorhill/cronexpr"
 	"time"
 )
 
@@ -9,11 +9,11 @@ import (
 // if activation time has not reached return false and remaining time
 // in case it failed to parse cron expression return error
 func activationTimeExceeded(cronString string, creationTime time.Time) (time.Duration, error) {
-	schedule, err := cron.Parse(cronString)
+	expr, err := cronexpr.Parse(cronString)
 	if err != nil {
 		return time.Duration(0), err
 	}
-	return timeToExpiration(schedule.Next(creationTime)), nil
+	return timeToExpiration(expr.Next(creationTime)), nil
 }
 
 //durationExceeded  check if duration is now meaning zero

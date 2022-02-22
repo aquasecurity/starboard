@@ -8,20 +8,10 @@ metadata:
 spec:
   group: aquasecurity.github.io
   scope: Cluster
-  names:
-    singular: clustercompliancereport
-    plural: clustercompliancereports
-    kind: ClusterComplianceReport
-    listKind: ClusterComplianceReportList
-    categories: [ ]
-    shortNames:
-      - compliance
   versions:
     - name: v1alpha1
       served: true
       storage: true
-      subresources:
-        status: { }
       additionalPrinterColumns:
         - jsonPath: .spec.kind
           type: string
@@ -115,9 +105,18 @@ spec:
                               properties:
                                 id:
                                   type: string
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+            status:
+              x-kubernetes-preserve-unknown-fields: true
+              type: object
+      subresources:
+        # status enables the status subresource.
+        status: { }
+        # scale enables the scale subresource.
+  names:
+    singular: clustercompliancereport
+    plural: clustercompliancereports
+    kind: ClusterComplianceReport
+    listKind: ClusterComplianceReportList
+    categories: [ ]
+    shortNames:
+      - compliance
