@@ -23,9 +23,9 @@ we cannot reuse the same ImagePullSecret available on the workload.
 
 ## Solution
 
-Add an environment variable to operator eg `OPERATOR_VULNERABILITY_SCANNER_SAME_NAMESPACE=true`. This way operator can schedule
-and monitor scan jobs in same namespace where workload is running. And plugins will act accordingly to utilize the service 
-account and ImagePullSecret available on the workload.
+Consider there is an option given to enable running vulnerability scan jobs in the same namespace of workload. Operator
+detects it, so it can schedule and monitor scan jobs in same namespace where workload is running. And plugins will act 
+accordingly to utilize the service account and ImagePullSecret available on the workload.
 
 
 ### Example

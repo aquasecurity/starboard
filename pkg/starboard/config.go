@@ -46,14 +46,15 @@ type BuildInfo struct {
 type Scanner string
 
 const (
-	keyVulnerabilityReportsScanner = "vulnerabilityReports.scanner"
-	keyConfigAuditReportsScanner   = "configAuditReports.scanner"
-	keyKubeBenchImageRef           = "kube-bench.imageRef"
-	keyKubeHunterImageRef          = "kube-hunter.imageRef"
-	keyKubeHunterQuick             = "kube-hunter.quick"
-	keyScanJobTolerations          = "scanJob.tolerations"
-	keyScanJobAnnotations          = "scanJob.annotations"
-	keyScanJobPodTemplateLabels    = "scanJob.podTemplateLabels"
+	keyVulnerabilityReportsScanner       = "vulnerabilityReports.scanner"
+	KeyVulnerabilityScansInSameNamespace = "vulnerabilityReports.scanJobsInSameNamespace"
+	keyConfigAuditReportsScanner         = "configAuditReports.scanner"
+	keyKubeBenchImageRef                 = "kube-bench.imageRef"
+	keyKubeHunterImageRef                = "kube-hunter.imageRef"
+	keyKubeHunterQuick                   = "kube-hunter.quick"
+	keyScanJobTolerations                = "scanJob.tolerations"
+	keyScanJobAnnotations                = "scanJob.annotations"
+	keyScanJobPodTemplateLabels          = "scanJob.podTemplateLabels"
 )
 
 // ConfigData holds Starboard configuration settings as a set of key-value
@@ -86,6 +87,15 @@ func (c ConfigData) GetVulnerabilityReportsScanner() (Scanner, error) {
 		return "", fmt.Errorf("property %s not set", keyVulnerabilityReportsScanner)
 	}
 	return Scanner(value), nil
+}
+
+func (c ConfigData) VulnerabilityScanJobsInSameNamespace() bool {
+	var ok bool
+	var value string
+	if value, ok = c[KeyVulnerabilityScansInSameNamespace]; !ok {
+		return false
+	}
+	return value == "true"
 }
 
 func (c ConfigData) GetConfigAuditReportsScanner() (Scanner, error) {

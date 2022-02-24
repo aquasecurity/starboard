@@ -13,16 +13,18 @@ type LimitChecker interface {
 	Check(ctx context.Context) (bool, int, error)
 }
 
-func NewLimitChecker(config etc.Config, client client.Client) LimitChecker {
+func NewLimitChecker(config etc.Config, client client.Client, starboardConfig starboard.ConfigData) LimitChecker {
 	return &checker{
-		config: config,
-		client: client,
+		config:          config,
+		client:          client,
+		starboardConfig: starboardConfig,
 	}
 }
 
 type checker struct {
-	config etc.Config
-	client client.Client
+	config          etc.Config
+	client          client.Client
+	starboardConfig starboard.ConfigData
 }
 
 func (c *checker) Check(ctx context.Context) (bool, int, error) {
@@ -36,9 +38,14 @@ func (c *checker) Check(ctx context.Context) (bool, int, error) {
 
 func (c *checker) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
-	err := c.client.List(ctx, &scanJobs, client.MatchingLabels{
+	listOptions := []client.ListOption{client.MatchingLabels{
 		starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
-	}, client.InNamespace(c.config.Namespace))
+	}}
+	if !c.starboardConfig.VulnerabilityScanJobsInSameNamespace() {
+		// scan jobs are running in only starboard operator namespace
+		listOptions = append(listOptions, client.InNamespace(c.config.Namespace))
+	}
+	err := c.client.List(ctx, &scanJobs, listOptions...)
 	if err != nil {
 		return 0, err
 	}

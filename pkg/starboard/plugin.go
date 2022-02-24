@@ -44,6 +44,8 @@ type PluginContext interface {
 	// GetServiceAccountName return the name of the K8s Service Account used to run workloads
 	// created by Starboard.
 	GetServiceAccountName() string
+	// GetStarboardConfig returns starboard configuration.
+	GetStarboardConfig() ConfigData
 }
 
 // GetPluginConfigMapName returns the name of a ConfigMap used to configure a plugin
@@ -58,6 +60,7 @@ type pluginContext struct {
 	client             client.Client
 	namespace          string
 	serviceAccountName string
+	starboardConfig    ConfigData
 }
 
 func (p *pluginContext) GetName() string {
@@ -121,6 +124,10 @@ func (p *pluginContext) GetServiceAccountName() string {
 	return p.serviceAccountName
 }
 
+func (p *pluginContext) GetStarboardConfig() ConfigData {
+	return p.starboardConfig
+}
+
 type PluginContextBuilder struct {
 	ctx *pluginContext
 }
@@ -148,6 +155,11 @@ func (b *PluginContextBuilder) WithNamespace(namespace string) *PluginContextBui
 
 func (b *PluginContextBuilder) WithServiceAccountName(name string) *PluginContextBuilder {
 	b.ctx.serviceAccountName = name
+	return b
+}
+
+func (b *PluginContextBuilder) WithStarboardConfig(config ConfigData) *PluginContextBuilder {
+	b.ctx.starboardConfig = config
 	return b
 }
 
