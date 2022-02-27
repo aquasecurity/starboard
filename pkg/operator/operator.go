@@ -232,7 +232,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 
 	if operatorConfig.ClusterComplianceEnabled {
 		logger := ctrl.Log.WithName("reconciler").WithName("clustercompliancereport")
-		cc := &controller.ClusterComplianceReportReconciler{
+		cc := &compliance.ClusterComplianceReportReconciler{
 			Logger: logger,
 			Config: operatorConfig,
 			Client: mgr.GetClient(),

@@ -4,7 +4,7 @@ kind: ClusterComplianceReport
 metadata:
   name: nsa
 spec:
-  kind: compliance
+  specKind: compliance
   name: nsa
   description: National Security Agency - Kubernetes Hardening Guidance
   version: "1.0"

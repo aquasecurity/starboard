@@ -22,7 +22,7 @@ type ClusterComplianceReport struct {
 
 //ReportSpec represent the compliance specification
 type ReportSpec struct {
-	Kind        string    `json:"kind"`
+	Kind        string    `json:"specKind"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Cron        string    `json:"cron"`
@@ -34,7 +34,7 @@ type ReportSpec struct {
 type Control struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
-	Description string   `json:"description"`
+	Description string   `json:"description,,omitempty"`
 	Resources   []string `json:"resources"`
 	Mapping     Mapping  `json:"mapping"`
 }

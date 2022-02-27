@@ -1,6 +1,7 @@
-package controller
+package utils
 
 import (
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"testing"
 	"time"
 )
@@ -22,7 +23,7 @@ func TestNextCronDuration(t *testing.T) {
 			if err != nil {
 				t.Errorf(err.Error())
 			}
-			duration, err := nextCronDuration(tt.cron, tm)
+			duration, err := NextCronDuration(tt.cron, tm)
 			if err != nil && err.Error() != tt.wantError {
 				t.Errorf("TestNextCronDuration want %v got %v", tt.wantError, err.Error())
 			}
@@ -38,7 +39,7 @@ func parseTime(creationTime string) (time.Time, error) {
 	layout := "2006-01-02T15:04:05"
 	tm, err := time.Parse(layout, creationTime)
 	if err != nil {
-		return time.Now(), err
+		return ext.NewSystemClock().Now(), err
 	}
 	return tm, nil
 }
@@ -54,7 +55,7 @@ func TestDurationExceeded(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			exceded := durationExceeded(tt.duration)
+			exceded := DurationExceeded(tt.duration)
 			if exceded != tt.want {
 				t.Errorf("TestDurationExceeded want %v got %v", tt.want, exceded)
 			}
@@ -78,8 +79,8 @@ func TestNextIntervalExceeded(t *testing.T) {
 			if err != nil {
 				t.Errorf(err.Error())
 			}
-			exceeded := nextIntervalExceeded(tt.duration, tm)
-			if durationExceeded(exceeded) && tt.want {
+			exceeded := NextIntervalExceeded(tt.duration, tm)
+			if DurationExceeded(exceeded) && tt.want {
 				t.Errorf("TestNextIntervalExceeded want %v got %v", tt.want, exceeded)
 			}
 		})

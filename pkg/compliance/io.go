@@ -67,12 +67,17 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportS
 
 //createComplianceReport create compliance report
 func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec, st summaryTotal, controlChecks []v1alpha1.ControlCheck) (*v1alpha1.ClusterComplianceReport, error) {
+	statusControlChecks := make([]v1alpha1.ControlCheck, 0)
+	//check if status data should be updated
+	if st.fail > 0 || st.pass > 0 {
+		statusControlChecks = append(statusControlChecks, controlChecks...)
+	}
 	summary := v1alpha1.ClusterComplianceSummary{PassCount: st.pass, FailCount: st.fail}
 	report := v1alpha1.ClusterComplianceReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(spec.Name),
 		},
-		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, ControlChecks: controlChecks},
+		Status: v1alpha1.ReportStatus{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, ControlChecks: statusControlChecks},
 	}
 	var existing v1alpha1.ClusterComplianceReport
 	err := w.client.Get(ctx, types.NamespacedName{

@@ -1,14 +1,12 @@
-package controller
+package compliance
 
 import (
 	"context"
-	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/compliance"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/go-cmp/cmp"
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,23 +30,22 @@ func loadResource(filePath string, resource interface{}) error {
 	return err
 }
 
-var _ = Describe("cluster compliance report", func() {
+var _ = ginkgo.Describe("cluster compliance report", func() {
 	config := etc.Config{
 		Namespace: "starboard-operator",
 	}
 
-	Context("reconcile compliance spec report", func() {
-		It("Should return true", func() {
+	ginkgo.Context("reconcile compliance spec report", func() {
+		ginkgo.It("check compliance reconcile with cis-benchmark and config-audit reports", func() {
 			var cisBenchList v1alpha1.CISKubeBenchReportList
-			var confAuditList v1alpha1.ConfigAuditReportList
-			var clusterComplianceSpec v1alpha1.ClusterComplianceReport
 			logger := log.Log.WithName("operator")
-			err := loadResource("./fixture/cisBenchmarkReportList.json", &cisBenchList)
+			err := loadResource("./testdata/fixture/cisBenchmarkReportList.json", &cisBenchList)
 			Expect(err).ToNot(HaveOccurred())
-			err = loadResource("./fixture/configAuditReportList.json", &confAuditList)
+			var confAuditList v1alpha1.ConfigAuditReportList
+			err = loadResource("./testdata/fixture/configAuditReportList.json", &confAuditList)
 			Expect(err).ToNot(HaveOccurred())
-			err = loadResource("./fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
-			Expect(err).ToNot(HaveOccurred())
+			var clusterComplianceSpec v1alpha1.ClusterComplianceReport
+			err = loadResource("./testdata/fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
 			Expect(err).ToNot(HaveOccurred())
 			client := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists(
 				&cisBenchList,
@@ -57,13 +54,13 @@ var _ = Describe("cluster compliance report", func() {
 				&clusterComplianceSpec,
 			).Build()
 			// generate report
-			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: compliance.NewMgr(client, logger)}
+			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger)}
 			_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 			Expect(err).ToNot(HaveOccurred())
 
 			// validate cluster details report
 			var clusterComplianceDetialReport v1alpha1.ClusterComplianceDetailReport
-			err = loadResource("./fixture/clusterComplianceDetailReport.json", &clusterComplianceDetialReport)
+			err = loadResource("./testdata/fixture/clusterComplianceDetailReport.json", &clusterComplianceDetialReport)
 			complianceDetailReport, err := getDetailReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa-details"}, client)
 			Expect(err).ToNot(HaveOccurred())
 			sort.Sort(controlDetailSort(complianceDetailReport.Report.ControlChecks))
@@ -76,15 +73,41 @@ var _ = Describe("cluster compliance report", func() {
 
 			// validate cluster compliance report
 			var clusterComplianceReport v1alpha1.ClusterComplianceReport
-			err = loadResource("./fixture/clusterComplianceReport.json", &clusterComplianceReport)
+			err = loadResource("./testdata/fixture/clusterComplianceReport.json", &clusterComplianceReport)
 			complianceReport, err := getReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"}, client)
 			Expect(err).ToNot(HaveOccurred())
 			sort.Sort(controlSort(complianceReport.Status.ControlChecks))
 			sort.Sort(controlSort(clusterComplianceReport.Status.ControlChecks))
-			b, err := json.Marshal(complianceReport)
-			Expect(err).ToNot(HaveOccurred())
-			fmt.Println(string(b))
 			Expect(cmp.Equal(complianceReport.Status, clusterComplianceReport.Status, ignoreTimeStamp())).To(BeTrue())
+
+			// validate reconcile requeue
+			res, err := instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(res.RequeueAfter > 0).To(BeTrue())
+		})
+
+		ginkgo.It("check compliance reconcile where cis-benchmark and config-audit reports are not present", func() {
+			logger := log.Log.WithName("operator")
+			var clusterComplianceSpec v1alpha1.ClusterComplianceReport
+			err := loadResource("./testdata/fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
+			Expect(err).ToNot(HaveOccurred())
+			client := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+				&clusterComplianceSpec,
+			).Build()
+			// generate report
+			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger)}
+			_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
+			Expect(err).ToNot(HaveOccurred())
+
+			// validate cluster details report
+			complianceDetailReport, err := getDetailReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa-details"}, client)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(complianceDetailReport.Report.ControlChecks) == 0).To(BeTrue())
+
+			// validate cluster compliance report
+			complianceReport, err := getReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"}, client)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(complianceReport.Status.ControlChecks) == 0).To(BeTrue())
 
 			// validate reconcile requeue
 			res, err := instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})

@@ -23,7 +23,7 @@ func TestPopulateSpecDataToMaps(t *testing.T) {
 		ids            []string
 		wantMappedData *specDataMapping
 	}{
-		{name: "spec file with good format", ids: []string{"1.0", "8.1"}, tools: []string{"config-audit", "kube-bench"}, specPath: "./fixture/nsa-1.0.yaml", wantMappedData: &specDataMapping{
+		{name: "spec file with good format", ids: []string{"1.0", "8.1"}, tools: []string{"config-audit", "kube-bench"}, specPath: "./testdata/fixture/nsa-1.0.yaml", wantMappedData: &specDataMapping{
 			toolResourceListNames: map[string]*hashset.Set{"config-audit": hashset.New("Job", "Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "CronJob"),
 				"kube-bench": hashset.New("Node")},
 			controlIDControlObject: map[string]v1alpha1.Control{"1.0": {ID: "1.0", Name: "Non-root containers",
@@ -32,7 +32,7 @@ func TestPopulateSpecDataToMaps(t *testing.T) {
 				Resources: []string{"Node"},
 				Mapping:   v1alpha1.Mapping{Tool: "kube-bench", Checks: []v1alpha1.SpecCheck{{ID: "1.2.22"}}}}},
 			controlCheckIds: map[string][]string{"1.0": {"KSV012"}, "8.1": {"1.2.22"}}}},
-		{name: "spec file with no controls", specPath: "./fixture/nsa-1.0_no_controls.yaml"}}
+		{name: "spec file with no controls", specPath: "./testdata/fixture/nsa-1.0_no_controls.yaml"}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestControlChecksByToolChecks(t *testing.T) {
 		mapToolResult map[string][]*ToolCheckResult
 		want          []v1alpha1.ControlCheck
 	}{
-		{name: " control checks by tool checks", specPath: "./fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1}},
+		{name: " control checks by tool checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1}},
 			mapToolResult: map[string][]*ToolCheckResult{
 				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "pass"}}}},
 				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "fail"}}}},
@@ -128,7 +128,7 @@ func TestCheckIdsToResults(t *testing.T) {
 		reportList map[string]map[string]client.ObjectList
 		wantResult map[string][]*ToolCheckResult
 	}{
-		{name: "map check ids to results report", reportList: map[string]map[string]client.ObjectList{ConfigAudit: {"Pod": getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"})}, KubeBench: {"Node": getCisInstance([]string{"1.1", "2.2"}, []string{"Pass", "Fail"}, []string{"aaa", "bbb"})}}, wantResult: getWantMapResults("./fixture/check_data_result.json")},
+		{name: "map check ids to results report", reportList: map[string]map[string]client.ObjectList{ConfigAudit: {"Pod": getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"})}, KubeBench: {"Node": getCisInstance([]string{"1.1", "2.2"}, []string{"Pass", "Fail"}, []string{"aaa", "bbb"})}}, wantResult: getWantMapResults("./testdata/fixture/check_data_result.json")},
 		{name: "map empty data ", reportList: map[string]map[string]client.ObjectList{}, wantResult: map[string][]*ToolCheckResult{}},
 	}
 	for _, tt := range tests {

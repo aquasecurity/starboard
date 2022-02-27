@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/utils"
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -64,7 +65,7 @@ func (r *TTLReportReconciler) reconcileReport() reconcile.Func {
 			return ctrl.Result{}, fmt.Errorf("failed parsing %v with value %v %w", v1alpha1.TTLReportAnnotation, ttlReportAnnotationStr, err)
 		}
 		durationToTTLExpiration := ttlIsExpired(reportTTLTime, report.Report.UpdateTimestamp.Time)
-		if durationExceeded(durationToTTLExpiration) {
+		if utils.DurationExceeded(durationToTTLExpiration) {
 			log.V(1).Info("Removing vulnerabilityReport with expired TTL")
 			err := r.Client.Delete(ctx, report, &client.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
@@ -79,5 +80,5 @@ func (r *TTLReportReconciler) reconcileReport() reconcile.Func {
 }
 
 func ttlIsExpired(reportTTL time.Duration, creationTime time.Time) time.Duration {
-	return nextIntervalExceeded(reportTTL, creationTime)
+	return utils.NextIntervalExceeded(reportTTL, creationTime)
 }

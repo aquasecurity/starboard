@@ -141,6 +141,12 @@ rules:
       - create
       - get
       - update
+  - apiGroups:
+      - aquasecurity.github.io
+    resources:
+      - clustercompliancereports/status
+    verbs:
+      - update
   {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

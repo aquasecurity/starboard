@@ -13,7 +13,7 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .spec.kind
+        - jsonPath: .spec.specKind
           type: string
           name: report
           description: The name of the complience report
@@ -49,14 +49,14 @@ spec:
             spec:
               type: object
               required:
-                - kind
+                - specKind
                 - name
                 - description
                 - version
                 - cron
                 - controls
               properties:
-                kind:
+                specKind:
                   type: string #type of report example compliance
                 name:
                   type: string
