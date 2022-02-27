@@ -77,6 +77,8 @@ spec:
               value: ":9090"
             - name: OPERATOR_CIS_KUBERNETES_BENCHMARK_ENABLED
               value: "true"
+            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
+              value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
               value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS
