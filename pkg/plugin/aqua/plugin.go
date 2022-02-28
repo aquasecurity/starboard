@@ -13,9 +13,108 @@ import (
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const (
+	// Plugin the name of this plugin.
+	aquaPlugin = "Aqua"
+
+	keyAquaScannerImage   = "aqua.imageRef"
+	keyStarboardAquaImage = "aqua.imageRefStarboardAquaScanner"
+	keyAquaCommand        = "aqua.command"
+	keyAquaCspHost        = "aqua.serverURL"
+	keyAquaUsername       = "aqua.username"
+	keyAquaPassword       = "aqua.password"
+	keyAquaRegistry       = "aqua.registry"
+
+	keyResourcesRequestsCPU    = "aqua.resources.requests.cpu"
+	keyResourcesRequestsMemory = "aqua.resources.requests.memory"
+	keyResourcesLimitsCPU      = "aqua.resources.limits.cpu"
+	keyResourcesLimitsMemory   = "aqua.resources.limits.memory"
+)
+
+// Command to scan image or filesystem.
+type Command string
+
+const (
+	Filesystem Command = "filesystem"
+	Image      Command = "image"
+)
+
+// Config defines configuration params for this plugin.
+type Config struct {
+	starboard.PluginConfig
+}
+
+func (c Config) GetCommand() (Command, error) {
+	var ok bool
+	var value string
+	if value, ok = c.Data[keyAquaCommand]; !ok {
+		// for backward compatibility, fallback to ImageScan
+		return Image, nil
+	}
+	switch Command(value) {
+	case Image:
+		return Image, nil
+	case Filesystem:
+		return Filesystem, nil
+	}
+	return "", fmt.Errorf("invalid value (%s) of %s; allowed values (%s, %s)",
+		value, keyAquaCommand, Image, Filesystem)
+}
+
+func (c Config) GetStarboardAquaScannerImage() (string, error) {
+	var ok bool
+	var value string
+	if value, ok = c.Data[keyStarboardAquaImage]; !ok {
+		return "", fmt.Errorf("property %s not set", keyStarboardAquaImage)
+	}
+	return value, nil
+}
+
+// GetResourceRequirements creates ResourceRequirements from the Config.
+func (c Config) GetResourceRequirements() (corev1.ResourceRequirements, error) {
+	requirements := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{},
+		Limits:   corev1.ResourceList{},
+	}
+
+	err := c.setResourceLimit(keyResourcesRequestsCPU, &requirements.Requests, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+	err = c.setResourceLimit(keyResourcesRequestsMemory, &requirements.Requests, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitsCPU, &requirements.Limits, corev1.ResourceCPU)
+	if err != nil {
+		return requirements, err
+	}
+
+	err = c.setResourceLimit(keyResourcesLimitsMemory, &requirements.Limits, corev1.ResourceMemory)
+	if err != nil {
+		return requirements, err
+	}
+
+	return requirements, nil
+}
+
+func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.ResourceList, k8sResourceName corev1.ResourceName) error {
+	if value, found := c.Data[configKey]; found {
+		quantity, err := resource.ParseQuantity(value)
+		if err != nil {
+			return fmt.Errorf("parsing resource definition %s: %s %w", configKey, value, err)
+		}
+
+		(*k8sResourceList)[k8sResourceName] = quantity
+	}
+	return nil
+}
 
 type plugin struct {
 	idGenerator ext.IDGenerator
@@ -39,8 +138,32 @@ func (s *plugin) Init(_ starboard.PluginContext) error {
 	return nil
 }
 
-func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Object, _ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
-	spec, err := kube.GetPodSpec(workload)
+func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, object client.Object,
+	_ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+	config, err := s.newConfigFrom(ctx)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	command, err := config.GetCommand()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	switch command {
+	case Image:
+		return s.getPodSpecForImageCommand(ctx, config, object)
+	case Filesystem:
+		return s.getPodSpecForFileSystemCommand(ctx, config, object)
+	default:
+		return corev1.PodSpec{}, nil, fmt.Errorf("unrecognized scanner command %q", command)
+
+	}
+}
+
+func (s *plugin) getPodSpecForImageCommand(ctx starboard.PluginContext, config Config,
+	object client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+	spec, err := kube.GetPodSpec(object)
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -55,7 +178,7 @@ func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Obj
 	scanJobContainers := make([]corev1.Container, len(spec.Containers))
 	for i, container := range spec.Containers {
 		var err error
-		scanJobContainers[i], err = s.newScanJobContainer(ctx, container)
+		scanJobContainers[i], err = s.newScanJobContainer(ctx, config, container)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
 		}
@@ -102,12 +225,19 @@ func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Obj
 	}, nil, nil
 }
 
-func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer corev1.Container) (corev1.Container, error) {
+func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, config Config,
+	podContainer corev1.Container) (corev1.Container, error) {
 	aquaImageRef, err := s.getImageRef(ctx)
 	if err != nil {
 		return corev1.Container{}, err
 	}
 	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
+	if err != nil {
+		return corev1.Container{}, err
+	}
+	pluginConfigName := starboard.GetPluginConfigMapName(aquaPlugin)
+
+	requirements, err := config.GetResourceRequirements()
 	if err != nil {
 		return corev1.Container{}, err
 	}
@@ -120,7 +250,8 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer c
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			fmt.Sprintf("/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) --host $(AQUA_CSP_HOST) --user $(AQUA_CSP_USERNAME) --password $(AQUA_CSP_PASSWORD) %s 2> %s",
+			fmt.Sprintf("/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) "+
+				"--host $(AQUA_CSP_HOST) --user $(AQUA_CSP_USERNAME) --password $(AQUA_CSP_PASSWORD) %s 2> %s",
 				podContainer.Image,
 				corev1.TerminationMessagePathDefault),
 		},
@@ -129,50 +260,11 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer c
 				Name:  "AQUA_VERSION",
 				Value: version,
 			},
-			{
-				Name: "AQUA_CSP_HOST",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.GetPluginConfigMapName("Aqua"),
-						},
-						Key: "aqua.serverURL",
-					},
-				},
-			},
-			{
-				Name: "AQUA_CSP_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.GetPluginConfigMapName("Aqua"),
-						},
-						Key: "aqua.username",
-					},
-				},
-			},
-			{
-				Name: "AQUA_CSP_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.GetPluginConfigMapName("Aqua"),
-						},
-						Key: "aqua.password",
-					},
-				},
-			},
+			constructEnvVarSourceFromConfigMap("AQUA_CSP_HOST", pluginConfigName, keyAquaCspHost),
+			constructEnvVarSourceFromConfigMap("AQUA_CSP_USERNAME", pluginConfigName, keyAquaUsername),
+			constructEnvVarSourceFromConfigMap("AQUA_CSP_PASSWORD", pluginConfigName, keyAquaPassword),
 		},
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("100m"),
-				corev1.ResourceMemory: resource.MustParse("100M"),
-			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("500m"),
-				corev1.ResourceMemory: resource.MustParse("500M"),
-			},
-		},
+		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      "scannercli",
@@ -182,6 +274,142 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, podContainer c
 			{
 				Name:      "dockersock",
 				MountPath: "/var/run/docker.sock",
+			},
+		},
+	}, nil
+}
+
+const (
+	FsSharedVolumeName = "starboard-aqua"
+)
+
+func (s *plugin) getPodSpecForFileSystemCommand(ctx starboard.PluginContext, config Config, object client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+	spec, err := kube.GetPodSpec(object)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
+	initContainerName := s.idGenerator.GenerateID()
+
+	aquaImageRef, err := s.getImageRef(ctx)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+	starboardAquaImage, err := config.GetStarboardAquaScannerImage()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+	secretName := vulnerabilityreport.GetScanJobName(object) + "-volume"
+	var env []corev1.EnvVar
+	envVars, err := s.getEnvFromConfig(ctx, secretName)
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+	env = append(env, envVars...)
+	scanJobContainers := make([]corev1.Container, len(spec.Containers))
+	for i, container := range spec.Containers {
+		var err error
+		scanJobContainers[i], err = s.newScanJobContainerFSCommand(config, container, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+	}
+
+	return corev1.PodSpec{
+			RestartPolicy:                corev1.RestartPolicyNever,
+			AutomountServiceAccountToken: pointer.BoolPtr(false),
+			Volumes: []corev1.Volume{
+				{
+					Name: FsSharedVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{
+							Medium: corev1.StorageMediumDefault,
+						},
+					},
+				},
+			},
+			InitContainers: []corev1.Container{
+				{
+					Name:            initContainerName,
+					Image:           aquaImageRef,
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Command: []string{
+						"cp",
+						"/opt/aquasec/scannercli",
+						"/var/aqua/scannercli",
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      FsSharedVolumeName,
+							MountPath: "/var/aqua",
+							ReadOnly:  false,
+						},
+					},
+				},
+				{
+					Name:            s.idGenerator.GenerateID(),
+					Image:           starboardAquaImage,
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Command: []string{
+						"cp",
+						"/usr/local/bin/starboard-scanner-aqua",
+						"/var/aqua/starboard-scanner-aqua",
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      FsSharedVolumeName,
+							MountPath: "/var/aqua",
+							ReadOnly:  false,
+						},
+					},
+				},
+			},
+			Containers: scanJobContainers,
+		}, []*corev1.Secret{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: ctx.GetNamespace(),
+			},
+			Data:       config.SecretData,
+			StringData: config.Data,
+		}}, nil
+}
+
+func (s *plugin) newScanJobContainerFSCommand(config Config, podContainer corev1.Container, envVars []corev1.EnvVar) (corev1.Container, error) {
+	requirements, err := config.GetResourceRequirements()
+	if err != nil {
+		return corev1.Container{}, err
+	}
+	return corev1.Container{
+		Name:                     podContainer.Name,
+		Image:                    podContainer.Image,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		Command: []string{
+			"/var/aqua/starboard-scanner-aqua",
+		},
+		Args: []string{
+			"--version",
+			"$(AQUA_VERSION)",
+			"--host",
+			"$(AQUA_CSP_HOST)",
+			"--user",
+			"$(AQUA_CSP_USERNAME)",
+			"--password",
+			"$(AQUA_CSP_PASSWORD)",
+			"--command",
+			"filesystem",
+			"--registry",
+			"$(AQUA_CSP_REGISTRY)",
+			podContainer.Image,
+		},
+		Env:       envVars,
+		Resources: requirements,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      FsSharedVolumeName,
+				MountPath: "/var/aqua",
+				ReadOnly:  false,
 			},
 		},
 	}, nil
@@ -198,5 +426,65 @@ func (s *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return config.GetRequiredData("aqua.imageRef")
+	return config.GetRequiredData(keyAquaScannerImage)
+}
+
+func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+	pluginConfig, err := ctx.GetConfig()
+	if err != nil {
+		return Config{}, err
+	}
+	return Config{PluginConfig: pluginConfig}, nil
+}
+
+func (s *plugin) getEnvFromConfig(ctx starboard.PluginContext, secretName string) ([]corev1.EnvVar, error) {
+	aquaImageRef, err := s.getImageRef(ctx)
+	if err != nil {
+		return nil, err
+	}
+	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
+	if err != nil {
+		return nil, err
+	}
+	env := []corev1.EnvVar{
+		{
+			Name:  "AQUA_VERSION",
+			Value: version,
+		},
+		constructEnvVarSourceFromSecret("AQUA_CSP_HOST", secretName, keyAquaCspHost),
+		constructEnvVarSourceFromSecret("AQUA_CSP_USERNAME", secretName, keyAquaUsername),
+		constructEnvVarSourceFromSecret("AQUA_CSP_PASSWORD", secretName, keyAquaPassword),
+		constructEnvVarSourceFromSecret("AQUA_CSP_REGISTRY", secretName, keyAquaRegistry),
+	}
+	return env, nil
+}
+
+func constructEnvVarSourceFromConfigMap(envName, configMapName, key string) (res corev1.EnvVar) {
+	return corev1.EnvVar{
+		Name: envName,
+		ValueFrom: &corev1.EnvVarSource{
+			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: configMapName,
+				},
+				Key:      key,
+				Optional: pointer.BoolPtr(true),
+			},
+		},
+	}
+}
+
+func constructEnvVarSourceFromSecret(envName, secretName, key string) (res corev1.EnvVar) {
+	return corev1.EnvVar{
+		Name: envName,
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: secretName,
+				},
+				Key:      key,
+				Optional: pointer.BoolPtr(true),
+			},
+		},
+	}
 }
