@@ -201,7 +201,3 @@ func getCisInstance(testIds []string, testStatus []string, remediation []string)
 					{TestNumber: testIds[1], Status: testStatus[1], Remediation: remediation[1]}}}},
 			}}}}}}
 }
-
-func pointerToInt64(x int64) *int64 {
-	return &x
-}
