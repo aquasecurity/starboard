@@ -1,11 +1,16 @@
 package compliance
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"io/ioutil"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"testing"
 )
 
@@ -55,6 +60,79 @@ func TestByTool(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMapComplianceToolToResource(t *testing.T) {
+	mgr := cm{}
+	tests := []struct {
+		name     string
+		specPath string
+		kClient  client.Client
+		want     map[string]map[string]int
+	}{
+		{name: "map compliance spec to resource", specPath: "./testdata/fixture/clusterComplianceSpec.json", kClient: GetClient(t, "./testdata/fixture/cisBenchmarkReportList.json", "./testdata/fixture/configAuditReportList.json"),
+			want: map[string]map[string]int{KubeBench: {"Node": 1, "LimitRange": 0, "NetworkPolicy": 0, "EncryptionConfiguration": 0}, ConfigAudit: {"DaemonSet": 0, "CronJob": 0, "Job": 0, "Pod": 1, "ReplicaSet": 0, "ReplicationController": 0, "StatefulSet": 0}}},
+		{name: "map compliance spec to resource no data", specPath: "./testdata/fixture/clusterComplianceSpec.json", kClient: GetClient(t),
+			want: map[string]map[string]int{KubeBench: {"Node": 0, "LimitRange": 0, "NetworkPolicy": 0, "EncryptionConfiguration": 0}, ConfigAudit: {"DaemonSet": 0, "CronJob": 0, "Job": 0, "Pod": 0, "ReplicaSet": 0, "ReplicationController": 0, "StatefulSet": 0}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := ioutil.ReadFile(tt.specPath)
+			if err != nil {
+				t.Error(err)
+			}
+			var spec v1alpha1.ClusterComplianceReport
+			err = json.Unmarshal(d, &spec)
+			if err != nil {
+				t.Error(err)
+			}
+			pd := mgr.populateSpecDataToMaps(spec.Spec)
+			mapData := mapComplianceToolToResource(tt.kClient, context.Background(), pd.toolResourceListNames)
+			var match bool
+			if len(mapData) > 0 {
+				for key, val := range tt.want {
+					if tool, ok := mapData[key]; ok {
+						for kTool, kVal := range tool {
+							if cis, ok := kVal.(*v1alpha1.CISKubeBenchReportList); ok {
+								if len(cis.Items) == val[kTool] {
+									match = true
+								}
+							}
+							if cis, ok := kVal.(*v1alpha1.ConfigAuditReportList); ok {
+								if len(cis.Items) == val[kTool] {
+									match = true
+								}
+							}
+						}
+					}
+				}
+			}
+			if !match {
+				t.Errorf("TestMapComplianceToolToResource: return data do not match expected %v ", mapData)
+			}
+		})
+	}
+}
+
+func GetClient(t *testing.T, filePath ...string) client.Client {
+	if len(filePath) == 0 {
+		return fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists().Build()
+	}
+	if len(filePath) == 2 {
+		var cisBenchList v1alpha1.CISKubeBenchReportList
+		err := loadResource(filePath[0], &cisBenchList)
+		if err != nil {
+			t.Error(err)
+		}
+		var confAuditList v1alpha1.ConfigAuditReportList
+		err = loadResource(filePath[1], &confAuditList)
+		if err != nil {
+			panic(err)
+		}
+		return fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists(&cisBenchList, &confAuditList).Build()
+	}
+	t.Error(fmt.Errorf("wrong num of file paths"))
+	return nil
 }
 
 func TestMapReportDataToMap(t *testing.T) {
@@ -122,4 +200,8 @@ func getCisInstance(testIds []string, testStatus []string, remediation []string)
 					{TestNumber: testIds[0], Status: testStatus[0], Remediation: remediation[0]},
 					{TestNumber: testIds[1], Status: testStatus[1], Remediation: remediation[1]}}}},
 			}}}}}}
+}
+
+func pointerToInt64(x int64) *int64 {
+	return &x
 }
