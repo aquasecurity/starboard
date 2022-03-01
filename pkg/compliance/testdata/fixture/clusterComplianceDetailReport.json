@@ -9,7 +9,7 @@
   "report": {
     "updateTimestamp": "2022-02-26T14:05:29Z",
     "type": {
-      "kind": "compliance",
+      "specKind": "compliance",
       "name": "nsa-details",
       "description": "national security agency - kubernetes hardening guidance",
       "version": "1.0"

@@ -12,7 +12,7 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .report.type.kind
+        - jsonPath: .report.type.specKind
           type: string
           name: report
           description: The name of the complience report
