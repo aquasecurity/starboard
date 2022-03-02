@@ -30,7 +30,7 @@ Aqua Starboard Workload Security Report - `)
 //line pkg/report/templates/workload_report.qtpl:4
 	qw422016.N().S(`/`)
 //line pkg/report/templates/workload_report.qtpl:4
-	qw422016.E().S(string(p.Workload.Kind))
+	qw422016.E().V(p.Workload.Kind)
 //line pkg/report/templates/workload_report.qtpl:4
 	qw422016.N().S(`/`)
 //line pkg/report/templates/workload_report.qtpl:4
@@ -111,7 +111,7 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
       <div class="row text-center">
         <h3 class="text-muted mx-auto">Workload: `)
 //line pkg/report/templates/workload_report.qtpl:42
-	qw422016.E().S(string(p.Workload.Kind))
+	qw422016.E().V(p.Workload.Kind)
 //line pkg/report/templates/workload_report.qtpl:42
 	qw422016.N().S(`/`)
 //line pkg/report/templates/workload_report.qtpl:42
@@ -470,7 +470,7 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                           </td>
                           <td>`)
 //line pkg/report/templates/workload_report.qtpl:207
-				qw422016.E().S(string(v.Severity))
+				qw422016.E().V(v.Severity)
 //line pkg/report/templates/workload_report.qtpl:207
 				qw422016.N().S(`</td>
                           <td>`)
@@ -555,89 +555,51 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                                </div>
                             </div>
                             <div class="row">
-                                `)
+                              `)
 //line pkg/report/templates/workload_report.qtpl:251
-		sumDanger := p.ConfigAuditReport.Report.Summary.DangerCount
-		sumWarning := p.ConfigAuditReport.Report.Summary.WarningCount
-		sumPass := p.ConfigAuditReport.Report.Summary.PassCount
+		sumCritical := p.ConfigAuditReport.Report.Summary.CriticalCount
+		sumHigh := p.ConfigAuditReport.Report.Summary.HighCount
+		sumMedium := p.ConfigAuditReport.Report.Summary.MediumCount
+		sumLow := p.ConfigAuditReport.Report.Summary.LowCount
 
-//line pkg/report/templates/workload_report.qtpl:254
+//line pkg/report/templates/workload_report.qtpl:255
 		qw422016.N().S(`
 
-                                `)
-//line pkg/report/templates/workload_report.qtpl:256
-		if sumDanger > 0 {
-//line pkg/report/templates/workload_report.qtpl:256
-			qw422016.N().S(`
-                                <div class="col text-center p-0 text-danger font-weight-bold">
-                                `)
+                              <div class="col text-center p-0 text-danger font-weight-bold">
+                                <p class="mx-auto mb-1">`)
 //line pkg/report/templates/workload_report.qtpl:258
-		} else {
+		qw422016.N().D(sumCritical)
 //line pkg/report/templates/workload_report.qtpl:258
-			qw422016.N().S(`
-                                <div class="col text-center p-0">
-                                `)
-//line pkg/report/templates/workload_report.qtpl:260
-		}
-//line pkg/report/templates/workload_report.qtpl:260
-		qw422016.N().S(`
-                                    <p class="mx-auto mb-1">`)
-//line pkg/report/templates/workload_report.qtpl:261
-		qw422016.N().D(sumDanger)
-//line pkg/report/templates/workload_report.qtpl:261
 		qw422016.N().S(`</p>
-                                    <p class="mx-auto">DANGER</p>
-                                </div>
+                                <p class="mx-auto">CRITICAL</p>
+                              </div>
 
-                                `)
-//line pkg/report/templates/workload_report.qtpl:265
-		if sumWarning > 0 {
-//line pkg/report/templates/workload_report.qtpl:265
-			qw422016.N().S(`
-                                <div class="col text-center p-0 text-warning font-weight-bold">
-                                `)
-//line pkg/report/templates/workload_report.qtpl:267
-		} else {
-//line pkg/report/templates/workload_report.qtpl:267
-			qw422016.N().S(`
-                                <div class="col text-center p-0">
-                                `)
-//line pkg/report/templates/workload_report.qtpl:269
-		}
-//line pkg/report/templates/workload_report.qtpl:269
-		qw422016.N().S(`
-                                    <p class="mx-auto mb-1">`)
-//line pkg/report/templates/workload_report.qtpl:270
-		qw422016.N().D(sumWarning)
-//line pkg/report/templates/workload_report.qtpl:270
+                              <div class="col text-center p-0 text-danger font-weight-bold">
+                                <p class="mx-auto mb-1">`)
+//line pkg/report/templates/workload_report.qtpl:263
+		qw422016.N().D(sumHigh)
+//line pkg/report/templates/workload_report.qtpl:263
 		qw422016.N().S(`</p>
-                                    <p class="mx-auto">WARNING</p>
-                                </div>
+                                <p class="mx-auto">HIGH</p>
+                              </div>
 
-                                `)
-//line pkg/report/templates/workload_report.qtpl:274
-		if sumPass > 0 {
-//line pkg/report/templates/workload_report.qtpl:274
-			qw422016.N().S(`
-                                <div class="col text-center p-0 text-success font-weight-bold">
-                                `)
-//line pkg/report/templates/workload_report.qtpl:276
-		} else {
-//line pkg/report/templates/workload_report.qtpl:276
-			qw422016.N().S(`
-                                <div class="col text-center p-0">
-                                `)
-//line pkg/report/templates/workload_report.qtpl:278
-		}
-//line pkg/report/templates/workload_report.qtpl:278
-		qw422016.N().S(`
-                                    <p class="mx-auto mb-1">`)
-//line pkg/report/templates/workload_report.qtpl:279
-		qw422016.N().D(sumPass)
-//line pkg/report/templates/workload_report.qtpl:279
+                              <div class="col text-center p-0 text-warning font-weight-bold">
+                                <p class="mx-auto mb-1">`)
+//line pkg/report/templates/workload_report.qtpl:268
+		qw422016.N().D(sumMedium)
+//line pkg/report/templates/workload_report.qtpl:268
 		qw422016.N().S(`</p>
-                                    <p class="mx-auto ">PASS</p>
-                                </div>
+                                <p class="mx-auto">MEDIUM</p>
+                              </div>
+
+                              <div class="col text-center p-0">
+                                <p class="mx-auto mb-1">`)
+//line pkg/report/templates/workload_report.qtpl:273
+		qw422016.N().D(sumLow)
+//line pkg/report/templates/workload_report.qtpl:273
+		qw422016.N().S(`</p>
+                                <p class="mx-auto">LOW</p>
+                              </div>
                             </div>
                         </div>
                         <!-- Metadata -->
@@ -651,9 +613,9 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                                 <div class="col">
                                     <p class="my-0">
                                         Generated at:  `)
-//line pkg/report/templates/workload_report.qtpl:294
+//line pkg/report/templates/workload_report.qtpl:288
 		qw422016.E().S(p.ConfigAuditReport.Report.UpdateTimestamp.Format("2 Jan 2006 15:04:01"))
-//line pkg/report/templates/workload_report.qtpl:294
+//line pkg/report/templates/workload_report.qtpl:288
 		qw422016.N().S(`
                                     </p>
                                 </div>
@@ -674,53 +636,53 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                             </thead>
                             <tbody>
                               `)
-//line pkg/report/templates/workload_report.qtpl:313
+//line pkg/report/templates/workload_report.qtpl:307
 		for _, check := range p.ConfigAuditReport.Report.PodChecks {
-//line pkg/report/templates/workload_report.qtpl:313
+//line pkg/report/templates/workload_report.qtpl:307
 			qw422016.N().S(`
                                 <tr>
                                   <td>`)
-//line pkg/report/templates/workload_report.qtpl:315
+//line pkg/report/templates/workload_report.qtpl:309
 			qw422016.E().V(check.Success)
-//line pkg/report/templates/workload_report.qtpl:315
+//line pkg/report/templates/workload_report.qtpl:309
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/workload_report.qtpl:316
+//line pkg/report/templates/workload_report.qtpl:310
 			qw422016.E().S(check.ID)
-//line pkg/report/templates/workload_report.qtpl:316
+//line pkg/report/templates/workload_report.qtpl:310
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/workload_report.qtpl:317
-			qw422016.E().S(check.Severity)
-//line pkg/report/templates/workload_report.qtpl:317
+//line pkg/report/templates/workload_report.qtpl:311
+			qw422016.E().V(check.Severity)
+//line pkg/report/templates/workload_report.qtpl:311
 			qw422016.N().S(`</td>
                                   <td>`)
-//line pkg/report/templates/workload_report.qtpl:318
+//line pkg/report/templates/workload_report.qtpl:312
 			qw422016.E().S(check.Category)
-//line pkg/report/templates/workload_report.qtpl:318
+//line pkg/report/templates/workload_report.qtpl:312
 			qw422016.N().S(`</td>
                                 </tr>
                               `)
-//line pkg/report/templates/workload_report.qtpl:320
+//line pkg/report/templates/workload_report.qtpl:314
 		}
-//line pkg/report/templates/workload_report.qtpl:320
+//line pkg/report/templates/workload_report.qtpl:314
 		qw422016.N().S(`
                             </tbody>
                       </table>
                   </div>
                   `)
-//line pkg/report/templates/workload_report.qtpl:324
+//line pkg/report/templates/workload_report.qtpl:318
 		for container, checks := range p.ConfigAuditReport.Report.ContainerChecks {
-//line pkg/report/templates/workload_report.qtpl:324
+//line pkg/report/templates/workload_report.qtpl:318
 			qw422016.N().S(`
                     <div class="row"><h5 class="text-info" id="ca_container_`)
-//line pkg/report/templates/workload_report.qtpl:325
+//line pkg/report/templates/workload_report.qtpl:319
 			qw422016.E().S(container)
-//line pkg/report/templates/workload_report.qtpl:325
+//line pkg/report/templates/workload_report.qtpl:319
 			qw422016.N().S(`">Container `)
-//line pkg/report/templates/workload_report.qtpl:325
+//line pkg/report/templates/workload_report.qtpl:319
 			qw422016.E().S(container)
-//line pkg/report/templates/workload_report.qtpl:325
+//line pkg/report/templates/workload_report.qtpl:319
 			qw422016.N().S(`</h5></div>
                     <div class="row">
                         <table class="table table-sm table-bordered">
@@ -734,78 +696,78 @@ func (p *WorkloadReport) StreamBody(qw422016 *qt422016.Writer) {
                               </thead>
                               <tbody>
                                 `)
-//line pkg/report/templates/workload_report.qtpl:337
+//line pkg/report/templates/workload_report.qtpl:331
 			for _, check := range checks {
-//line pkg/report/templates/workload_report.qtpl:337
+//line pkg/report/templates/workload_report.qtpl:331
 				qw422016.N().S(`
                                   <tr>
                                     <td>`)
-//line pkg/report/templates/workload_report.qtpl:339
+//line pkg/report/templates/workload_report.qtpl:333
 				qw422016.E().V(check.Success)
-//line pkg/report/templates/workload_report.qtpl:339
+//line pkg/report/templates/workload_report.qtpl:333
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/workload_report.qtpl:340
+//line pkg/report/templates/workload_report.qtpl:334
 				qw422016.E().S(check.ID)
-//line pkg/report/templates/workload_report.qtpl:340
+//line pkg/report/templates/workload_report.qtpl:334
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/workload_report.qtpl:341
-				qw422016.E().S(check.Severity)
-//line pkg/report/templates/workload_report.qtpl:341
+//line pkg/report/templates/workload_report.qtpl:335
+				qw422016.E().V(check.Severity)
+//line pkg/report/templates/workload_report.qtpl:335
 				qw422016.N().S(`</td>
                                     <td>`)
-//line pkg/report/templates/workload_report.qtpl:342
+//line pkg/report/templates/workload_report.qtpl:336
 				qw422016.E().S(check.Category)
-//line pkg/report/templates/workload_report.qtpl:342
+//line pkg/report/templates/workload_report.qtpl:336
 				qw422016.N().S(`</td>
                                   </tr>
                                 `)
-//line pkg/report/templates/workload_report.qtpl:344
+//line pkg/report/templates/workload_report.qtpl:338
 			}
-//line pkg/report/templates/workload_report.qtpl:344
+//line pkg/report/templates/workload_report.qtpl:338
 			qw422016.N().S(`
                               </tbody>
                         </table>
                     </div>
                   `)
-//line pkg/report/templates/workload_report.qtpl:348
+//line pkg/report/templates/workload_report.qtpl:342
 		}
-//line pkg/report/templates/workload_report.qtpl:348
+//line pkg/report/templates/workload_report.qtpl:342
 		qw422016.N().S(`
                   `)
-//line pkg/report/templates/workload_report.qtpl:349
+//line pkg/report/templates/workload_report.qtpl:343
 	}
-//line pkg/report/templates/workload_report.qtpl:349
+//line pkg/report/templates/workload_report.qtpl:343
 	qw422016.N().S(`
             </div>
         </div>
 `)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 }
 
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 func (p *WorkloadReport) WriteBody(qq422016 qtio422016.Writer) {
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	p.StreamBody(qw422016)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	qt422016.ReleaseWriter(qw422016)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 }
 
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 func (p *WorkloadReport) Body() string {
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	qb422016 := qt422016.AcquireByteBuffer()
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	p.WriteBody(qb422016)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	qs422016 := string(qb422016.B)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	qt422016.ReleaseByteBuffer(qb422016)
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 	return qs422016
-//line pkg/report/templates/workload_report.qtpl:352
+//line pkg/report/templates/workload_report.qtpl:346
 }

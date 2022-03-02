@@ -1,7 +1,7 @@
 {% import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1" %}
 
 {% func (p *WorkloadReport) Title() %}
-Aqua Starboard Workload Security Report - {%s p.Workload.Namespace %}/{%s string(p.Workload.Kind) %}/{%s p.Workload.Name %}
+Aqua Starboard Workload Security Report - {%s p.Workload.Namespace %}/{%v p.Workload.Kind %}/{%s p.Workload.Name %}
 {% endfunc %}
 
 TODO Check if we need that summary logic. If yes move this logic out of HTML templating.
@@ -39,7 +39,7 @@ func (p *WorkloadReport) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary)
         <h2 class="text-muted mx-auto">Aqua Starboard Workload Security Report</h2>
       </div>
       <div class="row text-center">
-        <h3 class="text-muted mx-auto">Workload: {%s string(p.Workload.Kind) %}/{%s p.Workload.Name %}</h3>
+        <h3 class="text-muted mx-auto">Workload: {%v p.Workload.Kind %}/{%s p.Workload.Name %}</h3>
       </div>
       <div class="row text-center">
         <h3 class="text-muted mx-auto">Namespace: {%s p.Workload.Namespace %}</h3>
@@ -204,7 +204,7 @@ func (p *WorkloadReport) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary)
                           <td>
                             <a target="_blank" href="{%s v.PrimaryLink %}">{%s v.VulnerabilityID %}</a>
                           </td>
-                          <td>{%s string(v.Severity) %}</td>
+                          <td>{%v v.Severity %}</td>
                           <td>{%s v.Resource %}</td>
                           <td>{%s v.InstalledVersion %}</td>
                           <td>{%s v.FixedVersion %}</td>
@@ -247,38 +247,32 @@ func (p *WorkloadReport) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary)
                                </div>
                             </div>
                             <div class="row">
-                                {% code
-                                  sumDanger := p.ConfigAuditReport.Report.Summary.DangerCount
-                                  sumWarning := p.ConfigAuditReport.Report.Summary.WarningCount
-                                  sumPass := p.ConfigAuditReport.Report.Summary.PassCount
-                                %}
+                              {% code
+                                sumCritical := p.ConfigAuditReport.Report.Summary.CriticalCount
+                                sumHigh := p.ConfigAuditReport.Report.Summary.HighCount
+                                sumMedium := p.ConfigAuditReport.Report.Summary.MediumCount
+                                sumLow := p.ConfigAuditReport.Report.Summary.LowCount
+                              %}
 
-                                {% if sumDanger > 0 %}
-                                <div class="col text-center p-0 text-danger font-weight-bold">
-                                {% else %}
-                                <div class="col text-center p-0">
-                                {% endif %}
-                                    <p class="mx-auto mb-1">{%d sumDanger %}</p>
-                                    <p class="mx-auto">DANGER</p>
-                                </div>
+                              <div class="col text-center p-0 text-danger font-weight-bold">
+                                <p class="mx-auto mb-1">{%d sumCritical %}</p>
+                                <p class="mx-auto">CRITICAL</p>
+                              </div>
 
-                                {% if sumWarning > 0 %}
-                                <div class="col text-center p-0 text-warning font-weight-bold">
-                                {% else %}
-                                <div class="col text-center p-0">
-                                {% endif %}
-                                    <p class="mx-auto mb-1">{%d sumWarning %}</p>
-                                    <p class="mx-auto">WARNING</p>
-                                </div>
+                              <div class="col text-center p-0 text-danger font-weight-bold">
+                                <p class="mx-auto mb-1">{%d sumHigh %}</p>
+                                <p class="mx-auto">HIGH</p>
+                              </div>
 
-                                {% if sumPass > 0 %}
-                                <div class="col text-center p-0 text-success font-weight-bold">
-                                {% else %}
-                                <div class="col text-center p-0">
-                                {% endif %}
-                                    <p class="mx-auto mb-1">{%d sumPass %}</p>
-                                    <p class="mx-auto ">PASS</p>
-                                </div>
+                              <div class="col text-center p-0 text-warning font-weight-bold">
+                                <p class="mx-auto mb-1">{%d sumMedium %}</p>
+                                <p class="mx-auto">MEDIUM</p>
+                              </div>
+
+                              <div class="col text-center p-0">
+                                <p class="mx-auto mb-1">{%d sumLow %}</p>
+                                <p class="mx-auto">LOW</p>
+                              </div>
                             </div>
                         </div>
                         <!-- Metadata -->
@@ -314,7 +308,7 @@ func (p *WorkloadReport) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary)
                                 <tr>
                                   <td>{%v check.Success %}</td>
                                   <td>{%s check.ID %}</td>
-                                  <td>{%s check.Severity %}</td>
+                                  <td>{%v check.Severity %}</td>
                                   <td>{%s check.Category %}</td>
                                 </tr>
                               {% endfor %}
@@ -338,7 +332,7 @@ func (p *WorkloadReport) GetMergedVulnsSummary() (v1alpha1.VulnerabilitySummary)
                                   <tr>
                                     <td>{%v check.Success %}</td>
                                     <td>{%s check.ID %}</td>
-                                    <td>{%s check.Severity %}</td>
+                                    <td>{%v check.Severity %}</td>
                                     <td>{%s check.Category %}</td>
                                   </tr>
                                 {% endfor %}

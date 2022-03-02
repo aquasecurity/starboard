@@ -382,33 +382,30 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 	err = json.NewDecoder(logsReader).Decode(&checkResults)
 
 	checks := make([]v1alpha1.Check, 0)
-	var successesCount, warningCount, dangerCount int
+	var lowCount, criticalCount int
 
 	for _, cr := range checkResults {
-		// Conftest reportedly returns negative count of passed tests is some cases: https://github.com/open-policy-agent/conftest/issues/464
-		if cr.Successes > 0 {
-			successesCount += cr.Successes
-		}
 
 		for _, warning := range cr.Warnings {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(warning),
-				Severity: v1alpha1.ConfigAuditSeverityWarning,
+				Severity: v1alpha1.SeverityLow,
 				Message:  warning.Message,
 				Category: defaultCheckCategory,
 				Success:  false,
 			})
-			warningCount++
+			lowCount++
 		}
 
 		for _, failure := range cr.Failures {
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(failure),
-				Severity: v1alpha1.ConfigAuditSeverityDanger,
+				Severity: v1alpha1.SeverityCritical,
 				Message:  failure.Message,
 				Category: defaultCheckCategory,
+				Success:  false,
 			})
-			dangerCount++
+			criticalCount++
 		}
 	}
 
@@ -430,9 +427,8 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			Version: version,
 		},
 		Summary: v1alpha1.ConfigAuditSummary{
-			PassCount:    successesCount,
-			WarningCount: warningCount,
-			DangerCount:  dangerCount,
+			CriticalCount: criticalCount,
+			LowCount:      lowCount,
 		},
 		Checks: checks,
 		// TODO Deprecate PodChecks and ContainerChecks in 0.12+

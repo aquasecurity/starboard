@@ -377,21 +377,20 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Version: polarisVersion,
 	}))
 	g.Expect(result.Summary).To(Equal(v1alpha1.ConfigAuditSummary{
-		PassCount:    2,
-		DangerCount:  1,
-		WarningCount: 1,
+		CriticalCount: 1,
+		LowCount:      1,
 	}))
 	g.Expect(result.PodChecks).To(ConsistOf(v1alpha1.Check{
 		ID:       "hostIPCSet",
 		Message:  "Host IPC is not configured",
 		Success:  false,
-		Severity: "danger",
+		Severity: v1alpha1.SeverityCritical,
 		Category: "Security",
 	}, v1alpha1.Check{
 		ID:       "hostNetworkSet",
 		Message:  "Host network is not configured",
 		Success:  true,
-		Severity: "warning",
+		Severity: v1alpha1.SeverityLow,
 		Category: "Networking",
 	}))
 	g.Expect(result.ContainerChecks).To(HaveLen(1))
@@ -399,7 +398,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		ID:       "cpuLimitsMissing",
 		Message:  "CPU limits are set",
 		Success:  false,
-		Severity: "warning",
+		Severity: v1alpha1.SeverityLow,
 		Category: "Resources",
 		Scope: &v1alpha1.CheckScope{
 			Type:  "Container",
@@ -409,7 +408,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		ID:       "cpuRequestsMissing",
 		Message:  "CPU requests are set",
 		Success:  true,
-		Severity: "warning",
+		Severity: v1alpha1.SeverityLow,
 		Category: "Resources",
 		Scope: &v1alpha1.CheckScope{
 			Type:  "Container",
