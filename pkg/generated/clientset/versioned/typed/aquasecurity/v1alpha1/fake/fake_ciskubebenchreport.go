@@ -83,7 +83,7 @@ func (c *FakeCISKubeBenchReports) Update(ctx context.Context, cISKubeBenchReport
 // Delete takes name of the cISKubeBenchReport and deletes it. Returns an error if one occurs.
 func (c *FakeCISKubeBenchReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(ciskubebenchreportsResource, name), &v1alpha1.CISKubeBenchReport{})
+		Invokes(testing.NewRootDeleteActionWithOptions(ciskubebenchreportsResource, name, opts), &v1alpha1.CISKubeBenchReport{})
 	return err
 }
 

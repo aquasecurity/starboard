@@ -34,8 +34,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 8,
-					DangerCount:  3,
+					LowCount:      8,
+					CriticalCount: 3,
 				},
 			},
 		})
@@ -62,8 +62,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 8,
-					DangerCount:  3,
+					LowCount:      8,
+					CriticalCount: 3,
 				},
 			},
 		}, found)
@@ -84,8 +84,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 8,
-					DangerCount:  3,
+					LowCount:      8,
+					CriticalCount: 3,
 				},
 			},
 		}).Build()
@@ -103,8 +103,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 9,
-					DangerCount:  2,
+					LowCount:      9,
+					CriticalCount: 2,
 				},
 			},
 		})
@@ -132,8 +132,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 9,
-					DangerCount:  2,
+					LowCount:      9,
+					CriticalCount: 2,
 				},
 			},
 		}, found)
@@ -260,8 +260,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 8,
-					DangerCount:  3,
+					LowCount:      8,
+					CriticalCount: 3,
 				},
 			},
 		})
@@ -286,8 +286,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 8,
-					DangerCount:  3,
+					LowCount:      8,
+					CriticalCount: 3,
 				},
 			},
 		}, found)
@@ -309,8 +309,8 @@ func TestReadWriter(t *testing.T) {
 					},
 					Report: v1alpha1.ConfigAuditReportData{
 						Summary: v1alpha1.ConfigAuditSummary{
-							WarningCount: 8,
-							DangerCount:  3,
+							LowCount:      8,
+							CriticalCount: 3,
 						},
 					},
 				}).
@@ -327,8 +327,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 9,
-					DangerCount:  2,
+					LowCount:      9,
+					CriticalCount: 2,
 				},
 			},
 		})
@@ -354,8 +354,8 @@ func TestReadWriter(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Summary: v1alpha1.ConfigAuditSummary{
-					WarningCount: 9,
-					DangerCount:  2,
+					LowCount:      9,
+					CriticalCount: 2,
 				},
 			},
 		}, found)

@@ -438,7 +438,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			ID:       pr.ID,
 			Message:  pr.Message,
 			Success:  pr.Success,
-			Severity: pr.Severity,
+			Severity: p.toSeverity(pr.Severity),
 			Category: pr.Category,
 		}
 		checks = append(checks, check)
@@ -452,7 +452,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 				ID:       crr.ID,
 				Message:  crr.Message,
 				Success:  crr.Success,
-				Severity: crr.Severity,
+				Severity: p.toSeverity(crr.Severity),
 				Category: crr.Category,
 				Scope: &v1alpha1.CheckScope{
 					Type:  "Container",
@@ -490,6 +490,17 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 	}, nil
 }
 
+func (p *plugin) toSeverity(value Severity) v1alpha1.Severity {
+	switch value {
+	case danger:
+		return v1alpha1.SeverityCritical
+	case warning:
+		return v1alpha1.SeverityLow
+	default:
+		return v1alpha1.SeverityUnknown
+	}
+}
+
 func (p *plugin) sourceNameFrom(obj client.Object) string {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	group := gvk.Group
@@ -509,27 +520,25 @@ func (p *plugin) configAuditSummaryFrom(podChecks []v1alpha1.Check, containerChe
 	var summary v1alpha1.ConfigAuditSummary
 	for _, c := range podChecks {
 		if c.Success {
-			summary.PassCount++
 			continue
 		}
 		switch c.Severity {
-		case v1alpha1.ConfigAuditSeverityDanger:
-			summary.DangerCount++
-		case v1alpha1.ConfigAuditSeverityWarning:
-			summary.WarningCount++
+		case v1alpha1.SeverityCritical:
+			summary.CriticalCount++
+		case v1alpha1.SeverityLow:
+			summary.LowCount++
 		}
 	}
 	for _, checks := range containerChecks {
 		for _, c := range checks {
 			if c.Success {
-				summary.PassCount++
 				continue
 			}
 			switch c.Severity {
-			case v1alpha1.ConfigAuditSeverityDanger:
-				summary.DangerCount++
-			case v1alpha1.ConfigAuditSeverityWarning:
-				summary.WarningCount++
+			case v1alpha1.SeverityCritical:
+				summary.CriticalCount++
+			case v1alpha1.SeverityLow:
+				summary.LowCount++
 			}
 		}
 	}

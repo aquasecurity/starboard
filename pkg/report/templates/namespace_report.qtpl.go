@@ -226,7 +226,7 @@ func (p *NamespaceReport) StreamBody(qw422016 *qt422016.Writer) {
 		qw422016.N().S(`</td>
         <td>`)
 //line pkg/report/templates/namespace_report.qtpl:90
-		qw422016.E().S(report.Severity)
+		qw422016.E().V(report.Severity)
 //line pkg/report/templates/namespace_report.qtpl:90
 		qw422016.N().S(`</td>
         <td>`)

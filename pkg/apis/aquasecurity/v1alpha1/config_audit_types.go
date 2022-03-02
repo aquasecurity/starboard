@@ -13,15 +13,20 @@ const (
 	ClusterConfigAuditReportCRName = "clusterconfigauditreports.aquasecurity.github.io"
 )
 
-const (
-	ConfigAuditSeverityDanger  = "danger"
-	ConfigAuditSeverityWarning = "warning"
-)
-
+// ConfigAuditSummary counts failed checks by severity.
 type ConfigAuditSummary struct {
-	PassCount    int `json:"passCount"`
-	DangerCount  int `json:"dangerCount"`
-	WarningCount int `json:"warningCount"`
+
+	// CriticalCount is the number of failed checks with critical severity.
+	CriticalCount int `json:"criticalCount"`
+
+	// HighCount is the number of failed checks with high severity.
+	HighCount int `json:"highCount"`
+
+	// MediumCount is the number of failed checks with medium severity.
+	MediumCount int `json:"mediumCount"`
+
+	// LowCount is the number of failed check with low severity.
+	LowCount int `json:"lowCount"`
 }
 
 // +genclient
@@ -101,16 +106,19 @@ type CheckScope struct {
 
 // Check provides the result of conducting a single audit step.
 type Check struct {
-	ID      string `json:"checkID"`
-	Message string `json:"message"`
+	ID          string   `json:"checkID"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Severity    Severity `json:"severity"`
+	Category    string   `json:"category,omitempty"`
+
+	Message string `json:"message,omitempty"`
 
 	// Remediation provides description or links to external resources to remediate failing check.
 	// +optional
 	Remediation string `json:"remediation,omitempty"`
 
-	Success  bool   `json:"success"`
-	Severity string `json:"severity"`
-	Category string `json:"category"`
+	Success bool `json:"success"`
 
 	// Scope indicates the section of config that was audited.
 	// +optional

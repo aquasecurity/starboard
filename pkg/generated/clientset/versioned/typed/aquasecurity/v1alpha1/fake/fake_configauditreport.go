@@ -89,7 +89,7 @@ func (c *FakeConfigAuditReports) Update(ctx context.Context, configAuditReport *
 // Delete takes name of the configAuditReport and deletes it. Returns an error if one occurs.
 func (c *FakeConfigAuditReports) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(configauditreportsResource, c.ns, name), &v1alpha1.ConfigAuditReport{})
+		Invokes(testing.NewDeleteActionWithOptions(configauditreportsResource, c.ns, name, opts), &v1alpha1.ConfigAuditReport{})
 
 	return err
 }

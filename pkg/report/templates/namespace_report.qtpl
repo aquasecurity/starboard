@@ -87,7 +87,7 @@ Aqua Starboard Namespace Security Report - Namespace: {%s p.Namespace.Name %}
       {% for _, report := range p.Top5FailedChecks %}
       <tr>
         <td>{%s report.ID %}</td>
-        <td>{%s report.Severity %}</td>
+        <td>{%v report.Severity %}</td>
         <td>{%s report.Category %}</td>
         <td>{%d report.AffectedWorkloads %}</td>
       </tr>

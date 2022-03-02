@@ -4,6 +4,19 @@ const (
 	TTLReportAnnotation = "starboard.aquasecurity.github.io/report-ttl"
 )
 
+// Severity level of a vulnerability or a configuration audit check.
+// +enum
+type Severity string
+
+const (
+	SeverityCritical Severity = "CRITICAL"
+	SeverityHigh     Severity = "HIGH"
+	SeverityMedium   Severity = "MEDIUM"
+	SeverityLow      Severity = "LOW"
+	SeverityNone     Severity = "NONE"
+	SeverityUnknown  Severity = "UNKNOWN"
+)
+
 // Scanner is the spec for a scanner generating a security assessment report.
 type Scanner struct {
 	// Name the name of the scanner.
