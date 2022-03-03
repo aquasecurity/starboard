@@ -71,6 +71,19 @@ func IsBuiltInWorkload(controller *metav1.OwnerReference) bool {
 			controller.Kind == string(KindJob))
 }
 
+// IsWorkload returns true if the specified resource kinds represents Kubernetes
+// workload, false otherwise.
+func IsWorkload(kind string) bool {
+	return kind == "Pod" ||
+		kind == "Deployment" ||
+		kind == "ReplicaSet" ||
+		kind == "ReplicationController" ||
+		kind == "StatefulSet" ||
+		kind == "DaemonSet" ||
+		kind == "Job" ||
+		kind == "CronJob"
+}
+
 // IsClusterScopedKind returns true if the specified kind is ClusterRole,
 // ClusterRoleBinding, and CustomResourceDefinition.
 //

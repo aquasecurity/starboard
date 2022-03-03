@@ -55,6 +55,60 @@ func TestIsBuiltInWorkload(t *testing.T) {
 	}
 }
 
+func TestIsWorkload(t *testing.T) {
+	testCases := []struct {
+		kind string
+		want bool
+	}{
+		{
+			kind: "Pod",
+			want: true,
+		},
+		{
+			kind: "Deployment",
+			want: true,
+		},
+		{
+			kind: "ReplicaSet",
+			want: true,
+		},
+		{
+			kind: "ReplicationController",
+			want: true,
+		},
+		{
+			kind: "StatefulSet",
+			want: true,
+		},
+		{
+			kind: "DaemonSet",
+			want: true,
+		},
+		{
+			kind: "Job",
+			want: true,
+		},
+		{
+			kind: "CronJob",
+			want: true,
+		},
+		{
+			kind: "ConfigMap",
+			want: false,
+		},
+		{
+			kind: "Ingress",
+			want: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.kind, func(t *testing.T) {
+			assert.Equal(t, tc.want, kube.IsWorkload(tc.kind))
+		})
+	}
+}
+
 func TestIsClusterScopedKind(t *testing.T) {
 	testCases := []struct {
 		kind string
