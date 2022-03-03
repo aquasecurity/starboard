@@ -198,7 +198,8 @@ spec:
       mapping:
         tool: kube-bench
         checks:
-          - id: "<check need to be added>"
+          - id: 1.2.31"
+          - id: 1.2.32"
     - name: Check encryption provider
       description: ''
       id: '6.2'
