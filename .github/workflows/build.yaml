@@ -160,6 +160,7 @@ jobs:
             -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.rbac.yaml
+          kubectl apply -f deploy/static/03-starboard-operator.config.yaml
           make itests-starboard-operator
         env:
           KUBECONFIG: /home/runner/.kube/config
@@ -207,11 +208,10 @@ jobs:
             -f deploy/crd/ciskubebenchreports.crd.yaml
           kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
             -f deploy/static/02-starboard-operator.rbac.yaml
+          kubectl apply -f deploy/static/03-starboard-operator.config.yaml
           make integration-operator-conftest
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-system
-          OPERATOR_TARGET_NAMESPACES: default
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:

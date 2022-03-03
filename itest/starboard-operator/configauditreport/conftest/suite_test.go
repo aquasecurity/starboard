@@ -17,6 +17,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,8 +64,17 @@ func TestIntegrationOperatorWithConftest(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	ctx := context.Background()
+
 	operatorConfig, err := etc.GetOperatorConfig()
 	Expect(err).ToNot(HaveOccurred())
+
+	operatorConfig.Namespace = "starboard-system"
+	operatorConfig.TargetNamespaces = "default"
+
+	// Disable vulnerability scanner and CIS Benchmarks
+	operatorConfig.VulnerabilityScannerEnabled = false
+	operatorConfig.CISKubernetesBenchmarkEnabled = false
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(operatorConfig.LogDevMode)))
 
@@ -88,41 +98,29 @@ var _ = BeforeSuite(func() {
 		Helper: helper.NewHelper(kubeClient),
 	}
 
-	// We can disable vulnerability scanner and CIS benchmarks
-	operatorConfig.VulnerabilityScannerEnabled = false
-	operatorConfig.CISKubernetesBenchmarkEnabled = false
-
-	starboardCM = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: operatorConfig.Namespace,
-			Name:      starboard.ConfigMapName,
-		},
-		Data: map[string]string{
+	starboardCM, err = createOrUpdateConfigMap(ctx, client.ObjectKey{
+		Namespace: operatorConfig.Namespace,
+		Name:      starboard.ConfigMapName,
+	},
+		map[string]string{
 			"configAuditReports.scanner": "Conftest",
-			"conftest.imageRef":          "docker.io/openpolicyagent/conftest:v0.30.0",
-		},
-	}
-	err = kubeClient.Create(context.Background(), starboardCM)
+		})
 	Expect(err).ToNot(HaveOccurred())
 
-	conftestCM = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: operatorConfig.Namespace,
-			Name:      starboard.GetPluginConfigMapName("Conftest"),
-		},
-		Data: map[string]string{
-			"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.30.0",
+	conftestCM, err = createOrUpdateConfigMap(ctx, client.ObjectKey{
+		Namespace: operatorConfig.Namespace,
+		Name:      starboard.GetPluginConfigMapName("Conftest"),
+	}, map[string]string{
+		"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.30.0",
 
-			"conftest.policy.runs_as_root.rego":              runAsRootPolicy,
-			"conftest.policy.runs_as_root.kinds":             "Workload",
-			"conftest.policy.service_with_external_ip.rego":  serviceWithExternalIPPolicy,
-			"conftest.policy.service_with_external_ip.kinds": "Service",
-		},
-	}
-	err = kubeClient.Create(context.Background(), conftestCM)
+		"conftest.policy.runs_as_root.rego":              runAsRootPolicy,
+		"conftest.policy.service_with_external_ip.rego":  serviceWithExternalIPPolicy,
+		"conftest.policy.runs_as_root.kinds":             "Workload",
+		"conftest.policy.service_with_external_ip.kinds": "Service",
+	})
 	Expect(err).ToNot(HaveOccurred())
 
-	startCtx, stopFunc = context.WithCancel(context.Background())
+	startCtx, stopFunc = context.WithCancel(ctx)
 
 	go func() {
 		defer GinkgoRecover()
@@ -141,3 +139,27 @@ var _ = AfterSuite(func() {
 	err = kubeClient.Delete(context.Background(), conftestCM)
 	Expect(err).ToNot(HaveOccurred())
 })
+
+func createOrUpdateConfigMap(ctx context.Context, ref client.ObjectKey, data map[string]string) (*corev1.ConfigMap, error) {
+	cm := &corev1.ConfigMap{}
+	err := kubeClient.Get(ctx, client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}, cm)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			cm = &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: ref.Namespace,
+					Name:      ref.Name,
+				},
+				Data: data,
+			}
+			err = kubeClient.Create(ctx, cm)
+			return cm, err
+		} else {
+			return nil, err
+		}
+	}
+	cm = cm.DeepCopy()
+	cm.Data = data
+	err = kubeClient.Update(ctx, cm)
+	return cm, err
+}
