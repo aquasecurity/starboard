@@ -265,21 +265,26 @@ spec:
           type: date
           name: Age
           description: The age of the report
-        - jsonPath: .report.summary.dangerCount
+        - jsonPath: .report.summary.criticalCount
           type: integer
-          name: Danger
+          name: Critial
           priority: 1
-          description: The number of checks that failed with Danger status
-        - jsonPath: .report.summary.warningCount
+          description: The number of failed checks with critial severity
+        - jsonPath: .report.summary.highCount
           type: integer
-          name: Warning
+          name: High
           priority: 1
-          description: The number of checks that failed with Warning status
-        - jsonPath: .report.summary.passCount
+          description: The number of failed checks with high severity
+        - jsonPath: .report.summary.mediumCount
           type: integer
-          name: Pass
+          name: Medium
           priority: 1
-          description: The number of checks that passed
+          description: The number of failed checks with medium severity
+        - jsonPath: .report.summary.lowCount
+          type: integer
+          name: Low
+          priority: 1
+          description: The number of failed checks with low severity
       schema:
         openAPIV3Schema:
           x-kubernetes-preserve-unknown-fields: true
@@ -317,21 +322,26 @@ spec:
           type: date
           name: Age
           description: The age of the report
-        - jsonPath: .report.summary.dangerCount
+        - jsonPath: .report.summary.criticalCount
           type: integer
-          name: Danger
+          name: Critial
           priority: 1
-          description: The number of checks that failed with Danger status
-        - jsonPath: .report.summary.warningCount
+          description: The number of failed checks with critial severity
+        - jsonPath: .report.summary.highCount
           type: integer
-          name: Warning
+          name: High
           priority: 1
-          description: The number of checks that failed with Warning status
-        - jsonPath: .report.summary.passCount
+          description: The number of failed checks with high severity
+        - jsonPath: .report.summary.mediumCount
           type: integer
-          name: Pass
+          name: Medium
           priority: 1
-          description: The number of checks that passed
+          description: The number of failed checks with medium severity
+        - jsonPath: .report.summary.lowCount
+          type: integer
+          name: Low
+          priority: 1
+          description: The number of failed checks with low severity
       schema:
         openAPIV3Schema:
           x-kubernetes-preserve-unknown-fields: true
