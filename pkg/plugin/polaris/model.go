@@ -35,17 +35,10 @@ type ContainerResult struct {
 	Results map[string]Check `json:"Results"`
 }
 
-type Severity string
-
-const (
-	danger  Severity = "danger"
-	warning Severity = "warning"
-)
-
 type Check struct {
-	ID       string   `json:"ID"`
-	Message  string   `json:"Message"`
-	Success  bool     `json:"Success"`
-	Severity Severity `json:"Severity"`
-	Category string   `json:"Category"`
+	ID       string `json:"ID"`
+	Message  string `json:"Message"`
+	Success  bool   `json:"Success"`
+	Severity string `json:"Severity"`
+	Category string `json:"Category"`
 }

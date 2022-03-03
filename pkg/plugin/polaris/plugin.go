@@ -434,11 +434,15 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("unexpected report results count, got: %d, want: %d", len(report.Results), 1)
 	}
 	for _, pr := range report.Results[0].PodResult.Results {
+		severity, err := v1alpha1.StringToSeverity(pr.Severity)
+		if err != nil {
+			return v1alpha1.ConfigAuditReportData{}, err
+		}
 		check := v1alpha1.Check{
 			ID:       pr.ID,
 			Message:  pr.Message,
 			Success:  pr.Success,
-			Severity: p.toSeverity(pr.Severity),
+			Severity: severity,
 			Category: pr.Category,
 		}
 		checks = append(checks, check)
@@ -448,11 +452,15 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 	for _, cr := range report.Results[0].PodResult.ContainerResults {
 		var containerChecks []v1alpha1.Check
 		for _, crr := range cr.Results {
+			severity, err := v1alpha1.StringToSeverity(crr.Severity)
+			if err != nil {
+				return v1alpha1.ConfigAuditReportData{}, err
+			}
 			containerChecks = append(containerChecks, v1alpha1.Check{
 				ID:       crr.ID,
 				Message:  crr.Message,
 				Success:  crr.Success,
-				Severity: p.toSeverity(crr.Severity),
+				Severity: severity,
 				Category: crr.Category,
 				Scope: &v1alpha1.CheckScope{
 					Type:  "Container",
@@ -488,17 +496,6 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		PodChecks:       podChecks,
 		ContainerChecks: containerNameToChecks,
 	}, nil
-}
-
-func (p *plugin) toSeverity(value Severity) v1alpha1.Severity {
-	switch value {
-	case danger:
-		return v1alpha1.SeverityCritical
-	case warning:
-		return v1alpha1.SeverityLow
-	default:
-		return v1alpha1.SeverityUnknown
-	}
 }
 
 func (p *plugin) sourceNameFrom(obj client.Object) string {

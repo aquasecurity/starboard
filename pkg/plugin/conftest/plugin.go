@@ -87,7 +87,7 @@ func (c Config) GetPoliciesByKind(kind string) (map[string]string, error) {
 			continue
 		}
 		for _, k := range strings.Split(value, ",") {
-			if k == kindWorkload && !c.IsWorkload(kind) {
+			if k == kindWorkload && !kube.IsWorkload(kind) {
 				continue
 			}
 			if k != kindAny && k != kindWorkload && k != kind {
@@ -104,18 +104,6 @@ func (c Config) GetPoliciesByKind(kind string) (map[string]string, error) {
 		}
 	}
 	return policies, nil
-}
-
-// TODO move to kube package?
-func (c Config) IsWorkload(kind string) bool {
-	return kind == "Pod" ||
-		kind == "Deployment" ||
-		kind == "ReplicaSet" ||
-		kind == "ReplicationController" ||
-		kind == "StatefulSet" ||
-		kind == "DaemonSet" ||
-		kind == "Job" ||
-		kind == "CronJob"
 }
 
 // GetResourceRequirements constructs ResourceRequirements from the Config.
