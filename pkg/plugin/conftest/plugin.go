@@ -378,7 +378,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(warning),
 				Severity: v1alpha1.SeverityLow,
-				Message:  warning.Message,
+				Messages: []string{warning.Message},
 				Category: defaultCheckCategory,
 				Success:  false,
 			})
@@ -389,7 +389,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			checks = append(checks, v1alpha1.Check{
 				ID:       p.getPolicyTitleFromResult(failure),
 				Severity: v1alpha1.SeverityCritical,
-				Message:  failure.Message,
+				Messages: []string{failure.Message},
 				Category: defaultCheckCategory,
 				Success:  false,
 			})

@@ -36,49 +36,49 @@ report:
   scanner:
     name: Polaris
     vendor: Fairwinds Ops
-    version: '3.2'
+    version: '4.2'
   summary:
-    dangerCount: 0
-    passCount: 3
-    warningCount: 2
+    criticalCount: 2
+    highCount: 0
+    lowCount: 9
+    mediumCount: 0
   checks:
     - category: Security
+      checkID: hostPIDSet
+      messages:
+        - Host PID is not configured
+      severity: CRITICAL
+      success: true
+    - category: Security
+      checkID: hostIPCSet
+      messages:
+        - Host IPC is not configured
+      severity: CRITICAL
+      success: true
+    - category: Security
       checkID: hostNetworkSet
-      message: Host network is not configured
-      severity: warning
+      messages:
+        - Host network is not configured
+      severity: LOW
       success: true
-    - category: Security
-      checkID: dangerousCapabilities
-      message: Container does not have any dangerous capabilities
-      severity: danger
-      success: true
-      scope:
-        type: Container
-        value: nginx
-    - category: Security
-      checkID: hostPortSet
-      message: Host port is not configured
-      severity: warning
-      success: true
-      scope:
-        type: Container
-        value: nginx
-    - category: Security
-      checkID: insecureCapabilities
-      message: Container should not have insecure capabilities
-      severity: warning
-      success: false
-      scope:
-        type: Container
-        value: nginx
     - category: Security
       checkID: notReadOnlyRootFilesystem
-      message: Filesystem should be read only
-      severity: warning
-      success: false
+      messages:
+        - Filesystem should be read only
       scope:
         type: Container
         value: nginx
+      severity: LOW
+      success: false
+    - category: Security
+      checkID: privilegeEscalationAllowed
+      messages:
+        - Privilege escalation should not be allowed
+      scope:
+        type: Container
+        value: nginx
+      severity: CRITICAL
+      success: false
 ```
 
 Third party Kubernetes configuration checkers, linters, and sanitizers that are compliant with the ConfigAuditReport

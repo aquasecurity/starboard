@@ -382,13 +382,13 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}))
 	g.Expect(result.PodChecks).To(ConsistOf(v1alpha1.Check{
 		ID:       "hostIPCSet",
-		Message:  "Host IPC is not configured",
+		Messages: []string{"Host IPC is not configured"},
 		Success:  false,
 		Severity: v1alpha1.SeverityCritical,
 		Category: "Security",
 	}, v1alpha1.Check{
 		ID:       "hostNetworkSet",
-		Message:  "Host network is not configured",
+		Messages: []string{"Host network is not configured"},
 		Success:  true,
 		Severity: v1alpha1.SeverityLow,
 		Category: "Networking",
@@ -396,7 +396,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	g.Expect(result.ContainerChecks).To(HaveLen(1))
 	g.Expect(result.ContainerChecks["db"]).To(ConsistOf(v1alpha1.Check{
 		ID:       "cpuLimitsMissing",
-		Message:  "CPU limits are set",
+		Messages: []string{"CPU limits are set"},
 		Success:  false,
 		Severity: v1alpha1.SeverityLow,
 		Category: "Resources",
@@ -406,7 +406,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		},
 	}, v1alpha1.Check{
 		ID:       "cpuRequestsMissing",
-		Message:  "CPU requests are set",
+		Messages: []string{"CPU requests are set"},
 		Success:  true,
 		Severity: v1alpha1.SeverityLow,
 		Category: "Resources",
