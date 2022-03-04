@@ -46,6 +46,7 @@ const (
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
+	keyTrivyServerInsecure      = "trivy.serverInsecure"
 	keyTrivyServerToken         = "trivy.serverToken"
 	keyTrivyServerCustomHeaders = "trivy.serverCustomHeaders"
 
@@ -118,6 +119,11 @@ func (c Config) GetCommand() (Command, error) {
 
 func (c Config) GetServerURL() (string, error) {
 	return c.GetRequiredData(keyTrivyServerURL)
+}
+
+func (c Config) GetServerInsecure() bool {
+	_, ok := c.Data[keyTrivyServerInsecure]
+	return ok
 }
 
 func (c Config) IgnoreFileExists() bool {
@@ -864,6 +870,13 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 		env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
+		}
+
+		if config.GetServerInsecure() {
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_INSECURE",
+				Value: "true",
+			})
 		}
 
 		if config.IgnoreFileExists() {
