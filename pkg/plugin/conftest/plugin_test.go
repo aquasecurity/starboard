@@ -618,8 +618,8 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	// Rego scripts the Check.ID is not unique. For example, for a Pod with multiple
 	// containers the Check.ID will be duplicated for each container, but the
 	// Check.Message will be different.
-	groupChecksByMessage := func(element interface{}) string {
-		return element.(v1alpha1.Check).Message
+	groupChecksByMessages := func(element interface{}) string {
+		return strings.Join(element.(v1alpha1.Check).Messages, ",")
 	}
 
 	g.Expect(err).ToNot(HaveOccurred())
@@ -634,38 +634,38 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 			CriticalCount: 6,
 			LowCount:      0,
 		}),
-		"Checks": MatchAllElements(groupChecksByMessage, Elements{
+		"Checks": MatchAllElements(groupChecksByMessages, Elements{
 			"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true": Equal(v1alpha1.Check{
 				ID:       "Root file system is not read-only",
-				Message:  "container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
@@ -675,7 +675,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 				// in the rule's response, which is then returned as metadata.type
 				// in Conftest output, the parser will fallback to a unique identifier.
 				ID:       "00000000-0000-0000-0000-000000000001",
-				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
@@ -684,38 +684,38 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		// Most Rego scripts do not return structured response object to indicate
 		// container name. Therefore, the ContainerChecks map is empty.
 		"ContainerChecks": Equal(map[string][]v1alpha1.Check{}),
-		"PodChecks": MatchAllElements(groupChecksByMessage, Elements{
+		"PodChecks": MatchAllElements(groupChecksByMessages, Elements{
 			"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
 				ID:       "Default capabilities: some containers do not drop all",
-				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
 			}),
 			"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true": Equal(v1alpha1.Check{
 				ID:       "Root file system is not read-only",
-				Message:  "container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",
@@ -725,7 +725,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 				// in the rule's response, which is then returned as metadata.type
 				// in Conftest output, the parser will fallback to a unique identifier.
 				ID:       "00000000-0000-0000-0000-000000000001",
-				Message:  "container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu"},
 				Success:  false,
 				Severity: v1alpha1.SeverityCritical,
 				Category: "Security",

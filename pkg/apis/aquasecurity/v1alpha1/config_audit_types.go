@@ -107,12 +107,12 @@ type CheckScope struct {
 // Check provides the result of conducting a single audit step.
 type Check struct {
 	ID          string   `json:"checkID"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
 	Severity    Severity `json:"severity"`
 	Category    string   `json:"category,omitempty"`
 
-	Message string `json:"message,omitempty"`
+	Messages []string `json:"messages,omitempty"`
 
 	// Remediation provides description or links to external resources to remediate failing check.
 	// +optional

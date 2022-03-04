@@ -440,7 +440,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		}
 		check := v1alpha1.Check{
 			ID:       pr.ID,
-			Message:  pr.Message,
+			Messages: []string{pr.Message},
 			Success:  pr.Success,
 			Severity: severity,
 			Category: pr.Category,
@@ -458,7 +458,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 			}
 			containerChecks = append(containerChecks, v1alpha1.Check{
 				ID:       crr.ID,
-				Message:  crr.Message,
+				Messages: []string{crr.Message},
 				Success:  crr.Success,
 				Severity: severity,
 				Category: crr.Category,
