@@ -159,8 +159,10 @@ func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults m
 				}
 			}
 		}
-		control := smd.controlIDControlObject[controlID]
-		controlChecks = append(controlChecks, v1alpha1.ControlCheck{ID: controlID, Name: control.Name, Description: control.Description, PassTotal: passTotal, FailTotal: failTotal})
+		control, ok := smd.controlIDControlObject[controlID]
+		if ok {
+			controlChecks = append(controlChecks, v1alpha1.ControlCheck{ID: controlID, Name: control.Name, Description: control.Description, PassTotal: passTotal, FailTotal: failTotal})
+		}
 	}
 	return controlChecks
 }
@@ -169,21 +171,23 @@ func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults m
 func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
-		control := smd.controlIDControlObject[controlID]
-		for _, checkId := range checkIds {
-			results, ok := checkIdsToResults[checkId]
-			if ok {
-				ctta := make([]v1alpha1.ToolCheckResult, 0)
-				for _, checkResult := range results {
-					var ctt v1alpha1.ToolCheckResult
-					rds := make([]v1alpha1.ResultDetails, 0)
-					for _, crd := range checkResult.Details {
-						rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
+		control, ok := smd.controlIDControlObject[controlID]
+		if ok {
+			for _, checkId := range checkIds {
+				results, ok := checkIdsToResults[checkId]
+				if ok {
+					ctta := make([]v1alpha1.ToolCheckResult, 0)
+					for _, checkResult := range results {
+						var ctt v1alpha1.ToolCheckResult
+						rds := make([]v1alpha1.ResultDetails, 0)
+						for _, crd := range checkResult.Details {
+							rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
+						}
+						ctt = v1alpha1.ToolCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
+						ctta = append(ctta, ctt)
 					}
-					ctt = v1alpha1.ToolCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
-					ctta = append(ctta, ctt)
+					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ToolCheckResult: ctta})
 				}
-				controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ToolCheckResult: ctta})
 			}
 		}
 	}
