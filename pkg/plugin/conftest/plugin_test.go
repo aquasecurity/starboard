@@ -1,4 +1,4 @@
-package conftest_test
+package conftest
 
 import (
 	. "github.com/onsi/gomega"
@@ -12,7 +12,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +32,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 
 	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		config := conftest.Config{
+		config := Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.library.kubernetes.rego":        "<REGO_A>",
@@ -48,7 +47,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 
 	t.Run("Should return error when policy is not found", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		config := conftest.Config{
+		config := Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.policy.access_to_host_pid.kinds": "Workload",
@@ -62,7 +61,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 	t.Run("Should return policies as Rego modules", func(t *testing.T) {
 
 		g := NewGomegaWithT(t)
-		config := conftest.Config{
+		config := Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
@@ -109,13 +108,13 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		config               conftest.Config
+		config               Config
 		expectedError        string
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
 			name:          "Should return empty requirements by default",
-			config:        conftest.Config{PluginConfig: starboard.PluginConfig{}},
+			config:        Config{PluginConfig: starboard.PluginConfig{}},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -124,7 +123,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+			config: Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu":    "800m",
 					"conftest.resources.requests.memory": "200M",
@@ -146,7 +145,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+			config: Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu": "roughly 100",
 				},
@@ -232,13 +231,13 @@ deny[res] {
 				}).Build()
 
 			pluginContext := starboard.NewPluginContext().
-				WithName(conftest.Plugin).
+				WithName(Plugin).
 				WithNamespace("starboard-ns").
 				WithServiceAccountName("starboard-sa").
 				WithClient(client).
 				Get()
 
-			instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+			instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 			ready, _, err := instance.IsApplicable(pluginContext, tc.obj)
 			g.Expect(err).ToNot(HaveOccurred())
 			g.Expect(ready).To(Equal(tc.expected))
@@ -254,10 +253,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		client := fake.NewClientBuilder().WithObjects().Build()
 
-		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(conftest.Plugin).
+			WithName(Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -310,13 +309,13 @@ func TestPlugin_Init(t *testing.T) {
 			}).Build()
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(conftest.Plugin).
+			WithName(Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
 			Get()
 
-		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		err := instance.Init(pluginContext)
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -347,7 +346,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g := NewGomegaWithT(t)
 	sequence := ext.NewSimpleIDGenerator()
 	pluginContext := starboard.NewPluginContext().
-		WithName(conftest.Plugin).
+		WithName(Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -377,7 +376,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			},
 		}).Build()).Get()
 
-	instance := conftest.NewPlugin(sequence, fixedClock)
+	instance := NewPlugin(sequence, fixedClock)
 
 	jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -529,7 +528,7 @@ status: {}
 
 func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	g := NewGomegaWithT(t)
-	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+	plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 	logsReader := ioutil.NopCloser(strings.NewReader(`[
   {
     "filename": "/project/workload.yaml",
@@ -598,7 +597,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 ]`))
 
 	pluginContext := starboard.NewPluginContext().
-		WithName(conftest.Plugin).
+		WithName(Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -764,7 +763,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"conftest.policy.policyA.kinds": "Pod",
 		})
 
-		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "Pod")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -785,7 +784,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"foo":   "bar",
 		})
 
-		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -806,7 +805,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"conftest.resources.requests.cpu": "60m",
 		})
 
-		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -819,6 +818,35 @@ func TestPlugin_ConfigHash(t *testing.T) {
 func TestPlugin_GetContainerName(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+	plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 	g.Expect(plugin.GetContainerName()).To(Equal("conftest"))
+}
+
+func TestGetPolicyTitleFromResult(t *testing.T) {
+	a := &plugin{idGenerator: ext.NewGoogleUUIDGenerator()}
+	tests := []struct {
+		name   string
+		result Result
+		equal  bool
+		want   string
+	}{
+		{name: "get Policy ID From Result", result: Result{Message: "aaa", Metadata: map[string]interface{}{"id": "1234"}}, want: "1234", equal: true},
+		{name: "get Policy Title From Result", result: Result{Message: "bbb", Metadata: map[string]interface{}{"title": "title 1234"}}, want: "title 1234", equal: true},
+		{name: "get Policy ig generator From Result", result: Result{Message: "ccc", Metadata: map[string]interface{}{}}, want: "", equal: false}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := a.getPolicyTitleFromResult(tt.result)
+			if tt.equal {
+				if got != tt.want {
+					t.Errorf("TestGetPolicyTitleFromResult got %v want %v", got, tt.want)
+				}
+			}
+			if !tt.equal {
+				if got == tt.want {
+					t.Errorf("TestGetPolicyTitleFromResult got %v not want %v", got, tt.want)
+				}
+			}
+		})
+	}
 }
