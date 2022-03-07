@@ -1,0 +1,677 @@
+{
+  "kind": "ClusterComplianceReport",
+  "apiVersion": "aquasecurity.github.io/v1alpha1",
+  "metadata": {
+    "name": "nsa",
+    "resourceVersion": "1000",
+    "creationTimestamp": null
+  },
+  "spec": {
+    "specKind": "compliance",
+    "name": "nsa",
+    "description": "National Security Agency - Kubernetes Hardening Guidance",
+    "cron": "* * * * *",
+    "version": "1.0",
+    "controls": [
+      {
+        "id": "1.0",
+        "name": "Non-root containers",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV012"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.1",
+        "name": "Immutable container file systems",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV014"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.2",
+        "name": "Preventing privileged containers",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV017"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.3",
+        "name": "share host process namespaces",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV008"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.4",
+        "name": "share host process namespaces.",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV009"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.5",
+        "name": "use the host network",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV010"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.6",
+        "name": "applications can run with root privileges or with root group membership",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV029"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.7",
+        "name": "Restricts escalation to root privileges.",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV001"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.8",
+        "name": "Sets the SELinux context of the container.",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV002"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.9",
+        "name": "Restrict a container's access to resources with AppArmor",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV030"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.10",
+        "name": "Sets the seccomp profile used to sandbox containers.",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV036"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.11",
+        "name": "Protecting Pod service account tokens",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV037"
+            }
+          ]
+        }
+      },
+      {
+        "id": "1.12",
+        "name": "Namespace kube-system should should not be used by users",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV038"
+            }
+          ]
+        }
+      },
+      {
+        "id": "2.0",
+        "name": "pod and/or namespace Selectors usage",
+        "description": "",
+        "resources": [
+          "Workload"
+        ],
+        "mapping": {
+          "tool": "config-audit",
+          "checks": [
+            {
+              "id": "KSV038"
+            }
+          ]
+        }
+      },
+      {
+        "id": "3.0",
+        "name": "Use CNI plugin that supports NetworkPolicy API",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "5.3.1"
+            }
+          ]
+        }
+      },
+      {
+        "id": "3.1",
+        "name": "Use a default policy to deny all ingress and egress traffic",
+        "description": "",
+        "resources": [
+          "NetworkPolicy"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "<check need to be added>"
+            }
+          ]
+        }
+      },
+      {
+        "id": "4.0",
+        "name": "Use LimitRange and ResourceQuota policies to limit resources",
+        "description": "",
+        "resources": [
+          "LimitRange"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "<check need to be added>"
+            }
+          ]
+        }
+      },
+      {
+        "id": "5.0",
+        "name": "Control plan disable insecure port",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.19"
+            }
+          ]
+        }
+      },
+      {
+        "id": "5.1",
+        "name": "Encrypt etcd communication",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "2.1"
+            }
+          ]
+        }
+      },
+      {
+        "id": "6.0",
+        "name": "Ensure kube config file permission",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "4.1.3"
+            },
+            {
+              "id": "4.1.4"
+            }
+          ]
+        }
+      },
+      {
+        "id": "6.1",
+        "name": "Check that encryption resource has been set",
+        "description": "",
+        "resources": [
+          "EncryptionConfiguration"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "<check need to be added>"
+            }
+          ]
+        }
+      },
+      {
+        "id": "6.2",
+        "name": "Check encryption provider",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.3"
+            }
+          ]
+        }
+      },
+      {
+        "id": "7.0",
+        "name": "Make sure anonymous-auth is unset",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.1"
+            }
+          ]
+        }
+      },
+      {
+        "id": "7.1",
+        "name": "Make sure -authorization-mode=RBAC",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.7"
+            },
+            {
+              "id": "1.2.8"
+            }
+          ]
+        }
+      },
+      {
+        "id": "8.0",
+        "name": "Audit policy is configure",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "3.2.1"
+            }
+          ]
+        }
+      },
+      {
+        "id": "8.1",
+        "name": "Audit log path is configure",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.22"
+            }
+          ]
+        }
+      },
+      {
+        "id": "8.2",
+        "name": "Audit log aging",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "1.2.23"
+            }
+          ]
+        }
+      },
+      {
+        "id": "9.0",
+        "name": "service mesh is configure",
+        "description": "",
+        "resources": [
+          "Node"
+        ],
+        "mapping": {
+          "tool": "kube-bench",
+          "checks": [
+            {
+              "id": "<check need to be added>"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "status": {
+    "updateTimestamp": "2022-02-26T14:11:39Z",
+    "summary": {
+      "passCount": 3,
+      "failCount": 3
+    },
+    "control_check": [
+      {
+        "id": "1.0",
+        "name": "Non-root containers",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.1",
+        "name": "Immutable container file systems",
+        "passTotal": 0,
+        "failTotal": 3,
+        "severity": ""
+      },
+      {
+        "id": "1.10",
+        "name": "Sets the seccomp profile used to sandbox containers.",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.11",
+        "name": "Protecting Pod service account tokens",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.12",
+        "name": "Namespace kube-system should should not be used by users",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.2",
+        "name": "Preventing privileged containers",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.3",
+        "name": "share host process namespaces",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.4",
+        "name": "share host process namespaces.",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.5",
+        "name": "use the host network",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.6",
+        "name": "applications can run with root privileges or with root group membership",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.7",
+        "name": "Restricts escalation to root privileges.",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.8",
+        "name": "Sets the SELinux context of the container.",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "1.9",
+        "name": "Restrict a container's access to resources with AppArmor",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "2.0",
+        "name": "pod and/or namespace Selectors usage",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "3.0",
+        "name": "Use CNI plugin that supports NetworkPolicy API",
+        "passTotal": 1,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "3.1",
+        "name": "Use a default policy to deny all ingress and egress traffic",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "4.0",
+        "name": "Use LimitRange and ResourceQuota policies to limit resources",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "5.0",
+        "name": "Control plan disable insecure port",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "5.1",
+        "name": "Encrypt etcd communication",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "6.0",
+        "name": "Ensure kube config file permission",
+        "passTotal": 2,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "6.1",
+        "name": "Check that encryption resource has been set",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "6.2",
+        "name": "Check encryption provider",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "7.0",
+        "name": "Make sure anonymous-auth is unset",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "7.1",
+        "name": "Make sure -authorization-mode=RBAC",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "8.0",
+        "name": "Audit policy is configure",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "8.1",
+        "name": "Audit log path is configure",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "8.2",
+        "name": "Audit log aging",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      },
+      {
+        "id": "9.0",
+        "name": "service mesh is configure",
+        "passTotal": 0,
+        "failTotal": 0,
+        "severity": ""
+      }
+    ]
+  }
+}

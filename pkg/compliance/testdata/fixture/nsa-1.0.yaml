@@ -1,0 +1,25 @@
+---
+specKind: compliance
+name: nsa
+description: National Security Agency - Kubernetes Hardening Guidance
+version: "1.0"
+cron: "* * * * *"
+controls:
+  - name: Non-root containers
+    description: ''
+    id: '1.0'
+    resources:
+      - Workload
+    mapping:
+      tool: config-audit
+      checks:
+        - id: KSV012
+  - name: Audit log path is configure
+    description: ''
+    id: '8.1'
+    resources:
+      - Node
+    mapping:
+      tool: kube-bench
+      checks:
+        - id: 1.2.22
