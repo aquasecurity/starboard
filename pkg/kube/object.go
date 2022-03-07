@@ -11,6 +11,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -53,11 +55,18 @@ const (
 	KindConfigMap             Kind = "ConfigMap"
 	KindRole                  Kind = "Role"
 	KindRoleBinding           Kind = "RoleBinding"
+	KindNetworkPolicy         Kind = "NetworkPolicy"
+	KindIngress               Kind = "Ingress"
+	KindResourceQuota         Kind = "ResourceQuota"
 
-	KindClusterRole              Kind   = "ClusterRole"
-	KindClusterRoleBindings      Kind   = "ClusterRoleBinding"
-	KindCustomResourceDefinition Kind   = "CustomResourceDefinition"
-	deploymentAnnotation         string = "deployment.kubernetes.io/revision"
+	KindClusterRole              Kind = "ClusterRole"
+	KindClusterRoleBindings      Kind = "ClusterRoleBinding"
+	KindCustomResourceDefinition Kind = "CustomResourceDefinition"
+	KindPodSecurityPolicy        Kind = "PodSecurityPolicy"
+)
+
+const (
+	deploymentAnnotation string = "deployment.kubernetes.io/revision"
 )
 
 // IsBuiltInWorkload returns true if the specified v1.OwnerReference
@@ -90,7 +99,7 @@ func IsWorkload(kind string) bool {
 // TODO Use discovery client to have a generic implementation.
 func IsClusterScopedKind(kind string) bool {
 	switch kind {
-	case string(KindClusterRole), string(KindClusterRoleBindings), string(KindCustomResourceDefinition):
+	case string(KindClusterRole), string(KindClusterRoleBindings), string(KindCustomResourceDefinition), string(KindPodSecurityPolicy):
 		return true
 	default:
 		return false
@@ -231,11 +240,19 @@ func ComputeSpecHash(obj client.Object) (string, error) {
 		return ComputeHash(obj), nil
 	case *rbacv1.RoleBinding:
 		return ComputeHash(obj), nil
+	case *networkingv1.NetworkPolicy:
+		return ComputeHash(obj), nil
+	case *networkingv1.Ingress:
+		return ComputeHash(obj), nil
+	case *corev1.ResourceQuota:
+		return ComputeHash(obj), nil
 	case *rbacv1.ClusterRole:
 		return ComputeHash(obj), nil
 	case *rbacv1.ClusterRoleBinding:
 		return ComputeHash(obj), nil
 	case *apiextensionsv1.CustomResourceDefinition:
+		return ComputeHash(obj), nil
+	case *policyv1beta1.PodSecurityPolicy:
 		return ComputeHash(obj), nil
 	default:
 		return "", fmt.Errorf("computing spec hash of unsupported object: %T", t)
@@ -302,12 +319,20 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 		obj = &rbacv1.Role{}
 	case KindRoleBinding:
 		obj = &rbacv1.RoleBinding{}
+	case KindNetworkPolicy:
+		obj = &networkingv1.NetworkPolicy{}
+	case KindIngress:
+		obj = &networkingv1.Ingress{}
+	case KindResourceQuota:
+		obj = &corev1.ResourceQuota{}
 	case KindClusterRole:
 		obj = &rbacv1.ClusterRole{}
 	case KindClusterRoleBindings:
 		obj = &rbacv1.ClusterRoleBinding{}
 	case KindCustomResourceDefinition:
 		obj = &apiextensionsv1.CustomResourceDefinition{}
+	case KindPodSecurityPolicy:
+		obj = &policyv1beta1.PodSecurityPolicy{}
 	default:
 		return nil, fmt.Errorf("unknown kind: %s", ref.Kind)
 	}
@@ -488,7 +513,7 @@ func (o *ObjectResolver) ensureGVK(obj client.Object) (client.Object, error) {
 	return obj, nil
 }
 
-// GetRelatedReplicasetName attempts to find the replicaset that is associated with
+// RelatedReplicaSetName attempts to find the replicaset that is associated with
 // the given owner. If the owner is a Deployment, it will look for a ReplicaSet
 // that is controlled by the Deployment. If the owner is a Pod, it will look for
 // the ReplicaSet that owns the Pod.

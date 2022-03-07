@@ -76,6 +76,10 @@ var _ = BeforeSuite(func() {
 	operatorConfig.VulnerabilityScannerEnabled = false
 	operatorConfig.CISKubernetesBenchmarkEnabled = false
 
+	// Disable built-in configuration scanner
+	operatorConfig.ConfigAuditScannerBuiltIn = false
+	operatorConfig.ConfigAuditScannerEnabled = true
+
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(operatorConfig.LogDevMode)))
 
 	kubeConfig, err := ctrl.GetConfig()

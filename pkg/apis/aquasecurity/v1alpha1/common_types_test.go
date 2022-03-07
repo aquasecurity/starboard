@@ -15,7 +15,7 @@ func TestStringToSeverity(t *testing.T) {
 	}{
 		{
 			name:          "xxx",
-			expectedError: "unrecognized severity name literal: xxx",
+			expectedError: "unrecognized name literal: xxx",
 		},
 		{
 			name:             "CRITICAL",

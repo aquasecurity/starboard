@@ -38,7 +38,9 @@ operator:
   # vulnerabilityScannerReportTTL the flag to set how long a vulnerability report should exist. "" means that the vulnerabilityScannerReportTTL feature is disabled
   vulnerabilityScannerReportTTL: ""
   # configAuditScannerEnabled the flag to enable configuration audit scanner
-  configAuditScannerEnabled: true
+  configAuditScannerEnabled: false
+  # configAuditScannerBuiltIn the flag to enable built-in configuration audit scanner
+  configAuditScannerBuiltIn: true
   # kubernetesBenchmarkEnabled the flag to enable CIS Kubernetes Benchmark scanner
   kubernetesBenchmarkEnabled: true
   # batchDeleteLimit the maximum number of config audit reports deleted by the operator when the plugin's config has changed.

@@ -81,6 +81,8 @@ spec:
               value: {{ .Values.operator.vulnerabilityScannerReportTTL | quote }}
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
               value: {{ .Values.operator.configAuditScannerEnabled | quote }}
+            - name: OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN
+              value: {{ .Values.operator.configAuditScannerBuiltIn | quote }}
             {{- if gt (int .Values.operator.replicas) 1 }}
             - name: OPERATOR_LEADER_ELECTION_ENABLED
               value: "true"

@@ -12,4 +12,5 @@ cat $CRD_ROOT/vulnerabilityreports.crd.yaml \
   $STATIC_ROOT/01-starboard-operator.ns.yaml \
   $STATIC_ROOT/02-starboard-operator.rbac.yaml \
   $STATIC_ROOT/03-starboard-operator.config.yaml \
-  $STATIC_ROOT/04-starboard-operator.deployment.yaml > $STATIC_ROOT/starboard.yaml
+  $STATIC_ROOT/04-starboard-operator.policies.yaml \
+  $STATIC_ROOT/05-starboard-operator.deployment.yaml > $STATIC_ROOT/starboard.yaml
