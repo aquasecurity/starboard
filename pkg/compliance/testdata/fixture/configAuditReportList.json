@@ -34,28 +34,28 @@
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV013",
-            "message": "Container 'front-end' of Pod 'rss-site' should specify an image tag",
+            "messages": ["Container 'front-end' of Pod 'rss-site' should specify an image tag"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV013",
-            "message": "Container 'rss-reader' of Pod 'rss-site' should specify an image tag",
+            "messages": ["Container 'rss-reader' of Pod 'rss-site' should specify an image tag"],
             "severity": "danger",
             "success": false
           }
@@ -65,28 +65,28 @@
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV013",
-            "message": "Container 'front-end' of Pod 'rss-site' should specify an image tag",
+            "messages": ["Container 'front-end' of Pod 'rss-site' should specify an image tag"],
             "severity": "danger",
             "success": false
           },
           {
             "category": "Security",
             "checkID": "KSV013",
-            "message": "Container 'rss-reader' of Pod 'rss-site' should specify an image tag",
+            "messages": ["Container 'rss-reader' of Pod 'rss-site' should specify an image tag"],
             "severity": "danger",
             "success": false
           }
@@ -137,7 +137,7 @@
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           }
@@ -147,7 +147,7 @@
           {
             "category": "Security",
             "checkID": "KSV014",
-            "message": "Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true",
+            "messages": ["Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true"],
             "severity": "danger",
             "success": false
           }

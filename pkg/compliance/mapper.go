@@ -17,14 +17,14 @@ const (
 	Warn = "warn"
 	// Pass check Status
 	Pass = "pass"
-	//KubeBench tool name as appear in specs file
+	//KubeBench scanner name as appear in specs file
 	KubeBench = "kube-bench"
-	//ConfigAudit tool name as appear in specs file
+	//ConfigAudit scanner name as appear in specs file
 	ConfigAudit = "config-audit"
 )
 
 type Mapper interface {
-	mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult
+	mapReportData(objType string, objList client.ObjectList) map[string]*ScannerCheckResult
 }
 
 type kubeBench struct {
@@ -33,15 +33,15 @@ type kubeBench struct {
 type configAudit struct {
 }
 
-func byTool(tool string) (Mapper, error) {
-	switch tool {
+func byScanner(scanner string) (Mapper, error) {
+	switch scanner {
 	case KubeBench:
 		return &kubeBench{}, nil
 	case ConfigAudit:
 		return &configAudit{}, nil
 	}
-	// tool is not supported
-	return nil, fmt.Errorf("mapper tool: %s is not supported", tool)
+	// scanner is not supported
+	return nil, fmt.Errorf("mapper scanner: %s is not supported", scanner)
 }
 
 type CheckDetails struct {
@@ -50,11 +50,11 @@ type CheckDetails struct {
 	Remediation string
 }
 
-func (kb kubeBench) mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
-	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
+func (kb kubeBench) mapReportData(objType string, objList client.ObjectList) map[string]*ScannerCheckResult {
+	scannerCheckResultMap := make(map[string]*ScannerCheckResult, 0)
 	cb, ok := objList.(*v1alpha1.CISKubeBenchReportList)
 	if !ok || len(cb.Items) == 0 {
-		return toolCheckResultMap
+		return scannerCheckResultMap
 	}
 	for _, item := range cb.Items {
 		name := item.GetName()
@@ -62,44 +62,48 @@ func (kb kubeBench) mapReportData(objType string, objList client.ObjectList) map
 		for _, section := range item.Report.Sections {
 			for _, check := range section.Tests {
 				for _, result := range check.Results {
-					if _, ok := toolCheckResultMap[result.TestNumber]; !ok {
-						toolCheckResultMap[result.TestNumber] = &ToolCheckResult{ID: result.TestNumber, Remediation: result.Remediation, ObjectType: objType}
-						toolCheckResultMap[result.TestNumber].Details = make([]ResultDetails, 0)
+					if _, ok := scannerCheckResultMap[result.TestNumber]; !ok {
+						scannerCheckResultMap[result.TestNumber] = &ScannerCheckResult{ID: result.TestNumber, Remediation: result.Remediation, ObjectType: objType}
+						scannerCheckResultMap[result.TestNumber].Details = make([]ResultDetails, 0)
 					}
-					toolCheckResultMap[result.TestNumber].Details = append(toolCheckResultMap[result.TestNumber].Details, ResultDetails{Name: name, Namespace: nameSpace, Status: strings.ToLower(result.Status)})
+					scannerCheckResultMap[result.TestNumber].Details = append(scannerCheckResultMap[result.TestNumber].Details, ResultDetails{Name: name, Namespace: nameSpace, Status: strings.ToLower(result.Status)})
 				}
 			}
 		}
 	}
-	return toolCheckResultMap
+	return scannerCheckResultMap
 }
 
-func (ac configAudit) mapReportData(objType string, objList client.ObjectList) map[string]*ToolCheckResult {
-	toolCheckResultMap := make(map[string]*ToolCheckResult, 0)
+func (ac configAudit) mapReportData(objType string, objList client.ObjectList) map[string]*ScannerCheckResult {
+	scannerCheckResultMap := make(map[string]*ScannerCheckResult, 0)
 	cb, ok := objList.(*v1alpha1.ConfigAuditReportList)
 	if !ok || len(cb.Items) == 0 {
-		return toolCheckResultMap
+		return scannerCheckResultMap
 	}
 	for _, item := range cb.Items {
 		for _, check := range item.Report.Checks {
-			if _, ok := toolCheckResultMap[check.ID]; !ok {
-				toolCheckResultMap[check.ID] = &ToolCheckResult{ID: check.ID, Remediation: check.Remediation, ObjectType: objType}
-				toolCheckResultMap[check.ID].Details = make([]ResultDetails, 0)
+			if _, ok := scannerCheckResultMap[check.ID]; !ok {
+				scannerCheckResultMap[check.ID] = &ScannerCheckResult{ID: check.ID, Remediation: check.Remediation, ObjectType: objType}
+				scannerCheckResultMap[check.ID].Details = make([]ResultDetails, 0)
+			}
+			var message string
+			if len(check.Messages) > 0 {
+				message = check.Messages[0]
 			}
 			var status = Fail
 			if check.Success {
 				status = Pass
 			}
-			toolCheckResultMap[check.ID].Details = append(toolCheckResultMap[check.ID].Details, ResultDetails{Name: item.GetName(), Namespace: item.Namespace, Status: status})
+			scannerCheckResultMap[check.ID].Details = append(scannerCheckResultMap[check.ID].Details, ResultDetails{Name: item.GetName(), Namespace: item.Namespace, Msg: message, Status: status})
 
 		}
 	}
-	return toolCheckResultMap
+	return scannerCheckResultMap
 }
 
-func mapComplianceToolToResource(cli client.Client, ctx context.Context, resourceListNames map[string]*hashset.Set) map[string]map[string]client.ObjectList {
-	toolResource := make(map[string]map[string]client.ObjectList)
-	for tool, objNames := range resourceListNames {
+func mapComplianceScannerToResource(cli client.Client, ctx context.Context, resourceListNames map[string]*hashset.Set) map[string]map[string]client.ObjectList {
+	scannerResource := make(map[string]map[string]client.ObjectList)
+	for scanner, objNames := range resourceListNames {
 		for _, objName := range objNames.Values() {
 			objNameString, ok := objName.(string)
 			if !ok {
@@ -109,22 +113,22 @@ func mapComplianceToolToResource(cli client.Client, ctx context.Context, resourc
 				starboard.LabelResourceKind: objNameString,
 			}
 			matchingLabel := client.MatchingLabels(labels)
-			objList := getObjListByName(tool)
+			objList := getObjListByName(scanner)
 			err := cli.List(ctx, objList, matchingLabel)
 			if err != nil {
 				continue
 			}
-			if _, ok := toolResource[tool]; !ok {
-				toolResource[tool] = make(map[string]client.ObjectList)
+			if _, ok := scannerResource[scanner]; !ok {
+				scannerResource[scanner] = make(map[string]client.ObjectList)
 			}
-			toolResource[tool][objNameString] = objList
+			scannerResource[scanner][objNameString] = objList
 		}
 	}
-	return toolResource
+	return scannerResource
 }
 
-func getObjListByName(toolName string) client.ObjectList {
-	switch toolName {
+func getObjListByName(scannerName string) client.ObjectList {
+	switch scannerName {
 	case KubeBench:
 		return &v1alpha1.CISKubeBenchReportList{}
 	case ConfigAudit:
@@ -141,7 +145,7 @@ type ResultDetails struct {
 	Status    string
 }
 
-type ToolCheckResult struct {
+type ScannerCheckResult struct {
 	ObjectType  string
 	ID          string
 	Remediation string

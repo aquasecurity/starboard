@@ -406,6 +406,180 @@ spec:
     shortNames:
       - kubebench
 ---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustercompliancereports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.1"
+spec:
+  group: aquasecurity.github.io
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .spec.specKind
+          type: string
+          name: report
+          description: The name of the complience report
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .status.summary.failCount
+          type: integer
+          name: Fail
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .status.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - apiVersion
+            - kind
+            - metadata
+            - spec
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - specKind
+                - name
+                - description
+                - version
+                - cron
+                - controls
+              properties:
+                specKind:
+                  type: string
+                  description: 'spedKind define the spec type , example: compliance'
+                name:
+                  type: string
+                description:
+                  type: string
+                version:
+                  type: string
+                cron:
+                  type: string
+                  pattern: '(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+(\/|-)\d+)|\d+|\*) ?){5,7})'
+                  description: 'cron define the intervals for report generation'
+                controls:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - id
+                      - resources
+                      - mapping
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      id:
+                        type: string
+                        description: 'id define the control check id'
+                      resources:
+                        type: array
+                        items:
+                          type: string
+                          description: 'resources define the list of kinds control check apply on , example: Node,Workload '
+                      mapping:
+                        type: object
+                        required:
+                          - scanner
+                          - checks
+                        properties:
+                          scanner:
+                            type: string
+                            pattern: '^config-audit$|^kube-bench$'
+                            description: 'scanner define the name of the scanner which produce data, currently only config-audit and kube-bench are supported'
+                          checks:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - id
+                              properties:
+                                id:
+                                  type: string
+                                  description: 'id define the check id as produced by scanner'
+            status:
+              x-kubernetes-preserve-unknown-fields: true
+              type: object
+      subresources:
+        # status enables the status subresource.
+        status: { }
+  names:
+    singular: clustercompliancereport
+    plural: clustercompliancereports
+    kind: ClusterComplianceReport
+    listKind: ClusterComplianceReportList
+    categories: [ ]
+    shortNames:
+      - compliance
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustercompliancedetailreports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.1"
+spec:
+  group: aquasecurity.github.io
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .report.type.specKind
+          type: string
+          name: report
+          description: The name of the complience report
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .report.summary.failCount
+          type: integer
+          name: Fail
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .report.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          x-kubernetes-preserve-unknown-fields: true
+          type: object
+  scope: Cluster
+  names:
+    singular: clustercompliancedetailreport
+    plural: clustercompliancedetailreports
+    kind: ClusterComplianceDetailReport
+    listKind: ClusterComplianceDetailReportList
+    categories: []
+    shortNames:
+      - compliancedetail
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -546,6 +720,8 @@ rules:
       - configauditreports
       - clusterconfigauditreports
       - ciskubebenchreports
+      - clustercompliancereports
+      - clustercompliancedetailreports
     verbs:
       - get
       - list
@@ -560,6 +736,12 @@ rules:
     verbs:
       - create
       - get
+      - update
+  - apiGroups:
+      - aquasecurity.github.io
+    resources:
+      - clustercompliancereports/status
+    verbs:
       - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1

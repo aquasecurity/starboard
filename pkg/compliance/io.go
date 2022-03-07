@@ -36,23 +36,23 @@ type summaryTotal struct {
 }
 
 type specDataMapping struct {
-	toolResourceListNames  map[string]*hashset.Set
-	controlIDControlObject map[string]v1alpha1.Control
-	controlCheckIds        map[string][]string
+	scannerResourceListNames map[string]*hashset.Set
+	controlIDControlObject   map[string]v1alpha1.Control
+	controlCheckIds          map[string][]string
 }
 
 func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error) {
 	// map specs to key/value map for easy processing
 	smd := w.populateSpecDataToMaps(spec)
-	// map compliance tool to resource data
-	toolResourceMap := mapComplianceToolToResource(w.client, ctx, smd.toolResourceListNames)
+	// map compliance scanner to resource data
+	scannerResourceMap := mapComplianceScannerToResource(w.client, ctx, smd.scannerResourceListNames)
 	// organized data by check id and it aggregated results
-	checkIdsToResults, err := w.checkIdsToResults(toolResourceMap)
+	checkIdsToResults, err := w.checkIdsToResults(scannerResourceMap)
 	if err != nil {
 		return nil, err
 	}
-	// map tool checks results to control check results
-	controlChecks := w.controlChecksByToolChecks(smd, checkIdsToResults)
+	// map scanner checks results to control check results
+	controlChecks := w.controlChecksByScannerChecks(smd, checkIdsToResults)
 	// find summary totals
 	st := w.getTotals(controlChecks)
 	//publish compliance details report
@@ -95,8 +95,8 @@ func (w *cm) createComplianceReport(ctx context.Context, spec v1alpha1.ReportSpe
 }
 
 //createComplianceDetailReport create and publish compliance details report
-func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.ReportSpec, smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult, st summaryTotal) error {
-	controlChecksDetails := w.controlChecksDetailsByToolChecks(smd, checkIdsToResults)
+func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.ReportSpec, smd *specDataMapping, checkIdsToResults map[string][]*ScannerCheckResult, st summaryTotal) error {
+	controlChecksDetails := w.controlChecksDetailsByScannerChecks(smd, checkIdsToResults)
 	name := strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "details"))
 	// compliance details report
 	summary := v1alpha1.ClusterComplianceDetailSummary{PassCount: st.pass, FailCount: st.fail}
@@ -138,8 +138,8 @@ func (w *cm) getTotals(controlChecks []v1alpha1.ControlCheck) summaryTotal {
 	return summaryTotal{fail: totalFail, pass: totalPass}
 }
 
-// controlChecksByToolChecks build control checks list by parsing test results and mapping it to relevant tool
-func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheck {
+// controlChecksByScannerChecks build control checks list by parsing test results and mapping it to relevant scanner
+func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResults map[string][]*ScannerCheckResult) []v1alpha1.ControlCheck {
 	controlChecks := make([]v1alpha1.ControlCheck, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		var passTotal, failTotal, total int
@@ -167,8 +167,8 @@ func (w *cm) controlChecksByToolChecks(smd *specDataMapping, checkIdsToResults m
 	return controlChecks
 }
 
-// controlChecksDetailsByToolChecks build control checks with details list by parsing test results and mapping it to relevant tool
-func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToResults map[string][]*ToolCheckResult) []v1alpha1.ControlCheckDetails {
+// controlChecksDetailsByScannerChecks build control checks with details list by parsing test results and mapping it to relevant tool
+func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsToResults map[string][]*ScannerCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
 	for controlID, checkIds := range smd.controlCheckIds {
 		control, ok := smd.controlIDControlObject[controlID]
@@ -176,17 +176,17 @@ func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToRe
 			for _, checkId := range checkIds {
 				results, ok := checkIdsToResults[checkId]
 				if ok {
-					ctta := make([]v1alpha1.ToolCheckResult, 0)
+					ctta := make([]v1alpha1.ScannerCheckResult, 0)
 					for _, checkResult := range results {
-						var ctt v1alpha1.ToolCheckResult
+						var ctt v1alpha1.ScannerCheckResult
 						rds := make([]v1alpha1.ResultDetails, 0)
 						for _, crd := range checkResult.Details {
 							rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
 						}
-						ctt = v1alpha1.ToolCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
+						ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
 						ctta = append(ctta, ctt)
 					}
-					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ToolCheckResult: ctta})
+					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, ScannerCheckResult: ctta})
 				}
 			}
 		}
@@ -194,11 +194,11 @@ func (w *cm) controlChecksDetailsByToolChecks(smd *specDataMapping, checkIdsToRe
 	return controlChecks
 }
 
-func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.ObjectList) (map[string][]*ToolCheckResult, error) {
-	checkIdsToResults := make(map[string][]*ToolCheckResult)
-	for tool, resourceListMap := range toolResourceMap {
+func (w *cm) checkIdsToResults(scannerResourceMap map[string]map[string]client.ObjectList) (map[string][]*ScannerCheckResult, error) {
+	checkIdsToResults := make(map[string][]*ScannerCheckResult)
+	for scanner, resourceListMap := range scannerResourceMap {
 		for resourceName, resourceList := range resourceListMap {
-			mapper, err := byTool(tool)
+			mapper, err := byScanner(scanner)
 			if err != nil {
 				return nil, err
 			}
@@ -206,11 +206,11 @@ func (w *cm) checkIdsToResults(toolResourceMap map[string]map[string]client.Obje
 			if idCheckResultMap == nil {
 				continue
 			}
-			for id, toolCheckResult := range idCheckResultMap {
+			for id, scannerCheckResult := range idCheckResultMap {
 				if _, ok := checkIdsToResults[id]; !ok {
-					checkIdsToResults[id] = make([]*ToolCheckResult, 0)
+					checkIdsToResults[id] = make([]*ScannerCheckResult, 0)
 				}
-				checkIdsToResults[id] = append(checkIdsToResults[id], toolCheckResult)
+				checkIdsToResults[id] = append(checkIdsToResults[id], scannerCheckResult)
 			}
 		}
 	}
@@ -223,15 +223,15 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 	controlIDControlObject := make(map[string]v1alpha1.Control)
 	//control to checks map
 	controlCheckIds := make(map[string][]string)
-	//tool to resource list map
-	toolResourceListName := make(map[string]*hashset.Set)
+	//scanner to resource list map
+	scannerResourceListName := make(map[string]*hashset.Set)
 	for _, control := range spec.Controls {
 		control.Resources = mapResources(control)
-		if _, ok := toolResourceListName[control.Mapping.Tool]; !ok {
-			toolResourceListName[control.Mapping.Tool] = hashset.New()
+		if _, ok := scannerResourceListName[control.Mapping.Scanner]; !ok {
+			scannerResourceListName[control.Mapping.Scanner] = hashset.New()
 		}
 		for _, resource := range control.Resources {
-			toolResourceListName[control.Mapping.Tool].Add(resource)
+			scannerResourceListName[control.Mapping.Scanner].Add(resource)
 		}
 		controlIDControlObject[control.ID] = control
 		//update control resource list map
@@ -243,7 +243,7 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 		}
 	}
 	return &specDataMapping{
-		toolResourceListNames:  toolResourceListName,
-		controlIDControlObject: controlIDControlObject,
-		controlCheckIds:        controlCheckIds}
+		scannerResourceListNames: scannerResourceListName,
+		controlIDControlObject:   controlIDControlObject,
+		controlCheckIds:          controlCheckIds}
 }

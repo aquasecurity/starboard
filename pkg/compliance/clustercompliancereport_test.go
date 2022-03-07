@@ -66,8 +66,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 			sort.Sort(controlDetailSort(complianceDetailReport.Report.ControlChecks))
 			sort.Sort(controlDetailSort(clusterComplianceDetialReport.Report.ControlChecks))
 			for i := 0; i < len(complianceDetailReport.Report.ControlChecks); i++ {
-				sort.Sort(controlObjectTypeSort(complianceDetailReport.Report.ControlChecks[i].ToolCheckResult))
-				sort.Sort(controlObjectTypeSort(clusterComplianceDetialReport.Report.ControlChecks[i].ToolCheckResult))
+				sort.Sort(controlObjectTypeSort(complianceDetailReport.Report.ControlChecks[i].ScannerCheckResult))
+				sort.Sort(controlObjectTypeSort(clusterComplianceDetialReport.Report.ControlChecks[i].ScannerCheckResult))
 			}
 			Expect(cmp.Equal(complianceDetailReport.Report, clusterComplianceDetialReport.Report, ignoreTimeStamp())).To(BeTrue())
 
@@ -139,7 +139,7 @@ func (a controlDetailSort) Len() int           { return len(a) }
 func (a controlDetailSort) Less(i, j int) bool { return a[i].ID < a[j].ID }
 func (a controlDetailSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
-type controlObjectTypeSort []v1alpha1.ToolCheckResult
+type controlObjectTypeSort []v1alpha1.ScannerCheckResult
 
 func (a controlObjectTypeSort) Len() int           { return len(a) }
 func (a controlObjectTypeSort) Less(i, j int) bool { return a[i].ObjectType < a[j].ObjectType }

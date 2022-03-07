@@ -39,15 +39,15 @@ type Control struct {
 	Mapping     Mapping  `json:"mapping"`
 }
 
-//SpecCheck represent the tool who perform the control check
+//SpecCheck represent the scanner who perform the control check
 type SpecCheck struct {
 	ID string `json:"id"`
 }
 
-//Mapping represent the tool who perform the control check
+//Mapping represent the scanner who perform the control check
 type Mapping struct {
-	Tool   string      `json:"tool"`
-	Checks []SpecCheck `json:"checks"`
+	Scanner string      `json:"scanner"`
+	Checks  []SpecCheck `json:"checks"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

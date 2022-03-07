@@ -16,17 +16,17 @@ import (
 
 func TestGetObjListByName(t *testing.T) {
 	tests := []struct {
-		name     string
-		toolName string
-		want     string
+		name        string
+		scannerName string
+		want        string
 	}{
-		{name: "kube bench tool name", toolName: KubeBench, want: "*v1alpha1.CISKubeBenchReportList"},
-		{name: "conf audit tool name", toolName: ConfigAudit, want: "*v1alpha1.ConfigAuditReportList"},
-		{name: "no tool name", toolName: "", want: ""},
+		{name: "kube bench scanner name", scannerName: KubeBench, want: "*v1alpha1.CISKubeBenchReportList"},
+		{name: "conf audit scanner name", scannerName: ConfigAudit, want: "*v1alpha1.ConfigAuditReportList"},
+		{name: "no scanner name", scannerName: "", want: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl := getObjListByName(tt.toolName)
+			cl := getObjListByName(tt.scannerName)
 			if cl != nil {
 				name := reflect.TypeOf(cl).String()
 				if name != tt.want {
@@ -37,32 +37,32 @@ func TestGetObjListByName(t *testing.T) {
 	}
 }
 
-func TestByTool(t *testing.T) {
+func TestByScanner(t *testing.T) {
 	tests := []struct {
-		name     string
-		toolName string
-		want     string
+		name        string
+		scannerName string
+		want        string
 	}{
-		{name: "kube bench tool name", toolName: KubeBench, want: "*compliance.kubeBench"},
-		{name: "conf audit tool name", toolName: ConfigAudit, want: "*compliance.configAudit"},
+		{name: "kube bench scanner name", scannerName: KubeBench, want: "*compliance.kubeBench"},
+		{name: "conf audit scanner name", scannerName: ConfigAudit, want: "*compliance.configAudit"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl, err := byTool(tt.toolName)
+			cl, err := byScanner(tt.scannerName)
 			if err != nil {
 				t.Error(err)
 			}
 			if cl != nil {
 				name := reflect.TypeOf(cl).String()
 				if name != tt.want {
-					t.Errorf("TestByTool() got = %v, want %v", name, tt.want)
+					t.Errorf("TestByScanner() got = %v, want %v", name, tt.want)
 				}
 			}
 		})
 	}
 }
 
-func TestMapComplianceToolToResource(t *testing.T) {
+func TestMapComplianceScannerToResource(t *testing.T) {
 	mgr := cm{}
 	tests := []struct {
 		name     string
@@ -87,19 +87,19 @@ func TestMapComplianceToolToResource(t *testing.T) {
 				t.Error(err)
 			}
 			pd := mgr.populateSpecDataToMaps(spec.Spec)
-			mapData := mapComplianceToolToResource(tt.kClient, context.Background(), pd.toolResourceListNames)
+			mapData := mapComplianceScannerToResource(tt.kClient, context.Background(), pd.scannerResourceListNames)
 			var match bool
 			if len(mapData) > 0 {
 				for key, val := range tt.want {
-					if tool, ok := mapData[key]; ok {
-						for kTool, kVal := range tool {
+					if scanner, ok := mapData[key]; ok {
+						for kScanner, kVal := range scanner {
 							if cis, ok := kVal.(*v1alpha1.CISKubeBenchReportList); ok {
-								if len(cis.Items) == val[kTool] {
+								if len(cis.Items) == val[kScanner] {
 									match = true
 								}
 							}
 							if cis, ok := kVal.(*v1alpha1.ConfigAuditReportList); ok {
-								if len(cis.Items) == val[kTool] {
+								if len(cis.Items) == val[kScanner] {
 									match = true
 								}
 							}
@@ -108,7 +108,7 @@ func TestMapComplianceToolToResource(t *testing.T) {
 				}
 			}
 			if !match {
-				t.Errorf("TestMapComplianceToolToResource: return data do not match expected %v ", mapData)
+				t.Errorf("TestMapComplianceScannerToResource: return data do not match expected %v ", mapData)
 			}
 		})
 	}
@@ -139,14 +139,14 @@ func TestMapReportDataToMap(t *testing.T) {
 	tests := []struct {
 		name       string
 		objectType string
-		mapfunc    func(objType string, objList client.ObjectList) map[string]*ToolCheckResult
+		mapfunc    func(objType string, objList client.ObjectList) map[string]*ScannerCheckResult
 		reportList client.ObjectList
-		wantResult map[string]*ToolCheckResult
+		wantResult map[string]*ScannerCheckResult
 	}{
 		{name: "map config audit report", objectType: "Pod", reportList: getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"}), wantResult: getWantResults("./testdata/fixture/config_audit_check_result.json"), mapfunc: configAudit{}.mapReportData},
 		{name: "map cis benchmark report", objectType: "Node", reportList: getCisInstance([]string{"1.1", "2.2"}, []string{"Pass", "Fail"}, []string{"aaa", "bbb"}), wantResult: getWantResults("./testdata/fixture/cis_bench_check_result.json"), mapfunc: kubeBench{}.mapReportData},
-		{name: "map empty config report", objectType: "Pod", reportList: &v1alpha1.ConfigAuditReportList{}, wantResult: map[string]*ToolCheckResult{}, mapfunc: configAudit{}.mapReportData},
-		{name: "map empty cis report ", objectType: "Node", reportList: &v1alpha1.CISKubeBenchReportList{}, wantResult: map[string]*ToolCheckResult{}, mapfunc: kubeBench{}.mapReportData},
+		{name: "map empty config report", objectType: "Pod", reportList: &v1alpha1.ConfigAuditReportList{}, wantResult: map[string]*ScannerCheckResult{}, mapfunc: configAudit{}.mapReportData},
+		{name: "map empty cis report ", objectType: "Node", reportList: &v1alpha1.CISKubeBenchReportList{}, wantResult: map[string]*ScannerCheckResult{}, mapfunc: kubeBench{}.mapReportData},
 	}
 
 	for _, tt := range tests {
@@ -159,8 +159,8 @@ func TestMapReportDataToMap(t *testing.T) {
 	}
 }
 
-func getWantResults(filePath string) map[string]*ToolCheckResult {
-	var tct map[string]*ToolCheckResult
+func getWantResults(filePath string) map[string]*ScannerCheckResult {
+	var tct map[string]*ScannerCheckResult
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil
@@ -172,8 +172,8 @@ func getWantResults(filePath string) map[string]*ToolCheckResult {
 	return tct
 }
 
-func getWantMapResults(filePath string) map[string][]*ToolCheckResult {
-	var tct map[string][]*ToolCheckResult
+func getWantMapResults(filePath string) map[string][]*ScannerCheckResult {
+	var tct map[string][]*ScannerCheckResult
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil

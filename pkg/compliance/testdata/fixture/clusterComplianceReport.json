@@ -21,7 +21,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV012"
@@ -37,7 +37,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV014"
@@ -53,7 +53,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV017"
@@ -69,7 +69,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV008"
@@ -85,7 +85,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV009"
@@ -101,7 +101,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV010"
@@ -117,7 +117,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV029"
@@ -133,7 +133,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV001"
@@ -149,7 +149,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV002"
@@ -165,7 +165,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV030"
@@ -181,7 +181,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV036"
@@ -197,7 +197,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV037"
@@ -213,7 +213,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV038"
@@ -229,7 +229,7 @@
           "Workload"
         ],
         "mapping": {
-          "tool": "config-audit",
+          "scanner": "config-audit",
           "checks": [
             {
               "id": "KSV038"
@@ -245,7 +245,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "5.3.1"
@@ -261,7 +261,7 @@
           "NetworkPolicy"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "<check need to be added>"
@@ -277,7 +277,7 @@
           "LimitRange"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "<check need to be added>"
@@ -293,7 +293,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.19"
@@ -309,7 +309,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "2.1"
@@ -325,7 +325,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "4.1.3"
@@ -344,7 +344,7 @@
           "EncryptionConfiguration"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "<check need to be added>"
@@ -360,7 +360,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.3"
@@ -376,7 +376,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.1"
@@ -392,7 +392,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.7"
@@ -411,7 +411,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "3.2.1"
@@ -427,7 +427,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.22"
@@ -443,7 +443,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "1.2.23"
@@ -459,7 +459,7 @@
           "Node"
         ],
         "mapping": {
-          "tool": "kube-bench",
+          "scanner": "kube-bench",
           "checks": [
             {
               "id": "<check need to be added>"

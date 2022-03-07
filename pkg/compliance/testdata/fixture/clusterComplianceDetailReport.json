@@ -31,13 +31,13 @@
               {
                 "name": "pod-rss-site",
                 "namespace": "default",
-                "msg": "",
+                "msg": "Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
                 "status": "fail"
               },
               {
                 "name": "pod-rss-site",
                 "namespace": "default",
-                "msg": "",
+                "msg": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
                 "status": "fail"
               }
             ]
@@ -50,7 +50,7 @@
               {
                 "name": "replicaset-memcached-sample-6c765df685",
                 "namespace": "default",
-                "msg": "",
+                "msg": "Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true",
                 "status": "fail"
               }
             ]

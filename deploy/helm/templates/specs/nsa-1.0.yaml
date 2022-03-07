@@ -16,7 +16,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV012
     - name: Immutable container file systems
@@ -25,7 +25,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV014
     - name: Preventing privileged containers
@@ -34,7 +34,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV017
     - name: share host process namespaces
@@ -43,7 +43,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV008
     - name: share host process namespaces.
@@ -52,7 +52,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV009
     - name: use the host network
@@ -60,7 +60,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV010
     - name: applications can run with root privileges or with root group membership
@@ -69,7 +69,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV029
     - name: Restricts escalation to root privileges.
@@ -78,7 +78,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV001
     - name: Sets the SELinux context of the container.
@@ -87,7 +87,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV002
     - name: Restrict a container's access to resources with AppArmor
@@ -96,7 +96,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV030
     - name: Sets the seccomp profile used to sandbox containers.
@@ -105,7 +105,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV036
     - name: Protecting Pod service account tokens
@@ -114,7 +114,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV037
     - name: Namespace kube-system should should not be used by users
@@ -123,7 +123,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV038
     - name: pod and/or namespace Selectors usage
@@ -132,7 +132,7 @@ spec:
       resources:
         - Workload
       mapping:
-        tool: config-audit
+        scanner: config-audit
         checks:
           - id: KSV038
     - name: Use CNI plugin that supports NetworkPolicy API
@@ -141,7 +141,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 5.3.1
     - name: Use a default policy to deny all ingress and egress traffic
@@ -150,7 +150,7 @@ spec:
       resources:
         - NetworkPolicy
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: "<check need to be added>"
     - name: Use LimitRange and ResourceQuota policies to limit resources
@@ -159,7 +159,7 @@ spec:
       resources:
         - LimitRange
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: "<check need to be added>"
     - name: Control plan disable insecure port
@@ -168,7 +168,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.19
     - name: Encrypt etcd communication
@@ -177,7 +177,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: '2.1'
     - name: Ensure kube config file permission
@@ -186,7 +186,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 4.1.3
           - id: 4.1.4
@@ -196,7 +196,7 @@ spec:
       resources:
         - EncryptionConfiguration
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.31"
           - id: 1.2.32"
@@ -206,7 +206,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.3
     - name: Make sure anonymous-auth is unset
@@ -215,7 +215,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.1
     - name: Make sure -authorization-mode=RBAC
@@ -224,7 +224,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.7
           - id: 1.2.8
@@ -234,7 +234,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 3.2.1
     - name: Audit log path is configure
@@ -243,7 +243,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.22
     - name: Audit log aging
@@ -252,7 +252,7 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: 1.2.23
     - name: service mesh is configure
@@ -261,6 +261,6 @@ spec:
       resources:
         - Node
       mapping:
-        tool: kube-bench
+        scanner: kube-bench
         checks:
           - id: "<check need to be added>"

@@ -11,7 +11,7 @@ controls:
     resources:
       - Workload
     mapping:
-      tool: config-audit
+      scanner: config-audit
       checks:
         - id: KSV012
   - name: Audit log path is configure
@@ -20,6 +20,6 @@ controls:
     resources:
       - Node
     mapping:
-      tool: kube-bench
+      scanner: kube-bench
       checks:
         - id: 1.2.22

@@ -57,7 +57,8 @@ spec:
                 - controls
               properties:
                 specKind:
-                  type: string #type of report example compliance
+                  type: string
+                  description: 'spedKind define the spec type , example: compliance'
                 name:
                   type: string
                 description:
@@ -67,6 +68,7 @@ spec:
                 cron:
                   type: string
                   pattern: '(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+(\/|-)\d+)|\d+|\*) ?){5,7})'
+                  description: 'cron define the intervals for report generation'
                 controls:
                   type: array
                   items:
@@ -81,21 +83,24 @@ spec:
                         type: string
                       description:
                         type: string
-                      id: # control check id
+                      id:
                         type: string
+                        description: 'id define the control check id'
                       resources:
                         type: array
                         items:
-                          type: string # example Node,Workload
+                          type: string
+                          description: 'resources define the list of kinds control check apply on , example: Node,Workload '
                       mapping:
                         type: object
                         required:
-                          - tool
+                          - scanner
                           - checks
                         properties:
-                          tool: # tool name currently only config-audit and kube-bench are supported
+                          scanner:
                             type: string
                             pattern: '^config-audit$|^kube-bench$'
+                            description: 'scanner define the name of the scanner which produce data, currently only config-audit and kube-bench are supported'
                           checks:
                             type: array
                             items:
@@ -103,8 +108,9 @@ spec:
                               required:
                                 - id
                               properties:
-                                id: # tool id
+                                id:
                                   type: string
+                                  description: 'id define the check id as produced by scanner'
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
