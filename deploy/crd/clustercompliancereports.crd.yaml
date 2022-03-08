@@ -76,7 +76,7 @@ spec:
                     required:
                       - name
                       - id
-                      - resources
+                      - kinds
                       - mapping
                     properties:
                       name:
@@ -86,11 +86,11 @@ spec:
                       id:
                         type: string
                         description: 'id define the control check id'
-                      resources:
+                      kinds:
                         type: array
                         items:
                           type: string
-                          description: 'resources define the list of kinds control check apply on , example: Node,Workload '
+                          description: 'kinds define the list of kinds control check apply on , example: Node,Workload '
                       mapping:
                         type: object
                         required:

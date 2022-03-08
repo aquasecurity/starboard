@@ -399,7 +399,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Messages: []string{"CPU limits are set"},
 		Success:  false,
 		Severity: v1alpha1.SeverityLow,
-		Category: "Resources",
+		Category: "Kinds",
 		Scope: &v1alpha1.CheckScope{
 			Type:  "Container",
 			Value: "db",
@@ -409,7 +409,7 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		Messages: []string{"CPU requests are set"},
 		Success:  true,
 		Severity: v1alpha1.SeverityLow,
-		Category: "Resources",
+		Category: "Kinds",
 		Scope: &v1alpha1.CheckScope{
 			Type:  "Container",
 			Value: "db",

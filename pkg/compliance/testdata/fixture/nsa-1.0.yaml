@@ -8,7 +8,7 @@ controls:
   - name: Non-root containers
     description: ''
     id: '1.0'
-    resources:
+    kinds:
       - Workload
     mapping:
       scanner: config-audit
@@ -17,7 +17,7 @@ controls:
   - name: Audit log path is configure
     description: ''
     id: '8.1'
-    resources:
+    kinds:
       - Node
     mapping:
       scanner: kube-bench

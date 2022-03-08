@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// ResourceController watches all Kubernetes resources and generates
+// ResourceController watches all Kubernetes kinds and generates
 // v1alpha1.ConfigAuditReport instances based on OPA Rego policies as fast as
 // possible.
 type ResourceController struct {

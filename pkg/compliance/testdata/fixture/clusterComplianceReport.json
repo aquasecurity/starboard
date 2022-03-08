@@ -17,7 +17,7 @@
         "id": "1.0",
         "name": "Non-root containers",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -33,7 +33,7 @@
         "id": "1.1",
         "name": "Immutable container file systems",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -49,7 +49,7 @@
         "id": "1.2",
         "name": "Preventing privileged containers",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -65,7 +65,7 @@
         "id": "1.3",
         "name": "share host process namespaces",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -81,7 +81,7 @@
         "id": "1.4",
         "name": "share host process namespaces.",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -97,7 +97,7 @@
         "id": "1.5",
         "name": "use the host network",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -113,7 +113,7 @@
         "id": "1.6",
         "name": "applications can run with root privileges or with root group membership",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -129,7 +129,7 @@
         "id": "1.7",
         "name": "Restricts escalation to root privileges.",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -145,7 +145,7 @@
         "id": "1.8",
         "name": "Sets the SELinux context of the container.",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -161,7 +161,7 @@
         "id": "1.9",
         "name": "Restrict a container's access to resources with AppArmor",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -177,7 +177,7 @@
         "id": "1.10",
         "name": "Sets the seccomp profile used to sandbox containers.",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -193,7 +193,7 @@
         "id": "1.11",
         "name": "Protecting Pod service account tokens",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -209,7 +209,7 @@
         "id": "1.12",
         "name": "Namespace kube-system should should not be used by users",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -225,7 +225,7 @@
         "id": "2.0",
         "name": "pod and/or namespace Selectors usage",
         "description": "",
-        "resources": [
+        "kinds": [
           "Workload"
         ],
         "mapping": {
@@ -241,7 +241,7 @@
         "id": "3.0",
         "name": "Use CNI plugin that supports NetworkPolicy API",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -257,7 +257,7 @@
         "id": "3.1",
         "name": "Use a default policy to deny all ingress and egress traffic",
         "description": "",
-        "resources": [
+        "kinds": [
           "NetworkPolicy"
         ],
         "mapping": {
@@ -273,7 +273,7 @@
         "id": "4.0",
         "name": "Use LimitRange and ResourceQuota policies to limit resources",
         "description": "",
-        "resources": [
+        "kinds": [
           "LimitRange"
         ],
         "mapping": {
@@ -289,7 +289,7 @@
         "id": "5.0",
         "name": "Control plan disable insecure port",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -305,7 +305,7 @@
         "id": "5.1",
         "name": "Encrypt etcd communication",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -321,7 +321,7 @@
         "id": "6.0",
         "name": "Ensure kube config file permission",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -340,7 +340,7 @@
         "id": "6.1",
         "name": "Check that encryption resource has been set",
         "description": "",
-        "resources": [
+        "kinds": [
           "EncryptionConfiguration"
         ],
         "mapping": {
@@ -356,7 +356,7 @@
         "id": "6.2",
         "name": "Check encryption provider",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -372,7 +372,7 @@
         "id": "7.0",
         "name": "Make sure anonymous-auth is unset",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -388,7 +388,7 @@
         "id": "7.1",
         "name": "Make sure -authorization-mode=RBAC",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -407,7 +407,7 @@
         "id": "8.0",
         "name": "Audit policy is configure",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -423,7 +423,7 @@
         "id": "8.1",
         "name": "Audit log path is configure",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -439,7 +439,7 @@
         "id": "8.2",
         "name": "Audit log aging",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {
@@ -455,7 +455,7 @@
         "id": "9.0",
         "name": "service mesh is configure",
         "description": "",
-        "resources": [
+        "kinds": [
           "Node"
         ],
         "mapping": {

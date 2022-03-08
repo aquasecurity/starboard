@@ -414,7 +414,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"Image":                    Equal("openpolicyagent/conftest:v0.23.0"),
 				"ImagePullPolicy":          Equal(corev1.PullIfNotPresent),
 				"TerminationMessagePolicy": Equal(corev1.TerminationMessageFallbackToLogsOnError),
-				"Resources": Equal(corev1.ResourceRequirements{
+				"Kinds": Equal(corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
 						corev1.ResourceCPU:    resource.MustParse("300m"),
 						corev1.ResourceMemory: resource.MustParse("300M"),

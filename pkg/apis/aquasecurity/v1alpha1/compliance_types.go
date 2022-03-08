@@ -35,7 +35,7 @@ type Control struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	Description string   `json:"description,,omitempty"`
-	Resources   []string `json:"resources"`
+	Kinds       []string `json:"kinds"`
 	Mapping     Mapping  `json:"mapping"`
 }
 
@@ -52,7 +52,7 @@ type Mapping struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ClusterComplianceReportList is a list of compliance resources.
+// ClusterComplianceReportList is a list of compliance kinds.
 type ClusterComplianceReportList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

@@ -21,7 +21,7 @@ type ClusterComplianceDetailReport struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ClusterComplianceDetailReportList is a list of compliance resources.
+// ClusterComplianceDetailReportList is a list of compliance kinds.
 type ClusterComplianceDetailReportList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

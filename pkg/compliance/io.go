@@ -226,11 +226,11 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 	//scanner to resource list map
 	scannerResourceListName := make(map[string]*hashset.Set)
 	for _, control := range spec.Controls {
-		control.Resources = mapResources(control)
+		control.Kinds = mapKinds(control)
 		if _, ok := scannerResourceListName[control.Mapping.Scanner]; !ok {
 			scannerResourceListName[control.Mapping.Scanner] = hashset.New()
 		}
-		for _, resource := range control.Resources {
+		for _, resource := range control.Kinds {
 			scannerResourceListName[control.Mapping.Scanner].Add(resource)
 		}
 		controlIDControlObject[control.ID] = control
