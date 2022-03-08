@@ -122,7 +122,7 @@ spec:
       description: 'Control check whether Namespace kube-system is not be used by users'
       id: '1.12'
       resources:
-        - Workload
+        - NetworkPolicy
       mapping:
         scanner: config-audit
         checks:
@@ -149,9 +149,9 @@ spec:
       description: ''
       id: '4.0'
       resources:
-        - LimitRange
+        - ResourceQuota
       mapping:
-        scanner: kube-bench
+        scanner: config-audit
         checks:
           - id: "<check need to be added>"
     - name: Control plan disable insecure port
@@ -186,7 +186,7 @@ spec:
       description: 'Control checks whether encryption resource has been set'
       id: '6.1'
       resources:
-        - EncryptionConfiguration
+        - Node
       mapping:
         scanner: kube-bench
         checks:
