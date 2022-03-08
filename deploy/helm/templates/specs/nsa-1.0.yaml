@@ -20,7 +20,7 @@ spec:
         checks:
           - id: KSV012
     - name: Immutable container file systems
-      description: 'check that container root file system is immutable'
+      description: 'Check that container root file system is immutable'
       id: '1.1'
       kinds:
         - Workload
@@ -37,7 +37,7 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV017
-    - name: share containers process namespaces
+    - name: Share containers process namespaces
       description: 'Controls whether containers can share process namespaces'
       id: '1.3'
       kinds:
@@ -46,7 +46,7 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV008
-    - name: share host process namespaces.
+    - name: Share host process namespaces.
       description: 'Controls whether share host process namespaces'
       id: '1.4'
       kinds:
@@ -64,7 +64,7 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV010
-    - name:  run with root privileges or with root group membership
+    - name:  Run with root privileges or with root group membership
       description: 'Controls whether container applications can run with root privileges or with root group membership'
       id: '1.6'
       kinds:
@@ -110,7 +110,7 @@ spec:
         checks:
           - id: KSV036
     - name: Protecting Pod service account tokens
-      description: 'control check whether disable secret token been mount ,automountServiceAccountToken: false'
+      description: 'Control check whether disable secret token been mount ,automountServiceAccountToken: false'
       id: '1.11'
       kinds:
         - Workload
@@ -127,7 +127,7 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV038
-    - name: pod and/or namespace Selectors usage / deny all ingress and egress policies are define
+    - name: Pod and/or namespace Selectors usage / deny all ingress and egress policies are define
       description: 'Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define'
       id: '2.0'
       kinds:
@@ -145,8 +145,8 @@ spec:
         scanner: kube-bench
         checks:
           - id: 5.3.1
-    - name: Use LimitRange and ResourceQuota policies to limit resources
-      description: ''
+    - name: Use ResourceQuota policies to limit resources
+      description: 'Control check the use of ResourceQuota policies to limit resources'
       id: '4.0'
       kinds:
         - ResourceQuota
@@ -230,7 +230,7 @@ spec:
         checks:
           - id: 3.2.1
     - name: Audit log path is configure
-      description: 'control check whether audit log path is configure'
+      description: 'Control check whether audit log path is configure'
       id: '8.1'
       kinds:
         - Node
@@ -239,7 +239,7 @@ spec:
         checks:
           - id: 1.2.22
     - name: Audit log aging
-      description: 'control check whether audit log aging is configure'
+      description: 'Control check whether audit log aging is configure'
       id: '8.2'
       kinds:
         - Node
@@ -247,8 +247,8 @@ spec:
         scanner: kube-bench
         checks:
           - id: 1.2.23
-    - name: service mesh is configure
-      description: 'control check whether service mesh is used in cluster'
+    - name: Service mesh is configure
+      description: 'Control check whether service mesh is used in cluster'
       id: '9.0'
       kinds:
         - Node
