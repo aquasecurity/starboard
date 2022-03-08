@@ -11,7 +11,7 @@ spec:
   cron: "* * * * *"
   controls:
     - name: Non-root containers
-      description: ''
+      description: 'Check that container is not running as root'
       id: '1.0'
       resources:
         - Workload
@@ -20,7 +20,7 @@ spec:
         checks:
           - id: KSV012
     - name: Immutable container file systems
-      description: ''
+      description: 'check that container root file system is immutable'
       id: '1.1'
       resources:
         - Workload
@@ -29,7 +29,7 @@ spec:
         checks:
           - id: KSV014
     - name: Preventing privileged containers
-      description: ''
+      description: 'Controls whether Pods can run privileged containers'
       id: '1.2'
       resources:
         - Workload
@@ -37,8 +37,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV017
-    - name: share host process namespaces
-      description: ''
+    - name: share containers process namespaces
+      description: 'Controls whether containers can share process namespaces'
       id: '1.3'
       resources:
         - Workload
@@ -47,7 +47,7 @@ spec:
         checks:
           - id: KSV008
     - name: share host process namespaces.
-      description: ''
+      description: 'Controls whether share host process namespaces'
       id: '1.4'
       resources:
         - Workload
@@ -56,6 +56,7 @@ spec:
         checks:
           - id: KSV009
     - name: use the host network
+      description: 'Controls whether containers can use the host network'
       id: '1.5'
       resources:
         - Workload
@@ -63,8 +64,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV010
-    - name: applications can run with root privileges or with root group membership
-      description: ''
+    - name:  run with root privileges or with root group membership
+      description: 'Controls whether container applications can run with root privileges or with root group membership'
       id: '1.6'
       resources:
         - Workload
@@ -72,8 +73,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV029
-    - name: Restricts escalation to root privileges.
-      description: ''
+    - name: Restricts escalation to root privileges
+      description: 'Control check restrictions escalation to root privileges'
       id: '1.7'
       resources:
         - Workload
@@ -81,8 +82,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV001
-    - name: Sets the SELinux context of the container.
-      description: ''
+    - name: Sets the SELinux context of the container
+      description: 'Control checks if pod sets the SELinux context of the container'
       id: '1.8'
       resources:
         - Workload
@@ -91,7 +92,7 @@ spec:
         checks:
           - id: KSV002
     - name: Restrict a container's access to resources with AppArmor
-      description: ''
+      description: 'Control checks the restriction of containers access to resources with AppArmor'
       id: '1.9'
       resources:
         - Workload
@@ -100,7 +101,7 @@ spec:
         checks:
           - id: KSV030
     - name: Sets the seccomp profile used to sandbox containers.
-      description: ''
+      description: 'Control checks the sets the seccomp profile used to sandbox containers'
       id: '1.10'
       resources:
         - Workload
@@ -109,7 +110,7 @@ spec:
         checks:
           - id: KSV036
     - name: Protecting Pod service account tokens
-      description: ''
+      description: 'control check whether disable secret token been mount ,automountServiceAccountToken: false'
       id: '1.11'
       resources:
         - Workload
@@ -117,8 +118,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV037
-    - name: Namespace kube-system should should not be used by users
-      description: ''
+    - name: Namespace kube-system should not be used by users
+      description: 'Control check whether Namespace kube-system is not be used by users'
       id: '1.12'
       resources:
         - Workload
@@ -126,8 +127,8 @@ spec:
         scanner: config-audit
         checks:
           - id: KSV038
-    - name: pod and/or namespace Selectors usage
-      description: ''
+    - name: pod and/or namespace Selectors usage / deny all ingress and egress policies are define
+      description: 'Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define'
       id: '2.0'
       resources:
         - Workload
@@ -136,7 +137,7 @@ spec:
         checks:
           - id: KSV038
     - name: Use CNI plugin that supports NetworkPolicy API
-      description: ''
+      description: 'Control check whether check cni plugin installed	'
       id: '3.0'
       resources:
         - Node
@@ -144,15 +145,6 @@ spec:
         scanner: kube-bench
         checks:
           - id: 5.3.1
-    - name: Use a default policy to deny all ingress and egress traffic
-      description: ''
-      id: '3.1'
-      resources:
-        - NetworkPolicy
-      mapping:
-        scanner: kube-bench
-        checks:
-          - id: "<check need to be added>"
     - name: Use LimitRange and ResourceQuota policies to limit resources
       description: ''
       id: '4.0'
@@ -163,7 +155,7 @@ spec:
         checks:
           - id: "<check need to be added>"
     - name: Control plan disable insecure port
-      description: ''
+      description: 'Control check whether control plan disable insecure port'
       id: '5.0'
       resources:
         - Node
@@ -172,7 +164,7 @@ spec:
         checks:
           - id: 1.2.19
     - name: Encrypt etcd communication
-      description: ''
+      description: 'Control check whether etcd communication is encrypted'
       id: '5.1'
       resources:
         - Node
@@ -181,7 +173,7 @@ spec:
         checks:
           - id: '2.1'
     - name: Ensure kube config file permission
-      description: ''
+      description: 'Control check whether kube config file permissions'
       id: '6.0'
       resources:
         - Node
@@ -191,7 +183,7 @@ spec:
           - id: 4.1.3
           - id: 4.1.4
     - name: Check that encryption resource has been set
-      description: ''
+      description: 'Control checks whether encryption resource has been set'
       id: '6.1'
       resources:
         - EncryptionConfiguration
@@ -201,7 +193,7 @@ spec:
           - id: 1.2.31"
           - id: 1.2.32"
     - name: Check encryption provider
-      description: ''
+      description: 'Control checks whether encryption provider has been set'
       id: '6.2'
       resources:
         - Node
@@ -210,7 +202,7 @@ spec:
         checks:
           - id: 1.2.3
     - name: Make sure anonymous-auth is unset
-      description: ''
+      description: 'Control checks whether anonymous-auth is unset'
       id: '7.0'
       resources:
         - Node
@@ -219,7 +211,7 @@ spec:
         checks:
           - id: 1.2.1
     - name: Make sure -authorization-mode=RBAC
-      description: ''
+      description: 'Control check whether RBAC permission is in use'
       id: '7.1'
       resources:
         - Node
@@ -229,7 +221,7 @@ spec:
           - id: 1.2.7
           - id: 1.2.8
     - name: Audit policy is configure
-      description: ''
+      description: 'Control check whether audit policy is configure'
       id: '8.0'
       resources:
         - Node
@@ -238,7 +230,7 @@ spec:
         checks:
           - id: 3.2.1
     - name: Audit log path is configure
-      description: ''
+      description: 'control check whether audit log path is configure'
       id: '8.1'
       resources:
         - Node
@@ -247,7 +239,7 @@ spec:
         checks:
           - id: 1.2.22
     - name: Audit log aging
-      description: ''
+      description: 'control check whether audit log aging is configure'
       id: '8.2'
       resources:
         - Node
@@ -256,7 +248,7 @@ spec:
         checks:
           - id: 1.2.23
     - name: service mesh is configure
-      description: ''
+      description: 'control check whether service mesh is used in cluster'
       id: '9.0'
       resources:
         - Node
