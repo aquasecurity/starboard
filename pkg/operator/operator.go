@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/compliance"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -245,6 +246,19 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		}
 	}
 
+	if operatorConfig.ClusterComplianceEnabled {
+		logger := ctrl.Log.WithName("reconciler").WithName("clustercompliancereport")
+		cc := &compliance.ClusterComplianceReportReconciler{
+			Logger: logger,
+			Config: operatorConfig,
+			Client: mgr.GetClient(),
+			Mgr:    compliance.NewMgr(mgr.GetClient(), logger),
+			Clock:  ext.NewSystemClock(),
+		}
+		if err := cc.SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to setup clustercompliancereport reconciler: %w", err)
+		}
+	}
 	setupLog.Info("Starting controllers manager")
 	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("starting controllers manager: %w", err)

@@ -21,6 +21,7 @@ Configuration of the operator's Pod is done via environment variables at startup
 | `OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL`                  | `""`                 | The flag to set how long a vulnerability report should exist. When a old report is deleted a new one will be created by the controller. It can be set to `""` to disabled the TTL for vulnerability scanner. |
 | `OPERATOR_LEADER_ELECTION_ENABLED`                           | `false`              | The flag to enable operator replica leader election                                                                                                                                                          |
 | `OPERATOR_LEADER_ELECTION_ID`                                | `starboard-lock`     | The name of the resource lock for leader election                                                                                                                                                            |
+| `OPERATOR_CLUSTER_COMPLIANCE_ENABLED `                       | `true`               | The flag to enable Cluster Compliance report generation                                                                                                                                                      |
 
 ## Install Modes
 

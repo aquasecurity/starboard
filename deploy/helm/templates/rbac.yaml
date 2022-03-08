@@ -141,6 +141,8 @@ rules:
       - configauditreports
       - clusterconfigauditreports
       - ciskubebenchreports
+      - clustercompliancereports
+      - clustercompliancedetailreports
     verbs:
       - get
       - list
@@ -148,6 +150,12 @@ rules:
       - create
       - update
       - delete
+  - apiGroups:
+      - aquasecurity.github.io
+    resources:
+      - clustercompliancereports/status
+    verbs:
+      - update
   {{- if gt (int .Values.operator.replicas) 1 }}
   - apiGroups:
       - coordination.k8s.io

@@ -406,6 +406,180 @@ spec:
     shortNames:
       - kubebench
 ---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustercompliancereports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.1"
+spec:
+  group: aquasecurity.github.io
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .spec.specKind
+          type: string
+          name: report
+          description: The name of the complience report
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .status.summary.failCount
+          type: integer
+          name: Fail
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .status.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - apiVersion
+            - kind
+            - metadata
+            - spec
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - specKind
+                - name
+                - description
+                - version
+                - cron
+                - controls
+              properties:
+                specKind:
+                  type: string
+                  description: 'spedKind define the spec type , example: compliance'
+                name:
+                  type: string
+                description:
+                  type: string
+                version:
+                  type: string
+                cron:
+                  type: string
+                  pattern: '^(((([\*]{1}){1})|((\*\/){0,1}(([0-9]{1}){1}|(([1-5]{1}){1}([0-9]{1}){1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([0-9]{1}){1}|(([1]{1}){1}([0-9]{1}){1}){1}|([2]{1}){1}([0-3]{1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([1-9]{1}){1}|(([1-2]{1}){1}([0-9]{1}){1}){1}|([3]{1}){1}([0-1]{1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([1-9]{1}){1}|(([1-2]{1}){1}([0-9]{1}){1}){1}|([3]{1}){1}([0-1]{1}){1}))|(jan|feb|mar|apr|may|jun|jul|aug|sep|okt|nov|dec)) ((([\*]{1}){1})|((\*\/){0,1}(([0-7]{1}){1}))|(sun|mon|tue|wed|thu|fri|sat)))$'
+                  description: 'cron define the intervals for report generation'
+                controls:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - id
+                      - kinds
+                      - mapping
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      id:
+                        type: string
+                        description: 'id define the control check id'
+                      kinds:
+                        type: array
+                        items:
+                          type: string
+                          description: 'kinds define the list of kinds control check apply on , example: Node,Workload '
+                      mapping:
+                        type: object
+                        required:
+                          - scanner
+                          - checks
+                        properties:
+                          scanner:
+                            type: string
+                            pattern: '^config-audit$|^kube-bench$'
+                            description: 'scanner define the name of the scanner which produce data, currently only config-audit and kube-bench are supported'
+                          checks:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - id
+                              properties:
+                                id:
+                                  type: string
+                                  description: 'id define the check id as produced by scanner'
+            status:
+              x-kubernetes-preserve-unknown-fields: true
+              type: object
+      subresources:
+        # status enables the status subresource.
+        status: { }
+  names:
+    singular: clustercompliancereport
+    plural: clustercompliancereports
+    kind: ClusterComplianceReport
+    listKind: ClusterComplianceReportList
+    categories: [ ]
+    shortNames:
+      - compliance
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustercompliancedetailreports.aquasecurity.github.io
+  labels:
+    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/version: "0.14.1"
+spec:
+  group: aquasecurity.github.io
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .report.type.specKind
+          type: string
+          name: report
+          description: The name of the complience report
+        - jsonPath: .metadata.creationTimestamp
+          type: date
+          name: Age
+          description: The age of the report
+        - jsonPath: .report.summary.failCount
+          type: integer
+          name: Fail
+          priority: 1
+          description: The number of checks that failed with Danger status
+        - jsonPath: .report.summary.passCount
+          type: integer
+          name: Pass
+          priority: 1
+          description: The number of checks that passed
+      schema:
+        openAPIV3Schema:
+          x-kubernetes-preserve-unknown-fields: true
+          type: object
+  scope: Cluster
+  names:
+    singular: clustercompliancedetailreport
+    plural: clustercompliancedetailreports
+    kind: ClusterComplianceDetailReport
+    listKind: ClusterComplianceDetailReportList
+    categories: []
+    shortNames:
+      - compliancedetail
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -546,6 +720,8 @@ rules:
       - configauditreports
       - clusterconfigauditreports
       - ciskubebenchreports
+      - clustercompliancereports
+      - clustercompliancedetailreports
     verbs:
       - get
       - list
@@ -560,6 +736,12 @@ rules:
     verbs:
       - create
       - get
+      - update
+  - apiGroups:
+      - aquasecurity.github.io
+    resources:
+      - clustercompliancereports/status
+    verbs:
       - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1787,3 +1969,262 @@ spec:
             readOnlyRootFilesystem: true
       securityContext:
         {}
+
+---
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: ClusterComplianceReport
+metadata:
+  name: nsa
+spec:
+  specKind: compliance
+  name: nsa
+  description: National Security Agency - Kubernetes Hardening Guidance
+  version: "1.0"
+  cron: "0 */3 * * *"
+  controls:
+    - name: Non-root containers
+      description: 'Check that container is not running as root'
+      id: '1.0'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV012
+    - name: Immutable container file systems
+      description: 'Check that container root file system is immutable'
+      id: '1.1'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV014
+    - name: Preventing privileged containers
+      description: 'Controls whether Pods can run privileged containers'
+      id: '1.2'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV017
+    - name: Share containers process namespaces
+      description: 'Controls whether containers can share process namespaces'
+      id: '1.3'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV008
+    - name: Share host process namespaces.
+      description: 'Controls whether share host process namespaces'
+      id: '1.4'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV009
+    - name: use the host network
+      description: 'Controls whether containers can use the host network'
+      id: '1.5'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV010
+    - name:  Run with root privileges or with root group membership
+      description: 'Controls whether container applications can run with root privileges or with root group membership'
+      id: '1.6'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV029
+    - name: Restricts escalation to root privileges
+      description: 'Control check restrictions escalation to root privileges'
+      id: '1.7'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV001
+    - name: Sets the SELinux context of the container
+      description: 'Control checks if pod sets the SELinux context of the container'
+      id: '1.8'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV002
+    - name: Restrict a container's access to resources with AppArmor
+      description: 'Control checks the restriction of containers access to resources with AppArmor'
+      id: '1.9'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV030
+    - name: Sets the seccomp profile used to sandbox containers.
+      description: 'Control checks the sets the seccomp profile used to sandbox containers'
+      id: '1.10'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV036
+    - name: Protecting Pod service account tokens
+      description: 'Control check whether disable secret token been mount ,automountServiceAccountToken: false'
+      id: '1.11'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV037
+    - name: Namespace kube-system should not be used by users
+      description: 'Control check whether Namespace kube-system is not be used by users'
+      id: '1.12'
+      kinds:
+        - NetworkPolicy
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV038
+    - name: Pod and/or namespace Selectors usage / deny all ingress and egress policies are define
+      description: 'Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define'
+      id: '2.0'
+      kinds:
+        - Workload
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: KSV038
+    - name: Use CNI plugin that supports NetworkPolicy API
+      description: 'Control check whether check cni plugin installed	'
+      id: '3.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 5.3.1
+    - name: Use ResourceQuota policies to limit resources
+      description: 'Control check the use of ResourceQuota policies to limit resources'
+      id: '4.0'
+      kinds:
+        - ResourceQuota
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: "<check need to be added>"
+    - name: Control plan disable insecure port
+      description: 'Control check whether control plan disable insecure port'
+      id: '5.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.19
+    - name: Encrypt etcd communication
+      description: 'Control check whether etcd communication is encrypted'
+      id: '5.1'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: '2.1'
+    - name: Ensure kube config file permission
+      description: 'Control check whether kube config file permissions'
+      id: '6.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 4.1.3
+          - id: 4.1.4
+    - name: Check that encryption resource has been set
+      description: 'Control checks whether encryption resource has been set'
+      id: '6.1'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.31"
+          - id: 1.2.32"
+    - name: Check encryption provider
+      description: 'Control checks whether encryption provider has been set'
+      id: '6.2'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.3
+    - name: Make sure anonymous-auth is unset
+      description: 'Control checks whether anonymous-auth is unset'
+      id: '7.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.1
+    - name: Make sure -authorization-mode=RBAC
+      description: 'Control check whether RBAC permission is in use'
+      id: '7.1'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.7
+          - id: 1.2.8
+    - name: Audit policy is configure
+      description: 'Control check whether audit policy is configure'
+      id: '8.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 3.2.1
+    - name: Audit log path is configure
+      description: 'Control check whether audit log path is configure'
+      id: '8.1'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.22
+    - name: Audit log aging
+      description: 'Control check whether audit log aging is configure'
+      id: '8.2'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: 1.2.23
+    - name: Service mesh is configure
+      description: 'Control check whether service mesh is used in cluster'
+      id: '9.0'
+      kinds:
+        - Node
+      mapping:
+        scanner: kube-bench
+        checks:
+          - id: "<check need to be added>"

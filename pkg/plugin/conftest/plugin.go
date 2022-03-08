@@ -426,8 +426,13 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 }
 
 func (p *plugin) getPolicyTitleFromResult(result Result) string {
-	if title, ok := result.Metadata["title"]; ok {
-		return title.(string)
+	// we check 1st if id exist
+	if value, ok := result.Metadata["id"]; ok {
+		return value.(string)
+	}
+	// if no id found it fall back to title
+	if value, ok := result.Metadata["title"]; ok {
+		return value.(string)
 	}
 	// Fallback to a unique identifier
 	return p.idGenerator.GenerateID()

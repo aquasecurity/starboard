@@ -79,6 +79,8 @@ spec:
               value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
               value: "true"
+            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
+              value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS
               value: "false"
             - name: OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL
