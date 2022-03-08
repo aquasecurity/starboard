@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"reflect"
+
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -29,9 +31,7 @@ func TestGetObjListByName(t *testing.T) {
 			cl := getObjListByName(tt.scannerName)
 			if cl != nil {
 				name := reflect.TypeOf(cl).String()
-				if name != tt.want {
-					t.Errorf("TestGetObjListByName() got = %v, want %v", name, tt.want)
-				}
+				assert.Equal(t, name, tt.want)
 			}
 		})
 	}
@@ -54,9 +54,7 @@ func TestByScanner(t *testing.T) {
 			}
 			if cl != nil {
 				name := reflect.TypeOf(cl).String()
-				if name != tt.want {
-					t.Errorf("TestByScanner() got = %v, want %v", name, tt.want)
-				}
+				assert.Equal(t, name, tt.want)
 			}
 		})
 	}
@@ -107,9 +105,7 @@ func TestMapComplianceScannerToResource(t *testing.T) {
 					}
 				}
 			}
-			if !match {
-				t.Errorf("TestMapComplianceScannerToResource: return data do not match expected %v ", mapData)
-			}
+			assert.True(t, match)
 		})
 	}
 }
@@ -152,9 +148,7 @@ func TestMapReportDataToMap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cct := tt.mapfunc(tt.objectType, tt.reportList)
-			if !reflect.DeepEqual(cct, tt.wantResult) {
-				t.Errorf("TestMapReportDataToMapConfxigAudit want %v got %v", tt.wantResult, cct)
-			}
+			assert.True(t, reflect.DeepEqual(cct, tt.wantResult))
 		})
 	}
 }

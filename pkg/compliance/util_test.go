@@ -1,8 +1,10 @@
 package compliance
 
 import (
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
 func TestMapResources(t *testing.T) {
@@ -18,9 +20,7 @@ func TestMapResources(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mapKinds(v1alpha1.Control{Kinds: tt.kinds})
-			if len(got) != tt.want {
-				t.Errorf("TestMapResources() = %v, want %v", len(got), tt.want)
-			}
+			assert.Equal(t, len(got), tt.want)
 		})
 	}
 }

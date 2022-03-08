@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -23,14 +24,12 @@ func TestNextCronDuration(t *testing.T) {
 			if err != nil {
 				t.Errorf(err.Error())
 			}
-			duration, err := NextCronDuration(tt.cron, tm)
-			if err != nil && err.Error() != tt.wantError {
-				t.Errorf("TestNextCronDuration want %v got %v", tt.wantError, err.Error())
+			duration, err := NextCronDuration(tt.cron, tm, ext.NewSystemClock())
+			if err != nil {
+				assert.Equal(t, err.Error(), tt.wantError)
 			}
 			if err == nil {
-				if int(duration.Hours()) > tt.wantDuration {
-					t.Errorf("TestNextCronDuration want %v got %v", tt.wantDuration, int(duration.Hours()))
-				}
+				assert.True(t, !(int(duration.Hours()) > tt.wantDuration))
 			}
 		})
 	}
@@ -55,34 +54,8 @@ func TestDurationExceeded(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			exceded := DurationExceeded(tt.duration)
-			if exceded != tt.want {
-				t.Errorf("TestDurationExceeded want %v got %v", tt.want, exceded)
-			}
-		})
-	}
-}
-
-func TestNextIntervalExceeded(t *testing.T) {
-	tests := []struct {
-		name         string
-		creationTime string
-		duration     time.Duration
-		want         bool
-	}{
-		{name: "duration future", duration: time.Duration(100), creationTime: "2050-11-12T11:00:00", want: true},
-		{name: "duration pass", duration: time.Duration(-2), creationTime: "2014-11-12T11:00:00", want: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tm, err := parseTime(tt.creationTime)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
-			exceeded := NextIntervalExceeded(tt.duration, tm)
-			if DurationExceeded(exceeded) && tt.want {
-				t.Errorf("TestNextIntervalExceeded want %v got %v", tt.want, exceeded)
-			}
+			exceeded := DurationExceeded(tt.duration)
+			assert.Equal(t, exceeded, tt.want)
 		})
 	}
 }

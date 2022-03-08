@@ -3,6 +3,8 @@ package compliance
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/emirpasic/gods/sets/hashset"
@@ -11,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 type Mgr interface {

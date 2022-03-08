@@ -475,7 +475,7 @@
       "passCount": 3,
       "failCount": 3
     },
-    "control_check": [
+    "controlCheck": [
       {
         "id": "1.0",
         "name": "Non-root containers",

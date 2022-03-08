@@ -253,6 +253,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			Config: operatorConfig,
 			Client: mgr.GetClient(),
 			Mgr:    compliance.NewMgr(mgr.GetClient(), logger),
+			Clock:  ext.NewSystemClock(),
 		}
 		if err := cc.SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup clustercompliancereport reconciler: %w", err)

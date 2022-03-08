@@ -3,11 +3,12 @@ package compliance
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/emirpasic/gods/sets/hashset"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 const (

@@ -1,17 +1,19 @@
 package compliance
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/stretchr/testify/assert"
+
+	//"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"reflect"
+	"sort"
+	"testing"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"testing"
 )
 
 func TestPopulateSpecDataToMaps(t *testing.T) {
@@ -93,9 +95,7 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 			}
 			sm := mgr.populateSpecDataToMaps(spec)
 			controlChecks := mgr.controlChecksByScannerChecks(sm, tt.mapScannerResult)
-			if !reflect.DeepEqual(controlChecks, tt.want) {
-				t.Errorf("TestControlChecksByScannerChecks want %v got %v", tt.want, controlChecks)
-			}
+			assert.True(t, reflect.DeepEqual(controlChecks, tt.want))
 		})
 	}
 }
@@ -114,9 +114,7 @@ func TestGetTotals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sm := mgr.getTotals(tt.controlCheck)
-			if !reflect.DeepEqual(sm, tt.want) {
-				t.Errorf("TestGetTotals want %v got %v", tt.want, sm)
-			}
+			assert.True(t, reflect.DeepEqual(sm, tt.want))
 		})
 	}
 }
@@ -137,14 +135,7 @@ func TestCheckIdsToResults(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			b, err := json.Marshal(cct)
-			if err != nil {
-				t.Error(err)
-			}
-			fmt.Println(string(b))
-			if !reflect.DeepEqual(cct, tt.wantResult) {
-				t.Errorf("TestMapReportDataToMapConfxigAudit want %v got %v", tt.wantResult, cct)
-			}
+			assert.True(t, reflect.DeepEqual(cct, tt.wantResult))
 		})
 	}
 }

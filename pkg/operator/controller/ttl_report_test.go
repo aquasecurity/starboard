@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/aquasecurity/starboard/pkg/utils"
 	"testing"
 	"time"
 
@@ -12,8 +11,9 @@ func TestTTLIsExpired(t *testing.T) {
 	ttlReportAnnotationStr := "10h"
 	ttlReportTime, _ := time.ParseDuration(ttlReportAnnotationStr)
 	creationTime := time.Now()
-	ttlExpired := ttlIsExpired(ttlReportTime, creationTime)
-	assert.False(t, utils.DurationExceeded(ttlExpired))
+	ttlExpired, _, err := ttlIsExpired(ttlReportTime, creationTime)
+	assert.NoError(t, err)
+	assert.False(t, ttlExpired)
 }
 
 func TestTTLIsNotExpired(t *testing.T) {
@@ -21,7 +21,8 @@ func TestTTLIsNotExpired(t *testing.T) {
 	ttlReportTime, _ := time.ParseDuration(ttlReportAnnotationStr)
 	creationTime := time.Now()
 	then := creationTime.Add(time.Duration(-10) * time.Minute)
-	ttlExpired := ttlIsExpired(ttlReportTime, then)
-	t.Logf("Duration to ttl expiration %s, we should rescheduel check", ttlExpired.String())
-	assert.True(t, utils.DurationExceeded(ttlExpired))
+	ttlExpired, durationToTTLExp, err := ttlIsExpired(ttlReportTime, then)
+	t.Logf("Duration to ttl expiration %s, we should rescheduel check", durationToTTLExp)
+	assert.NoError(t, err)
+	assert.True(t, ttlExpired)
 }

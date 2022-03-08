@@ -1,9 +1,10 @@
 package compliance
 
 import (
+	"testing"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestPredicate(t *testing.T) {

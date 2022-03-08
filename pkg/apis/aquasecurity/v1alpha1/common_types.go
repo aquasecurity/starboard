@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	TTLReportAnnotation            = "starboard.aquasecurity.github.io/report-ttl"
-	ComplianceReportNextGeneration = "starboard.aquasecurity.github.io/report-next-generation"
+	TTLReportAnnotation = "starboard.aquasecurity.github.io/report-ttl"
 )
 
 // Severity level of a vulnerability or a configuration audit check.
@@ -54,18 +53,5 @@ type Scanner struct {
 	Vendor string `json:"vendor"`
 
 	// Version the version of the scanner.
-	Version string `json:"version"`
-}
-
-// Compliance is the specs for a security assessment report.
-type Compliance struct {
-	// Name the name of the compliance report.
-	Kind string `json:"specKind"`
-	// Name the name of the compliance report.
-	Name string `json:"name"`
-	// Description of the compliance report.
-	Description string `json:"description"`
-
-	// Version the compliance report.
 	Version string `json:"version"`
 }

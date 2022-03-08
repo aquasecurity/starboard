@@ -9,12 +9,12 @@ import (
 // NextCronDuration check if next cron activation time has exceeded if so return true
 // if activation time has not reached return false and remaining time
 // in case it failed to parse cron expression return error
-func NextCronDuration(cronString string, creationTime time.Time) (time.Duration, error) {
+func NextCronDuration(cronString string, creationTime time.Time, clock ext.Clock) (time.Duration, error) {
 	expr, err := cronexpr.Parse(cronString)
 	if err != nil {
 		return time.Duration(0), err
 	}
-	return timeToExpiration(expr.Next(creationTime)), nil
+	return timeToExpiration(expr.Next(creationTime), clock), nil
 }
 
 //DurationExceeded  check if duration is now meaning zero
@@ -23,11 +23,6 @@ func DurationExceeded(duration time.Duration) bool {
 }
 
 //timeToExpiration  return the duration between time to expiration
-func timeToExpiration(expiresAt time.Time) time.Duration {
-	return expiresAt.Sub(ext.NewSystemClock().Now())
-}
-
-//NextIntervalExceeded  check if interval for given time has exceeded
-func NextIntervalExceeded(interval time.Duration, creationTime time.Time) time.Duration {
-	return timeToExpiration(creationTime.Add(interval))
+func timeToExpiration(expiresAt time.Time, clock ext.Clock) time.Duration {
+	return expiresAt.Sub(clock.Now())
 }

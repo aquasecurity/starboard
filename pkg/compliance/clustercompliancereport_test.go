@@ -2,20 +2,22 @@ package compliance
 
 import (
 	"context"
+	"io/ioutil"
+	"sort"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sort"
 )
 
 func loadResource(filePath string, resource interface{}) error {
@@ -54,7 +56,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 				&clusterComplianceSpec,
 			).Build()
 			// generate report
-			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger)}
+			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger), Clock: ext.NewSystemClock()}
 			_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -95,7 +97,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 				&clusterComplianceSpec,
 			).Build()
 			// generate report
-			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger)}
+			instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger), Clock: ext.NewSystemClock()}
 			_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 			Expect(err).ToNot(HaveOccurred())
 

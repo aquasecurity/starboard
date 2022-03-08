@@ -3,7 +3,10 @@ package compliance
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/utils"
 	"github.com/go-logr/logr"
@@ -13,7 +16,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
 )
 
 type ClusterComplianceReportReconciler struct {
@@ -21,6 +23,7 @@ type ClusterComplianceReportReconciler struct {
 	etc.Config
 	client.Client
 	Mgr
+	ext.Clock
 }
 
 func (r *ClusterComplianceReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -52,7 +55,7 @@ func (r *ClusterComplianceReportReconciler) generateComplianceReport(ctx context
 			}
 			return fmt.Errorf("getting report from cache: %w", err)
 		}
-		durationToNextGeneration, err := utils.NextCronDuration(report.Spec.Cron, r.reportLastUpdatedTime(&report))
+		durationToNextGeneration, err := utils.NextCronDuration(report.Spec.Cron, r.reportLastUpdatedTime(&report), r.Clock)
 		if err != nil {
 			return fmt.Errorf("failed to check report cron expression %w", err)
 		}

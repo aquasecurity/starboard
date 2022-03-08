@@ -62,7 +62,7 @@ type ClusterComplianceReportList struct {
 type ReportStatus struct {
 	UpdateTimestamp metav1.Time              `json:"updateTimestamp"`
 	Summary         ClusterComplianceSummary `json:"summary"`
-	ControlChecks   []ControlCheck           `json:"control_check"`
+	ControlChecks   []ControlCheck           `json:"controlCheck"`
 }
 
 // ControlCheck provides the result of conducting a single audit step.
