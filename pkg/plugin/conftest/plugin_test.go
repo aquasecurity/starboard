@@ -1,6 +1,7 @@
-package conftest
+package conftest_test
 
 import (
+	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 
@@ -32,7 +33,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 
 	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		config := Config{
+		config := conftest.Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.library.kubernetes.rego":        "<REGO_A>",
@@ -47,7 +48,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 
 	t.Run("Should return error when policy is not found", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		config := Config{
+		config := conftest.Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.policy.access_to_host_pid.kinds": "Workload",
@@ -61,7 +62,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 	t.Run("Should return policies as Rego modules", func(t *testing.T) {
 
 		g := NewGomegaWithT(t)
-		config := Config{
+		config := conftest.Config{
 			PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
@@ -108,13 +109,13 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 func TestConfig_GetResourceRequirements(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		config               Config
+		config               conftest.Config
 		expectedError        string
 		expectedRequirements corev1.ResourceRequirements
 	}{
 		{
 			name:          "Should return empty requirements by default",
-			config:        Config{PluginConfig: starboard.PluginConfig{}},
+			config:        conftest.Config{PluginConfig: starboard.PluginConfig{}},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -123,7 +124,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			config: Config{PluginConfig: starboard.PluginConfig{
+			config: conftest.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu":    "800m",
 					"conftest.resources.requests.memory": "200M",
@@ -145,7 +146,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			config: Config{PluginConfig: starboard.PluginConfig{
+			config: conftest.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu": "roughly 100",
 				},
@@ -231,13 +232,13 @@ deny[res] {
 				}).Build()
 
 			pluginContext := starboard.NewPluginContext().
-				WithName(Plugin).
+				WithName(conftest.Plugin).
 				WithNamespace("starboard-ns").
 				WithServiceAccountName("starboard-sa").
 				WithClient(client).
 				Get()
 
-			instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+			instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 			ready, _, err := instance.IsApplicable(pluginContext, tc.obj)
 			g.Expect(err).ToNot(HaveOccurred())
 			g.Expect(ready).To(Equal(tc.expected))
@@ -253,10 +254,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		client := fake.NewClientBuilder().WithObjects().Build()
 
-		instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(Plugin).
+			WithName(conftest.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
@@ -309,13 +310,13 @@ func TestPlugin_Init(t *testing.T) {
 			}).Build()
 
 		pluginContext := starboard.NewPluginContext().
-			WithName(Plugin).
+			WithName(conftest.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
 			WithClient(client).
 			Get()
 
-		instance := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		err := instance.Init(pluginContext)
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -346,7 +347,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g := NewGomegaWithT(t)
 	sequence := ext.NewSimpleIDGenerator()
 	pluginContext := starboard.NewPluginContext().
-		WithName(Plugin).
+		WithName(conftest.Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -376,7 +377,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			},
 		}).Build()).Get()
 
-	instance := NewPlugin(sequence, fixedClock)
+	instance := conftest.NewPlugin(sequence, fixedClock)
 
 	jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -526,78 +527,13 @@ status: {}
 	))
 }
 
-func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
+func TestPlugin_ParseConfigAuditReportDataWithTitleOnMetadataOnly(t *testing.T) {
 	g := NewGomegaWithT(t)
-	plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-	logsReader := ioutil.NopCloser(strings.NewReader(`[
-  {
-    "filename": "/project/workload.yaml",
-    "namespace": "appshield.KSV003",
-    "successes": -3,
-    "failures": [
-      {
-        "msg": "container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
-        "metadata": {
-          "title": "Default capabilities: some containers do not drop all"
-        }
-      },
-      {
-        "msg": "container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
-        "metadata": {
-          "title": "Default capabilities: some containers do not drop all"
-        }
-      },
-      {
-        "msg": "container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
-        "metadata": {
-          "title": "Default capabilities: some containers do not drop all"
-        }
-      },
-      {
-        "msg": "container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop",
-        "metadata": {
-          "title": "Default capabilities: some containers do not drop all"
-        }
-      }
-    ]
-  },
-  {
-    "filename": "/project/workload.yaml",
-    "namespace": "appshield.KSV014",
-    "successes": 0,
-    "failures": [
-      {
-        "msg": "container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true",
-        "metadata": {
-          "title": "Root file system is not read-only"
-        }
-      }
-    ]
-  },
-  {
-    "filename": "/project/workload.yaml",
-    "namespace": "appshield.KSV025",
-    "successes": 1
-  },
-  {
-    "filename": "/project/workload.yaml",
-    "namespace": "appshield.KSV017",
-    "successes": 1
-  },
-  {
-    "filename": "/project/workload.yaml",
-    "namespace": "appshield.KSV015",
-    "successes": 0,
-    "failures": [
-      {
-        "msg": "container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu"
-      }
-    ]
-  }
-]`))
-
+	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+	logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title.json")
+	logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
 	pluginContext := starboard.NewPluginContext().
-		WithName(Plugin).
+		WithName(conftest.Plugin).
 		WithNamespace("starboard-ns").
 		WithServiceAccountName("starboard-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
@@ -733,6 +669,148 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	}))
 }
 
+func TestPlugin_ParseConfigAuditReportDataWithTitleAndIDOnMetadata(t *testing.T) {
+	g := NewGomegaWithT(t)
+	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+	logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title_id.json")
+	logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
+	pluginContext := starboard.NewPluginContext().
+		WithName(conftest.Plugin).
+		WithNamespace("starboard-ns").
+		WithServiceAccountName("starboard-sa").
+		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "starboard-conftest-config",
+				Namespace: "starboard-ns",
+			},
+			Data: map[string]string{
+				"conftest.imageRef": "openpolicyagent/conftest:v0.30.0",
+			},
+		}).Build()).
+		Get()
+
+	data, err := plugin.ParseConfigAuditReportData(pluginContext, logsReader)
+
+	// When Conftest plugin is used with https://github.com/aquasecurity/appshield
+	// Rego scripts the Check.ID is not unique. For example, for a Pod with multiple
+	// containers the Check.ID will be duplicated for each container, but the
+	// Check.Message will be different.
+	groupChecksByMessages := func(element interface{}) string {
+		return strings.Join(element.(v1alpha1.Check).Messages, ",")
+	}
+
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(data).To(MatchFields(IgnoreExtras, Fields{
+		"UpdateTimestamp": Equal(metav1.NewTime(fixedTime)),
+		"Scanner": Equal(v1alpha1.Scanner{
+			Name:    "Conftest",
+			Vendor:  "Open Policy Agent",
+			Version: "v0.30.0",
+		}),
+		"Summary": Equal(v1alpha1.ConfigAuditSummary{
+			CriticalCount: 6,
+			LowCount:      0,
+		}),
+		"Checks": MatchAllElements(groupChecksByMessages, Elements{
+			"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true": Equal(v1alpha1.Check{
+				ID:       "KSV014",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu": Equal(v1alpha1.Check{
+				// If the author of a Rego script does not provide the title property
+				// in the rule's response, which is then returned as metadata.type
+				// in Conftest output, the parser will fallback to a unique identifier.
+				ID:       "00000000-0000-0000-0000-000000000001",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+		}),
+		// Most Rego scripts do not return structured response object to indicate
+		// container name. Therefore, the ContainerChecks map is empty.
+		"ContainerChecks": Equal(map[string][]v1alpha1.Check{}),
+		"PodChecks": MatchAllElements(groupChecksByMessages, Elements{
+			"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container kubedns of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container sidecar of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop": Equal(v1alpha1.Check{
+				ID:       "KSV003",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should add 'ALL' to securityContext.capabilities.drop"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true": Equal(v1alpha1.Check{
+				ID:       "KSV014",
+				Messages: []string{"container dnsmasq of deployment kube-dns in default namespace should set securityContext.readOnlyRootFilesystem to true"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+			"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu": Equal(v1alpha1.Check{
+				// If the author of a Rego script does not provide the title property
+				// in the rule's response, which is then returned as metadata.type
+				// in Conftest output, the parser will fallback to a unique identifier.
+				ID:       "00000000-0000-0000-0000-000000000001",
+				Messages: []string{"container prometheus-to-sd of deployment kube-dns in default namespace should set resources.requests.cpu"},
+				Success:  false,
+				Severity: v1alpha1.SeverityCritical,
+				Category: "Security",
+			}),
+		}),
+	}))
+}
+
 func TestPlugin_ConfigHash(t *testing.T) {
 
 	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
@@ -763,7 +841,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"conftest.policy.policyA.kinds": "Pod",
 		})
 
-		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "Pod")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -784,7 +862,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"foo":   "bar",
 		})
 
-		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -805,7 +883,7 @@ func TestPlugin_ConfigHash(t *testing.T) {
 			"conftest.resources.requests.cpu": "60m",
 		})
 
-		plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		hash1, err := plugin.ConfigHash(pluginContext1, "")
 		g.Expect(err).ToNot(HaveOccurred())
 
@@ -818,35 +896,6 @@ func TestPlugin_ConfigHash(t *testing.T) {
 func TestPlugin_GetContainerName(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	plugin := NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
+	plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 	g.Expect(plugin.GetContainerName()).To(Equal("conftest"))
-}
-
-func TestGetPolicyTitleFromResult(t *testing.T) {
-	a := &plugin{idGenerator: ext.NewGoogleUUIDGenerator()}
-	tests := []struct {
-		name   string
-		result Result
-		equal  bool
-		want   string
-	}{
-		{name: "get Policy ID From Result", result: Result{Message: "aaa", Metadata: map[string]interface{}{"id": "1234"}}, want: "1234", equal: true},
-		{name: "get Policy Title From Result", result: Result{Message: "bbb", Metadata: map[string]interface{}{"title": "title 1234"}}, want: "title 1234", equal: true},
-		{name: "get Policy ig generator From Result", result: Result{Message: "ccc", Metadata: map[string]interface{}{}}, want: "", equal: false}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := a.getPolicyTitleFromResult(tt.result)
-			if tt.equal {
-				if got != tt.want {
-					t.Errorf("TestGetPolicyTitleFromResult got %v want %v", got, tt.want)
-				}
-			}
-			if !tt.equal {
-				if got == tt.want {
-					t.Errorf("TestGetPolicyTitleFromResult got %v not want %v", got, tt.want)
-				}
-			}
-		})
-	}
 }
