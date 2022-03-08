@@ -50,6 +50,9 @@ data:
   {{- if .httpsProxy }}
   trivy.httpsProxy: {{ .httpsProxy | quote }}
   {{- end }}
+  {{- if .serverInsecure }}
+  trivy.serverInsecure: {{ .serverInsecure | quote }}
+  {{- end }}
   {{- if .noProxy }}
   trivy.noProxy: {{ .noProxy | quote }}
   {{- end }}

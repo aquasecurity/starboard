@@ -153,6 +153,9 @@ trivy:
   #
   # serverURL: "https://trivy.trivy:4975"
 
+  # serverInsecure is the flag to enable insecure connection to the Trivy server.
+  #
+  # serverInsecure: true
   # serverToken is the token to authenticate Trivy client with Trivy server. Only
   # applicable in ClientServer mode.
   #
