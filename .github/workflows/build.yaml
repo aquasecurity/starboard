@@ -39,7 +39,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cached Go dependencies
         uses: actions/cache@v2
         with:
@@ -69,7 +69,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -95,7 +95,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -135,7 +135,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -184,7 +184,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
@@ -227,7 +227,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 #v2.4.0
+        uses: actions/checkout@v3 #v2.4.0
         with:
           fetch-depth: 0
       - name: Install Helm
