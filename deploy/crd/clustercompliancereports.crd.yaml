@@ -78,6 +78,7 @@ spec:
                       - id
                       - kinds
                       - mapping
+                      - severity
                     properties:
                       name:
                         type: string
@@ -111,6 +112,10 @@ spec:
                                 id:
                                   type: string
                                   description: 'id define the check id as produced by scanner'
+                      severity:
+                        type: string
+                        pattern: '^CRITICAL$|^HIGH$|^MEDIUM$|^LOW$|^UNKNOWN$'
+                        description: 'severity define the severity og the control'
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object

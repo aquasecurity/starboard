@@ -37,6 +37,7 @@ type Control struct {
 	Description string   `json:"description,,omitempty"`
 	Kinds       []string `json:"kinds"`
 	Mapping     Mapping  `json:"mapping"`
+	Severity    string   `json:"severity"`
 }
 
 //SpecCheck represent the scanner who perform the control check

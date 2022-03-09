@@ -7,7 +7,7 @@
     "creationTimestamp": null
   },
   "report": {
-    "updateTimestamp": "2022-02-26T14:05:29Z",
+    "updateTimestamp": "2022-03-09T08:47:03Z",
     "type": {
       "specKind": "compliance",
       "name": "nsa-details",
@@ -22,6 +22,8 @@
       {
         "id": "1.1",
         "name": "Immutable container file systems",
+        "description": "Check that container root file system is immutable",
+        "severity": "LOW",
         "checkResults": [
           {
             "objectType": "Pod",
@@ -60,6 +62,8 @@
       {
         "id": "3.0",
         "name": "Use CNI plugin that supports NetworkPolicy API",
+        "description": "Control check whether check cni plugin installed\t",
+        "severity": "CRITICAL",
         "checkResults": [
           {
             "objectType": "Node",
@@ -79,6 +83,8 @@
       {
         "id": "6.0",
         "name": "Ensure kube config file permission",
+        "description": "Control check whether kube config file permissions",
+        "severity": "CRITICAL",
         "checkResults": [
           {
             "objectType": "Node",
@@ -98,6 +104,8 @@
       {
         "id": "6.0",
         "name": "Ensure kube config file permission",
+        "description": "Control check whether kube config file permissions",
+        "severity": "CRITICAL",
         "checkResults": [
           {
             "objectType": "Node",
