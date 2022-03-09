@@ -85,20 +85,24 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			specData, err := ioutil.ReadFile(tt.specPath)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			assert.NoError(t, err)
 			var spec v1alpha1.ReportSpec
 			err = yaml.Unmarshal(specData, &spec)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			assert.NoError(t, err)
 			sm := mgr.populateSpecDataToMaps(spec)
 			controlChecks := mgr.controlChecksByScannerChecks(sm, tt.mapScannerResult)
+			sort.Sort(scannerCheckSort(controlChecks))
+			sort.Sort(scannerCheckSort(tt.want))
 			assert.True(t, reflect.DeepEqual(controlChecks, tt.want))
 		})
 	}
 }
+
+type scannerCheckSort []v1alpha1.ControlCheck
+
+func (a scannerCheckSort) Len() int           { return len(a) }
+func (a scannerCheckSort) Less(i, j int) bool { return a[i].ID < a[j].ID }
+func (a scannerCheckSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func TestGetTotals(t *testing.T) {
 	mgr := cm{}
