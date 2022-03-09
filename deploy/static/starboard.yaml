@@ -586,7 +586,7 @@ spec:
     plural: clustercompliancedetailreports
     kind: ClusterComplianceDetailReport
     listKind: ClusterComplianceDetailReportList
-    categories: []
+    categories: [ ]
     shortNames:
       - compliancedetail
 ---
@@ -1939,6 +1939,8 @@ spec:
               value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
               value: "true"
+            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
+              value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS
               value: "false"
             - name: OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL
@@ -1984,6 +1986,11 @@ apiVersion: aquasecurity.github.io/v1alpha1
 kind: ClusterComplianceReport
 metadata:
   name: nsa
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/managed-by: kubectl
 spec:
   specKind: compliance
   name: nsa

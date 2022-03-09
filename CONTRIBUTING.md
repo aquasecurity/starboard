@@ -189,7 +189,7 @@ basic development workflow. For other install modes see [Operator Multitenancy w
    ```
 2. Create the `starboard-operator` Deployment in the `starboard-system` namespace to run the operator's container:
    ```
-   kubectl apply -k deploy/static
+   kubectl create -k deploy/static
    ```
 
 You can uninstall the operator with:

@@ -152,7 +152,7 @@ rules:
       - get
       - update
   - apiGroups:
-    - aquasecurity.github.io
+      - aquasecurity.github.io
     resources:
       - clustercompliancereports/status
     verbs:

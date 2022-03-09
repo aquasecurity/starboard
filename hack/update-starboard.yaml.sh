@@ -2,17 +2,19 @@
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 
-CRD_ROOT=$SCRIPT_ROOT/deploy/crd
-STATIC_ROOT=$SCRIPT_ROOT/deploy/static
+CRD_DIR=$SCRIPT_ROOT/deploy/crd
+SPECS_DIR=$SCRIPT_ROOT/deploy/specs
+STATIC_DIR=$SCRIPT_ROOT/deploy/static
 
-cat $CRD_ROOT/vulnerabilityreports.crd.yaml \
-  $CRD_ROOT/configauditreports.crd.yaml \
-  $CRD_ROOT/clusterconfigauditreports.crd.yaml \
-  $CRD_ROOT/ciskubebenchreports.crd.yaml \
-  $CRD_ROOT/clustercompliancereports.crd.yaml \
-  $CRD_ROOT/clustercompliancedetailreports.crd.yaml \
-  $STATIC_ROOT/01-starboard-operator.ns.yaml \
-  $STATIC_ROOT/02-starboard-operator.rbac.yaml \
-  $STATIC_ROOT/03-starboard-operator.config.yaml \
-  $STATIC_ROOT/04-starboard-operator.policies.yaml \
-  $STATIC_ROOT/05-starboard-operator.deployment.yaml > $STATIC_ROOT/starboard.yaml
+cat $CRD_DIR/vulnerabilityreports.crd.yaml \
+  $CRD_DIR/configauditreports.crd.yaml \
+  $CRD_DIR/clusterconfigauditreports.crd.yaml \
+  $CRD_DIR/ciskubebenchreports.crd.yaml \
+  $CRD_DIR/clustercompliancereports.crd.yaml \
+  $CRD_DIR/clustercompliancedetailreports.crd.yaml \
+  $STATIC_DIR/01-starboard-operator.ns.yaml \
+  $STATIC_DIR/02-starboard-operator.rbac.yaml \
+  $STATIC_DIR/03-starboard-operator.config.yaml \
+  $STATIC_DIR/04-starboard-operator.policies.yaml \
+  $STATIC_DIR/05-starboard-operator.deployment.yaml \
+  $SPECS_DIR/nsa-1.0.yaml > $STATIC_DIR/starboard.yaml

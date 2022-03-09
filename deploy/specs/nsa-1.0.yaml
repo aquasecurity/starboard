@@ -3,6 +3,11 @@ apiVersion: aquasecurity.github.io/v1alpha1
 kind: ClusterComplianceReport
 metadata:
   name: nsa
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/managed-by: kubectl
 spec:
   specKind: compliance
   name: nsa
