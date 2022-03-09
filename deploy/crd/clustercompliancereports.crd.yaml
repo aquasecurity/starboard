@@ -115,7 +115,7 @@ spec:
                       severity:
                         type: string
                         pattern: '^CRITICAL$|^HIGH$|^MEDIUM$|^LOW$|^UNKNOWN$'
-                        description: 'severity define the severity og the control'
+                        description: 'define the severity of the control'
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
