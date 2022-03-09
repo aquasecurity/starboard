@@ -40,6 +40,7 @@ type ControlCheckDetails struct {
 	ID                 string               `json:"id"`
 	Name               string               `json:"name"`
 	Description        string               `json:"description,omitempty"`
+	Severity           Severity             `json:"severity"`
 	ScannerCheckResult []ScannerCheckResult `json:"checkResults"`
 }
 

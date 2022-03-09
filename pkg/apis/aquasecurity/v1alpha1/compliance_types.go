@@ -37,6 +37,7 @@ type Control struct {
 	Description string   `json:"description,,omitempty"`
 	Kinds       []string `json:"kinds"`
 	Mapping     Mapping  `json:"mapping"`
+	Severity    Severity `json:"severity"`
 }
 
 //SpecCheck represent the scanner who perform the control check
@@ -67,10 +68,10 @@ type ReportStatus struct {
 
 // ControlCheck provides the result of conducting a single audit step.
 type ControlCheck struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	PassTotal   int    `json:"passTotal"`
-	FailTotal   int    `json:"failTotal"`
-	Severity    string `json:"severity"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	PassTotal   int      `json:"passTotal"`
+	FailTotal   int      `json:"failTotal"`
+	Severity    Severity `json:"severity"`
 }

@@ -29,10 +29,10 @@ func TestPopulateSpecDataToMaps(t *testing.T) {
 			scannerResourceListNames: map[string]*hashset.Set{"config-audit": hashset.New("Job", "Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "CronJob"),
 				"kube-bench": hashset.New("Node")},
 			controlIDControlObject: map[string]v1alpha1.Control{"1.0": {ID: "1.0", Name: "Non-root containers",
-				Kinds:   []string{"Job", "Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "CronJob"},
+				Kinds: []string{"Job", "Pod", "ReplicationController", "ReplicaSet", "StatefulSet", "DaemonSet", "CronJob"}, Severity: "MEDIUM",
 				Mapping: v1alpha1.Mapping{Scanner: "config-audit", Checks: []v1alpha1.SpecCheck{{ID: "KSV012"}}}}, "8.1": {ID: "8.1", Name: "Audit log path is configure",
 				Kinds:   []string{"Node"},
-				Mapping: v1alpha1.Mapping{Scanner: "kube-bench", Checks: []v1alpha1.SpecCheck{{ID: "1.2.22"}}}}},
+				Mapping: v1alpha1.Mapping{Scanner: "kube-bench", Checks: []v1alpha1.SpecCheck{{ID: "1.2.22"}}}, Severity: "MEDIUM"}},
 			controlCheckIds: map[string][]string{"1.0": {"KSV012"}, "8.1": {"1.2.22"}}}},
 		{name: "spec file with no controls", specPath: "./testdata/fixture/nsa-1.0_no_controls.yaml"}}
 
@@ -77,7 +77,7 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 		mapScannerResult map[string][]*ScannerCheckResult
 		want             []v1alpha1.ControlCheck
 	}{
-		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1}},
+		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
 			mapScannerResult: map[string][]*ScannerCheckResult{
 				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "pass"}}}},
 				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "fail"}}}},
@@ -85,20 +85,24 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			specData, err := ioutil.ReadFile(tt.specPath)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			assert.NoError(t, err)
 			var spec v1alpha1.ReportSpec
 			err = yaml.Unmarshal(specData, &spec)
-			if err != nil {
-				t.Errorf(err.Error())
-			}
+			assert.NoError(t, err)
 			sm := mgr.populateSpecDataToMaps(spec)
 			controlChecks := mgr.controlChecksByScannerChecks(sm, tt.mapScannerResult)
+			sort.Sort(scannerCheckSort(controlChecks))
+			sort.Sort(scannerCheckSort(tt.want))
 			assert.True(t, reflect.DeepEqual(controlChecks, tt.want))
 		})
 	}
 }
+
+type scannerCheckSort []v1alpha1.ControlCheck
+
+func (a scannerCheckSort) Len() int           { return len(a) }
+func (a scannerCheckSort) Less(i, j int) bool { return a[i].ID < a[j].ID }
+func (a scannerCheckSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func TestGetTotals(t *testing.T) {
 	mgr := cm{}

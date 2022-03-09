@@ -14,6 +14,7 @@ controls:
       scanner: config-audit
       checks:
         - id: KSV012
+    severity: 'MEDIUM'
   - name: Audit log path is configure
     description: ''
     id: '8.1'
@@ -23,3 +24,4 @@ controls:
       scanner: kube-bench
       checks:
         - id: 1.2.22
+    severity: 'MEDIUM'
