@@ -269,9 +269,23 @@ func (r *ResourceController) policies(ctx context.Context) (*policy.Policies, er
 }
 
 func (r *ResourceController) evaluate(ctx context.Context, policies *policy.Policies, resource client.Object) (v1alpha1.ConfigAuditReportData, error) {
-	checks, err := policies.Eval(ctx, resource)
+	results, err := policies.Eval(ctx, resource)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, err
+	}
+
+	checks := make([]v1alpha1.Check, len(results))
+	for i, result := range results {
+		checks[i] = v1alpha1.Check{
+			ID:          result.Metadata.ID,
+			Title:       result.Metadata.Title,
+			Description: result.Metadata.Description,
+			Severity:    result.Metadata.Severity,
+			Category:    result.Metadata.Type,
+
+			Success:  result.Success,
+			Messages: result.Messages,
+		}
 	}
 
 	return v1alpha1.ConfigAuditReportData{
