@@ -25,6 +25,17 @@ const (
 	kindWorkload = "Workload"
 )
 
+const (
+	// varMessage is the name of Rego variable used to bind deny or warn
+	// messages.
+	varMessage = "msg"
+	// varMetadata is the name of Rego variable used to bind policy metadata.
+	varMetadata = "md"
+	// varResult is the name of Rego variable used to bind result of evaluating
+	// deny or warn rules.
+	varResult = "res"
+)
+
 // Metadata describes policy metadata.
 type Metadata struct {
 	ID          string
@@ -73,23 +84,31 @@ func NewMetadata(values map[string]interface{}) (Metadata, error) {
 	}, nil
 }
 
-// Result describes result of evaluating a policy.
+// Result describes result of evaluating a Rego policy that defines `deny` or
+// `warn` rules.
 type Result struct {
-	Message string
+	// Metadata describes Rego policy metadata.
+	Metadata Metadata
+
+	// Success represents the status of evaluating Rego policy.
+	Success bool
+
+	// Messages deny or warning messages.
+	Messages []string
 }
 
-// NewResult constructs new Result based on raw values.
-func NewResult(values map[string]interface{}) (Result, error) {
+type Results []Result
+
+// NewMessage constructs new message string based on raw values.
+func NewMessage(values map[string]interface{}) (string, error) {
 	if values == nil {
-		return Result{}, errors.New("values must not be nil")
+		return "", errors.New("values must not be nil")
 	}
-	message, err := requiredStringValue(values, "msg")
+	message, err := requiredStringValue(values, varMessage)
 	if err != nil {
-		return Result{}, err
+		return "", err
 	}
-	return Result{
-		Message: message,
-	}, nil
+	return message, nil
 }
 
 type Policies struct {
@@ -188,7 +207,7 @@ func (p *Policies) Applicable(resource client.Object) (bool, string, error) {
 //
 // TODO(danielpacak) Compile and cache prepared queries to make Eval more efficient.
 //                   We can reuse prepared queries so long policies do not change.
-func (p *Policies) Eval(ctx context.Context, resource client.Object) ([]v1alpha1.Check, error) {
+func (p *Policies) Eval(ctx context.Context, resource client.Object) (Results, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("resource must not be nil")
 	}
@@ -197,7 +216,7 @@ func (p *Policies) Eval(ctx context.Context, resource client.Object) ([]v1alpha1
 		return nil, fmt.Errorf("resource kind must not be blank")
 	}
 
-	checks := make([]v1alpha1.Check, 0)
+	var results Results
 
 	policies, err := p.PoliciesByKind(resourceKind)
 	if err != nil {
@@ -237,7 +256,7 @@ func (p *Policies) Eval(ctx context.Context, resource client.Object) ([]v1alpha1
 			return nil, fmt.Errorf("failed evaluating Rego metadata rule: %s: %w", metadataQuery, err)
 		}
 
-		metadataResult, hasMetadataResult := hasBinding(metadata, "md")
+		metadataResult, hasMetadataResult := hasBinding(metadata, varMetadata)
 
 		if !hasMetadataResult {
 			return nil, fmt.Errorf("failed parsing policy metadata: %s", policyName)
@@ -259,13 +278,13 @@ func (p *Policies) Eval(ctx context.Context, resource client.Object) ([]v1alpha1
 			return nil, fmt.Errorf("failed evaluating Rego deny rule: %s: %w", denyQuery, err)
 		}
 
-		denyResults, hasDenyResults := hasBindings(deny, "res")
-		if hasDenyResults {
-			denyChecks, err := valuesToChecks(md, denyResults)
+		denyValues, hasDenyValues := hasBindings(deny, varResult)
+		if hasDenyValues {
+			denyResults, err := valuesToResults(md, denyValues)
 			if err != nil {
 				return nil, fmt.Errorf("failed parsing deny rule result: %s: %w", denyQuery, err)
 			}
-			checks = append(checks, denyChecks...)
+			results = append(results, denyResults...)
 			continue
 		}
 
@@ -280,27 +299,23 @@ func (p *Policies) Eval(ctx context.Context, resource client.Object) ([]v1alpha1
 			return nil, fmt.Errorf("failed evaluating Rego warn rule: %s: %w", warnQuery, err)
 		}
 
-		warnResults, hasWarnResults := hasBindings(warn, "res")
-		if hasWarnResults {
-			warnChecks, err := valuesToChecks(md, warnResults)
+		warnValues, hasWarnValues := hasBindings(warn, varResult)
+		if hasWarnValues {
+			warnResults, err := valuesToResults(md, warnValues)
 			if err != nil {
 				return nil, fmt.Errorf("failed parsing warn rule result: %s: %w", warnQuery, err)
 			}
-			checks = append(checks, warnChecks...)
+			results = append(results, warnResults...)
 			continue
 		}
 
-		checks = append(checks, v1alpha1.Check{
-			Success:     true,
-			ID:          md.ID,
-			Title:       md.Title,
-			Severity:    md.Severity,
-			Category:    md.Type,
-			Description: md.Description,
+		results = append(results, Result{
+			Metadata: md,
+			Success:  true,
 		})
 	}
 
-	return checks, nil
+	return results, nil
 }
 
 func hasBinding(rs rego.ResultSet, key string) (map[string]interface{}, bool) {
@@ -349,26 +364,22 @@ func requiredStringValue(values map[string]interface{}, key string) (string, err
 	return valueString, nil
 }
 
-func valuesToChecks(md Metadata, values []map[string]interface{}) ([]v1alpha1.Check, error) {
-	var checks []v1alpha1.Check
+func valuesToResults(md Metadata, values []map[string]interface{}) (Results, error) {
+	var results Results
 	var messages []string
 
 	for _, value := range values {
-		result, err := NewResult(value)
+		message, err := NewMessage(value)
 		if err != nil {
 			return nil, err
 		}
-		messages = append(messages, result.Message)
+		messages = append(messages, message)
 	}
 
-	checks = append(checks, v1alpha1.Check{
-		Success:     false,
-		ID:          md.ID,
-		Title:       md.Title,
-		Severity:    md.Severity,
-		Category:    md.Type,
-		Description: md.Description,
-		Messages:    messages,
+	results = append(results, Result{
+		Metadata: md,
+		Success:  false,
+		Messages: messages,
 	})
-	return checks, nil
+	return results, nil
 }

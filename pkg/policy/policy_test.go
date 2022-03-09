@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func TestConfig_PoliciesByKind(t *testing.T) {
+func TestPolicies_PoliciesByKind(t *testing.T) {
 
 	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
 		g := NewGomegaWithT(t)
@@ -72,7 +72,7 @@ func TestConfig_PoliciesByKind(t *testing.T) {
 	})
 }
 
-func TestConfig_Applicable(t *testing.T) {
+func TestPolicies_Applicable(t *testing.T) {
 
 	testCases := []struct {
 		name     string
@@ -130,12 +130,12 @@ deny[res] {
 
 }
 
-func TestConfig_Eval(t *testing.T) {
+func TestPolicies_Eval(t *testing.T) {
 	testCases := []struct {
 		name          string
 		resource      client.Object
 		policies      map[string]string
-		checks        []v1alpha1.Check
+		results       policy.Results
 		expectedError string
 	}{
 		{
@@ -191,15 +191,17 @@ deny[res] {
 }
 `,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					Success:     false,
-					ID:          "KSV014",
-					Title:       "Root file system is not read-only",
-					Description: "An immutable root file system prevents applications from writing to their local disk",
-					Severity:    v1alpha1.SeverityLow,
-					Category:    "Kubernetes Security Check",
-					Messages:    []string{"Containers must not run as root"},
+					Success: false,
+					Metadata: policy.Metadata{
+						ID:          "KSV014",
+						Title:       "Root file system is not read-only",
+						Description: "An immutable root file system prevents applications from writing to their local disk",
+						Severity:    v1alpha1.SeverityLow,
+						Type:        "Kubernetes Security Check",
+					},
+					Messages: []string{"Containers must not run as root"},
 				},
 			},
 		},
@@ -259,14 +261,16 @@ deny[res] {
 }
 `,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					Success:     true,
-					ID:          "KSV014",
-					Severity:    v1alpha1.SeverityLow,
-					Title:       "Root file system is not read-only",
-					Description: "An immutable root file system prevents applications from writing to their local disk",
-					Category:    "Kubernetes Security Check",
+					Success: true,
+					Metadata: policy.Metadata{
+						ID:          "KSV014",
+						Severity:    v1alpha1.SeverityLow,
+						Title:       "Root file system is not read-only",
+						Description: "An immutable root file system prevents applications from writing to their local disk",
+						Type:        "Kubernetes Security Check",
+					},
 				},
 			},
 		},
@@ -323,15 +327,17 @@ warn[res] {
 }
 `,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					Success:     false,
-					ID:          "KSV014",
-					Title:       "Root file system is not read-only",
-					Description: "An immutable root file system prevents applications from writing to their local disk",
-					Severity:    v1alpha1.SeverityMedium,
-					Category:    "Kubernetes Security Check",
-					Messages:    []string{"Containers must not run as root"},
+					Success: false,
+					Metadata: policy.Metadata{
+						ID:          "KSV014",
+						Title:       "Root file system is not read-only",
+						Description: "An immutable root file system prevents applications from writing to their local disk",
+						Severity:    v1alpha1.SeverityMedium,
+						Type:        "Kubernetes Security Check",
+					},
+					Messages: []string{"Containers must not run as root"},
 				},
 			},
 		},
@@ -391,14 +397,16 @@ warn[res] {
 }
 `,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					Success:     true,
-					ID:          "KSV014",
-					Severity:    v1alpha1.SeverityLow,
-					Title:       "Root file system is not read-only",
-					Description: "An immutable root file system prevents applications from writing to their local disk",
-					Category:    "Kubernetes Security Check",
+					Success: true,
+					Metadata: policy.Metadata{
+						ID:          "KSV014",
+						Severity:    v1alpha1.SeverityLow,
+						Title:       "Root file system is not read-only",
+						Description: "An immutable root file system prevents applications from writing to their local disk",
+						Type:        "Kubernetes Security Check",
+					},
 				},
 			},
 		},
@@ -628,15 +636,17 @@ deny[res] {
 	}
 }`,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					ID:          "KSV013",
-					Title:       "Image tag ':latest' used",
-					Description: "It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.",
-					Severity:    "LOW",
-					Category:    "Kubernetes Security Check",
-					Messages:    []string{"msg1", "msg2"},
-					Success:     false,
+					Metadata: policy.Metadata{
+						ID:          "KSV013",
+						Title:       "Image tag ':latest' used",
+						Description: "It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.",
+						Severity:    "LOW",
+						Type:        "Kubernetes Security Check",
+					},
+					Messages: []string{"msg1", "msg2"},
+					Success:  false,
 				},
 			},
 		},
@@ -692,15 +702,17 @@ deny[res] {
 	}
 }`,
 			},
-			checks: []v1alpha1.Check{
+			results: []policy.Result{
 				{
-					ID:          "KSV013",
-					Title:       "Image tag ':latest' used",
-					Description: "It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.",
-					Severity:    "LOW",
-					Category:    "Kubernetes Security Check",
-					Messages:    []string{"msg1", "msg2"},
-					Success:     false,
+					Metadata: policy.Metadata{
+						ID:          "KSV013",
+						Title:       "Image tag ':latest' used",
+						Description: "It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.",
+						Severity:    "LOW",
+						Type:        "Kubernetes Security Check",
+					},
+					Messages: []string{"msg1", "msg2"},
+					Success:  false,
 				},
 			},
 		},
@@ -714,7 +726,7 @@ deny[res] {
 				g.Expect(err).To(MatchError(tc.expectedError))
 			} else {
 				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(checks).To(Equal(tc.checks))
+				g.Expect(checks).To(Equal(tc.results))
 			}
 		})
 	}
@@ -923,11 +935,11 @@ func TestNewMetadata(t *testing.T) {
 
 }
 
-func TestNewResult(t *testing.T) {
+func TestNewMessage(t *testing.T) {
 	testCases := []struct {
 		name           string
 		values         map[string]interface{}
-		expectedResult policy.Result
+		expectedResult string
 		expectedError  string
 	}{
 		{
@@ -959,16 +971,14 @@ func TestNewResult(t *testing.T) {
 			values: map[string]interface{}{
 				"msg": "some message",
 			},
-			expectedResult: policy.Result{
-				Message: "some message",
-			},
+			expectedResult: "some message",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			g := NewGomegaWithT(t)
-			result, err := policy.NewResult(tc.values)
+			result, err := policy.NewMessage(tc.values)
 			if tc.expectedError != "" {
 				g.Expect(err).To(MatchError(tc.expectedError))
 			} else {
