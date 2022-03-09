@@ -100,7 +100,7 @@ func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.Rep
 	controlChecksDetails := w.controlChecksDetailsByScannerChecks(smd, checkIdsToResults)
 	name := strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "details"))
 	// compliance details report
-	summary := v1alpha1.ClusterComplianceDetailSummary{PassCount: st.pass, FailCount: st.fail}
+	summary := v1alpha1.ClusterComplianceSummary{PassCount: st.pass, FailCount: st.fail}
 	report := v1alpha1.ClusterComplianceDetailReport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

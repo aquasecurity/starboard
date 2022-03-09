@@ -4,11 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ClusterComplianceDetailSummary struct {
-	PassCount int `json:"passCount"`
-	FailCount int `json:"failCount"`
-}
-
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -29,10 +24,10 @@ type ClusterComplianceDetailReportList struct {
 }
 
 type ClusterComplianceDetailReportData struct {
-	UpdateTimestamp metav1.Time                    `json:"updateTimestamp"`
-	Type            Compliance                     `json:"type"`
-	Summary         ClusterComplianceDetailSummary `json:"summary"`
-	ControlChecks   []ControlCheckDetails          `json:"controlCheck"`
+	UpdateTimestamp metav1.Time              `json:"updateTimestamp"`
+	Type            Compliance               `json:"type"`
+	Summary         ClusterComplianceSummary `json:"summary"`
+	ControlChecks   []ControlCheckDetails    `json:"controlCheck"`
 }
 
 // ControlCheckDetails provides the result of conducting a single audit step.
