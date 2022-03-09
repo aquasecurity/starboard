@@ -522,8 +522,13 @@ spec:
                                   description: 'id define the check id as produced by scanner'
                       severity:
                         type: string
-                        pattern: '^CRITICAL$|^HIGH$|^MEDIUM$|^LOW$|^UNKNOWN$'
                         description: 'define the severity of the control'
+                        enum:
+                          - CRITICAL
+                          - HIGH
+                          - MEDIUM
+                          - LOW
+                          - UNKNOWN
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
