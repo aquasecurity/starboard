@@ -2116,8 +2116,8 @@ spec:
         checks:
           - id: KSV037
       severity: 'MEDIUM'
-    - name: Pod and/or namespace Selectors usage / deny all ingress and egress policies are define
-      description: 'Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define'
+    - name: Pod and/or namespace Selectors usage
+      description: 'Control check validate the pod and/or namespace Selectors usage'
       id: '2.0'
       kinds:
         - Workload

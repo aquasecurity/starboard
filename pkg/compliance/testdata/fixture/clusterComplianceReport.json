@@ -220,7 +220,7 @@
       {
         "id": "1.12",
         "name": "Namespace kube-system should not be used by users",
-        "description": "Control check whether Namespace kube-system is not be used by users",
+        "description": "Control check whether Namespace kube-system is not being used by users",
         "kinds": [
           "NetworkPolicy"
         ],
@@ -236,8 +236,8 @@
       },
       {
         "id": "2.0",
-        "name": "Pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
-        "description": "Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
+        "name": "Pod and/or namespace Selectors usage",
+        "description": "Control check validate pod and/or namespace Selectors usage",
         "kinds": [
           "Workload"
         ],
@@ -433,7 +433,7 @@
       {
         "id": "8.1",
         "name": "Audit log path is configure",
-        "description": "Control check whether audit log path is configure",
+        "description": "Control check whether audit log path is configured",
         "kinds": [
           "Node"
         ],
@@ -509,7 +509,7 @@
       {
         "id": "1.12",
         "name": "Namespace kube-system should not be used by users",
-        "description": "Control check whether Namespace kube-system is not be used by users",
+        "description": "Control check whether Namespace kube-system is not being used by users",
         "passTotal": 0,
         "failTotal": 0,
         "severity": "MEDIUM"
@@ -573,7 +573,7 @@
       {
         "id": "8.1",
         "name": "Audit log path is configure",
-        "description": "Control check whether audit log path is configure",
+        "description": "Control check whether audit log path is configured",
         "passTotal": 0,
         "failTotal": 0,
         "severity": "MEDIUM"
@@ -604,8 +604,8 @@
       },
       {
         "id": "2.0",
-        "name": "Pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
-        "description": "Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
+        "name": "Pod and/or namespace Selectors usage",
+        "description": "Control check validate the pod and/or namespace Selectors usage",
         "passTotal": 0,
         "failTotal": 0,
         "severity": "MEDIUM"

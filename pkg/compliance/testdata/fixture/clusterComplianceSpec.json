@@ -217,7 +217,7 @@
       },
       {
         "name": "Namespace kube-system should not be used by users",
-        "description": "Control check whether Namespace kube-system is not be used by users",
+        "description": "Control check whether Namespace kube-system is not being used by users",
         "id": "1.12",
         "kinds": [
           "NetworkPolicy"
@@ -233,8 +233,8 @@
         "severity": "MEDIUM"
       },
       {
-        "name": "Pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
-        "description": "Control check validate pod and/or namespace Selectors usage / deny all ingress and egress policies are define",
+        "name": "Pod and/or namespace Selectors usage",
+        "description": "Control check validate the pod and/or namespace Selectors usage",
         "id": "2.0",
         "kinds": [
           "Workload"
@@ -430,7 +430,7 @@
       },
       {
         "name": "Audit log path is configure",
-        "description": "Control check whether audit log path is configure",
+        "description": "Control check whether audit log path is configured",
         "id": "8.1",
         "kinds": [
           "Node"

@@ -162,7 +162,12 @@ func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResult
 		}
 		control, ok := smd.controlIDControlObject[controlID]
 		if ok {
-			controlChecks = append(controlChecks, v1alpha1.ControlCheck{ID: controlID, Name: control.Name, Description: control.Description, Severity: control.Severity, PassTotal: passTotal, FailTotal: failTotal})
+			controlChecks = append(controlChecks, v1alpha1.ControlCheck{ID: controlID,
+				Name:        control.Name,
+				Description: control.Description,
+				Severity:    control.Severity,
+				PassTotal:   passTotal,
+				FailTotal:   failTotal})
 		}
 	}
 	return controlChecks
@@ -187,7 +192,11 @@ func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsT
 						ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
 						ctta = append(ctta, ctt)
 					}
-					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID, Name: control.Name, Description: control.Description, Severity: control.Severity, ScannerCheckResult: ctta})
+					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID,
+						Name:               control.Name,
+						Description:        control.Description,
+						Severity:           control.Severity,
+						ScannerCheckResult: ctta})
 				}
 			}
 		}
