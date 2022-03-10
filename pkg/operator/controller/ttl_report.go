@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/utils"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/operator/predicate"
@@ -20,6 +23,7 @@ type TTLReportReconciler struct {
 	logr.Logger
 	etc.Config
 	client.Client
+	ext.Clock
 }
 
 func (r *TTLReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -63,11 +67,7 @@ func (r *TTLReportReconciler) reconcileReport() reconcile.Func {
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed parsing %v with value %v %w", v1alpha1.TTLReportAnnotation, ttlReportAnnotationStr, err)
 		}
-		creationTime := report.Report.UpdateTimestamp
-		ttlExpired, durationToTTLExpiration, err := ttlIsExpired(reportTTLTime, creationTime.Time)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
+		ttlExpired, durationToTTLExpiration := utils.IsTTLExpired(reportTTLTime, report.Report.UpdateTimestamp.Time, r.Clock)
 		if ttlExpired {
 			log.V(1).Info("Removing vulnerabilityReport with expired TTL")
 			err := r.Client.Delete(ctx, report, &client.DeleteOptions{})
@@ -80,17 +80,4 @@ func (r *TTLReportReconciler) reconcileReport() reconcile.Func {
 		log.V(1).Info("RequeueAfter", "durationToTTLExpiration", durationToTTLExpiration)
 		return ctrl.Result{RequeueAfter: durationToTTLExpiration}, nil
 	}
-}
-
-func ttlIsExpired(reportTTL time.Duration, creationTime time.Time) (bool, time.Duration, error) {
-	expiresAt := creationTime.Add(reportTTL)
-	currentTime := time.Now()
-	isExpired := currentTime.After(expiresAt)
-
-	if isExpired {
-		return true, time.Duration(0), nil
-	}
-
-	expiresIn := expiresAt.Sub(currentTime)
-	return false, expiresIn, nil
 }

@@ -167,6 +167,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 				Logger: ctrl.Log.WithName("reconciler").WithName("ttlreport"),
 				Config: operatorConfig,
 				Client: mgr.GetClient(),
+				Clock:  ext.NewSystemClock(),
 			}).SetupWithManager(mgr); err != nil {
 				return fmt.Errorf("unable to setup TTLreport reconciler: %w", err)
 			}
