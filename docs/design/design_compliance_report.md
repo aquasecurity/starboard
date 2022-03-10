@@ -32,7 +32,6 @@ kind: ClusterComplianceReport
 metadata:
   name: nsa
 spec:
-  specKind: compliance
   name: nsa
   description: National Security Agency - Kubernetes Hardening Guidance
   version: "1.0"
@@ -542,10 +541,6 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .spec.specKind
-          type: string
-          name: report
-          description: The name of the complience report
         - jsonPath: .metadata.creationTimestamp
           type: date
           name: Age
@@ -578,16 +573,12 @@ spec:
             spec:
               type: object
               required:
-                - specKind
                 - name
                 - description
                 - version
                 - cron
                 - controls
               properties:
-                specKind:
-                  type: string
-                  description: 'spedKind define the spec type , example: compliance'
                 name:
                   type: string
                 description:
@@ -684,10 +675,6 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .report.type.specKind
-          type: string
-          name: report
-          description: The name of the complience report
         - jsonPath: .metadata.creationTimestamp
           type: date
           name: Age

@@ -105,7 +105,10 @@ func (w *cm) createComplianceDetailReport(ctx context.Context, spec v1alpha1.Rep
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Report: v1alpha1.ClusterComplianceDetailReportData{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()), Summary: summary, Type: v1alpha1.Compliance{Kind: strings.ToLower(spec.Kind), Name: name, Description: strings.ToLower(spec.Description), Version: spec.Version}, ControlChecks: controlChecksDetails},
+		Report: v1alpha1.ClusterComplianceDetailReportData{UpdateTimestamp: metav1.NewTime(ext.NewSystemClock().Now()),
+			Summary:       summary,
+			Type:          v1alpha1.Compliance{Name: name, Description: strings.ToLower(spec.Description), Version: spec.Version},
+			ControlChecks: controlChecksDetails},
 	}
 
 	var existing v1alpha1.ClusterComplianceDetailReport
