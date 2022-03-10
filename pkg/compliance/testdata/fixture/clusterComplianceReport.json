@@ -7,7 +7,6 @@
     "creationTimestamp": null
   },
   "spec": {
-    "specKind": "compliance",
     "name": "nsa",
     "description": "National Security Agency - Kubernetes Hardening Guidance",
     "cron": "* * * * *",

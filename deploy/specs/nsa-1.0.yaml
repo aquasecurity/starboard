@@ -9,7 +9,6 @@ metadata:
     app.kubernetes.io/version: "0.14.1"
     app.kubernetes.io/managed-by: kubectl
 spec:
-  specKind: compliance
   name: nsa
   description: National Security Agency - Kubernetes Hardening Guidance
   version: "1.0"

@@ -14,10 +14,6 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-        - jsonPath: .spec.specKind
-          type: string
-          name: report
-          description: The name of the complience report
         - jsonPath: .metadata.creationTimestamp
           type: date
           name: Age
@@ -50,16 +46,12 @@ spec:
             spec:
               type: object
               required:
-                - specKind
                 - name
                 - description
                 - version
                 - cron
                 - controls
               properties:
-                specKind:
-                  type: string
-                  description: 'spedKind define the spec type , example: compliance'
                 name:
                   type: string
                 description:
