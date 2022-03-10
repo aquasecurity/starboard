@@ -14,14 +14,8 @@ metadata:
 
 {{- if .Values.rbac.create }}
 ---
-{{- /*
-Create (Cluster)Role and (Cluster)RoleBinding depending on if the Helm chart is
-installed in a namespace different from the targetNamespace.
-*/}}
-{{- $clusterWide := not (eq .Release.Namespace (tpl .Values.targetNamespaces .)) }}
-{{- $conditionalClusterPrefix := $clusterWide | ternary "Cluster" "" }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ $conditionalClusterPrefix }}Role
+kind: ClusterRole
 metadata:
   name: {{ include "starboard-operator.fullname" . }}
   labels:
@@ -168,14 +162,14 @@ rules:
   {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ $conditionalClusterPrefix }}RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: {{ include "starboard-operator.fullname" . }}
   labels:
     {{- include "starboard-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: {{ $conditionalClusterPrefix }}Role
+  kind: ClusterRole
   name: {{ include "starboard-operator.fullname" . }}
 subjects:
   - kind: ServiceAccount
