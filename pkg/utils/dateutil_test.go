@@ -59,3 +59,22 @@ func TestDurationExceeded(t *testing.T) {
 		})
 	}
 }
+
+func TestTTLIsNotExpired(t *testing.T) {
+	ttlReportAnnotationStr := "10h"
+	ttlReportTime, _ := time.ParseDuration(ttlReportAnnotationStr)
+	creationTime := time.Now()
+	ttlExpired, duration := IsTTLExpired(ttlReportTime, creationTime, ext.NewSystemClock())
+	assert.True(t, duration > 0)
+	assert.False(t, ttlExpired)
+}
+
+func TestTTLIsExpired(t *testing.T) {
+	ttlReportAnnotationStr := "10s"
+	ttlReportTime, _ := time.ParseDuration(ttlReportAnnotationStr)
+	creationTime := time.Now()
+	then := creationTime.Add(time.Duration(-10) * time.Minute)
+	ttlExpired, duration := IsTTLExpired(ttlReportTime, then, ext.NewSystemClock())
+	assert.True(t, duration <= 0)
+	assert.True(t, ttlExpired)
+}

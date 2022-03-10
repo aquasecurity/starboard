@@ -26,3 +26,9 @@ func DurationExceeded(duration time.Duration) bool {
 func timeToExpiration(expiresAt time.Time, clock ext.Clock) time.Duration {
 	return expiresAt.Sub(clock.Now())
 }
+
+// IsTTLExpired check whether current time has exceeded creation time + ttl duration
+func IsTTLExpired(ttl time.Duration, creationTime time.Time, clock ext.Clock) (bool, time.Duration) {
+	durationToTTLExpiration := timeToExpiration(creationTime.Add(ttl), clock)
+	return DurationExceeded(durationToTTLExpiration), durationToTTLExpiration
+}
