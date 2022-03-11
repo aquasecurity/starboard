@@ -96,7 +96,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(&corev1.ConfigMap{}, builder.WithPredicates(
 				predicate.Not(predicate.IsBeingTerminated),
-				predicate.HasName("starboard-policies-config"),
+				predicate.HasName(starboard.PoliciesConfigMapName),
 				predicate.InNamespace(r.Config.Namespace),
 			)).
 			Complete(r.reconcileConfig(resource.kind))
@@ -122,7 +122,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(&corev1.ConfigMap{}, builder.WithPredicates(
 				predicate.Not(predicate.IsBeingTerminated),
-				predicate.HasName("starboard-policies-config"),
+				predicate.HasName(starboard.PoliciesConfigMapName),
 				predicate.InNamespace(r.Config.Namespace))).
 			Complete(r.reconcileClusterConfig(resource.kind))
 		if err != nil {
@@ -260,10 +260,10 @@ func (r *ResourceController) policies(ctx context.Context) (*policy.Policies, er
 
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: r.Config.Namespace,
-		Name:      "starboard-policies-config",
+		Name:      starboard.PoliciesConfigMapName,
 	}, cm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", r.Config.Namespace, starboard.PoliciesConfigMapName, err)
 	}
 	return policy.NewPolicies(cm.Data), nil
 }

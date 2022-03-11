@@ -4,11 +4,9 @@ import (
 	"context"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,31 +46,9 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}
-		kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-		if err != nil {
-			return err
-		}
 		scheme := starboard.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
-		opts, err := getScannerOpts(cmd)
-		if err != nil {
-			return err
-		}
-		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
-		if err != nil {
-			return err
-		}
-		plugin, pluginContext, err := plugin.NewResolver().
-			WithBuildInfo(buildInfo).
-			WithNamespace(starboard.NamespaceName).
-			WithServiceAccountName(starboard.ServiceAccountName).
-			WithConfig(config).
-			WithClient(kubeClient).
-			GetConfigAuditPlugin()
-		if err != nil {
-			return err
-		}
-		scanner := configauditreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
+		scanner := configauditreport.NewScanner(buildInfo, kubeClient)
 		reportBuilder, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
