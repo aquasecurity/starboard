@@ -77,7 +77,38 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 		mapScannerResult map[string][]*ScannerCheckResult
 		want             []v1alpha1.ControlCheck
 	}{
-		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
+		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers",
+			PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
+			mapScannerResult: map[string][]*ScannerCheckResult{
+				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "pass"}}}},
+				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "fail"}}}},
+			}}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			specData, err := ioutil.ReadFile(tt.specPath)
+			assert.NoError(t, err)
+			var spec v1alpha1.ReportSpec
+			err = yaml.Unmarshal(specData, &spec)
+			assert.NoError(t, err)
+			sm := mgr.populateSpecDataToMaps(spec)
+			controlChecks := mgr.controlChecksByScannerChecks(sm, tt.mapScannerResult)
+			sort.Sort(scannerCheckSort(controlChecks))
+			sort.Sort(scannerCheckSort(tt.want))
+			assert.True(t, reflect.DeepEqual(controlChecks, tt.want))
+		})
+	}
+}
+
+func TestControlChecksByScannerChecksDefaultValue(t *testing.T) {
+	mgr := cm{}
+	tests := []struct {
+		name             string
+		specPath         string
+		mapScannerResult map[string][]*ScannerCheckResult
+		want             []v1alpha1.ControlCheck
+	}{
+		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers",
+			PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
 			mapScannerResult: map[string][]*ScannerCheckResult{
 				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "pass"}}}},
 				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "fail"}}}},

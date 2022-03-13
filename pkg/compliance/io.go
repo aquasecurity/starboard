@@ -15,6 +15,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	ResourceIsMissingRemediation = "Resource do not exist in cluster"
+)
+
 type Mgr interface {
 	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error)
 }
@@ -40,6 +44,7 @@ type specDataMapping struct {
 	scannerResourceListNames map[string]*hashset.Set
 	controlIDControlObject   map[string]v1alpha1.Control
 	controlCheckIds          map[string][]string
+	controlIdResources       map[string][]string
 }
 
 func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error) {
@@ -165,6 +170,14 @@ func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResult
 		}
 		control, ok := smd.controlIDControlObject[controlID]
 		if ok {
+			if passTotal == 0 && failTotal == 0 {
+				if control.DefaultValue == v1alpha1.FailValue {
+					failTotal = 1
+				}
+				if control.DefaultValue == v1alpha1.PassValue {
+					passTotal = 1
+				}
+			}
 			controlChecks = append(controlChecks, v1alpha1.ControlCheck{ID: controlID,
 				Name:        control.Name,
 				Description: control.Description,
@@ -184,17 +197,32 @@ func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsT
 		if ok {
 			for _, checkId := range checkIds {
 				results, ok := checkIdsToResults[checkId]
+				ctta := make([]v1alpha1.ScannerCheckResult, 0)
 				if ok {
-					ctta := make([]v1alpha1.ScannerCheckResult, 0)
 					for _, checkResult := range results {
 						var ctt v1alpha1.ScannerCheckResult
 						rds := make([]v1alpha1.ResultDetails, 0)
 						for _, crd := range checkResult.Details {
+							//control check detail relevant to fail issues only
+							if crd.Status == Pass {
+								continue
+							}
 							rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
 						}
 						ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
 						ctta = append(ctta, ctt)
 					}
+
+				} else {
+					if control.DefaultValue == v1alpha1.FailValue {
+						resources := smd.controlIdResources[controlID]
+						for _, resource := range resources {
+							ctt := v1alpha1.ScannerCheckResult{ObjectType: resource, Details: []v1alpha1.ResultDetails{{Msg: ResourceIsMissingRemediation, Status: Fail}}}
+							ctta = append(ctta, ctt)
+						}
+					}
+				}
+				if len(ctta) > 0 {
 					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID,
 						Name:               control.Name,
 						Description:        control.Description,
@@ -238,25 +266,34 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 	controlCheckIds := make(map[string][]string)
 	//scanner to resource list map
 	scannerResourceListName := make(map[string]*hashset.Set)
+	//controlOID to resources
+	controlIdResources := make(map[string][]string)
 	for _, control := range spec.Controls {
 		control.Kinds = mapKinds(control)
 		if _, ok := scannerResourceListName[control.Mapping.Scanner]; !ok {
 			scannerResourceListName[control.Mapping.Scanner] = hashset.New()
 		}
+		if _, ok := controlIdResources[control.ID]; !ok {
+			controlIdResources[control.ID] = make([]string, 0)
+		}
 		for _, resource := range control.Kinds {
 			scannerResourceListName[control.Mapping.Scanner].Add(resource)
+			controlIdResources[control.ID] = append(controlIdResources[control.ID], resource)
 		}
 		controlIDControlObject[control.ID] = control
 		//update control resource list map
 		for _, check := range control.Mapping.Checks {
 			if _, ok := controlCheckIds[control.ID]; !ok {
 				controlCheckIds[control.ID] = make([]string, 0)
+				controlIdResources[control.ID] = make([]string, 0)
 			}
 			controlCheckIds[control.ID] = append(controlCheckIds[control.ID], check.ID)
 		}
+
 	}
 	return &specDataMapping{
 		scannerResourceListNames: scannerResourceListName,
 		controlIDControlObject:   controlIDControlObject,
-		controlCheckIds:          controlCheckIds}
+		controlCheckIds:          controlCheckIds,
+		controlIdResources:       controlIdResources}
 }

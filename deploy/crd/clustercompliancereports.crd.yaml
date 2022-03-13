@@ -114,6 +114,12 @@ spec:
                           - MEDIUM
                           - LOW
                           - UNKNOWN
+                      defaultValue:
+                        type: string
+                        description: 'define the default value for check status in case resource not found'
+                        enum:
+                          - FAIL
+                          - PASS
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
