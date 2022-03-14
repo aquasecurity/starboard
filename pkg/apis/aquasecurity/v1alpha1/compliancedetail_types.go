@@ -40,16 +40,16 @@ type ControlCheckDetails struct {
 }
 
 type ResultDetails struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
 	Msg       string `json:"msg"`
 	Status    string `json:"status"`
 }
 
 type ScannerCheckResult struct {
 	ObjectType  string          `json:"objectType"`
-	ID          string          `json:"id"`
-	Remediation string          `json:"remediation"`
+	ID          string          `json:"id,omitempty"`
+	Remediation string          `json:"remediation,omitempty"`
 	Details     []ResultDetails `json:"details"`
 }
 

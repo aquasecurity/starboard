@@ -150,6 +150,9 @@ func (w *cm) getTotals(controlChecks []v1alpha1.ControlCheck) summaryTotal {
 // controlChecksByScannerChecks build control checks list by parsing test results and mapping it to relevant scanner
 func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResults map[string][]*ScannerCheckResult) []v1alpha1.ControlCheck {
 	controlChecks := make([]v1alpha1.ControlCheck, 0)
+	if len(checkIdsToResults) == 0 {
+		return controlChecks
+	}
 	for controlID, checkIds := range smd.controlCheckIds {
 		var passTotal, failTotal, total int
 		for _, checkId := range checkIds {
@@ -192,6 +195,9 @@ func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResult
 // controlChecksDetailsByScannerChecks build control checks with details list by parsing test results and mapping it to relevant tool
 func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsToResults map[string][]*ScannerCheckResult) []v1alpha1.ControlCheckDetails {
 	controlChecks := make([]v1alpha1.ControlCheckDetails, 0)
+	if len(checkIdsToResults) == 0 {
+		return controlChecks
+	}
 	for controlID, checkIds := range smd.controlCheckIds {
 		control, ok := smd.controlIDControlObject[controlID]
 		if ok {
@@ -199,28 +205,10 @@ func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsT
 				results, ok := checkIdsToResults[checkId]
 				ctta := make([]v1alpha1.ScannerCheckResult, 0)
 				if ok {
-					for _, checkResult := range results {
-						var ctt v1alpha1.ScannerCheckResult
-						rds := make([]v1alpha1.ResultDetails, 0)
-						for _, crd := range checkResult.Details {
-							//control check detail relevant to fail issues only
-							if crd.Status == Pass {
-								continue
-							}
-							rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
-						}
-						ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
-						ctta = append(ctta, ctt)
-					}
-
+					scr := w.createScanCheckResult(results)
+					ctta = append(ctta, scr...)
 				} else {
-					if control.DefaultValue == v1alpha1.FailValue {
-						resources := smd.controlIdResources[controlID]
-						for _, resource := range resources {
-							ctt := v1alpha1.ScannerCheckResult{ObjectType: resource, Details: []v1alpha1.ResultDetails{{Msg: ResourceIsMissingRemediation, Status: Fail}}}
-							ctta = append(ctta, ctt)
-						}
-					}
+					w.createDefaultScanResult(smd, control, controlID, &ctta)
 				}
 				if len(ctta) > 0 {
 					controlChecks = append(controlChecks, v1alpha1.ControlCheckDetails{ID: controlID,
@@ -233,6 +221,34 @@ func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsT
 		}
 	}
 	return controlChecks
+}
+
+func (w *cm) createDefaultScanResult(smd *specDataMapping, control v1alpha1.Control, controlID string, ctta *[]v1alpha1.ScannerCheckResult) {
+	if control.DefaultValue == v1alpha1.FailValue {
+		resources := smd.controlIdResources[controlID]
+		for _, resource := range resources {
+			ctt := v1alpha1.ScannerCheckResult{ObjectType: resource, Details: []v1alpha1.ResultDetails{{Msg: ResourceIsMissingRemediation, Status: Fail}}}
+			*ctta = append(*ctta, ctt)
+		}
+	}
+}
+
+func (w *cm) createScanCheckResult(results []*ScannerCheckResult) []v1alpha1.ScannerCheckResult {
+	ctta := make([]v1alpha1.ScannerCheckResult, 0)
+	for _, checkResult := range results {
+		var ctt v1alpha1.ScannerCheckResult
+		rds := make([]v1alpha1.ResultDetails, 0)
+		for _, crd := range checkResult.Details {
+			//control check detail relevant to fail checks only
+			if crd.Status == Pass {
+				continue
+			}
+			rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
+		}
+		ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
+		ctta = append(ctta, ctt)
+	}
+	return ctta
 }
 
 func (w *cm) checkIdsToResults(scannerResourceMap map[string]map[string]client.ObjectList) (map[string][]*ScannerCheckResult, error) {
@@ -285,7 +301,6 @@ func (w *cm) populateSpecDataToMaps(spec v1alpha1.ReportSpec) *specDataMapping {
 		for _, check := range control.Mapping.Checks {
 			if _, ok := controlCheckIds[control.ID]; !ok {
 				controlCheckIds[control.ID] = make([]string, 0)
-				controlIdResources[control.ID] = make([]string, 0)
 			}
 			controlCheckIds[control.ID] = append(controlCheckIds[control.ID], check.ID)
 		}

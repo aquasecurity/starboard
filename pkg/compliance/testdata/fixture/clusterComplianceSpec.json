@@ -221,6 +221,7 @@
         "kinds": [
           "NetworkPolicy"
         ],
+        "defaultValue": "PASS",
         "mapping": {
           "scanner": "config-audit",
           "checks": [
@@ -272,6 +273,7 @@
         "kinds": [
           "ResourceQuota"
         ],
+        "defaultValue": "FAIL",
         "mapping": {
           "scanner": "config-audit",
           "checks": [

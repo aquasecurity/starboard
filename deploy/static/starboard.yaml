@@ -521,6 +521,12 @@ spec:
                           - MEDIUM
                           - LOW
                           - UNKNOWN
+                      defaultValue:
+                        type: string
+                        description: 'define the default value for check status in case resource not found'
+                        enum:
+                          - FAIL
+                          - PASS
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
@@ -2112,6 +2118,7 @@ spec:
         - NetworkPolicy
       mapping:
         scanner: config-audit
+        defaultValue: 'FAIL'
         checks:
           - id: KSV037
       severity: 'MEDIUM'
@@ -2140,6 +2147,7 @@ spec:
       id: '4.0'
       kinds:
         - ResourceQuota
+      defaultValue: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
@@ -2252,9 +2260,10 @@ spec:
       description: 'Control check whether service mesh is used in cluster'
       id: '9.0'
       kinds:
-        - Node
+        - IstioOperator
+      defaultValue: 'FAIL'
       mapping:
-        scanner: kube-bench
+        scanner: config-audit
         checks:
           - id: "<check need to be added>"
       severity: 'MEDIUM'

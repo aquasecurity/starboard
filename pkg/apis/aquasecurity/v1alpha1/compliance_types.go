@@ -33,11 +33,11 @@ type ReportSpec struct {
 type Control struct {
 	ID           string       `json:"id"`
 	Name         string       `json:"name"`
-	Description  string       `json:"description,,omitempty"`
+	Description  string       `json:"description,omitempty"`
 	Kinds        []string     `json:"kinds"`
 	Mapping      Mapping      `json:"mapping"`
 	Severity     Severity     `json:"severity"`
-	DefaultValue DefaultValue `json:"defaultValue"`
+	DefaultValue DefaultValue `json:"defaultValue,omitempty"`
 }
 
 //SpecCheck represent the scanner who perform the control check

@@ -141,6 +141,7 @@ spec:
         - NetworkPolicy
       mapping:
         scanner: config-audit
+        defaultValue: 'FAIL'
         checks:
           - id: KSV037
       severity: 'MEDIUM'
@@ -169,6 +170,7 @@ spec:
       id: '4.0'
       kinds:
         - ResourceQuota
+      defaultValue: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
@@ -281,9 +283,10 @@ spec:
       description: 'Control check whether service mesh is used in cluster'
       id: '9.0'
       kinds:
-        - Node
+        - IstioOperator
+      defaultValue: 'FAIL'
       mapping:
-        scanner: kube-bench
+        scanner: config-audit
         checks:
           - id: "<check need to be added>"
       severity: 'MEDIUM'
