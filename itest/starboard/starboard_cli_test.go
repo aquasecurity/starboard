@@ -8,14 +8,12 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 
 	"context"
-	"strings"
 	"time"
 
 	"github.com/aquasecurity/starboard/itest/helper"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/cmd"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
@@ -1031,56 +1029,6 @@ var _ = Describe("Starboard CLI", func() {
 				Labels[starboard.LabelResourceName]
 		}
 
-		updateScannerConfig := func(scanner starboard.Scanner) {
-			configmap := &corev1.ConfigMap{}
-			err := kubeClient.Get(context.Background(), types.NamespacedName{
-				Namespace: "starboard",
-				Name:      "starboard",
-			}, configmap)
-			Expect(err).ToNot(HaveOccurred())
-
-			configmapCopy := configmap.DeepCopy()
-			configmapCopy.Data["configAuditReports.scanner"] = string(scanner)
-			err = kubeClient.Update(context.Background(), configmapCopy)
-			Expect(err).ToNot(HaveOccurred())
-		}
-
-		assertConfigAuditReportCreated := func(scanner starboard.Scanner, kind kube.Kind) {
-			It("should create ConfigAuditReport", func() {
-				updateScannerConfig(scanner)
-				err := cmd.Run(versionInfo, []string{
-					"starboard",
-					"scan", "configauditreports", strings.ToLower(string(kind)) + "/" + object.GetName(),
-					"--namespace", object.GetNamespace(),
-					"-v", starboardCLILogLevel,
-				}, GinkgoWriter, GinkgoWriter)
-				Expect(err).ToNot(HaveOccurred())
-
-				var reportList v1alpha1.ConfigAuditReportList
-				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
-					starboard.LabelResourceKind:      string(kind),
-					starboard.LabelResourceName:      object.GetName(),
-					starboard.LabelResourceNamespace: object.GetNamespace(),
-				})
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
-					object.GetName(): IsConfigAuditReportOwnedBy(object, scanner),
-				}))
-			})
-		}
-
-		BeforeEach(func() {
-			configmapCopy := conftestConfigMap.DeepCopy()
-			err := kubeClient.Create(context.TODO(), configmapCopy)
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		AfterEach(func() {
-			err := kubeClient.Delete(context.TODO(), conftestConfigMap)
-			Expect(err).ToNot(HaveOccurred())
-		})
-
 		Context("when unmanaged Pod is specified as workload", func() {
 
 			var ctx context.Context
@@ -1088,7 +1036,8 @@ var _ = Describe("Starboard CLI", func() {
 			BeforeEach(func() {
 				ctx = context.TODO()
 
-				object = helper.NewPod().WithName("nginx-polaris"+"-"+rand.String(5)).
+				object = helper.NewPod().
+					WithRandomName("nginx-polaris").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
 					Build()
@@ -1096,12 +1045,26 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Polaris, kube.KindPod)
-			})
+			It("should create ConfigAuditReport", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"scan", "configauditreports", "pod" + "/" + object.GetName(),
+					"--namespace", object.GetNamespace(),
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
 
-			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Conftest, kube.KindPod)
+				var reportList v1alpha1.ConfigAuditReportList
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
+					starboard.LabelResourceKind:      "Pod",
+					starboard.LabelResourceName:      object.GetName(),
+					starboard.LabelResourceNamespace: object.GetNamespace(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					object.GetName(): IsConfigAuditReportOwnedBy(object),
+				}))
 			})
 
 			AfterEach(func() {
@@ -1117,7 +1080,8 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				ctx = context.TODO()
-				object = helper.NewPod().WithName("nginx-and-tomcat-starboard"+"-"+rand.String(5)).
+				object = helper.NewPod().
+					WithRandomName("nginx-and-tomcat-starboard").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
 					WithContainer("tomcat-container", "tomcat:8").
@@ -1126,12 +1090,26 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Polaris, kube.KindPod)
-			})
+			It("should create ConfigAuditReport", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"scan", "configauditreports", "pod" + "/" + object.GetName(),
+					"--namespace", object.GetNamespace(),
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
 
-			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Conftest, kube.KindPod)
+				var reportList v1alpha1.ConfigAuditReportList
+				err = kubeClient.List(ctx, &reportList, client.MatchingLabels{
+					starboard.LabelResourceKind:      "Pod",
+					starboard.LabelResourceName:      object.GetName(),
+					starboard.LabelResourceNamespace: object.GetNamespace(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					object.GetName(): IsConfigAuditReportOwnedBy(object),
+				}))
 			})
 
 			AfterEach(func() {
@@ -1144,6 +1122,7 @@ var _ = Describe("Starboard CLI", func() {
 		Context("when CronJob is specified as workload", func() {
 
 			var ctx context.Context
+
 			BeforeEach(func() {
 				ctx = context.TODO()
 				object = &batchv1.CronJob{
@@ -1179,12 +1158,26 @@ var _ = Describe("Starboard CLI", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			Context("with Polaris as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Polaris, kube.KindCronJob)
-			})
+			It("should create ConfigAuditReport", func() {
+				err := cmd.Run(versionInfo, []string{
+					"starboard",
+					"scan", "configauditreports", "cronjob" + "/" + object.GetName(),
+					"--namespace", object.GetNamespace(),
+					"-v", starboardCLILogLevel,
+				}, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
 
-			Context("with Conftest as scanner", func() {
-				assertConfigAuditReportCreated(plugin.Conftest, kube.KindCronJob)
+				var reportList v1alpha1.ConfigAuditReportList
+				err = kubeClient.List(context.TODO(), &reportList, client.MatchingLabels{
+					starboard.LabelResourceKind:      "CronJob",
+					starboard.LabelResourceName:      object.GetName(),
+					starboard.LabelResourceNamespace: object.GetNamespace(),
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(reportList.Items).To(MatchAllElements(groupByWorkloadName, Elements{
+					object.GetName(): IsConfigAuditReportOwnedBy(object),
+				}))
 			})
 
 			AfterEach(func() {

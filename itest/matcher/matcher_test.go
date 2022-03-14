@@ -7,7 +7,6 @@ import (
 
 	"github.com/aquasecurity/starboard/itest/matcher"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -72,7 +71,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 
 	t.Run("Should return error when actual is not ConfigAuditReport", func(t *testing.T) {
 		g := NewGomegaWithT(t)
-		instance := matcher.IsConfigAuditReportOwnedBy(&appsv1.ReplicaSet{}, plugin.Polaris)
+		instance := matcher.IsConfigAuditReportOwnedBy(&appsv1.ReplicaSet{})
 		_, err := instance.Match("I AM INVALID ACTUAL")
 		g.Expect(err).To(MatchError("matcher.configAuditReportMatcher expects a v1alpha1.ConfigAuditReport"))
 	})
@@ -85,7 +84,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 				Namespace: "default",
 				UID:       "494b2727-5d52-4057-9a9b-8b508c753fea",
 			},
-		}, plugin.Polaris)
+		})
 		success, err := instance.Match(v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "replicaset-nginx-6d4cf56db6",
@@ -108,9 +107,9 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Scanner: v1alpha1.Scanner{
-					Name:    "Polaris",
-					Vendor:  "Fairwinds Ops",
-					Version: "4.2",
+					Name:    "Starboard",
+					Vendor:  "Aqua Security",
+					Version: "dev",
 				},
 			},
 		})

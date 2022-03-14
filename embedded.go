@@ -3,6 +3,7 @@ package starboard
 import (
 	_ "embed"
 
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 )
@@ -20,7 +21,18 @@ var (
 	kubeBenchReportsCRD []byte
 	//go:embed deploy/crd/kubehunterreports.crd.yaml
 	kubeHunterReportsCRD []byte
+	//go:embed  deploy/static/04-starboard-operator.policies.yaml
+	policies []byte
 )
+
+func PoliciesConfigMap() (corev1.ConfigMap, error) {
+	var cm corev1.ConfigMap
+	_, _, err := scheme.Codecs.UniversalDecoder().Decode(policies, nil, &cm)
+	if err != nil {
+		return cm, err
+	}
+	return cm, nil
+}
 
 func GetVulnerabilityReportsCRD() (apiextensionsv1.CustomResourceDefinition, error) {
 	return getCRDFromBytes(vulnerabilityReportsCRD)

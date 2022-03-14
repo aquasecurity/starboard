@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	embedded "github.com/aquasecurity/starboard"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
@@ -224,7 +225,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 	_, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, ConfigMapName, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("getting config: %w", err)
+			return fmt.Errorf("failed getting configmap: %s: %w", ConfigMapName, err)
 		}
 		_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -238,7 +239,23 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 		}, metav1.CreateOptions{})
 
 		if err != nil {
-			return fmt.Errorf("creating config: %w", err)
+			return fmt.Errorf("failed creating configmap: %s: %w", ConfigMapName, err)
+		}
+	}
+
+	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, PoliciesConfigMapName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed getting configmap: %s: %w", PoliciesConfigMapName, err)
+		}
+		policyCM, err := embedded.PoliciesConfigMap()
+		if err != nil {
+			return fmt.Errorf("failed getting embedded policies: %w", err)
+		}
+		policyCM.Namespace = c.namespace
+		_, err = c.client.CoreV1().ConfigMaps(c.namespace).Create(ctx, &policyCM, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed creating configmap: %s: %w", PoliciesConfigMapName, err)
 		}
 	}
 

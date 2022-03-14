@@ -22,6 +22,10 @@ const (
 	// SecretName the name of the secret where Starboard stores is sensitive
 	// configuration.
 	SecretName = "starboard"
+
+	// PoliciesConfigMapName the name of the ConfigMap used to store OPA Rego
+	// policies.
+	PoliciesConfigMapName = "starboard-policies-config"
 )
 
 const (

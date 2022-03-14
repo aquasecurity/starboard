@@ -40,40 +40,6 @@ var (
 		},
 	}
 	privateRegistryConfig = &helper.PrivateRegistryConfig{}
-
-	conftestConfigMap = &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "starboard-conftest-config",
-			Namespace: "starboard",
-		},
-		Data: map[string]string{
-			"conftest.imageRef":                  "docker.io/openpolicyagent/conftest:v0.30.0",
-			"conftest.policy.runs_as_root.kinds": "Workload",
-			"conftest.policy.runs_as_root.rego": `
-	package main
-    
-    deny[msg] {
-      input.kind == "ReplicaSet"
-      not input.spec.template.spec.securityContext.runAsNonRoot
-
-      msg := "Containers must not run as root"
-    }
-
-    deny[msg] {
-      input.kind == "Pod"
-      not input.spec.securityContext.runAsNonRoot
-
-      msg := "Containers must not run as root"
-    }
-
-    deny[msg] {
-      input.kind == "CronJob"
-      not input.spec.jobTemplate.spec.template.spec.securityContext.runAsNonRoot
-
-      msg := "Containers must not run as root"
-    }`,
-		},
-	}
 )
 
 var (

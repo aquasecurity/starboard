@@ -8,7 +8,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,15 +23,10 @@ var (
 		Vendor:  "Aqua Security",
 		Version: "0.24.2",
 	}
-	polarisScanner = v1alpha1.Scanner{
-		Name:    "Polaris",
-		Vendor:  "Fairwinds Ops",
-		Version: "4.2",
-	}
-	conftestScanner = v1alpha1.Scanner{
-		Name:    "Conftest",
-		Vendor:  "Open Policy Agent",
-		Version: "v0.30.0",
+	builtInScanner = v1alpha1.Scanner{
+		Name:    "Starboard",
+		Vendor:  "Aqua Security",
+		Version: "dev",
 	}
 )
 
@@ -137,16 +131,14 @@ func (m *vulnerabilityReportMatcher) NegatedFailureMessage(_ interface{}) string
 //
 // Note: This matcher is not suitable for unit tests because it does not perform a strict validation
 // of the actual v1alpha1.ConfigAuditReport.
-func IsConfigAuditReportOwnedBy(owner client.Object, scanner starboard.Scanner) types.GomegaMatcher {
+func IsConfigAuditReportOwnedBy(owner client.Object) types.GomegaMatcher {
 	return &configAuditReportMatcher{
-		owner:   owner,
-		scanner: scanner,
+		owner: owner,
 	}
 }
 
 type configAuditReportMatcher struct {
 	owner                 client.Object
-	scanner               starboard.Scanner
 	failureMessage        string
 	negatedFailureMessage string
 }
@@ -159,11 +151,6 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	gvk, err := apiutil.GVKForObject(m.owner, starboard.NewScheme())
 	if err != nil {
 		return false, err
-	}
-
-	scanner := polarisScanner
-	if m.scanner == plugin.Conftest {
-		scanner = conftestScanner
 	}
 
 	matcher := MatchFields(IgnoreExtras, Fields{
@@ -183,7 +170,7 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 			}),
 		}),
 		"Report": MatchFields(IgnoreExtras, Fields{
-			"Scanner": Equal(scanner),
+			"Scanner": Equal(builtInScanner),
 		}),
 	})
 	success, err := matcher.Match(actual)

@@ -4,57 +4,52 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/policy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
+	buildInfo      starboard.BuildInfo
 	scheme         *runtime.Scheme
-	clientset      kubernetes.Interface
-	opts           kube.ScannerOpts
+	client         client.Client
 	objectResolver *kube.ObjectResolver
-	logsReader     kube.LogsReader
-	plugin         Plugin
-	pluginContext  starboard.PluginContext
-	config         starboard.ConfigData
 }
 
-func NewScanner(
-	clientset kubernetes.Interface,
-	client client.Client,
-	plugin Plugin,
-	pluginContext starboard.PluginContext,
-	config starboard.ConfigData,
-	opts kube.ScannerOpts,
-) *Scanner {
+func NewScanner(buildInfo starboard.BuildInfo, client client.Client) *Scanner {
 	return &Scanner{
-		scheme:         client.Scheme(),
-		clientset:      clientset,
-		opts:           opts,
-		plugin:         plugin,
-		pluginContext:  pluginContext,
-		objectResolver: &kube.ObjectResolver{Client: client},
-		logsReader:     kube.NewLogsReader(clientset),
-		config:         config,
+		buildInfo: buildInfo,
+		scheme:    client.Scheme(),
+		client:    client,
+		objectResolver: &kube.ObjectResolver{
+			Client: client,
+		},
 	}
 }
 
-func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuilder, error) {
-	if !s.supportsKind(partial.Kind) {
-		return nil, fmt.Errorf("kind %s is not supported by %s plugin", partial.Kind, s.pluginContext.GetName())
-	}
-	obj, err := s.objectResolver.ObjectFromObjectRef(ctx, partial)
+func (s *Scanner) Scan(ctx context.Context, resourceRef kube.ObjectRef) (*ReportBuilder, error) {
+	resource, err := s.objectResolver.ObjectFromObjectRef(ctx, resourceRef)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed resolving resource from ref: %w", err)
 	}
 
-	applicable, reason, err := s.plugin.IsApplicable(s.pluginContext, obj)
+	resource, err = s.objectResolver.ReportOwner(ctx, resource)
+	if err != nil {
+		return nil, fmt.Errorf("failed resolving report owner: %w", err)
+	}
+
+	resourceKind := resource.GetObjectKind().GroupVersionKind().Kind
+
+	policies, err := s.policies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting policies: %w", err)
+	}
+
+	applicable, reason, err := policies.Applicable(resource)
 	if err != nil {
 		return nil, err
 	}
@@ -62,91 +57,63 @@ func (s *Scanner) Scan(ctx context.Context, partial kube.ObjectRef) (*ReportBuil
 		return nil, fmt.Errorf("not applicable: %s", reason)
 	}
 
-	owner, err := s.objectResolver.ReportOwner(ctx, obj)
+	results, err := policies.Eval(ctx, resource)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed evaluating policies: %w", err)
 	}
 
-	scanJobTolerations, err := s.config.GetScanJobTolerations()
-	if err != nil {
-		return nil, fmt.Errorf("getting scan job tolerations: %w", err)
-	}
+	checks := make([]v1alpha1.Check, len(results))
+	for i, result := range results {
+		checks[i] = v1alpha1.Check{
+			ID:          result.Metadata.ID,
+			Title:       result.Metadata.Title,
+			Description: result.Metadata.Description,
+			Severity:    result.Metadata.Severity,
+			Category:    result.Metadata.Type,
 
-	scanJobAnnotations, err := s.config.GetScanJobAnnotations()
-	if err != nil {
-		return nil, fmt.Errorf("getting scan job annotations: %w", err)
-	}
-
-	scanJobPodTemplateLabels, err := s.config.GetScanJobPodTemplateLabels()
-	if err != nil {
-		return nil, fmt.Errorf("getting scan job template labels: %w", err)
-	}
-
-	klog.V(3).Infof("Scanning with options: %+v", s.opts)
-	job, secrets, err := NewScanJobBuilder().
-		WithPlugin(s.plugin).
-		WithPluginContext(s.pluginContext).
-		WithTimeout(s.opts.ScanJobTimeout).
-		WithObject(owner).
-		WithTolerations(scanJobTolerations).
-		WithAnnotations(scanJobAnnotations).
-		WithPodTemplateLabels(scanJobPodTemplateLabels).
-		Get()
-	if err != nil {
-		return nil, fmt.Errorf("constructing scan job: %w", err)
-	}
-
-	err = runner.New().Run(ctx, kube.NewRunnableJob(s.scheme, s.clientset, job, secrets...))
-	if err != nil {
-		return nil, fmt.Errorf("running scan job: %w", err)
-	}
-
-	defer func() {
-		if !s.opts.DeleteScanJob {
-			klog.V(3).Infof("Skipping scan job deletion: %s/%s", job.Namespace, job.Name)
-			return
+			Success:  result.Success,
+			Messages: result.Messages,
 		}
-		klog.V(3).Infof("Deleting scan job: %s/%s", job.Namespace, job.Name)
-		background := metav1.DeletePropagationBackground
-		_ = s.clientset.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
-			PropagationPolicy: &background,
-		})
-	}()
+	}
 
-	containerName := s.plugin.GetContainerName()
+	data := v1alpha1.ConfigAuditReportData{
+		Scanner: v1alpha1.Scanner{
+			Name:    "Starboard",
+			Vendor:  "Aqua Security",
+			Version: s.buildInfo.Version,
+		},
+		Summary: v1alpha1.ConfigAuditSummaryFromChecks(checks),
+		Checks:  checks,
 
-	klog.V(3).Infof("Getting logs for %s container in job: %s/%s", containerName, job.Namespace, job.Name)
-	logsStream, err := s.logsReader.GetLogsByJobAndContainerName(ctx, job, containerName)
+		PodChecks:       checks,
+		ContainerChecks: map[string][]v1alpha1.Check{},
+	}
+
+	resourceHash, err := kube.ComputeSpecHash(resource)
 	if err != nil {
-		return nil, fmt.Errorf("getting logs: %w", err)
+		return nil, fmt.Errorf("failed computing spec hash: %w", err)
 	}
-
-	result, err := s.plugin.ParseConfigAuditReportData(s.pluginContext, logsStream)
-	defer func() {
-		_ = logsStream.Close()
-	}()
-
-	resourceSpecHash, ok := job.Labels[starboard.LabelResourceSpecHash]
-	if !ok {
-		return nil, fmt.Errorf("expected label %s not set", starboard.LabelResourceSpecHash)
-	}
-	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
-	if !ok {
-		return nil, fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
+	scannerConfigHash, err := policies.Hash(resourceKind)
+	if err != nil {
+		return nil, fmt.Errorf("failed computing scanner config hash: %w", err)
 	}
 
 	return NewReportBuilder(s.scheme).
-		Controller(owner).
-		ResourceSpecHash(resourceSpecHash).
-		PluginConfigHash(pluginConfigHash).
-		Data(result), nil
+		Controller(resource).
+		ResourceSpecHash(resourceHash).
+		PluginConfigHash(scannerConfigHash).
+		Data(data), nil
 }
 
-func (s *Scanner) supportsKind(kind kube.Kind) bool {
-	for _, k := range s.plugin.SupportedKinds() {
-		if k == kind {
-			return true
-		}
+func (s *Scanner) policies(ctx context.Context) (*policy.Policies, error) {
+	cm := &corev1.ConfigMap{}
+
+	err := s.client.Get(ctx, client.ObjectKey{
+		Namespace: starboard.NamespaceName,
+		Name:      starboard.PoliciesConfigMapName,
+	}, cm)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", starboard.NamespaceName, starboard.PoliciesConfigMapName, err)
 	}
-	return false
+	return policy.NewPolicies(cm.Data), nil
 }
