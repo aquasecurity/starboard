@@ -2,7 +2,6 @@ package compliance
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"sort"
 	"time"
@@ -127,13 +126,6 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 			Expect(err).ToNot(HaveOccurred())
 			sort.Sort(controlSort(complianceReportUpdate.Status.ControlChecks))
 			sort.Sort(controlSort(clusterComplianceReportUpdate.Status.ControlChecks))
-
-			b1, err := json.Marshal(complianceReportUpdate)
-			Expect(err).ToNot(HaveOccurred())
-			fmt.Println(string(b1))
-			b2, err := json.Marshal(clusterComplianceReportUpdate)
-			fmt.Println(string(b2))
-			Expect(err).ToNot(HaveOccurred())
 			// validate updated cluster compliance report status
 			Expect(cmp.Equal(complianceReportUpdate.Status, clusterComplianceReportUpdate.Status, ignoreTimeStamp())).To(BeTrue())
 		})

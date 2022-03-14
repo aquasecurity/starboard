@@ -139,9 +139,9 @@ spec:
       id: '1.12'
       kinds:
         - NetworkPolicy
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
-        defaultValue: 'FAIL'
         checks:
           - id: KSV037
       severity: 'MEDIUM'
@@ -170,7 +170,7 @@ spec:
       id: '4.0'
       kinds:
         - ResourceQuota
-      defaultValue: 'FAIL'
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
@@ -284,7 +284,7 @@ spec:
       id: '9.0'
       kinds:
         - IstioOperator
-      defaultValue: 'FAIL'
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
         checks:

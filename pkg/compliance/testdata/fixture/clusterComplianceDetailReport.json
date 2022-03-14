@@ -19,54 +19,6 @@
     },
     "controlCheck": [
       {
-        "id": "6.0",
-        "name": "Ensure kube config file permission",
-        "description": "Control check whether kube config file permissions",
-        "severity": "CRITICAL",
-        "checkResults": [
-          {
-            "objectType": "Node",
-            "id": "4.1.3",
-            "remediation": "Run the below command (based on the file location on your system) on the each worker node.\nFor example,\nchmod 644 /etc/kubernetes/proxy.conf\n",
-            "details": []
-          }
-        ]
-      },
-      {
-        "id": "6.0",
-        "name": "Ensure kube config file permission",
-        "description": "Control check whether kube config file permissions",
-        "severity": "CRITICAL",
-        "checkResults": [
-          {
-            "objectType": "Node",
-            "id": "4.1.4",
-            "remediation": "Run the below command (based on the file location on your system) on the each worker node.\nFor example, chown root:root /etc/kubernetes/proxy.conf\n",
-            "details": []
-          }
-        ]
-      },
-      {
-        "id": "3.0",
-        "name": "Use CNI plugin that supports NetworkPolicy API",
-        "description": "Control check whether check cni plugin installed\t",
-        "severity": "CRITICAL",
-        "checkResults": [
-          {
-            "objectType": "Node",
-            "id": "5.3.1",
-            "remediation": "If the CNI plugin in use does not support network policies, consideration should be given to\nmaking use of a different plugin, or finding an alternate mechanism for restricting traffic\nin the Kubernetes cluster.\n",
-            "details": [
-              {
-                "name": "local-control-plane",
-                "msg": "",
-                "status": "warn"
-              }
-            ]
-          }
-        ]
-      },
-      {
         "id": "4.0",
         "name": "Use ResourceQuota policies to limit resources",
         "description": "Control check the use of ResourceQuota policies to limit resources",
@@ -77,7 +29,7 @@
             "details": [
               {
                 "msg": "Resource do not exist in cluster",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }
@@ -97,7 +49,7 @@
                 "name": "replicaset-memcached-sample-6c765df685",
                 "namespace": "default",
                 "msg": "Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           },
@@ -109,13 +61,13 @@
                 "name": "pod-rss-site",
                 "namespace": "default",
                 "msg": "Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "fail"
+                "status": "FAIL"
               },
               {
                 "name": "pod-rss-site",
                 "namespace": "default",
                 "msg": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }

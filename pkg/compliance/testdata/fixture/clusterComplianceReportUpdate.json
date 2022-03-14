@@ -219,7 +219,7 @@
       {
         "id": "1.12",
         "name": "Namespace kube-system should not be used by users",
-        "defaultValue": "PASS",
+        "defaultStatus": "PASS",
         "description": "Control check whether Namespace kube-system is not being used by users",
         "kinds": [
           "NetworkPolicy"
@@ -272,7 +272,7 @@
         "id": "4.0",
         "name": "Use ResourceQuota policies to limit resources",
         "description": "Control check the use of ResourceQuota policies to limit resources",
-        "defaultValue": "FAIL",
+        "defaultStatus": "FAIL",
         "kinds": [
           "ResourceQuota"
         ],

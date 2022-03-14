@@ -521,12 +521,13 @@ spec:
                           - MEDIUM
                           - LOW
                           - UNKNOWN
-                      defaultValue:
+                      defaultStatus:
                         type: string
                         description: 'define the default value for check status in case resource not found'
                         enum:
-                          - FAIL
                           - PASS
+                          - WARN
+                          - FAIL
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object
@@ -2116,9 +2117,9 @@ spec:
       id: '1.12'
       kinds:
         - NetworkPolicy
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
-        defaultValue: 'FAIL'
         checks:
           - id: KSV037
       severity: 'MEDIUM'
@@ -2147,7 +2148,7 @@ spec:
       id: '4.0'
       kinds:
         - ResourceQuota
-      defaultValue: 'FAIL'
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
@@ -2261,9 +2262,10 @@ spec:
       id: '9.0'
       kinds:
         - IstioOperator
-      defaultValue: 'FAIL'
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
           - id: "<check need to be added>"
       severity: 'MEDIUM'
+

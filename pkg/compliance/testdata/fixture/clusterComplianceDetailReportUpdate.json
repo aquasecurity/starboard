@@ -19,26 +19,6 @@
     },
     "controlCheck": [
       {
-        "id": "3.0",
-        "name": "Use CNI plugin that supports NetworkPolicy API",
-        "description": "Control check whether check cni plugin installed\t",
-        "severity": "CRITICAL",
-        "checkResults": [
-          {
-            "objectType": "Node",
-            "id": "5.3.1",
-            "remediation": "If the CNI plugin in use does not support network policies, consideration should be given to\nmaking use of a different plugin, or finding an alternate mechanism for restricting traffic\nin the Kubernetes cluster.\n",
-            "details": [
-              {
-                "name": "local-control-plane",
-                "msg": "",
-                "status": "warn"
-              }
-            ]
-          }
-        ]
-      },
-      {
         "id": "1.1",
         "name": "Immutable container file systems",
         "description": "Check that container root file system is immutable",
@@ -52,7 +32,7 @@
                 "name": "pod-rss-site",
                 "namespace": "default",
                 "msg": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           },
@@ -64,7 +44,7 @@
                 "name": "replicaset-memcached-sample-6c765df685",
                 "namespace": "default",
                 "msg": "Container 'memcached' of ReplicaSet 'memcached-sample-6c765df685' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }
@@ -81,7 +61,7 @@
             "details": [
               {
                 "msg": "Resource do not exist in cluster",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }
@@ -101,7 +81,7 @@
               {
                 "name": "local-control-plane",
                 "msg": "",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }
@@ -121,7 +101,7 @@
               {
                 "name": "local-control-plane",
                 "msg": "",
-                "status": "fail"
+                "status": "FAIL"
               }
             ]
           }

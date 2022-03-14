@@ -31,13 +31,13 @@ type ReportSpec struct {
 
 //Control represent the cps controls data and mapping checks
 type Control struct {
-	ID           string       `json:"id"`
-	Name         string       `json:"name"`
-	Description  string       `json:"description,omitempty"`
-	Kinds        []string     `json:"kinds"`
-	Mapping      Mapping      `json:"mapping"`
-	Severity     Severity     `json:"severity"`
-	DefaultValue DefaultValue `json:"defaultValue,omitempty"`
+	ID            string        `json:"id"`
+	Name          string        `json:"name"`
+	Description   string        `json:"description,omitempty"`
+	Kinds         []string      `json:"kinds"`
+	Mapping       Mapping       `json:"mapping"`
+	Severity      Severity      `json:"severity"`
+	DefaultStatus ControlStatus `json:"defaultStatus,omitempty"`
 }
 
 //SpecCheck represent the scanner who perform the control check
@@ -76,9 +76,10 @@ type ControlCheck struct {
 	Severity    Severity `json:"severity"`
 }
 
-type DefaultValue string
+type ControlStatus string
 
 const (
-	FailValue DefaultValue = "FAIL"
-	PassValue DefaultValue = "PASS"
+	FailStatus ControlStatus = "FAIL"
+	PassStatus ControlStatus = "PASS"
+	WarnStatus ControlStatus = "WARN"
 )

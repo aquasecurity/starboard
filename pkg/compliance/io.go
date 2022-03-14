@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	ResourceIsMissingRemediation = "Resource do not exist in cluster"
+	ResourceDoNotExistInCluster = "Resource do not exist in cluster"
 )
 
 type Mgr interface {
@@ -161,9 +161,9 @@ func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResult
 				for _, checkResult := range results {
 					for _, crd := range checkResult.Details {
 						switch crd.Status {
-						case Pass, Warn:
+						case v1alpha1.PassStatus, v1alpha1.WarnStatus:
 							passTotal++
-						case Fail:
+						case v1alpha1.FailStatus:
 							failTotal++
 						}
 						total++
@@ -174,10 +174,10 @@ func (w *cm) controlChecksByScannerChecks(smd *specDataMapping, checkIdsToResult
 		control, ok := smd.controlIDControlObject[controlID]
 		if ok {
 			if passTotal == 0 && failTotal == 0 {
-				if control.DefaultValue == v1alpha1.FailValue {
+				if control.DefaultStatus == v1alpha1.FailStatus {
 					failTotal = 1
 				}
-				if control.DefaultValue == v1alpha1.PassValue {
+				if control.DefaultStatus == v1alpha1.PassStatus {
 					passTotal = 1
 				}
 			}
@@ -224,10 +224,10 @@ func (w *cm) controlChecksDetailsByScannerChecks(smd *specDataMapping, checkIdsT
 }
 
 func (w *cm) createDefaultScanResult(smd *specDataMapping, control v1alpha1.Control, controlID string, ctta *[]v1alpha1.ScannerCheckResult) {
-	if control.DefaultValue == v1alpha1.FailValue {
+	if control.DefaultStatus == v1alpha1.FailStatus {
 		resources := smd.controlIdResources[controlID]
 		for _, resource := range resources {
-			ctt := v1alpha1.ScannerCheckResult{ObjectType: resource, Details: []v1alpha1.ResultDetails{{Msg: ResourceIsMissingRemediation, Status: Fail}}}
+			ctt := v1alpha1.ScannerCheckResult{ObjectType: resource, Details: []v1alpha1.ResultDetails{{Msg: ResourceDoNotExistInCluster, Status: v1alpha1.FailStatus}}}
 			*ctta = append(*ctta, ctt)
 		}
 	}
@@ -240,13 +240,15 @@ func (w *cm) createScanCheckResult(results []*ScannerCheckResult) []v1alpha1.Sca
 		rds := make([]v1alpha1.ResultDetails, 0)
 		for _, crd := range checkResult.Details {
 			//control check detail relevant to fail checks only
-			if crd.Status == Pass {
+			if crd.Status == v1alpha1.PassStatus || crd.Status == v1alpha1.WarnStatus {
 				continue
 			}
 			rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
 		}
-		ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
-		ctta = append(ctta, ctt)
+		if len(rds) > 0 {
+			ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
+			ctta = append(ctta, ctt)
+		}
 	}
 	return ctta
 }
