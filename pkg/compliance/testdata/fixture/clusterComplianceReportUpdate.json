@@ -9,7 +9,7 @@
   "spec": {
     "name": "nsa",
     "description": "National Security Agency - Kubernetes Hardening Guidance",
-    "cron": "* * * * *",
+    "cron": "0/4 * * * * ? *",
     "version": "1.0",
     "controls": [
       {
@@ -219,6 +219,7 @@
       {
         "id": "1.12",
         "name": "Namespace kube-system should not be used by users",
+        "defaultStatus": "PASS",
         "description": "Control check whether Namespace kube-system is not being used by users",
         "kinds": [
           "NetworkPolicy"
@@ -271,6 +272,7 @@
         "id": "4.0",
         "name": "Use ResourceQuota policies to limit resources",
         "description": "Control check the use of ResourceQuota policies to limit resources",
+        "defaultStatus": "FAIL",
         "kinds": [
           "ResourceQuota"
         ],
@@ -485,8 +487,8 @@
   "status": {
     "updateTimestamp": "2022-03-09T08:52:44Z",
     "summary": {
-      "passCount": 2,
-      "failCount": 4
+      "passCount": 3,
+      "failCount": 5
     },
     "controlCheck": [
       {
@@ -509,7 +511,7 @@
         "id": "1.12",
         "name": "Namespace kube-system should not be used by users",
         "description": "Control check whether Namespace kube-system is not being used by users",
-        "passTotal": 0,
+        "passTotal": 1,
         "failTotal": 0,
         "severity": "MEDIUM"
       },
@@ -646,7 +648,7 @@
         "name": "Use ResourceQuota policies to limit resources",
         "description": "Control check the use of ResourceQuota policies to limit resources",
         "passTotal": 0,
-        "failTotal": 0,
+        "failTotal": 1,
         "severity": "CRITICAL"
       },
       {

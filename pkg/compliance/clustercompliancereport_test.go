@@ -100,7 +100,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		})
 
 		ginkgo.It("check compliance compliance report status is updated following to changes occur with cis-bench and config-audit report", func() {
-			// update cis-benchmark report with failed tests and compare update compliance report
+			// update cis-benchmark report and config-audit with failed tests and compare update compliance report
 			var updatedCisBench v1alpha1.CISKubeBenchReport
 			err = loadResource("./testdata/fixture/cisBenchmarkReportUpdate.json", &updatedCisBench)
 			Expect(err).ToNot(HaveOccurred())
@@ -126,9 +126,22 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 			Expect(err).ToNot(HaveOccurred())
 			sort.Sort(controlSort(complianceReportUpdate.Status.ControlChecks))
 			sort.Sort(controlSort(clusterComplianceReportUpdate.Status.ControlChecks))
-
 			// validate updated cluster compliance report status
 			Expect(cmp.Equal(complianceReportUpdate.Status, clusterComplianceReportUpdate.Status, ignoreTimeStamp())).To(BeTrue())
+		})
+		ginkgo.It("check compliance compliance report detail is updated following to changes occur with cis-bench and config-audit report", func() {
+			// update cis-benchmark report and config-audit with failed tests and compare update compliance report
+			var clusterComplianceDetialReport v1alpha1.ClusterComplianceDetailReport
+			err = loadResource("./testdata/fixture/clusterComplianceDetailReportUpdate.json", &clusterComplianceDetialReport)
+			complianceDetailReport, err := getDetailReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa-details"}, client)
+			Expect(err).ToNot(HaveOccurred())
+			sort.Sort(controlDetailSort(complianceDetailReport.Report.ControlChecks))
+			sort.Sort(controlDetailSort(clusterComplianceDetialReport.Report.ControlChecks))
+			for i := 0; i < len(complianceDetailReport.Report.ControlChecks); i++ {
+				sort.Sort(controlObjectTypeSort(complianceDetailReport.Report.ControlChecks[i].ScannerCheckResult))
+				sort.Sort(controlObjectTypeSort(clusterComplianceDetialReport.Report.ControlChecks[i].ScannerCheckResult))
+			}
+			Expect(cmp.Equal(complianceDetailReport.Report, clusterComplianceDetialReport.Report, ignoreTimeStamp())).To(BeTrue())
 		})
 	})
 

@@ -140,7 +140,7 @@ func TestMapReportDataToMap(t *testing.T) {
 		wantResult map[string]*ScannerCheckResult
 	}{
 		{name: "map config audit report", objectType: "Pod", reportList: getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"}), wantResult: getWantResults("./testdata/fixture/config_audit_check_result.json"), mapfunc: configAudit{}.mapReportData},
-		{name: "map cis benchmark report", objectType: "Node", reportList: getCisInstance([]string{"1.1", "2.2"}, []string{"Pass", "Fail"}, []string{"aaa", "bbb"}), wantResult: getWantResults("./testdata/fixture/cis_bench_check_result.json"), mapfunc: kubeBench{}.mapReportData},
+		{name: "map cis benchmark report", objectType: "Node", reportList: getCisInstance([]string{"1.1", "2.2"}, []string{"PASS", "FAIL"}, []string{"aaa", "bbb"}), wantResult: getWantResults("./testdata/fixture/cis_bench_check_result.json"), mapfunc: kubeBench{}.mapReportData},
 		{name: "map empty config report", objectType: "Pod", reportList: &v1alpha1.ConfigAuditReportList{}, wantResult: map[string]*ScannerCheckResult{}, mapfunc: configAudit{}.mapReportData},
 		{name: "map empty cis report ", objectType: "Node", reportList: &v1alpha1.CISKubeBenchReportList{}, wantResult: map[string]*ScannerCheckResult{}, mapfunc: kubeBench{}.mapReportData},
 	}

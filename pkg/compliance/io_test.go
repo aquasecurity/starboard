@@ -77,10 +77,11 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 		mapScannerResult map[string][]*ScannerCheckResult
 		want             []v1alpha1.ControlCheck
 	}{
-		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers", PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
+		{name: " control checks by scanner checks", specPath: "./testdata/fixture/nsa-1.0.yaml", want: []v1alpha1.ControlCheck{{ID: "1.0", Name: "Non-root containers",
+			PassTotal: 1, FailTotal: 0, Severity: "MEDIUM"}, {ID: "8.1", Name: "Audit log path is configure", PassTotal: 0, FailTotal: 1, Severity: "MEDIUM"}},
 			mapScannerResult: map[string][]*ScannerCheckResult{
-				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "pass"}}}},
-				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "fail"}}}},
+				"KSV012": {{ID: "1.0", Remediation: "aaa", Details: []ResultDetails{{Status: "PASS"}}}},
+				"1.2.22": {{ID: "2.0", Remediation: "bbb", Details: []ResultDetails{{Status: "FAIL"}}}},
 			}}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -130,7 +131,7 @@ func TestCheckIdsToResults(t *testing.T) {
 		reportList map[string]map[string]client.ObjectList
 		wantResult map[string][]*ScannerCheckResult
 	}{
-		{name: "map check ids to results report", reportList: map[string]map[string]client.ObjectList{ConfigAudit: {"Pod": getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"})}, KubeBench: {"Node": getCisInstance([]string{"1.1", "2.2"}, []string{"Pass", "Fail"}, []string{"aaa", "bbb"})}}, wantResult: getWantMapResults("./testdata/fixture/check_data_result.json")},
+		{name: "map check ids to results report", reportList: map[string]map[string]client.ObjectList{ConfigAudit: {"Pod": getConfAudit([]string{"KSV037", "KSV038"}, []bool{true, false}, []string{"aaa", "bbb"})}, KubeBench: {"Node": getCisInstance([]string{"1.1", "2.2"}, []string{"PASS", "FAIL"}, []string{"aaa", "bbb"})}}, wantResult: getWantMapResults("./testdata/fixture/check_data_result.json")},
 		{name: "map empty data ", reportList: map[string]map[string]client.ObjectList{}, wantResult: map[string][]*ScannerCheckResult{}},
 	}
 	for _, tt := range tests {

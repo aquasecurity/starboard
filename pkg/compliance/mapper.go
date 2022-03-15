@@ -3,8 +3,6 @@ package compliance
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/emirpasic/gods/sets/hashset"
@@ -12,12 +10,6 @@ import (
 )
 
 const (
-	//Fail check Status
-	Fail = "fail"
-	//Warn check Status
-	Warn = "warn"
-	// Pass check Status
-	Pass = "pass"
 	//KubeBench scanner name as appear in specs file
 	KubeBench = "kube-bench"
 	//ConfigAudit scanner name as appear in specs file
@@ -67,7 +59,7 @@ func (kb kubeBench) mapReportData(objType string, objList client.ObjectList) map
 						scannerCheckResultMap[result.TestNumber] = &ScannerCheckResult{ID: result.TestNumber, Remediation: result.Remediation, ObjectType: objType}
 						scannerCheckResultMap[result.TestNumber].Details = make([]ResultDetails, 0)
 					}
-					scannerCheckResultMap[result.TestNumber].Details = append(scannerCheckResultMap[result.TestNumber].Details, ResultDetails{Name: name, Namespace: nameSpace, Status: strings.ToLower(result.Status)})
+					scannerCheckResultMap[result.TestNumber].Details = append(scannerCheckResultMap[result.TestNumber].Details, ResultDetails{Name: name, Namespace: nameSpace, Status: v1alpha1.ControlStatus(result.Status)})
 				}
 			}
 		}
@@ -91,9 +83,9 @@ func (ac configAudit) mapReportData(objType string, objList client.ObjectList) m
 			if len(check.Messages) > 0 {
 				message = check.Messages[0]
 			}
-			var status = Fail
+			var status = v1alpha1.FailStatus
 			if check.Success {
-				status = Pass
+				status = v1alpha1.PassStatus
 			}
 			scannerCheckResultMap[check.ID].Details = append(scannerCheckResultMap[check.ID].Details, ResultDetails{Name: item.GetName(), Namespace: item.Namespace, Msg: message, Status: status})
 
@@ -143,7 +135,7 @@ type ResultDetails struct {
 	Name      string
 	Namespace string
 	Msg       string
-	Status    string
+	Status    v1alpha1.ControlStatus
 }
 
 type ScannerCheckResult struct {

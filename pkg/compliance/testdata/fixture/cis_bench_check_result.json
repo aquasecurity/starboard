@@ -7,7 +7,7 @@
       {
         "Name": "",
         "Namespace": "",
-        "Status": "pass"
+        "Status": "PASS"
       }
     ]
   },
@@ -19,7 +19,7 @@
       {
         "Name": "",
         "Namespace": "",
-        "Status": "fail"
+        "Status": "FAIL"
       }
     ]
   }
