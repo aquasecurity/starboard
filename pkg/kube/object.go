@@ -58,6 +58,7 @@ const (
 	KindNetworkPolicy         Kind = "NetworkPolicy"
 	KindIngress               Kind = "Ingress"
 	KindResourceQuota         Kind = "ResourceQuota"
+	KindLimitRange            Kind = "LimitRange"
 
 	KindClusterRole              Kind = "ClusterRole"
 	KindClusterRoleBindings      Kind = "ClusterRoleBinding"
@@ -246,6 +247,8 @@ func ComputeSpecHash(obj client.Object) (string, error) {
 		return ComputeHash(obj), nil
 	case *corev1.ResourceQuota:
 		return ComputeHash(obj), nil
+	case *corev1.LimitRange:
+		return ComputeHash(obj), nil
 	case *rbacv1.ClusterRole:
 		return ComputeHash(obj), nil
 	case *rbacv1.ClusterRoleBinding:
@@ -325,6 +328,8 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 		obj = &networkingv1.Ingress{}
 	case KindResourceQuota:
 		obj = &corev1.ResourceQuota{}
+	case KindLimitRange:
+		obj = &corev1.LimitRange{}
 	case KindClusterRole:
 		obj = &rbacv1.ClusterRole{}
 	case KindClusterRoleBindings:

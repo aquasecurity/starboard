@@ -166,7 +166,7 @@ spec:
           - id: 5.3.1
       severity: 'CRITICAL'
     - name: Use ResourceQuota policies to limit resources
-      description: 'Control check the use of ResourceQuota policies to limit resources'
+      description: 'Control check the use of ResourceQuota policy to limit aggregate resource usage within namespace'
       id: '4.0'
       kinds:
         - ResourceQuota
@@ -174,8 +174,19 @@ spec:
       mapping:
         scanner: config-audit
         checks:
-          - id: "<check need to be added>"
-      severity: 'CRITICAL'
+          - id: "KSV040"
+      severity: 'MEDIUM'
+    - name: Use LimitRange policies to limit resources
+      description: 'Control check the use of LimitRange policy limit resource usage for namespaces or nodes'
+      id: '4.1'
+      kinds:
+        - ResourceQuota
+      defaultStatus: 'FAIL'
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: "KSV039"
+      severity: 'MEDIUM'
     - name: Control plan disable insecure port
       description: 'Control check whether control plan disable insecure port'
       id: '5.0'

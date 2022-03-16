@@ -619,6 +619,7 @@ rules:
       - replicationcontrollers
       - services
       - resourcequotas
+      - limitranges
     verbs:
       - get
       - list
@@ -1853,6 +1854,11 @@ data:
     kubernetes.namespace]))\n\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\":
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
+  policy.use_limit_range.kinds: LimitRange
+  policy.use_limit_range.rego: "package appshield.kubernetes.KSV039\n\nimport data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\": \"KSV039\",\n\t\"avd_id\": \"AVD-KSV-0039\",\n\t\"title\": \"limit range usage\",\n\t\"short_code\": \"limit-range-usage\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"LOW\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\": \"ensure limit range policy has configure in order to limit resource usage for namespaces or nodes\",\n\t\"recommended_actions\": \"create limit range policy with a default request and limit, min and max request, for each container.\",\n\t\"url\": \"https://kubernetes.io/docs/concepts/policy/limit-range/\",\n}\n\ndeny[res] {\n\tnot limitRangeConfigure\n\tmsg := \"limit range policy with a default request and limit, min and max request, for each container should be configure\"\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n\nlimitRangeConfigure {\n\tlower(input.kind) == \"limitrange\"\n\tinput.spec[limits]\n\tkubernetes.has_field(input.spec.limits[_], \"type\")\n\tkubernetes.has_field(input.spec.limits[_], \"max\")\n\tkubernetes.has_field(input.spec.limits[_], \"min\")\n\tkubernetes.has_field(input.spec.limits[_], \"default\")\n\tkubernetes.has_field(input.spec.limits[_], \"defaultRequest\")\n}\n"
+  policy.use_resource_quota.kinds: ResourceQuota
+  policy.use_resource_quota.rego: "package appshield.kubernetes.KSV040\n\nimport data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\": \"KSV040\",\n\t\"avd_id\": \"AVD-KSV-0040\",\n\t\"title\": \"resource quota usage\",\n\t\"short_code\": \"resource-quota-usage\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"LOW\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\": \"ensure resource quota policy has configure in order to limit aggregate resource usage within namespace\",\n\t\"recommended_actions\": \"create resource quota policy with mem and cpu quota per each namespace\",\n\t\"url\": \"https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/quota-memory-cpu-namespace/\",\n}\n\ndeny[res] {\n\tnot resourceQuotaConfigure\n\tmsg := \"resource quota policy with hard memory and cpu quota per namespace should be configure\"\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n\nresourceQuotaConfigure {\n\tlower(input.kind) == \"resourcequota\"\n\tinput.spec[hard]\n\tkubernetes.has_field(input.spec.hard, \"requests.cpu\")\n\tkubernetes.has_field(input.spec.hard, \"requests.memory\")\n\tkubernetes.has_field(input.spec.hard, \"limits.cpu\")\n\tkubernetes.has_field(input.spec.hard, \"limits.memory\")\n}\n"
+
 ---
 apiVersion: v1
 kind: Service
@@ -2144,7 +2150,7 @@ spec:
           - id: 5.3.1
       severity: 'CRITICAL'
     - name: Use ResourceQuota policies to limit resources
-      description: 'Control check the use of ResourceQuota policies to limit resources'
+      description: 'Control check the use of ResourceQuota policy to limit aggregate resource usage within namespace'
       id: '4.0'
       kinds:
         - ResourceQuota
@@ -2152,8 +2158,19 @@ spec:
       mapping:
         scanner: config-audit
         checks:
-          - id: "<check need to be added>"
-      severity: 'CRITICAL'
+          - id: "KSV040"
+      severity: 'MEDIUM'
+    - name: Use LimitRange policies to limit resources
+      description: 'Control check the use of LimitRange policy limit resource usage for namespaces or nodes'
+      id: '4.1'
+      kinds:
+        - ResourceQuota
+      defaultStatus: 'FAIL'
+      mapping:
+        scanner: config-audit
+        checks:
+          - id: "KSV039"
+      severity: 'MEDIUM'
     - name: Control plan disable insecure port
       description: 'Control check whether control plan disable insecure port'
       id: '5.0'
@@ -2268,4 +2285,5 @@ spec:
         checks:
           - id: "<check need to be added>"
       severity: 'MEDIUM'
+
 
