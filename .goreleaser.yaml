@@ -79,14 +79,14 @@ dockers:
     ids:
       - starboard
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name={{ .ProjectName }}"
-      - "--label=org.label-schema.description=Command line interface for Starboard"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Command line interface for Starboard"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-amd64"
@@ -98,14 +98,14 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name=starboard-operator"
-      - "--label=org.label-schema.description=Keeps Starboard resources updated"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title=starboard-operator"
+      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
@@ -117,14 +117,14 @@ dockers:
     ids:
       - starboard-scanner-aqua
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name=starboard-scanner-aqua"
-      - "--label=org.label-schema.description=Aqua scanner for Starboard"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title=starboard-scanner-aqua"
+      - "--label=org.opencontainers.image.description=Aqua scanner for Starboard"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-arm64"
@@ -136,14 +136,14 @@ dockers:
     ids:
       - starboard
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name={{ .ProjectName }}"
-      - "--label=org.label-schema.description=Command line interface for Starboard"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Command line interface for Starboard"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
@@ -155,14 +155,14 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name=starboard-operator"
-      - "--label=org.label-schema.description=Keeps Starboard resources updated"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title=starboard-operator"
+      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-s390x"
@@ -174,14 +174,14 @@ dockers:
     ids:
       - starboard
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name={{ .ProjectName }}"
-      - "--label=org.label-schema.description=Command line interface for Starboard"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Command line interface for Starboard"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-s390x"
@@ -193,14 +193,14 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.label-schema.schema-version=1.0"
-      - "--label=org.label-schema.name=starboard-operator"
-      - "--label=org.label-schema.description=Keeps Starboard resources updated"
-      - "--label=org.label-schema.vendor=Aqua Security"
-      - "--label=org.label-schema.version={{ .Version }}"
-      - "--label=org.label-schema.build-date={{ .Date }}"
-      - "--label=org.label-schema.vcs=https://github.com/aquasecurity/starboard"
-      - "--label=org.label-schema.vcs-ref={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.title=starboard-operator"
+      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/s390x"
 docker_manifests:
   - name_template: 'aquasec/starboard:{{ .Version }}'
