@@ -290,14 +290,3 @@ spec:
         checks:
           - id: 1.2.23
       severity: 'MEDIUM'
-    - name: Service mesh is configure
-      description: 'Control check whether service mesh is used in cluster'
-      id: '9.0'
-      kinds:
-        - IstioOperator
-      defaultStatus: 'FAIL'
-      mapping:
-        scanner: config-audit
-        checks:
-          - id: "<check need to be added>"
-      severity: 'MEDIUM'

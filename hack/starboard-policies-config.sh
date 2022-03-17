@@ -27,6 +27,8 @@ kubectl create configmap starboard-policies-config --namespace starboard-system 
   --from-file=policy.selector_usage_in_network_policies.rego=$DEFSEC_DIR/rules/kubernetes/policies/advanced/selector_usage_in_network_policies.rego \
   --from-file=policy.uses_untrusted_azure_registry.rego=$DEFSEC_DIR/rules/kubernetes/policies/advanced/uses_untrusted_azure_registry.rego \
   --from-file=policy.uses_untrusted_gcr_registry.rego=$DEFSEC_DIR/rules/kubernetes/policies/advanced/uses_untrusted_gcr_registry.rego \
+  --from-file=policy.use_limit_range.rego=$DEFSEC_DIR/rules/kubernetes/policies/advanced/use_limit_range.rego \
+  --from-file=policy.use_resource_quota.rego=$DEFSEC_DIR/rules/kubernetes/policies/advanced/use_resource_quota.rego \
   --from-file=policy.1_host_ipc.rego=$DEFSEC_DIR/rules/kubernetes/policies/pss/baseline/1_host_ipc.rego \
   --from-file=policy.1_host_network.rego=$DEFSEC_DIR/rules/kubernetes/policies/pss/baseline/1_host_network.rego \
   --from-file=policy.1_host_pid.rego=$DEFSEC_DIR/rules/kubernetes/policies/pss/baseline/1_host_pid.rego \
@@ -61,6 +63,8 @@ kubectl create configmap starboard-policies-config --namespace starboard-system 
   --from-literal=policy.protecting_pod_service_account_tokens.kinds=Workload \
   --from-literal=policy.selector_usage_in_network_policies.kinds=NetworkPolicy \
   --from-literal=policy.uses_untrusted_azure_registry.kinds=Workload \
+  --from-literal=policy.use_limit_range.kinds=LimitRange \
+  --from-literal=policy.use_resource_quota.kinds=ResourceQuota \
   --from-literal=policy.uses_untrusted_gcr_registry.kinds=Workload \
   --from-literal=policy.1_host_ipc.kinds=Workload \
   --from-literal=policy.1_host_network.kinds=Workload \

@@ -1,10 +1,4 @@
----
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: starboard-policies-config
-  labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
 data:
   library.kubernetes.rego: "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
     {\n\thas_field(input, \"review\")\n\thas_field(input.review, \"object\")\n}\n\nobject
@@ -860,3 +854,8 @@ data:
     kubernetes.namespace]))\n\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\":
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: starboard-policies-config
+  namespace: starboard-system
