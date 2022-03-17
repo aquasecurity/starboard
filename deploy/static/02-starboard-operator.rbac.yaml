@@ -28,6 +28,7 @@ rules:
       - replicationcontrollers
       - services
       - resourcequotas
+      - limitranges
     verbs:
       - get
       - list
