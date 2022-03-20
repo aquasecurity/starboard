@@ -86,6 +86,34 @@ var _ = Describe("Starboard CLI", func() {
 						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
 					}),
 				}),
+				"clustercompliancereports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clustercompliancereports",
+							Singular:   "clustercompliancereport",
+							ShortNames: []string{"compliance"},
+							Kind:       "ClusterComplianceReport",
+							ListKind:   "ClusterComplianceReportList",
+						}),
+						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
+					}),
+				}),
+				"clustercompliancedetailreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clustercompliancedetailreports",
+							Singular:   "clustercompliancedetailreport",
+							ShortNames: []string{"compliancedetail"},
+							Kind:       "ClusterComplianceDetailReport",
+							ListKind:   "ClusterComplianceDetailReportList",
+						}),
+						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
+					}),
+				}),
 				"configauditreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Group":   Equal("aquasecurity.github.io"),
