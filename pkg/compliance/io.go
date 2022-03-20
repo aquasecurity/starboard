@@ -20,7 +20,7 @@ const (
 )
 
 type Mgr interface {
-	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error)
+	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) error
 }
 
 func NewMgr(client client.Client, log logr.Logger) Mgr {
@@ -47,7 +47,7 @@ type specDataMapping struct {
 	controlIdResources       map[string][]string
 }
 
-func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) (*v1alpha1.ClusterComplianceReport, error) {
+func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) error {
 	// map specs to key/value map for easy processing
 	smd := w.populateSpecDataToMaps(spec)
 	// map compliance scanner to resource data
@@ -55,19 +55,24 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportS
 	// organized data by check id and it aggregated results
 	checkIdsToResults, err := w.checkIdsToResults(scannerResourceMap)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// map scanner checks results to control check results
 	controlChecks := w.controlChecksByScannerChecks(smd, checkIdsToResults)
 	// find summary totals
 	st := w.getTotals(controlChecks)
-	//publish compliance details report
+	//create cluster compliance details report
 	err = w.createComplianceDetailReport(ctx, spec, smd, checkIdsToResults, st)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	//generate compliance details report
-	return w.createComplianceReport(ctx, spec, st, controlChecks)
+	//generate cluster compliance report
+	updatedReport, err := w.createComplianceReport(ctx, spec, st, controlChecks)
+	if err != nil {
+		return err
+	}
+	// update compliance report status
+	return w.client.Status().Update(ctx, updatedReport)
 
 }
 
