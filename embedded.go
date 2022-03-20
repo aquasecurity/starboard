@@ -30,7 +30,6 @@ var (
 	//go:embed  deploy/static/04-starboard-operator.policies.yaml
 	policies []byte
 
-	// compliance reports
 	//go:embed deploy/specs/nsa-1.0.yaml
 	nsaSpecV10 []byte
 )
@@ -76,7 +75,7 @@ func GetKubeHunterReportsCRD() (apiextensionsv1.CustomResourceDefinition, error)
 	return getCRDFromBytes(kubeHunterReportsCRD)
 }
 
-func GetNsaSpecV10() (v1alpha1.ClusterComplianceReport, error) {
+func GetNSASpecV10() (v1alpha1.ClusterComplianceReport, error) {
 	return getComplianceSpec(nsaSpecV10)
 }
 

@@ -13,7 +13,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
@@ -21,15 +20,13 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 		Use:     "clustercompliancereports (NAME)",
 		Aliases: []string{"clustercompliance"},
 		Short:   "Get cluster compliance reports",
-		Long:    `Get cluster compliance report for pre-define spec`,
-		Example: fmt.Sprintf(`
-# Get cluster compliance report for specifc spec in JSON output format
+		Long:    `Get cluster compliance report for pre-defined spec`,
+		Example: fmt.Sprintf(`  # Get cluster compliance report for specifc spec in JSON output format
   %[1]s get clustercompliancereports nsa -o json
 
-# Get compliance detail report for control checks failure in JSON output format
+  # Get compliance detail report for control checks failure in JSON output format
   %[1]s get clustercompliancereports nsa -o json --detail`, executable),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//init client dependencies
 			logger := ctrl.Log.WithName("reconciler").WithName("clustercompliancereport")
 			ctx := context.Background()
 			scheme := starboard.NewScheme()
@@ -37,7 +34,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 			if err != nil {
 				return fmt.Errorf("failed to create kubeConfig: %w", err)
 			}
-			// create k8s client
+
 			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 			if err != nil {
 				return fmt.Errorf("failed to create kubernetes client: %w", err)
@@ -46,7 +43,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 			if err != nil {
 				return err
 			}
-			// check report if report with spec exist
+
 			var report v1alpha1.ClusterComplianceReport
 			err = GetComplianceReport(ctx, kubeClient, namespaceName, out, &report)
 			if err != nil {
@@ -67,14 +64,12 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 			if err != nil {
 				return fmt.Errorf("faild to create printer: %w", err)
 			}
-			// check report detail flag has been set
-			detailString := cmd.Flag("detail").Value.String()
-			detail, err := strconv.ParseBool(detailString)
+
+			detail, err := cmd.Flags().GetBool("detail")
 			if err != nil {
-				detail = false
+				return fmt.Errorf("detail flag is not set corectly ,check flag usage: %w", err)
 			}
 			if !detail {
-				// print cluster compliance report
 				var complianceReport v1alpha1.ClusterComplianceReport
 				err := GetComplianceReport(ctx, kubeClient, namespaceName, out, &complianceReport)
 				if err != nil {
@@ -85,7 +80,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 				}
 				return nil
 			}
-			// print cluster compliance failure detail report
+
 			detailNamespaceName, err := ComplianceNameFromArgs(args, "details")
 			if err != nil {
 				return err

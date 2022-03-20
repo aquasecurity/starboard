@@ -220,7 +220,7 @@ func (m *Installer) Install(ctx context.Context) error {
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 
 	// compliance report
-	clusterComplianceReportSpec, err := embedded.GetNsaSpecV10()
+	clusterComplianceReportSpec, err := embedded.GetNSASpecV10()
 	if err != nil {
 		return err
 	}
