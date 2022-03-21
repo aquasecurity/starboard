@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,6 +53,17 @@ func WorkloadFromArgs(mapper meta.RESTMapper, namespace string, args []string) (
 		Name:      resourceName,
 	}
 	return
+}
+
+func ComplianceNameFromArgs(args []string, suffix ...string) (types.NamespacedName, error) {
+	if len(args) < 1 {
+		return types.NamespacedName{}, fmt.Errorf("required compliance name not specified")
+	}
+	reportName := args[0]
+	if len(suffix) > 0 {
+		reportName = fmt.Sprintf("%s-%s", reportName, suffix[0])
+	}
+	return types.NamespacedName{Name: reportName}, nil
 }
 
 const (

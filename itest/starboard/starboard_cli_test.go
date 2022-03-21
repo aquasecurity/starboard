@@ -86,6 +86,34 @@ var _ = Describe("Starboard CLI", func() {
 						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
 					}),
 				}),
+				"clustercompliancereports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clustercompliancereports",
+							Singular:   "clustercompliancereport",
+							ShortNames: []string{"compliance"},
+							Kind:       "ClusterComplianceReport",
+							ListKind:   "ClusterComplianceReportList",
+						}),
+						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
+					}),
+				}),
+				"clustercompliancedetailreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
+					"Spec": MatchFields(IgnoreExtras, Fields{
+						"Group":   Equal("aquasecurity.github.io"),
+						"Version": Equal("v1alpha1"),
+						"Names": Equal(apiextensionsv1beta1.CustomResourceDefinitionNames{
+							Plural:     "clustercompliancedetailreports",
+							Singular:   "clustercompliancedetailreport",
+							ShortNames: []string{"compliancedetail"},
+							Kind:       "ClusterComplianceDetailReport",
+							ListKind:   "ClusterComplianceDetailReportList",
+						}),
+						"Scope": Equal(apiextensionsv1beta1.ClusterScoped),
+					}),
+				}),
 				"configauditreports.aquasecurity.github.io": MatchFields(IgnoreExtras, Fields{
 					"Spec": MatchFields(IgnoreExtras, Fields{
 						"Group":   Equal("aquasecurity.github.io"),
@@ -173,8 +201,19 @@ var _ = Describe("Starboard CLI", func() {
 			}, &corev1.ServiceAccount{})
 			Expect(err).ToNot(HaveOccurred())
 		})
+		It("should deploy nsa report", func() {
+			nsaSpec := &v1alpha1.ClusterComplianceReport{}
+			err := kubeClient.Get(context.TODO(), types.NamespacedName{
+				Name: "nsa",
+			}, nsaSpec)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(nsaSpec.Spec.Name == "nsa").To(BeTrue())
+			Expect(nsaSpec.Spec.Description == "National Security Agency - Kubernetes Hardening Guidance").To(BeTrue())
+			Expect(nsaSpec.Spec.Cron == "0 */3 * * *").To(BeTrue())
+			Expect(nsaSpec.Spec.Version == "1.0").To(BeTrue())
+			Expect(len(nsaSpec.Spec.Controls) == 27).To(BeTrue())
+		})
 	})
-
 	Describe("Command version", func() {
 
 		It("should print the current version of the executable binary", func() {
@@ -186,7 +225,6 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(out).Should(Say("Starboard Version: {Version:dev Commit:none Date:unknown}"))
 		})
-
 	})
 
 	Describe("Command scan vulnerabilityreports", func() {
@@ -1231,6 +1269,71 @@ var _ = Describe("Starboard CLI", func() {
 					}),
 				}))
 			}
+		})
+	})
+
+	Describe("Command get nsa compliance report", func() {
+
+		It("should create nsa compliance report", func() {
+			// create ciskubebenchreports
+			err := cmd.Run(versionInfo, []string{
+				"starboard",
+				"scan", "ciskubebenchreports",
+				"-v", starboardCLILogLevel,
+			}, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+
+			// create configauditreports
+			ctx := context.TODO()
+			object := helper.NewPod().
+				WithRandomName("nginx-polaris").
+				WithNamespace(testNamespace.Name).
+				WithContainer("nginx-container", "nginx:1.16").
+				Build()
+			err = kubeClient.Create(ctx, object)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = cmd.Run(versionInfo, []string{
+				"starboard",
+				"scan", "configauditreports", "pod" + "/" + object.GetName(),
+				"--namespace", object.GetNamespace(),
+				"-v", starboardCLILogLevel,
+			}, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+
+			// get cluster compliance report
+			stdout := NewBuffer()
+			stderr := NewBuffer()
+			err = cmd.Run(versionInfo, []string{
+				"starboard", "get", "clustercompliancereports",
+				"nsa", "--output", "yaml",
+				"-v", starboardCLILogLevel,
+			}, stdout, stderr)
+			Expect(err).ToNot(HaveOccurred())
+
+			var ccr v1alpha1.ClusterComplianceReport
+			err = yaml.Unmarshal(stdout.Contents(), &ccr)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ccr.Status.Summary.PassCount > 0).To(BeTrue())
+			Expect(ccr.Status.Summary.FailCount > 0).To(BeTrue())
+			Expect(len(ccr.Status.ControlChecks) > 0).To(BeTrue())
+
+			// get cluster compliance detail report
+			stdout = NewBuffer()
+			stderr = NewBuffer()
+			err = cmd.Run(versionInfo, []string{
+				"starboard", "get", "clustercompliancereports",
+				"nsa", "--output", "yaml", "--detail",
+				"-v", starboardCLILogLevel,
+			}, stdout, stderr)
+			Expect(err).ToNot(HaveOccurred())
+
+			var ccdr v1alpha1.ClusterComplianceDetailReport
+			err = yaml.Unmarshal(stdout.Contents(), &ccdr)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ccdr.Report.Summary.PassCount > 0).To(BeTrue())
+			Expect(ccdr.Report.Summary.FailCount > 0).To(BeTrue())
+			Expect(len(ccdr.Report.ControlChecks) > 0).To(BeTrue())
 		})
 	})
 

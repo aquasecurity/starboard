@@ -15,6 +15,7 @@ func NewGetCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags,
 	}
 	getCmd.AddCommand(NewGetVulnerabilityReportsCmd(buildInfo.Executable, cf, outWriter))
 	getCmd.AddCommand(NewGetConfigAuditReportsCmd(buildInfo.Executable, cf, outWriter))
+	getCmd.AddCommand(NewGetClusterComplianceReportsCmd(buildInfo.Executable, cf, outWriter))
 	getCmd.PersistentFlags().StringP("output", "o", "", "Output format. One of yaml|json")
 
 	return getCmd

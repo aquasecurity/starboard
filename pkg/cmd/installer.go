@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	embedded "github.com/aquasecurity/starboard"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/plugin"
@@ -198,9 +200,34 @@ func (m *Installer) Install(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	clusterComplianceReportsCRD, err := embedded.GetClusterComplianceReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &clusterComplianceReportsCRD)
+	if err != nil {
+		return err
+	}
+	clusterComplianceDetailReportsCRD, err := embedded.GetClusterComplianceDetailReportsCRD()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateCRD(ctx, &clusterComplianceDetailReportsCRD)
+	if err != nil {
+		return err
+	}
 
 	// TODO We should wait for CRD statuses and make sure that the names were accepted
 
+	// compliance report
+	clusterComplianceReportSpec, err := embedded.GetNSASpecV10()
+	if err != nil {
+		return err
+	}
+	err = m.createOrUpdateComplianceSpec(ctx, clusterComplianceReportSpec)
+	if err != nil {
+		return err
+	}
 	err = m.createNamespaceIfNotFound(ctx, namespace)
 	if err != nil {
 		return err
@@ -387,6 +414,22 @@ func (m *Installer) createOrUpdateCRD(ctx context.Context, crd *ext.CustomResour
 	return
 }
 
+func (m *Installer) createOrUpdateComplianceSpec(ctx context.Context, spec v1alpha1.ClusterComplianceReport) error {
+	namespaceName := types.NamespacedName{Name: spec.Spec.Name}
+	err := m.client.Get(ctx, namespaceName, &spec)
+	switch {
+	case err == nil:
+		klog.V(3).Infof("Updating compliance spec %q", spec.Spec.Name)
+		deepCopy := spec.DeepCopy()
+		deepCopy.Spec = spec.Spec
+		return m.client.Update(ctx, deepCopy)
+	case errors.IsNotFound(err):
+		klog.V(3).Infof("Creating compliance spec %q", spec.Spec.Name)
+		return m.client.Create(ctx, &spec)
+	}
+	return nil
+}
+
 func (m *Installer) deleteCRD(ctx context.Context, name string) (err error) {
 	klog.V(3).Infof("Deleting CRD %q", name)
 	err = m.clientsetext.CustomResourceDefinitions().Delete(ctx, name, metav1.DeleteOptions{})
@@ -418,6 +461,14 @@ func (m *Installer) Uninstall(ctx context.Context) error {
 		return err
 	}
 	err = m.deleteCRD(ctx, v1alpha1.ClusterConfigAuditReportCRName)
+	if err != nil {
+		return err
+	}
+	err = m.deleteCRD(ctx, v1alpha1.ClusterComplianceReportCRName)
+	if err != nil {
+		return err
+	}
+	err = m.deleteCRD(ctx, v1alpha1.ClusterComplianceDetailReportCRName)
 	if err != nil {
 		return err
 	}
