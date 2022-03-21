@@ -67,7 +67,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 
 			detail, err := cmd.Flags().GetBool("detail")
 			if err != nil {
-				return fmt.Errorf("detail flag is not set corectly ,check flag usage: %w", err)
+				return fmt.Errorf("detail flag is not set correctly, check flag usage: %w", err)
 			}
 			if !detail {
 				var complianceReport v1alpha1.ClusterComplianceReport
