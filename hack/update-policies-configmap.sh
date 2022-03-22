@@ -3,7 +3,7 @@
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 DEFSEC_DIR=$TMPDIR/defsec
 
-git clone git@github.com:aquasecurity/defsec.git $DEFSEC_DIR
+git clone --branch v0.25.0 git@github.com:aquasecurity/defsec.git $DEFSEC_DIR
 
 kubectl create configmap starboard-policies-config --namespace starboard-system \
   --from-file=library.kubernetes.rego=$DEFSEC_DIR/rules/kubernetes/lib/kubernetes.rego \
@@ -82,4 +82,4 @@ kubectl create configmap starboard-policies-config --namespace starboard-system 
   --from-literal=policy.3_runs_as_root.kinds=Workload \
   --from-literal=policy.4_runs_with_a_root_gid.kinds=Workload \
   --from-literal=policy.5_runtime_default_seccomp_profile_not_set.kinds=Workload \
-  --dry-run=client -o yaml > $SCRIPT_ROOT/deploy/static/05-starboard-operator.policies.yaml
+  --dry-run=client -o yaml > $SCRIPT_ROOT/deploy/static/04-starboard-operator.policies.yaml

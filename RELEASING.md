@@ -33,6 +33,7 @@
       11. [`deploy/static/03-starboard-operator.config.yaml`]
       12. [`deploy/static/02-starboard-operator.rbac.yaml`]
       13. [`deploy/static/01-starboard-operator.ns.yaml`]
+      14. [`deploy/specs/nsa-1.0.yaml`]
    4. Update [`deploy/static/starboard.yaml`] by running the following script:
       ```
       ./hack/update-starboard.yaml.sh
@@ -80,7 +81,8 @@
 [`deploy/static/04-starboard-operator.policies.yaml`]: ./deploy/static/04-starboard-operator.policies.yaml
 [`deploy/static/03-starboard-operator.config.yaml`]: ./deploy/static/03-starboard-operator.config.yaml
 [`deploy/static/02-starboard-operator.rbac.yaml`]: ./deploy/static/02-starboard-operator.rbac.yaml
-[`deploy/static/01-starboard-operator.ns.yaml`]: ./deploy/static/02-starboard-operator.rbac.yaml
+[`deploy/static/01-starboard-operator.ns.yaml`]: ./deploy/static/01-starboard-operator.ns.yaml
+[`deploy/specs/nsa-1.0.yaml`]: ./deploy/specs/nsa-1.0.yaml
 [`deploy/static/starboard.yaml`]: ./deploy/static/starboard.yaml
 [`mkdocs.yml`]: ./mkdocs.yml
 [`.github/workflows/release.yaml`]: ./.github/workflows/release.yaml

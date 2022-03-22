@@ -1,9 +1,17 @@
-You have installed Starboard Operator in the "{{ .Release.Namespace }}" namespace.
-It is configured to discover Kubernetes workloads in the namespaces: '{{ tpl .Values.targetNamespaces . | default "(all namespaces)" }}'.
+You have installed Starboard Operator in the {{ .Release.Namespace }} namespace.
+It is configured to discover Kubernetes workloads in the {{ tpl .Values.targetNamespaces . | default "(all)" }} namespace(s).
 
 Inspect created VulnerabilityReports by:
 
-    kubectl get vulnerabilityreports --all-namespaces
+    kubectl get vulnerabilityreports --all-namespaces -o wide
+
+Inspect created ConfigAuditReports by:
+
+    kubectl get configauditreports --all-namespaces -o wide
+
+Inspect created CISKubeBenchReports by:
+
+    kubectl get ciskubebenchreports -o wide
 
 Inspect the work log of starboard-operator by:
 
