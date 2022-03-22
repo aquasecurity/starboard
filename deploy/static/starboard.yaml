@@ -5,7 +5,7 @@ metadata:
   name: vulnerabilityreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -249,7 +249,7 @@ metadata:
   name: configauditreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -306,7 +306,7 @@ metadata:
   name: clusterconfigauditreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -362,7 +362,7 @@ metadata:
   name: ciskubebenchreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -412,7 +412,7 @@ metadata:
   name: clustercompliancereports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   scope: Cluster
@@ -549,7 +549,7 @@ metadata:
   name: clustercompliancedetailreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -589,6 +589,11 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: starboard-system
+  labels:
+    app.kubernetes.io/name: starboard-operator
+    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -598,7 +603,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -608,7 +613,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 rules:
   - apiGroups:
@@ -757,7 +762,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -776,7 +781,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -787,7 +792,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -798,7 +803,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 data:
   vulnerabilityReports.scanner: "Trivy"
@@ -813,7 +818,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 data:
   trivy.imageRef: "docker.io/aquasec/trivy:0.24.2"
@@ -833,7 +838,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 data:
   polaris.imageRef: "quay.io/fairwinds/polaris:4.2"
@@ -1034,7 +1039,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 data:
   library.kubernetes.rego: "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
@@ -1637,7 +1642,8 @@ data:
     \"v1.0.0\",\n\t\"severity\": \"MEDIUM\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\":
     \"ensure that User pods are not placed in kube-system namespace\",\n\t\"recommended_actions\":
     \"Deploy the use pods into a designated namespace which is not kube-system.\",\n\t\"url\":
-    \"https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/\",\n}\n\ndeny[res]
+    \"https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/\",\n}\n\n__rego_input__
+    := {\n\t\"combine\": false,\n\t\"selector\": [{\"type\": \"kubernetes\"}],\n}\n\ndeny[res]
     {\n\tsystemNamespaceInUse(input.metadata, input.spec)\n\tmsg := sprintf(\"%s '%s'
     should not be set with 'kube-system' namespace\", [kubernetes.kind, kubernetes.name])\n\tres
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
@@ -1656,7 +1662,8 @@ data:
     \"v1.0.0\",\n\t\"severity\": \"MEDIUM\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\":
     \"ensure that Pod specifications disable the secret token being mounted by setting
     automountServiceAccountToken: false\",\n\t\"recommended_actions\": \"Remove 'container.apparmor.security.beta.kubernetes.io'
-    annotation or set it to 'runtime/default'.\",\n\t\"url\": \"https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#serviceaccount-admission-controller\",\n}\n\ndeny[res]
+    annotation or set it to 'runtime/default'.\",\n\t\"url\": \"https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#serviceaccount-admission-controller\",\n}\n\n__rego_input__
+    := {\n\t\"combine\": false,\n\t\"selector\": [{\"type\": \"kubernetes\"}],\n}\n\ndeny[res]
     {\n\tmountServiceAccountToken(input.spec)\n\tmsg := kubernetes.format(sprintf(\"Container
     of %s '%s' should set 'spec.automountServiceAccountToken' to false\", [kubernetes.kind,
     kubernetes.name]))\n\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\":
@@ -1731,7 +1738,8 @@ data:
     \"ensure that network policies selectors are applied to pods or namespaces to
     restricted ingress and egress traffic within the pod network\",\n\t\"recommended_actions\":
     \"create network policies and ensure that pods are selected using the podSelector
-    and/or the namespaceSelector options\",\n\t\"url\": \"https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/\",\n}\n\ndeny[res]
+    and/or the namespaceSelector options\",\n\t\"url\": \"https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/\",\n}\n\n__rego_input__
+    := {\n\t\"combine\": false,\n\t\"selector\": [{\"type\": \"kubernetes\"}],\n}\n\ndeny[res]
     {\n\tnot hasSelector(input.spec)\n\tmsg := \"Network policy should uses podSelector
     and/or the namespaceSelector to restrict ingress and egress traffic within the
     Pod network\"\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\":
@@ -1900,7 +1908,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
   annotations:
     prometheus.io/path: /metrics
@@ -1923,7 +1931,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 spec:
   replicas: 1
@@ -1943,7 +1951,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: "starboard-operator"
-          image: "docker.io/aquasec/starboard-operator:0.14.1"
+          image: "docker.io/aquasec/starboard-operator:0.15.0-rc1"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPERATOR_NAMESPACE
@@ -1972,8 +1980,6 @@ spec:
               value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
               value: "true"
-            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
-              value: "true"
             - name: OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS
               value: "false"
             - name: OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL
@@ -1981,6 +1987,8 @@ spec:
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED
               value: "false"
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN
+              value: "true"
+            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
               value: "true"
           ports:
             - name: metrics
@@ -2022,7 +2030,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.14.1"
+    app.kubernetes.io/version: "0.15.0-rc1"
     app.kubernetes.io/managed-by: kubectl
 spec:
   name: nsa
@@ -2307,4 +2315,3 @@ spec:
         checks:
           - id: 1.2.23
       severity: 'MEDIUM'
-

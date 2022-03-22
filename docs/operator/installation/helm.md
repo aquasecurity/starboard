@@ -4,7 +4,7 @@
 YAML manifests called Helm [charts].
 
 To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Starboard
-operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
+Operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
 
 As an example, let's install the operator in the `starboard-system` namespace and configure it to watch the `default`
 namespaces:
@@ -75,6 +75,8 @@ You have to manually delete custom resource definitions created by the `helm ins
     kubectl delete crd ciskubebenchreports.aquasecurity.github.io
     kubectl delete crd kubehunterreports.aquasecurity.github.io
     kubectl delete crd clusterconfigauditreports.aquasecurity.github.io
+    kubectl delete crd clustercompliancereports.aquasecurity.github.io
+    kubectl delete crd clustercompliancedetailreports.aquasecurity.github.io
     ```
 
 [Helm]: https://helm.sh/

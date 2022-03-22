@@ -89,8 +89,8 @@ extra:
   version:
     provider: mike
   var:
-    prev_git_tag: "v0.14.0"
-    chart_version: 0.9.1
+    prev_git_tag: "v0.14.1"
+    chart_version: 0.10.0
 
 # Requires pip install mkdocs-macros-plugin
 plugins:

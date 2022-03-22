@@ -75,8 +75,6 @@ spec:
               value: {{ .Values.operator.kubernetesBenchmarkEnabled | quote }}
             - name: OPERATOR_VULNERABILITY_SCANNER_ENABLED
               value: {{ .Values.operator.vulnerabilityScannerEnabled | quote }}
-            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
-              value: {{ .Values.operator.clusterComplianceEnabled | quote }}
             - name: OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS
               value: {{ .Values.operator.vulnerabilityScannerScanOnlyCurrentRevisions | quote }}
             - name: OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL
@@ -85,6 +83,8 @@ spec:
               value: {{ .Values.operator.configAuditScannerEnabled | quote }}
             - name: OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN
               value: {{ .Values.operator.configAuditScannerBuiltIn | quote }}
+            - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
+              value: {{ .Values.operator.clusterComplianceEnabled | quote }}
             {{- if gt (int .Values.operator.replicas) 1 }}
             - name: OPERATOR_LEADER_ELECTION_ENABLED
               value: "true"
