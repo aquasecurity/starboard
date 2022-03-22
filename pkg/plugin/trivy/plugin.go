@@ -2,9 +2,11 @@ package trivy
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -13,6 +15,10 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/google/go-containerregistry/pkg/name"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -42,6 +48,7 @@ const (
 	keyTrivyGitHubToken            = "trivy.githubToken"
 	keyTrivySkipFiles              = "trivy.skipFiles"
 	keyTrivySkipDirs               = "trivy.skipDirs"
+	keyTrivyUseECRRoleCreds        = "trivy.useEcrRoleCreds"
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
@@ -61,6 +68,11 @@ const (
 	Standalone   Mode = "Standalone"
 	ClientServer Mode = "ClientServer"
 )
+
+type ecr_credentials struct {
+	username string
+	password string
+}
 
 type Command string
 
@@ -116,6 +128,11 @@ func (c Config) GetCommand() (Command, error) {
 
 func (c Config) GetServerURL() (string, error) {
 	return c.GetRequiredData(keyTrivyServerURL)
+}
+
+func (c Config) UseECRCredentials() bool {
+	_, ok := c.Data[keyTrivyUseECRRoleCreds]
+	return ok
 }
 
 func (c Config) IgnoreFileExists() bool {
@@ -547,31 +564,45 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			})
 		}
 
-		if _, ok := credentials[c.Name]; ok && secret != nil {
-			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
-			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+		if config.UseECRCredentials() {
+			var aws_creds = GetAuthorizationToken()
+			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
-				Name: "TRIVY_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryUsernameKey,
-					},
-				},
-			}, corev1.EnvVar{
-				Name: "TRIVY_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryPasswordKey,
-					},
-				},
+				Name:  "TRIVY_USERNAME",
+				Value: creds.username,
 			})
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_PASSWORD",
+				Value: creds.password,
+			})
+		} else {
+			if _, ok := credentials[c.Name]; ok && secret != nil {
+				registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
+				registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+
+				env = append(env, corev1.EnvVar{
+					Name: "TRIVY_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryUsernameKey,
+						},
+					},
+				}, corev1.EnvVar{
+					Name: "TRIVY_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryPasswordKey,
+						},
+					},
+				})
+			}
 		}
 
 		env, err = p.appendTrivyInsecureEnv(config, c.Image, env)
@@ -795,31 +826,45 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			},
 		}
 
-		if _, ok := credentials[container.Name]; ok && secret != nil {
-			registryUsernameKey := fmt.Sprintf("%s.username", container.Name)
-			registryPasswordKey := fmt.Sprintf("%s.password", container.Name)
+		if config.UseECRCredentials() {
+			var aws_creds = GetAuthorizationToken()
+			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
-				Name: "TRIVY_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryUsernameKey,
-					},
-				},
-			}, corev1.EnvVar{
-				Name: "TRIVY_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryPasswordKey,
-					},
-				},
+				Name:  "TRIVY_USERNAME",
+				Value: creds.username,
 			})
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_PASSWORD",
+				Value: creds.password,
+			})
+		} else {
+			if _, ok := credentials[container.Name]; ok && secret != nil {
+				registryUsernameKey := fmt.Sprintf("%s.username", container.Name)
+				registryPasswordKey := fmt.Sprintf("%s.password", container.Name)
+
+				env = append(env, corev1.EnvVar{
+					Name: "TRIVY_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryUsernameKey,
+						},
+					},
+				}, corev1.EnvVar{
+					Name: "TRIVY_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryPasswordKey,
+						},
+					},
+				})
+			}
 		}
 
 		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
@@ -1300,4 +1345,34 @@ func constructEnvVarSourceFromConfigMap(envName, trivyConfigName, trivyConfikey 
 		},
 	}
 	return
+}
+
+func GetAuthorizationToken() [][]string {
+	svc := ecr.New(session.New(aws.NewConfig().WithRegion("eu-central-1")))
+	input := &ecr.GetAuthorizationTokenInput{}
+
+	result, err := svc.GetAuthorizationToken(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+		return nil
+	}
+
+	var credentials = *result.AuthorizationData[0].AuthorizationToken
+
+	sDec, _ := base64.StdEncoding.DecodeString(credentials)
+
+	pattern := regexp.MustCompile("^(AWS):(.+)$")
+	return pattern.FindAllStringSubmatch(string(sDec), -1)
+
 }
