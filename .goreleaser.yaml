@@ -71,7 +71,6 @@ changelog:
 dockers:
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-amd64"
-      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
@@ -90,7 +89,6 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-amd64"
-      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -109,7 +107,6 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
-      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/scanner-aqua/Dockerfile
@@ -128,7 +125,6 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-arm64"
-      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
@@ -147,7 +143,6 @@ dockers:
       - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
-      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -166,7 +161,6 @@ dockers:
       - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-s390x"
-      - "public.ecr.aws/aquasecurity/starboard:{{ .Version }}-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
@@ -185,7 +179,6 @@ dockers:
       - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-s390x"
-      - "public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -208,24 +201,11 @@ docker_manifests:
       - 'aquasec/starboard:{{ .Version }}-amd64'
       - 'aquasec/starboard:{{ .Version }}-arm64'
       - 'aquasec/starboard:{{ .Version }}-s390x'
-  - name_template: 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}'
-    image_templates:
-      - 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}-amd64'
-      - 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}-arm64'
-      - 'public.ecr.aws/aquasecurity/starboard:{{ .Version }}-s390x'
   - name_template: 'aquasec/starboard-operator:{{ .Version }}'
     image_templates:
       - 'aquasec/starboard-operator:{{ .Version }}-amd64'
       - 'aquasec/starboard-operator:{{ .Version }}-arm64'
       - 'aquasec/starboard-operator:{{ .Version }}-s390x'
-  - name_template: 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}'
-    image_templates:
-      - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-amd64'
-      - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-arm64'
-      - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-s390x'
   - name_template: 'aquasec/starboard-scanner-aqua:{{ .Version }}'
     image_templates:
       - 'aquasec/starboard-scanner-aqua:{{ .Version }}-amd64'
-  - name_template: 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}'
-    image_templates:
-      - 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64'
