@@ -108,8 +108,8 @@ dockers:
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
-      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}"
-      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}"
+      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
+      - "public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/scanner-aqua/Dockerfile
@@ -225,7 +225,7 @@ docker_manifests:
       - 'public.ecr.aws/aquasecurity/starboard-operator:{{ .Version }}-s390x'
   - name_template: 'aquasec/starboard-scanner-aqua:{{ .Version }}'
     image_templates:
-      - 'aquasec/starboard-scanner-aqua:{{ .Version }}'
+      - 'aquasec/starboard-scanner-aqua:{{ .Version }}-amd64'
   - name_template: 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}'
     image_templates:
-      - 'public.ecr.aws/aquasecurity/sstarboard-scanner-aqua:{{ .Version }}'
+      - 'public.ecr.aws/aquasecurity/starboard-scanner-aqua:{{ .Version }}-amd64'
