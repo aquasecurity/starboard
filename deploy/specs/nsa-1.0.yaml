@@ -149,7 +149,8 @@ spec:
       description: 'Control check validate the pod and/or namespace Selectors usage'
       id: '2.0'
       kinds:
-        - Workload
+        - NetworkPolicy
+      defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
         checks:
