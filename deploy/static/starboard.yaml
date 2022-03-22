@@ -5,7 +5,7 @@ metadata:
   name: vulnerabilityreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -249,7 +249,7 @@ metadata:
   name: configauditreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -306,7 +306,7 @@ metadata:
   name: clusterconfigauditreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -362,7 +362,7 @@ metadata:
   name: ciskubebenchreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -412,7 +412,7 @@ metadata:
   name: clustercompliancereports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   scope: Cluster
@@ -549,7 +549,7 @@ metadata:
   name: clustercompliancedetailreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
 spec:
   group: aquasecurity.github.io
   versions:
@@ -592,7 +592,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -603,7 +603,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -613,7 +613,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 rules:
   - apiGroups:
@@ -762,7 +762,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -781,7 +781,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -792,7 +792,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -803,7 +803,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
   vulnerabilityReports.scanner: "Trivy"
@@ -818,7 +818,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
   trivy.imageRef: "docker.io/aquasec/trivy:0.24.2"
@@ -838,7 +838,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
   polaris.imageRef: "quay.io/fairwinds/polaris:4.2"
@@ -1039,7 +1039,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 data:
   library.kubernetes.rego: "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
@@ -1908,7 +1908,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
   annotations:
     prometheus.io/path: /metrics
@@ -1931,7 +1931,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 spec:
   replicas: 1
@@ -1951,7 +1951,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: "starboard-operator"
-          image: "docker.io/aquasec/starboard-operator:0.15.0-rc1"
+          image: "docker.io/aquasec/starboard-operator:0.15.0-rc2"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPERATOR_NAMESPACE
@@ -2030,7 +2030,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc1"
+    app.kubernetes.io/version: "0.15.0-rc2"
     app.kubernetes.io/managed-by: kubectl
 spec:
   name: nsa
