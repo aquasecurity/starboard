@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc4"
+    app.kubernetes.io/version: "0.15.0-rc5"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -18,7 +18,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc4"
+    app.kubernetes.io/version: "0.15.0-rc5"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
@@ -29,7 +29,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc4"
+    app.kubernetes.io/version: "0.15.0-rc5"
     app.kubernetes.io/managed-by: kubectl
 data:
   vulnerabilityReports.scanner: "Trivy"
@@ -44,7 +44,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc4"
+    app.kubernetes.io/version: "0.15.0-rc5"
     app.kubernetes.io/managed-by: kubectl
 data:
   trivy.imageRef: "docker.io/aquasec/trivy:0.24.2"
@@ -64,7 +64,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.0-rc4"
+    app.kubernetes.io/version: "0.15.0-rc5"
     app.kubernetes.io/managed-by: kubectl
 data:
   polaris.imageRef: "quay.io/fairwinds/polaris:4.2"
