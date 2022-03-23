@@ -60,6 +60,7 @@ data:
   trivy.nonSslRegistry.{{ $key }}: {{ $registry | quote }}
   {{- end }}
   trivy.severity: {{ .severity | quote }}
+  trivy.dbRepository: {{ .dbRepository | quote }}
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
   {{- end }}

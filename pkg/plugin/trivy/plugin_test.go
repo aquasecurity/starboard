@@ -196,6 +196,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 			config: trivy.Config{
 				PluginConfig: starboard.PluginConfig{
 					Data: map[string]string{
+						"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 						"trivy.resources.requests.cpu":    "800m",
 						"trivy.resources.requests.memory": "200M",
 						"trivy.resources.limits.cpu":      "600m",
@@ -470,10 +471,11 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"trivy.imageRef": "docker.io/aquasec/trivy:0.24.2",
-				"trivy.severity": "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-				"trivy.mode":     "Standalone",
-				"trivy.timeout":  "5m0s",
+				"trivy.imageRef":     "docker.io/aquasec/trivy:0.24.2",
+				"trivy.severity":     "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+				"trivy.mode":         "Standalone",
+				"trivy.timeout":      "5m0s",
+				"trivy.dbRepository": "ghcr.io/aquasecurity/trivy-db",
 
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
@@ -582,7 +584,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 			config: map[string]string{
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":     string(trivy.Standalone),
-
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -682,6 +684,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -834,6 +837,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.imageRef":                     "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                         string(trivy.Standalone),
 				"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.dbRepository":                 "ghcr.io/aquasecurity/trivy-db",
 
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
@@ -928,6 +932,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1084,6 +1089,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				"trivy.imageRef":                   "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                       string(trivy.Standalone),
 				"trivy.nonSslRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.dbRepository":               "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":     "100m",
 				"trivy.resources.requests.memory":  "100M",
 				"trivy.resources.limits.cpu":       "500m",
@@ -1178,6 +1184,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1338,6 +1345,7 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -1448,6 +1456,7 @@ CVE-2019-1543`,
 							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1609,6 +1618,7 @@ CVE-2019-1543`,
 				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":     string(trivy.Standalone),
 
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -1706,6 +1716,7 @@ CVE-2019-1543`,
 							"--cache-dir", "/tmp/trivy/.cache",
 							"image",
 							"--download-db-only",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -1858,6 +1869,7 @@ CVE-2019-1543`,
 				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                      string(trivy.ClientServer),
 				"trivy.serverURL":                 "http://trivy.trivy:4954",
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -2047,6 +2059,7 @@ CVE-2019-1543`,
 				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.14.0",
 				"trivy.mode":                      string(trivy.ClientServer),
 				"trivy.serverURL":                 "http://trivy.trivy:4954",
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -2237,6 +2250,7 @@ CVE-2019-1543`,
 				"trivy.mode":                      string(trivy.ClientServer),
 				"trivy.serverURL":                 "https://trivy.trivy:4954",
 				"trivy.serverInsecure":            "true",
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -2431,6 +2445,7 @@ CVE-2019-1543`,
 				"trivy.mode":                       string(trivy.ClientServer),
 				"trivy.serverURL":                  "http://trivy.trivy:4954",
 				"trivy.nonSslRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
+				"trivy.dbRepository":               "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":     "100m",
 				"trivy.resources.requests.memory":  "100M",
 				"trivy.resources.limits.cpu":       "500m",
@@ -2629,6 +2644,7 @@ CVE-2018-14618
 
 # No impact in our settings
 CVE-2019-1543`,
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -2847,6 +2863,7 @@ CVE-2019-1543`,
 				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.24.2",
 				"trivy.mode":                      string(trivy.Standalone),
 				"trivy.command":                   string(trivy.Filesystem),
+				"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
 				"trivy.resources.limits.cpu":      "500m",
@@ -2978,6 +2995,7 @@ CVE-2019-1543`,
 							"--download-db-only",
 							"--cache-dir",
 							"/var/starboard/trivy-db",
+							"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
@@ -3162,6 +3180,7 @@ CVE-2019-1543`,
 			"trivy.imageRef":                  "docker.io/aquasec/trivy:0.22.0",
 			"trivy.mode":                      string(trivy.Standalone),
 			"trivy.command":                   string(trivy.Filesystem),
+			"trivy.dbRepository":              "ghcr.io/aquasecurity/trivy-db",
 			"trivy.resources.requests.cpu":    "100m",
 			"trivy.resources.requests.memory": "100M",
 			"trivy.resources.limits.cpu":      "500m",
@@ -3294,6 +3313,7 @@ CVE-2019-1543`,
 						"--download-db-only",
 						"--cache-dir",
 						"/var/starboard/trivy-db",
+						"--db-repository", "ghcr.io/aquasecurity/trivy-db",
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{

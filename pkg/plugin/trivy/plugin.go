@@ -43,6 +43,7 @@ const (
 	keyTrivyGitHubToken            = "trivy.githubToken"
 	keyTrivySkipFiles              = "trivy.skipFiles"
 	keyTrivySkipDirs               = "trivy.skipDirs"
+	keyTrivyDBRepository           = "trivy.dbRepository"
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
@@ -211,6 +212,11 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 	return nil
 }
 
+func (c Config) GetDBRepository() string {
+	dbRepository, _ := c.GetRequiredData(keyTrivyDBRepository)
+	return dbRepository
+}
+
 type plugin struct {
 	clock          ext.Clock
 	idGenerator    ext.IDGenerator
@@ -244,6 +250,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 			keyTrivyTimeout:  "5m0s",
+			keyTrivyDBRepository: "ghcr.io/aquasecurity/trivy-db",
 
 			keyResourcesRequestsCPU:    "100m",
 			keyResourcesRequestsMemory: "100M",
@@ -411,6 +418,8 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			"/tmp/trivy/.cache",
 			"image",
 			"--download-db-only",
+			"--db-repository",
+			config.GetDBRepository(),
 		},
 		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
@@ -1046,6 +1055,8 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 			"--download-db-only",
 			"--cache-dir",
 			"/var/starboard/trivy-db",
+			"--db-repository",
+			config.GetDBRepository(),
 		},
 		Resources:    requirements,
 		VolumeMounts: volumeMounts,
