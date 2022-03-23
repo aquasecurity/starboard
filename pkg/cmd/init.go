@@ -45,28 +45,9 @@ of the scanners.
 All resources created by this command can be removed from the cluster using
 the "uninstall" command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kubeConfig, err := cf.ToRESTConfig()
-			if err != nil {
-				return err
-			}
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
-			apiExtensionsClientset, err := apiextensionsv1.NewForConfig(kubeConfig)
-			if err != nil {
-				return err
-			}
-			scheme := starboard.NewScheme()
-			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
-			if err != nil {
-				return err
-			}
-			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
-			installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
-			err = installer.Install(context.Background())
-			if err != nil {
-				return err
+			err2 := installData(cf, buildInfo)
+			if err2 != nil {
+				return err2
 			}
 			fmt.Fprintln(os.Stdout)
 			fmt.Fprintf(os.Stdout, starboard.Banner)
@@ -74,4 +55,31 @@ the "uninstall" command.`,
 		},
 	}
 	return cmd
+}
+
+func installData(cf *genericclioptions.ConfigFlags, buildInfo starboard.BuildInfo) error {
+	kubeConfig, err := cf.ToRESTConfig()
+	if err != nil {
+		return err
+	}
+	kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return err
+	}
+	apiExtensionsClientset, err := apiextensionsv1.NewForConfig(kubeConfig)
+	if err != nil {
+		return err
+	}
+	scheme := starboard.NewScheme()
+	kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+	if err != nil {
+		return err
+	}
+	configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
+	installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
+	err = installer.Install(context.Background())
+	if err != nil {
+		return err
+	}
+	return nil
 }
