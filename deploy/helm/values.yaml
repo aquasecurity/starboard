@@ -427,6 +427,11 @@ serviceAccount:
 # podAnnotations annotations added to the operator's pod
 podAnnotations: {}
 
+# podAnnotations example for to get the ECR-Credentials fetch working via AWS-Roles
+#
+# podAnnotations: 
+    # iam.amazonaws.com/role: <yourRolewithPermissions>
+
 podSecurityContext: {}
   # fsGroup: 2000
 
