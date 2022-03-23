@@ -41,16 +41,15 @@ configure it to watch the `default` namespaces:
    the `starboard-system` namespace. For example, you can use Trivy
    in [ClientServer](./../../integrations/vulnerability-scanners/trivy.md#clientserver) mode or
    [Aqua Enterprise](./../../integrations/vulnerability-scanners/aqua-enterprise.md) as an active vulnerability scanner.
-   If you skip this step, the operator will ensure [configuration objects](./../../settings.md)
-   on startup with the default settings:
+   If you skip this step, the operator will ensure default [Starboard Settings](./../../settings.md) on startup:
    ```
    kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/static/03-starboard-operator.config.yaml
    ```
-   Review the default values and makes sure the operator is configured properly:
+5. Install default OPA Rego policies used by the built-in configuration checker:
    ```
-   kubectl describe cm starboard starboard-trivy-config starboard-polaris-config -n starboard-system
+   kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/static/04-starboard-operator.policies.yaml
    ```
-5. Install the operator by creating the Subscription:
+6. Install the operator by creating the Subscription:
    ```
    cat << EOF | kubectl apply -f -
    apiVersion: operators.coreos.com/v1alpha1
@@ -75,10 +74,10 @@ configure it to watch the `default` namespaces:
    EOF
    ```
    The operator will be installed in the `starboard-system` namespace and will be usable from the `default` namespace.
-   Note that the `spec.config` property allows you to override the default [configuration](./../configuration.md) of
+   Note that the `spec.config` property allows you to override the default [Configuration](./../configuration.md) of
    the operator's Deployment.
 
-6. After install, watch the operator come up using the following command:
+7. After install, watch the operator come up using the following command:
    ```console
    $ kubectl get clusterserviceversions -n starboard-system
    NAME                        DISPLAY              VERSION   REPLACES                     PHASE
@@ -117,6 +116,8 @@ You have to manually delete custom resource definitions created by the OLM opera
     kubectl delete crd configauditreports.aquasecurity.github.io
     kubectl delete crd clusterconfigauditreports.aquasecurity.github.io
     kubectl delete crd ciskubebenchreports.aquasecurity.github.io
+    kubectl delete crd clustercompliancereports.aquasecurity.github.io
+    kubectl delete crd clustercompliancedetailreports.aquasecurity.github.io
     ```
 
 [olm]: https://github.com/operator-framework/operator-lifecycle-manager/
