@@ -33,6 +33,10 @@ const (
 )
 
 const (
+	AWSECR_Image_Regex = "^\\d+\\.dkr\\.ecr\\.(\\w+-\\w+-\\d+)\\.amazonaws\\.com\\/"
+)
+
+const (
 	keyTrivyImageRef               = "trivy.imageRef"
 	keyTrivyMode                   = "trivy.mode"
 	keyTrivyCommand                = "trivy.command"
@@ -565,7 +569,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		}
 
 		if config.UseECRCredentials() {
-			var aws_creds = GetAuthorizationToken()
+			var aws_creds = GetAuthorizationToken(c.Image)
 			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
@@ -827,7 +831,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 		}
 
 		if config.UseECRCredentials() {
-			var aws_creds = GetAuthorizationToken()
+			var aws_creds = GetAuthorizationToken(container.Image)
 			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
@@ -1347,8 +1351,8 @@ func constructEnvVarSourceFromConfigMap(envName, trivyConfigName, trivyConfikey 
 	return
 }
 
-func GetAuthorizationToken() [][]string {
-	svc := ecr.New(session.New(aws.NewConfig().WithRegion("eu-central-1")))
+func GetAuthorizationToken(ImageUrl string) [][]string {
+	svc := ecr.New(session.New(aws.NewConfig().WithRegion(regexp.MustCompile(AWSECR_Image_Regex).FindAllStringSubmatch(ImageUrl, -1)[0][1])))
 	input := &ecr.GetAuthorizationTokenInput{}
 
 	result, err := svc.GetAuthorizationToken(input)
