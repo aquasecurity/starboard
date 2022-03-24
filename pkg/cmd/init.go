@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"os"
-
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -20,7 +18,6 @@ func NewInitCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags
 		Short:   "Create Kubernetes resources used by Starboard",
 		Long: `Create all the resources used by Starboard. It will create the following in your
 Kubernetes cluster:
-
  - CustomResourceDefinition objects:
    - "vulnerabilityreports.aquasecurity.github.io"
    - "clustervulnerabilityreports.aquasecurity.github.io"
@@ -37,41 +34,22 @@ Kubernetes cluster:
    - The "starboard" secret
    - The "starboard-trivy-config" ConfigMap
    - The "starboard-polaris-config" ConfigMap
-
 The "starboard" ConfigMap and the "starboard" secret contain the default
 config parameters. However this can be modified to change the behaviour
 of the scanners.
-
 All resources created by this command can be removed from the cluster using
 the "uninstall" command.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err2 := installData(cf, buildInfo)
-			if err2 != nil {
-				return err2
-			}
-			fmt.Fprintln(os.Stdout)
-			fmt.Fprintf(os.Stdout, starboard.Banner)
-			return nil
-		},
+		RunE: createOrUpdateResourcesAndMetadata(buildInfo, cf),
 	}
 	return cmd
 }
 
-func installData(cf *genericclioptions.ConfigFlags, buildInfo starboard.BuildInfo) error {
-	kubeConfig, err := cf.ToRESTConfig()
-	if err != nil {
-		return err
-	}
+func installResources(kubeClient client.Client, kubeConfig *rest.Config, buildInfo starboard.BuildInfo) error {
 	kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return err
 	}
 	apiExtensionsClientset, err := apiextensionsv1.NewForConfig(kubeConfig)
-	if err != nil {
-		return err
-	}
-	scheme := starboard.NewScheme()
-	kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 	if err != nil {
 		return err
 	}

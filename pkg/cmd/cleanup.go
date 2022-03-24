@@ -16,6 +16,7 @@ func NewCleanupCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 		Use:     "uninstall",
 		Aliases: []string{"cleanup"},
 		Short:   "Delete Kubernetes resources created by Starboard",
+		PreRunE: deleteStarboardMetadataFolder(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {

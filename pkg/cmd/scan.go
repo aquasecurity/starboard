@@ -8,9 +8,10 @@ import (
 
 func NewScanCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	scanCmd := &cobra.Command{
-		Use:     "scan",
-		Aliases: []string{"generate"},
-		Short:   "Manage security weakness identification tools",
+		Use:               "scan",
+		Aliases:           []string{"generate"},
+		Short:             "Manage security weakness identification tools",
+		PersistentPreRunE: createOrUpdateResourcesAndMetadata(buildInfo, cf),
 	}
 	scanCmd.AddCommand(NewScanConfigAuditReportsCmd(buildInfo, cf))
 	scanCmd.AddCommand(NewScanKubeBenchReportsCmd(cf))

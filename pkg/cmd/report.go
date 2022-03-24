@@ -48,6 +48,7 @@ NAME is the name of a particular Kubernetes workload.
   # Generate an HTML report for a node with the specified name and save it to a file.
   %[1]s report node/kind-control-plane > kind-control-plane.node.html
 `, info.Executable),
+		PreRunE: createOrUpdateResourcesAndMetadata(info, cf),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {

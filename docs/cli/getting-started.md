@@ -13,48 +13,14 @@ You also need the `starboard` command to be installed, e.g. [From the Binary Rel
 configuration as kubectl to communicate with the cluster.
 
 ## Scanning Workloads
-
-The easiest way to get started with Starboard is to use an imperative `starboard` command, which allows ad hoc scanning
-of Kubernetes workloads deployed in your cluster.
-
-To begin with, execute the following one-time setup command:
-
-```
-starboard install
-```
-
-The `install` subcommand creates the `starboard` namespace, in which Starboard executes Kubernetes jobs to perform
-scans. It also sends custom security resources definitions to the Kubernetes API and creates default configuration
-objects:
-
-```console
-kubectl api-resources --api-group aquasecurity.github.io
-```
-
-<details>
-<summary>Result</summary>
-
-```
-NAME                             SHORTNAMES                 APIVERSION                        NAMESPACED   KIND
-ciskubebenchreports              kubebench                  aquasecurity.github.io/v1alpha1   false        CISKubeBenchReport
-clustercompliancedetailreports   compliancedetail           aquasecurity.github.io/v1alpha1   false        ClusterComplianceDetailReport
-clustercompliancereports         compliance                 aquasecurity.github.io/v1alpha1   false        ClusterComplianceReport
-clusterconfigauditreports        clusterconfigaudit         aquasecurity.github.io/v1alpha1   false        ClusterConfigAuditReport
-clustervulnerabilityreports      clustervuln,clustervulns   aquasecurity.github.io/v1alpha1   false        ClusterVulnerabilityReport
-configauditreports               configaudit                aquasecurity.github.io/v1alpha1   true         ConfigAuditReport
-kubehunterreports                kubehunter                 aquasecurity.github.io/v1alpha1   false        KubeHunterReport
-vulnerabilityreports             vuln,vulns                 aquasecurity.github.io/v1alpha1   true         VulnerabilityReport
-```
-</details>
-
-!!! tip
-    There's also a `starboard uninstall` subcommand, which can be used to remove all resources created by Starboard.
-
 As an example let's run in the current namespace an old version of `nginx` that we know has vulnerabilities:
 
 ```
 kubectl create deployment nginx --image nginx:1.16
 ```
+
+The easiest way to get started with Starboard is to use an imperative `starboard` command, which allows ad hoc scanning
+of Kubernetes workloads deployed in your cluster.
 
 Run the vulnerability scanner to generate vulnerability reports:
 
@@ -120,6 +86,13 @@ NAME                          SCANNER     AGE   CRITIAL   HIGH   MEDIUM   LOW
 replicaset-nginx-78449c65d4   Starboard   75s   0         0      6        7
 ```
 </details>
+
+!!! tip
+    There's also starboard uninstall subcommand, which can be used to clean up all resources created by Starboard.
+    ```
+    starboard uninstall
+    ```
+
 
 ## Generating HTML Reports
 

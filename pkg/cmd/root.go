@@ -1,19 +1,14 @@
 package cmd
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"io"
-	"io/ioutil"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"os"
-	"os/user"
-	"path"
-	"path/filepath"
 )
 
 const (
@@ -73,80 +68,13 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 	return rootCmd
 }
 
-func GetStarboardHomeFolder() (string, error) {
-	usrFolder, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	// User can set a custom KUBE_KNARK_HOME from environment variable
-	return path.Join(usrFolder.HomeDir, ".starboard"), nil
-}
-
 // Run is the entry point of the Starboard CLI. It runs the specified
 // command based on the specified args.
 func Run(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
 
 	initFlags()
-	folderPath, err := GetStarboardHomeFolder()
-	if err != nil {
-		return err
-	}
-	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-		err = CreateStarboardHomeFolderIfNotExist(folderPath)
-		if err != nil {
-			return err
-		}
-	}
-	filePath := filepath.Join(folderPath, "metadata.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		err := initMetadata(version, err, filePath)
-		if err != nil {
-			return err
-		}
-	} else {
-		metadataByte, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return err
-		}
-		var metadata Metadata
-		err = json.Unmarshal(metadataByte, &metadata)
-		if err != nil {
-			return err
-		}
-	}
-	fmt.Println(folderPath)
 
 	return NewRootCmd(version, args, outWriter, errWriter).Execute()
-}
-
-func initMetadata(version starboard.BuildInfo, err error, filePath string) error {
-	cf := genericclioptions.NewConfigFlags(true)
-	err = installData(cf, version)
-	if err != nil {
-		return err
-	}
-	matadata := Metadata{Version: version.Version, Initialized: true}
-	metadataByte, err := json.Marshal(matadata)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(filePath, metadataByte, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-//CreateStarboardHomeFolderIfNotExist create starboard home folder if not exist
-func CreateStarboardHomeFolderIfNotExist(folderName string) error {
-	_, err := os.Stat(folderName)
-	if os.IsNotExist(err) {
-		errDir := os.MkdirAll(folderName, 0750)
-		if errDir != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func initFlags() {
@@ -158,9 +86,4 @@ func initFlags() {
 			pflag.Lookup(f.Name).Hidden = true
 		}
 	})
-}
-
-type Metadata struct {
-	Version     string `json:"version"`
-	Initialized bool   `json:"initialized"`
 }

@@ -10,8 +10,9 @@ import (
 
 func NewGetCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
 	getCmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get security reports",
+		Use:               "get",
+		Short:             "Get security reports",
+		PersistentPreRunE: createOrUpdateResourcesAndMetadata(buildInfo, cf),
 	}
 	getCmd.AddCommand(NewGetVulnerabilityReportsCmd(buildInfo.Executable, cf, outWriter))
 	getCmd.AddCommand(NewGetConfigAuditReportsCmd(buildInfo.Executable, cf, outWriter))

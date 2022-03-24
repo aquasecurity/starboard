@@ -5,10 +5,6 @@ confidential settings (such as a GitHub token). Starboard plugins read configura
 and Secrets named after the plugin. For example, Trivy configuration is stored in the ConfigMap and Secret named
 `starboard-trivy-config`.
 
-The `starboard install` command ensures the `starboard` ConfigMap and the `starboard` Secret in the `starboard`
-namespace with default settings. Similarly, the operator ensures the `starboard` ConfigMap and the `starboard` Secret in
-the `OPERATOR_NAMESPACE`.
-
 You can change the default settings with `kubectl patch` or `kubectl edit` commands. For example, by default Trivy
 displays vulnerabilities with all severity levels (`UNKNOWN`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). However, you can
 display only `HIGH` and `CRITICAL` vulnerabilities by patching the `trivy.severity` value in the `starboard-trivy-config`
@@ -65,8 +61,8 @@ configuration settings for common use cases. For example, switch Trivy from [Sta
 | `kube-hunter.quick`                            | `"false"`                             | Whether to use kube-hunter's "quick" scanning mode (subnet 24). Set to `"true"` to enable.                                                                                                                                          |
 
 !!! tip
-    You can find it handy to delete a configuration key, which was not created by default by the `starboard install`
-    command. For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
+    You can find it handy to delete a configuration key.
+    For example, the following `kubectl patch` command deletes the `trivy.httpProxy` key:
     ```
     STARBOARD_NAMESPACE=<your starboard namespace>
     ```
