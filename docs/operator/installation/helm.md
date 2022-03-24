@@ -4,7 +4,7 @@
 YAML manifests called Helm [charts].
 
 To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Starboard
-Operator. The Helm chart supports all [install modes](./../configuration.md#install-modes).
+Operator. The Helm chart supports all [Install Modes](./../configuration.md#install-modes).
 
 As an example, let's install the operator in the `starboard-system` namespace and configure it to watch the `default`
 namespaces:
@@ -37,14 +37,15 @@ namespaces:
      --version {{ var.chart_version }}
    ```
    There are many [values] in the chart that can be set to configure Starboard.
-3. Check that the `starboard-operator` Helm release is created in the `starboard-system` namespace:
+3. Check that the `starboard-operator` Helm release is created in the `starboard-system` namespace, and it has status
+   `deployed`:
    ```console
    $ helm list -n starboard-system
    NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
    starboard-operator	starboard-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart_version }}	{{ git.tag[1:] }}
    ```
-   To confirm that the operator is running, check the number of replicas created by the `starboard-operator` Deployment
-   in the `starboard-system` namespace:
+   To confirm that the operator is running, check that the `starboard-operator` Deployment in the `starboard-system`
+   namespace is available and all its containers are ready:
    ```console
    $ kubectl get deployment -n starboard-system
    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
