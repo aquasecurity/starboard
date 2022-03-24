@@ -35,13 +35,15 @@ kubectl api-resources --api-group aquasecurity.github.io
 <summary>Result</summary>
 
 ```
-NAME                          SHORTNAMES                 APIVERSION                        NAMESPACED   KIND
-ciskubebenchreports           kubebench                  aquasecurity.github.io/v1alpha1   false        CISKubeBenchReport
-clusterconfigauditreports     clusterconfigaudit         aquasecurity.github.io/v1alpha1   false        ClusterConfigAuditReport
-clustervulnerabilityreports   clustervuln,clustervulns   aquasecurity.github.io/v1alpha1   false        ClusterVulnerabilityReport
-configauditreports            configaudit                aquasecurity.github.io/v1alpha1   true         ConfigAuditReport
-kubehunterreports             kubehunter                 aquasecurity.github.io/v1alpha1   false        KubeHunterReport
-vulnerabilityreports          vuln,vulns                 aquasecurity.github.io/v1alpha1   true         VulnerabilityReport
+NAME                             SHORTNAMES                 APIVERSION                        NAMESPACED   KIND
+ciskubebenchreports              kubebench                  aquasecurity.github.io/v1alpha1   false        CISKubeBenchReport
+clustercompliancedetailreports   compliancedetail           aquasecurity.github.io/v1alpha1   false        ClusterComplianceDetailReport
+clustercompliancereports         compliance                 aquasecurity.github.io/v1alpha1   false        ClusterComplianceReport
+clusterconfigauditreports        clusterconfigaudit         aquasecurity.github.io/v1alpha1   false        ClusterConfigAuditReport
+clustervulnerabilityreports      clustervuln,clustervulns   aquasecurity.github.io/v1alpha1   false        ClusterVulnerabilityReport
+configauditreports               configaudit                aquasecurity.github.io/v1alpha1   true         ConfigAuditReport
+kubehunterreports                kubehunter                 aquasecurity.github.io/v1alpha1   false        KubeHunterReport
+vulnerabilityreports             vuln,vulns                 aquasecurity.github.io/v1alpha1   true         VulnerabilityReport
 ```
 </details>
 
@@ -92,7 +94,7 @@ Moving forward, let's take the same `nginx` Deployment and audit its Kubernetes 
 created it with the `kubectl create deployment` command which applies the default settings to the deployment descriptors.
 However, we also know that in Kubernetes the defaults are usually the least secure.
 
-Run the scanner to audit the configuration using [Polaris], which is the default configuration checker:
+Run the scanner to audit the configuration using the built-in configuration checker:
 
 ```
 starboard scan configauditreports deployment/nginx
@@ -114,8 +116,8 @@ kubectl get configauditreport -o wide
 <summary>Result</summary>
 
 ```
-NAME                          SCANNER   AGE    DANGER   WARNING   PASS
-replicaset-nginx-6d4cf56db6   Polaris   155m   1        9         7
+NAME                          SCANNER     AGE   CRITIAL   HIGH   MEDIUM   LOW
+replicaset-nginx-78449c65d4   Starboard   75s   0         0      6        7
 ```
 </details>
 
@@ -141,7 +143,6 @@ open nginx.deploy.html
 * Read up on [Infrastructure Scanners] integrated with Starboard.
 
 [Trivy]: ./../integrations/vulnerability-scanners/trivy.md
-[Polaris]: ./../integrations/config-checkers/polaris.md
 [Custom Resource Definitions]: ./../crds/index.md
 [Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
 [Play with Kubernetes]: http://labs.play-with-k8s.com/
