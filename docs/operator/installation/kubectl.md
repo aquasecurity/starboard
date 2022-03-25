@@ -22,14 +22,22 @@ If for some reason it's not ready yet, check the logs of the `starboard-operator
 kubectl logs deployment/starboard-operator -n starboard-system
 ```
 
-Starboard ensures the default [settings] stored in ConfigMaps and Secrets created in the `starboard-system` namespace.
+Starboard ensures the default [Settings] stored in ConfigMaps and Secrets created in the `starboard-system` namespace.
 You can always change these settings by editing configuration objects. For example, you can use Trivy in [ClientServer]
 mode, which is more efficient that the [Standalone] mode, or switch to [Aqua Enterprise] as an alternative vulnerability
 scanner.
 
-You can further [configure](./../configuration.md) the operator with environment variables. For example, to change the
-target namespace from the `defaul` namespace to all namespaces update the value of the `OPERATOR_TARGET_NAMESPACES`
-environment variable from `default` to a blank string (i.e., `OPERATOR_TARGET_NAMESPACES=""`).
+You can further adjust the [Configuration](./../configuration.md) of the operator with environment variables. For
+example, to change the target namespace from the `defaul` namespace to all namespaces edit the `starboard-operator`
+Deployment in the `starobard-system` namespace and change the value of the `OPERATOR_TARGET_NAMESPACES` environment
+variable from `default` to a blank string (i.e., `OPERATOR_TARGET_NAMESPACES=""`).
+
+Starboard can generate the compliance report based on the [NSA, CISA Kubernetes Hardening Guidance v1.0]. In order to do
+that you must install the `nsa` ClusterComplianceReport resource:
+
+```
+kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/specs/nsa-1.0.yaml
+```
 
 Static YAML manifests with fixed values have shortcomings. For example, if you want to change the container image or
 modify default configuration settings, you have to edit existing manifests or customize them with tools such as
@@ -46,9 +54,10 @@ You can uninstall the operator with the following command:
 kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/static/starboard.yaml
 ```
 
-[settings]: ./../../settings.md
+[Settings]: ./../../settings.md
 [Standalone]: ./../../integrations/vulnerability-scanners/trivy.md#standalone
 [ClientServer]: ./../../integrations/vulnerability-scanners/trivy.md#clientserver
 [Aqua Enterprise]: ./../../integrations/vulnerability-scanners/aqua-enterprise.md
 [Kustomize]: https://kustomize.io
 [Helm]: ./helm.md
+[NSA, CISA Kubernetes Hardening Guidance v1.0]: ./../../specs/NSA_Kubernetes_Hardening_Guidance_1.0.pdf

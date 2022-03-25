@@ -3,8 +3,8 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/compliance"
 
+	"github.com/aquasecurity/starboard/pkg/compliance"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -146,7 +146,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			return fmt.Errorf("initializing %s plugin: %w", pluginContext.GetName(), err)
 		}
 
-		if err = (&controller.VulnerabilityReportReconciler{
+		if err = (&vulnerabilityreport.WorkloadController{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
 			Config:         operatorConfig,
 			ConfigData:     starboardConfig,

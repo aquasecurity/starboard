@@ -1,4 +1,4 @@
-# Starboard Settings
+# Settings
 
 The Starboard CLI and Starboard Operator read configuration settings from ConfigMaps, as well as Secrets that holds
 confidential settings (such as a GitHub token). Starboard plugins read configuration and secret data from ConfigMaps
