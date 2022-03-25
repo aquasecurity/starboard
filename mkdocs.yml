@@ -9,15 +9,6 @@ copyright: Copyright 2019-2022 Aqua Security Software Ltd.
 
 nav:
   - Introduction: index.md
-  - Starboard CLI:
-      - Overview: cli/index.md
-      - Installation:
-          - From the Binary Releases: cli/installation/binary-releases.md
-          - Krew: cli/installation/krew.md
-          - Docker: cli/installation/docker.md
-          - From Source (Linux, macOS): cli/installation/source.md
-      - Getting Started: cli/getting-started.md
-      - Troubleshooting: cli/troubleshooting.md
   - Starboard Operator:
       - Overview: operator/index.md
       - Installation:
@@ -27,7 +18,16 @@ nav:
           - Upgrade: operator/installation/upgrade.md
       - Getting Started: operator/getting-started.md
       - Configuration: operator/configuration.md
-  - Starboard Settings: settings.md
+  - Starboard CLI:
+      - Overview: cli/index.md
+      - Installation:
+          - From the Binary Releases: cli/installation/binary-releases.md
+          - Krew: cli/installation/krew.md
+          - Docker: cli/installation/docker.md
+          - From Source (Linux, macOS): cli/installation/source.md
+      - Getting Started: cli/getting-started.md
+      - Troubleshooting: cli/troubleshooting.md
+  - Settings: settings.md
   - Integrations:
       - Vulnerability Scanners:
           - Overview: integrations/vulnerability-scanners/index.md
