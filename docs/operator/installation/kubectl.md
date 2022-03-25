@@ -1,7 +1,7 @@
 # kubectl
 
-You can use static YAML manifests to install the operator in the `starboard-system` namespace and configure it to watch
-the `default` namespace:
+You can use static YAML manifests to install the operator in the `starboard-system` namespace and configure it to select
+all namespaces, except `kube-system` and `starboard-system`.
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/static/starboard.yaml
@@ -28,9 +28,9 @@ mode, which is more efficient that the [Standalone] mode, or switch to [Aqua Ent
 scanner.
 
 You can further adjust the [Configuration](./../configuration.md) of the operator with environment variables. For
-example, to change the target namespace from the `defaul` namespace to all namespaces edit the `starboard-operator`
-Deployment in the `starobard-system` namespace and change the value of the `OPERATOR_TARGET_NAMESPACES` environment
-variable from `default` to a blank string (i.e., `OPERATOR_TARGET_NAMESPACES=""`).
+example, to change the target namespace from all namespaces to the `default` namespace edit the `starboard-operator`
+Deployment and change the value of the `OPERATOR_TARGET_NAMESPACES` environment variable from the blank string
+(`""`) to the `default` value.
 
 Starboard can generate the compliance report based on the [NSA, CISA Kubernetes Hardening Guidance v1.0]. In order to do
 that you must install the `nsa` ClusterComplianceReport resource:

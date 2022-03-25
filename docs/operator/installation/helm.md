@@ -6,8 +6,8 @@ YAML manifests called Helm [charts].
 To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Starboard
 Operator. The Helm chart supports all [Install Modes](./../configuration.md#install-modes).
 
-As an example, let's install the operator in the `starboard-system` namespace and configure it to watch the `default`
-namespaces:
+As an example, let's install the operator in the `starboard-system` namespace and configure it to select all namespaces,
+except `kube-system` and `starboard-system`:
 
 1. Clone the chart directory:
    ```
@@ -24,7 +24,6 @@ namespaces:
    helm install starboard-operator ./deploy/helm \
      --namespace starboard-system \
      --create-namespace \
-     --set="targetNamespaces=default" \
      --set="trivy.ignoreUnfixed=true"
    ```
    Or install the chart from the Aqua chart repository:
@@ -32,7 +31,6 @@ namespaces:
    helm install starboard-operator aqua/starboard-operator \
      --namespace starboard-system \
      --create-namespace \
-     --set="targetNamespaces=default" \
      --set="trivy.ignoreUnfixed=true" \
      --version {{ var.chart_version }}
    ```
