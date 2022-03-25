@@ -105,6 +105,74 @@ var _ = Describe("Predicate", func() {
 				})
 			})
 		})
+
+		Context("When install mode is AllNamespaces", func() {
+			When("and object is not excluded", func() {
+				It("Should return true", func() {
+					config := etc.Config{
+						Namespace:         "starboard-operator",
+						TargetNamespaces:  "",
+						ExcludeNamespaces: "kube-system",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "default",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeTrue())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeTrue())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeTrue())
+				})
+			})
+
+			When("and object is excluded", func() {
+				It("Should return false", func() {
+					config := etc.Config{
+						Namespace:         "starboard-operator",
+						TargetNamespaces:  "",
+						ExcludeNamespaces: "kube-system,starboard-system",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "kube-system",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
+				})
+			})
+
+			When("and object is excluded with glob pattern", func() {
+				It("Should return false", func() {
+					config := etc.Config{
+						Namespace:         "starboard-operator",
+						TargetNamespaces:  "",
+						ExcludeNamespaces: "kube-*,starboard-system",
+					}
+					obj := &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "kube-system",
+						},
+					}
+					instance, err := predicate.InstallModePredicate(config)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(instance.Create(event.CreateEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Update(event.UpdateEvent{ObjectNew: obj})).To(BeFalse())
+					Expect(instance.Delete(event.DeleteEvent{Object: obj})).To(BeFalse())
+					Expect(instance.Generic(event.GenericEvent{Object: obj})).To(BeFalse())
+				})
+			})
+		})
 	})
 
 	Describe("When checking a HasName predicate", func() {
