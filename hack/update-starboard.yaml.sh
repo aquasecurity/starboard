@@ -3,7 +3,6 @@
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 
 CRD_DIR=$SCRIPT_ROOT/deploy/crd
-SPECS_DIR=$SCRIPT_ROOT/deploy/specs
 STATIC_DIR=$SCRIPT_ROOT/deploy/static
 
 cat $CRD_DIR/vulnerabilityreports.crd.yaml \
@@ -16,5 +15,4 @@ cat $CRD_DIR/vulnerabilityreports.crd.yaml \
   $STATIC_DIR/02-starboard-operator.rbac.yaml \
   $STATIC_DIR/03-starboard-operator.config.yaml \
   $STATIC_DIR/04-starboard-operator.policies.yaml \
-  $STATIC_DIR/05-starboard-operator.deployment.yaml \
-  $SPECS_DIR/nsa-1.0.yaml > $STATIC_DIR/starboard.yaml
+  $STATIC_DIR/05-starboard-operator.deployment.yaml > $STATIC_DIR/starboard.yaml
