@@ -33,8 +33,7 @@ configure it to watch the `default` namespaces:
      name: starboard-operator
      namespace: starboard-system
    spec:
-     targetNamespaces:
-       - ""
+     targetNamespaces: []
    EOF
    ```
 4. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
