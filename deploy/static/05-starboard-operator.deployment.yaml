@@ -56,7 +56,9 @@ spec:
             - name: OPERATOR_NAMESPACE
               value: "starboard-system"
             - name: OPERATOR_TARGET_NAMESPACES
-              value: "default"
+              value: ""
+            - name: OPERATOR_EXCLUDE_NAMESPACES
+              value: "kube-system,starboard-system"
             - name: OPERATOR_SERVICE_ACCOUNT
               value: "starboard-operator"
             - name: OPERATOR_LOG_DEV_MODE

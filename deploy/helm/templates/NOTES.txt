@@ -1,5 +1,6 @@
 You have installed Starboard Operator in the {{ .Release.Namespace }} namespace.
-It is configured to discover Kubernetes workloads in the {{ tpl .Values.targetNamespaces . | default "(all)" }} namespace(s).
+It is configured to discover Kubernetes workloads and resources in
+{{ tpl .Values.targetNamespaces . | default "all" }} namespace(s).
 
 Inspect created VulnerabilityReports by:
 

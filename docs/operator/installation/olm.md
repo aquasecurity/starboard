@@ -24,7 +24,7 @@ configure it to watch the `default` namespaces:
    ```
    kubectl create ns starboard-system
    ```
-3. Declare `default` as the target namespace by creating the OperatorGroup:
+3. Create the OperatorGroup to select all namespaces:
    ```
    cat << EOF | kubectl apply -f -
    apiVersion: operators.coreos.com/v1alpha2
@@ -34,7 +34,7 @@ configure it to watch the `default` namespaces:
      namespace: starboard-system
    spec:
      targetNamespaces:
-     - default
+       - ""
    EOF
    ```
 4. (Optional) Configure Starboard by creating the `starboard` ConfigMap and the `starboard` secret in
@@ -65,18 +65,13 @@ configure it to watch the `default` namespaces:
      installPlanApproval: Automatic
      config:
        env:
-       - name: OPERATOR_SCAN_JOB_TIMEOUT
-         value: "60s"
-       - name: OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT
-         value: "10"
-       - name: OPERATOR_LOG_DEV_MODE
-         value: "true"
+       - name: OPERATOR_EXCLUDE_NAMESPACES
+         value: "kube-system,starboard-system"
    EOF
    ```
-   The operator will be installed in the `starboard-system` namespace and will be usable from the `default` namespace.
-   Note that the `spec.config` property allows you to override the default [Configuration](./../configuration.md) of
-   the operator's Deployment.
-
+   The operator will be installed in the `starboard-system` namespace and will select all namespaces, except
+   `kube-system` and `starboard-system`. Note that the `spec.config` property allows you to override the default
+   [Configuration](./../configuration.md) of the operator's Deployment.
 7. After install, watch the operator come up using the following command:
    ```console
    $ kubectl get clusterserviceversions -n starboard-system

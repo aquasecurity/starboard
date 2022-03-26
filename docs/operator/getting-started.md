@@ -11,7 +11,7 @@ of these Kubernetes playgrounds:
 
 You also need the Starboard Operator to be installed in the `starboard-system` namespace, e.g. with
 [kubectl](./installation/kubectl.md) or [Helm](./installation/helm.md). Let's also assume that the operator is
-configured to discover built-in Kubernetes resources in the `default` namespace.
+configured to discover built-in Kubernetes resources in all namespaces, except `kube-system` and `starboard-system`.
 
 ## Workloads Scanning
 

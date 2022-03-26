@@ -51,7 +51,9 @@ var InstallModePredicate = func(config etc.Config) (predicate.Predicate, error) 
 					// In case of error we'd assume the resource should be scanned
 					return true
 				}
-				return !matches
+				if matches {
+					return false
+				}
 			}
 		}
 
