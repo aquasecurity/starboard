@@ -35,7 +35,8 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	}
 	setupLog.Info("Resolved install mode", "install mode", installMode,
 		"operator namespace", operatorNamespace,
-		"target namespaces", targetNamespaces)
+		"target namespaces", targetNamespaces,
+		"exclude namespaces", operatorConfig.ExcludeNamespaces)
 
 	// Set the default manager options.
 	options := manager.Options{

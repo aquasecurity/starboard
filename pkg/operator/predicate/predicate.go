@@ -1,6 +1,9 @@
 package predicate
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -15,12 +18,12 @@ import (
 // InstallModePredicate is a predicate.Predicate that determines whether to
 // reconcile the specified client.Object based on the give etc.InstallMode.
 //
-// In the etc.SingleNamespace install mode we're configuring client.Client cache
+// In etc.SingleNamespace install mode we're configuring client.Client cache
 // to watch the operator namespace, in which the operator runs scan jobs.
 // However, we do not want to scan the workloads that might run in the
 // operator namespace.
 //
-// Similarly, in the etc.MultiNamespace install mode we're configuring
+// Similarly, in etc.MultiNamespace install mode we're configuring
 // client.Client cache to watch the operator namespace, in which the operator
 // runs scan jobs. However, we do not want to scan the workloads that might run
 // in the operator namespace unless the operator namespace is added to the list
@@ -38,6 +41,20 @@ var InstallModePredicate = func(config etc.Config) (predicate.Predicate, error) 
 
 		if mode == etc.MultiNamespace {
 			return ext.SliceContainsString(targetNamespaces, obj.GetNamespace())
+		}
+
+		if mode == etc.AllNamespaces && strings.TrimSpace(config.ExcludeNamespaces) != "" {
+			namespaces := strings.Split(config.ExcludeNamespaces, ",")
+			for _, namespace := range namespaces {
+				matches, err := filepath.Match(strings.TrimSpace(namespace), obj.GetNamespace())
+				if err != nil {
+					// In case of error we'd assume the resource should be scanned
+					return true
+				}
+				if matches {
+					return false
+				}
+			}
 		}
 
 		return true
