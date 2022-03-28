@@ -54,7 +54,7 @@ spec:
         checks:
           - id: KSV008
       severity: 'HIGH'
-    - name: Share host process namespaces.
+    - name: Share host process namespaces
       description: 'Controls whether share host process namespaces'
       id: '1.4'
       kinds:
@@ -64,7 +64,7 @@ spec:
         checks:
           - id: KSV009
       severity: 'HIGH'
-    - name: use the host network
+    - name: Use the host network
       description: 'Controls whether containers can use the host network'
       id: '1.5'
       kinds:
@@ -157,7 +157,7 @@ spec:
           - id: KSV038
       severity: 'MEDIUM'
     - name: Use CNI plugin that supports NetworkPolicy API
-      description: 'Control check whether check cni plugin installed	'
+      description: 'Control check whether check cni plugin installed'
       id: '3.0'
       kinds:
         - Node
@@ -181,7 +181,7 @@ spec:
       description: 'Control check the use of LimitRange policy limit resource usage for namespaces or nodes'
       id: '4.1'
       kinds:
-        - ResourceQuota
+        - LimitRange
       defaultStatus: 'FAIL'
       mapping:
         scanner: config-audit
