@@ -57,6 +57,8 @@ const (
 	keyResourcesLimitsMemory   = "trivy.resources.limits.memory"
 )
 
+const defaultDBRepository = "ghcr.io/aquasecurity/trivy-db"
+
 // Mode in which Trivy client operates.
 type Mode string
 
@@ -212,9 +214,8 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 	return nil
 }
 
-func (c Config) GetDBRepository() string {
-	dbRepository, _ := c.GetRequiredData(keyTrivyDBRepository)
-	return dbRepository
+func (c Config) GetDBRepository() (string, error) {
+	return c.GetRequiredData(keyTrivyDBRepository)
 }
 
 type plugin struct {
@@ -250,7 +251,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 			keyTrivySeverity: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
 			keyTrivyMode:     string(Standalone),
 			keyTrivyTimeout:  "5m0s",
-			keyTrivyDBRepository: "ghcr.io/aquasecurity/trivy-db",
+			keyTrivyDBRepository: defaultDBRepository,
 
 			keyResourcesRequestsCPU:    "100m",
 			keyResourcesRequestsMemory: "100M",
@@ -350,6 +351,11 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 
 	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
 
+	dbRepository, err := config.GetDBRepository()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
 	requirements, err := config.GetResourceRequirements()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -419,7 +425,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			"image",
 			"--download-db-only",
 			"--db-repository",
-			config.GetDBRepository(),
+			dbRepository,
 		},
 		Resources: requirements,
 		VolumeMounts: []corev1.VolumeMount{
@@ -998,6 +1004,11 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 
 	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
 
+	dbRepository, err := config.GetDBRepository()
+	if err != nil {
+		return corev1.PodSpec{}, nil, err
+	}
+
 	requirements, err := config.GetResourceRequirements()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -1056,7 +1067,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 			"--cache-dir",
 			"/var/starboard/trivy-db",
 			"--db-repository",
-			config.GetDBRepository(),
+			dbRepository,
 		},
 		Resources:    requirements,
 		VolumeMounts: volumeMounts,
