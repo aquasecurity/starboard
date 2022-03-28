@@ -50,5 +50,7 @@ with new plugin's configuration.
 [configauditreports]: ./../crds/configaudit-report.md
 [ciskubebenchreports]: ./../crds/ciskubebench-report.md
 [kubehunterreports]: ./../crds/kubehunter-report.md
+[clustercompliancereports]: ./../crds/clustercompliance-report.md
+[clustercompliancedetailreports]: ./../crds/clustercompliancedetail-report.md
 
 [k8s-garbage-collection]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
