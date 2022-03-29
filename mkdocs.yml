@@ -54,6 +54,10 @@ nav:
       - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
       - CISKubeBenchReport: crds/ciskubebench-report.md
       - KubeHunterReport: crds/kubehunter-report.md
+      - ClusterComplianceReport: crds/clustercompliance-report.md
+      - ClusterComplianceDetailReport: crds/clustercompliancedetail-report.md
+  - Compliance Reports:
+      - National Security Agency: compliance/nsa-1.0.md
   - Frequently Asked Questions: faq.md
   - Further Reading: further-reading.md
 
