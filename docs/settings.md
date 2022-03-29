@@ -76,6 +76,6 @@ configuration settings for common use cases. For example, switch Trivy from [Sta
       -p '[{"op": "remove", "path": "/data/trivy.httpProxy"}]'
     ```
 
-[Standalone]: ./integrations/vulnerability-scanners/trivy.md#standalone
-[ClientServer]: ./integrations/vulnerability-scanners/trivy.md#clientserver
+[Standalone]: ./vulnerability-scanning/trivy.md#standalone
+[ClientServer]: ./vulnerability-scanning/trivy.md#clientserver
 [tolerations]: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration
