@@ -178,7 +178,7 @@ trivy:
   # serverCustomHeaders: "foo=bar"
 
 kubeBench:
-  imageRef: docker.io/aquasec/kube-bench:v0.6.5
+  imageRef: docker.io/aquasec/kube-bench:v0.6.6
 
 polaris:
   # createConfig indicates whether to create config objects

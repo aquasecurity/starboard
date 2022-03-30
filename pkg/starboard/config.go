@@ -79,7 +79,7 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: "Trivy",
 		keyConfigAuditReportsScanner:   "Polaris",
 
-		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.5",
+		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.6",
 		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.6.3",
 		"kube-hunter.quick":    "false",
 	}
