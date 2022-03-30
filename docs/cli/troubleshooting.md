@@ -1,3 +1,7 @@
+# Troubleshooting the Starboard CLI
+
+Feel free to either [open an issue](https://github.com/aquasecurity/starboard/issues), reach out on [Slack](https://slack.aquasec.com), or post your questions in the [discussion forum.](https://github.com/aquasecurity/starboard/discussions)
+
 ## "starboard" cannot be opened because the developer cannot be verified. (macOS)
 
 Since Starboard CLI is not registered with Apple by an identified developer, if you try to run it for the first time
