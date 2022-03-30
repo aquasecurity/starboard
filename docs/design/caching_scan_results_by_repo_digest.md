@@ -102,6 +102,26 @@ bar         replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy    
 foo         replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy     6m10s
 ```
 
+## Life-cycle management
+
+Just like any other cache it's very important that it's up to date and contains the correct information.
+To make sure of this we need to have a automated way of automatically cleaning up the ClusterVulnerabilityReport after some time.
+
+My suggestion is to solve this problem just like we did in [PR #879](https://github.com/aquasecurity/starboard/pull/879).
+For each ClusterVulnerabilityReport created we should annotate the report with `starboard.aquasecurity.github.io/cluster-vulnerability-report-ttl`.
+When the TTL ends the other controller will automatically delete the existing ClusterVulnerabilityReport and the next time the image is created in the cluster and normal vulnerabilityreport scan will happen.
+
+I suggest that we have a default value of 72 hours for this report. This is a new feature and I don't see why we shouldn't enable it by default.
+
+### Vulnerability reports
+
+From a vulnerability reports point of view we need to have a simple way for cluster admins to know if the vulnerability report is generated from a cache and if so which one?
+
+We could ether do this by setting a status on the vulnerability report that gets created but since this feature won't be on by default I suggest we use annotations.
+
+For example: `starboard.aquasecurity.github.io/ClusterVulnerabilityReportName: 84bcb5cd46` would make it easy to find.
+We can't use something like ownerReference since it would delete all vulnerabilities at the same time if a ClusterVulnerabilityReport was deleted.
+
 ## Summary
 
 * This solution might be the first step towards more efficient vulnerability scanning.
@@ -109,9 +129,6 @@ foo         replicaset-nginx-6d4cf56db6-nginx   library/nginx   1.16   Trivy    
   a gate.
 * Both Starboard CLI and Starboard Operator can read and leverage ClusterVulnerabilityReports.
 
-## TODO
-
-* Specify the life-cycle of ClusterVulnerabilityReport objects, e.g. how they are invalidated.
-
 [Standalone]: https://aquasecurity.github.io/starboard/v0.12.0/integrations/vulnerability-scanners/trivy/#standalone
 [ClientServer]: https://aquasecurity.github.io/starboard/v0.12.0/integrations/vulnerability-scanners/trivy/#clientserver
+[PR #879]: (https://github.com/aquasecurity/starboard/pull/879)
