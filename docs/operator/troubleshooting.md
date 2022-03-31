@@ -2,7 +2,7 @@
 
 The Starboard Operator installs several Kubernetes resources into your Kubernetes cluster.
 
-Here are the common steps to check whether the operator is running correctly and to troubleshoot common issue.
+Here are the common steps to check whether the operator is running correctly and to troubleshoot common issues.
 
 In addition to having a look at this section, you want to check [previous issues](https://github.com/aquasecurity/starboard/issues) to see if someone from the community had similar problems before.
 Feel free to either [open an issue](https://github.com/aquasecurity/starboard/issues), reach out on [Slack](https://slack.aquasec.com), or post your questions in the [discussion forum.](https://github.com/aquasecurity/starboard/discussions)
@@ -66,7 +66,7 @@ Make sure that you are providing the right resources upon installing the Starboa
 If your pod is in `CrashLoopBackOff`, it is likely the case that the pod cannot be scheduled on the Kubernetes node that it is trying to schedule on.
 In this case, you want to investigate further whether there is an issue with the node. It could for instance be the case that the node does not have sufficient resources.
 
-## Reconsilation Error
+## Reconcilation Error
 
 It could happen that the pod appears to be running normally but does not reconcile the resources inside of your Kubernetes cluster.
 
@@ -75,11 +75,11 @@ Check the logs for reconcilation errors:
 kubectl logs deployment/starboard-operator -n starboard-system
 ```
 
-If this is the case, the Starboard Operator likley does not have the right configurations to access your resource. 
+If this is the case, the Starboard Operator likely does not have the right configurations to access your resource. 
 
-## Operator does not create VulnerabilityReports
+## Operator does not Create VulnerabilityReports
 
-VulnerabilityReports are owned and controlled by the immediate Kubernetes workload. Every VulnerabilityReport of a pod is thus, linked to a [replicaset.](./index.md) In case the Starboard Operator does not create a VulnerabilityReport for your workloads, it could be that it is not monitoring the namespace that your workloads are running on.
+VulnerabilityReports are owned and controlled by the immediate Kubernetes workload. Every VulnerabilityReport of a pod is thus, linked to a [ReplicaSet.](./index.md) In case the Starboard Operator does not create a VulnerabilityReport for your workloads, it could be that it is not monitoring the namespace that your workloads are running on.
 
 An easy way to check this is by looking for the `ClusterRoleBinding` for the Starboard Operator:
 
