@@ -243,13 +243,13 @@ kube-system      └─Pod/kube-scheduler-kind-control-plane           True     
 
 - Find out how the operator scans workloads that use container images from [Private Registries].
 - By default, the operator uses Trivy as [Vulnerability Scanner] and Polaris as [Configuration Checker], but you can
-  choose other tools that are integrated with Starboard or even implement you own plugins.
+  choose other tools that are integrated with Starboard or even implement you own plugin.
 
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/
 [Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
 [Play with Kubernetes]: http://labs.play-with-k8s.com/
 [tree]: https://github.com/ahmetb/kubectl-tree
-[Private Registries]: ./../integrations/private-registries.md
-[Vulnerability Scanner]: ./../integrations/vulnerability-scanners/index.md
-[Configuration Checker]: ./../integrations/config-checkers/index.md
+[Private Registries]: ./../vulnerability-scanning/private-registries.md
+[Vulnerability Scanner]: ./../vulnerability-scanning/index.md
+[Configuration Checker]: ./../configuration-auditing/index.md

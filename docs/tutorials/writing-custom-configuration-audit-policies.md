@@ -1,6 +1,6 @@
 # Writing Custom Configuration Audit Policies
 
-Starboard ships with a set of pre-installed configuration audit policies defined as OPA [Rego] policies. You can also
+Starboard ships with a set of [Built-in Configuration Audit Policies] defined as OPA [Rego] policies. You can also
 define custom policies and associate them with applicable Kubernetes resources to extend basic configuration audit
 functionality.
 
@@ -213,6 +213,6 @@ report:
 6. The flag indicating whether the configuration audit check has failed or passed.
 7. The array of messages with details in case of failure.
 
+[Built-in Configuration Audit Policies]: ./../configuration-auditing/built-in-policies.md
 [Rego]: https://www.openpolicyagent.org/docs/latest/#rego
-
 [recommended labels]: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels

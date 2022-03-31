@@ -11,11 +11,14 @@ The CIS benchmark for Kubernetes provides prescriptive guidance for system and a
 specialists, auditors, help desk, and platform deployment personnel who are responsible for establishing secure
 configuration for solutions that incorporate Kubernetes.
 
-To run the CIS Kubernetes benchmark for each node in your cluster use the following Starboard CLI command:
+Starboard Operator automatically discovers cluster nodes and checks their configuration against CIS benchmarks.
+With Starboard CLI you can use the `scan ciskubebenchreports` command:
 
 ```
 starboard scan ciskubebenchreports
 ```
+
+In both cases, results are stored as [CISKubeBenchReport] resources controller by the corresponding cluster node.
 
 If everything goes fine, list benchmark results with the `kubectl get` command:
 
@@ -69,4 +72,5 @@ cluster   kube-hunter   27h   0      0        1
 [kube-bench]: https://github.com/aquasecurity/kube-bench/
 [kube-hunter]: https://github.com/aquasecurity/kube-hunter/
 [Infrastructure Scanning]: ./../../operator/getting-started.md#infrastructure-scanning
+[CISKubeBenchReport]: ./../../crds/ciskubebench-report.md
 [Automating Kubernetes Compliance Checks with Starboard Operator]: https://www.youtube.com/watch?v=hOQyEPL-ULI

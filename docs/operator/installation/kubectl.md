@@ -55,9 +55,9 @@ kubectl delete -f https://raw.githubusercontent.com/aquasecurity/starboard/{{ gi
 ```
 
 [Settings]: ./../../settings.md
-[Standalone]: ./../../integrations/vulnerability-scanners/trivy.md#standalone
-[ClientServer]: ./../../integrations/vulnerability-scanners/trivy.md#clientserver
-[Aqua Enterprise]: ./../../integrations/vulnerability-scanners/aqua-enterprise.md
+[Standalone]: ./../../vulnerability-scanning/trivy.md#standalone
+[ClientServer]: ./../../vulnerability-scanning/trivy.md#clientserver
+[Aqua Enterprise]: ./../../vulnerability-scanning/aqua-enterprise.md
 [Kustomize]: https://kustomize.io
 [Helm]: ./helm.md
 [NSA, CISA Kubernetes Hardening Guidance v1.0]: ./../../specs/NSA_Kubernetes_Hardening_Guidance_1.0.pdf
