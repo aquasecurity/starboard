@@ -18,6 +18,7 @@ nav:
           - Upgrade: operator/installation/upgrade.md
       - Getting Started: operator/getting-started.md
       - Configuration: operator/configuration.md
+      - Troubleshooting: operator/troubleshooting.md
   - Starboard CLI:
       - Overview: cli/index.md
       - Installation:
