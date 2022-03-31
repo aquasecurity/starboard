@@ -10,7 +10,7 @@ Feel free to either [open an issue](https://github.com/aquasecurity/starboard/is
 ## Installation
 
 Make sure that the latest version of the Starboard Operator is installed inside of your Kubernetes cluster.
-For this, have a look at the installation [options.](./installation)
+For this, have a look at the installation [options.](./installation/helm.md)
 
 For instance, if your are using the Helm deployment, you need to check the Helm Chart version deployed to your cluster. You can check the Helm Chart version with the following command:
 ```
