@@ -1,0 +1,30 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: starboard-admission-hook-config
+  namespace: starboard-system
+webhooks:
+  - name: configurationaudit.aquasec.github.io
+    admissionReviewVersions:
+      - v1beta1
+    timeoutSeconds: 5
+    failurePolicy: Ignore
+    sideEffects: "None"
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - "*"
+        apiVersions:
+          - "*"
+        resources:
+          - pods
+    clientConfig:
+      caBundle: ""
+      service:
+        name: starboard-operator
+        namespace: starboard-system
+        path: "/validate"
+        port: 443

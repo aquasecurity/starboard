@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var (
@@ -260,6 +261,15 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			return fmt.Errorf("unable to setup clustercompliancereport reconciler: %w", err)
 		}
 	}
+
+	webhookServer := mgr.GetWebhookServer()
+	webhookServer.Register("/validate", &webhook.Admission{
+		Handler: &configauditreport.AdmissionHandler{
+			Config: operatorConfig,
+			Client: mgr.GetClient(),
+		},
+	})
+
 	setupLog.Info("Starting controllers manager")
 	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("starting controllers manager: %w", err)
