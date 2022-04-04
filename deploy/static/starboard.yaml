@@ -1992,6 +1992,8 @@ spec:
               value: "true"
             - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
               value: "true"
+            - name: OPERATOR_CLUSTER_COMPLIANCE_FAIL_ENTRIES_LIMIT
+              value: "10"
           ports:
             - name: metrics
               containerPort: 8080

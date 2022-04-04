@@ -27,6 +27,7 @@ type Config struct {
 	VulnerabilityScannerScanOnlyCurrentRevisions bool           `env:"OPERATOR_VULNERABILITY_SCANNER_SCAN_ONLY_CURRENT_REVISIONS" envDefault:"false"`
 	VulnerabilityScannerReportTTL                *time.Duration `env:"OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL"`
 	ClusterComplianceEnabled                     bool           `env:"OPERATOR_CLUSTER_COMPLIANCE_ENABLED" envDefault:"true"`
+	ClusterComplianceFailEntriesLimit            int            `env:"OPERATOR_CLUSTER_COMPLIANCE_FAIL_ENTRIES_LIMIT" envDefault:"10"`
 	ConfigAuditScannerEnabled                    bool           `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"false"`
 
 	// ConfigAuditScannerBuiltIn tells Starboard to use the built-in

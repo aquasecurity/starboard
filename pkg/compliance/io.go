@@ -3,6 +3,7 @@ package compliance
 import (
 	"context"
 	"fmt"
+	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -23,16 +24,18 @@ type Mgr interface {
 	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) error
 }
 
-func NewMgr(client client.Client, log logr.Logger) Mgr {
+func NewMgr(client client.Client, log logr.Logger, config etc.Config) Mgr {
 	return &cm{
 		client: client,
 		log:    log,
+		config: config,
 	}
 }
 
 type cm struct {
 	client client.Client
 	log    logr.Logger
+	config etc.Config
 }
 
 type summaryTotal struct {
@@ -242,16 +245,19 @@ func (w *cm) createScanCheckResult(results []*ScannerCheckResult) []v1alpha1.Sca
 	ctta := make([]v1alpha1.ScannerCheckResult, 0)
 	for _, checkResult := range results {
 		var ctt v1alpha1.ScannerCheckResult
-		rds := make([]v1alpha1.ResultDetails, 0)
+		failedResultEntries := make([]v1alpha1.ResultDetails, 0)
 		for _, crd := range checkResult.Details {
+			if len(failedResultEntries) > w.config.ClusterComplianceFailEntriesLimit {
+				continue
+			}
 			//control check detail relevant to fail checks only
 			if crd.Status == v1alpha1.PassStatus || crd.Status == v1alpha1.WarnStatus {
 				continue
 			}
-			rds = append(rds, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
+			failedResultEntries = append(failedResultEntries, v1alpha1.ResultDetails{Name: crd.Name, Namespace: crd.Namespace, Msg: crd.Msg, Status: crd.Status})
 		}
-		if len(rds) > 0 {
-			ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: rds}
+		if len(failedResultEntries) > 0 {
+			ctt = v1alpha1.ScannerCheckResult{ID: checkResult.ID, ObjectType: checkResult.ObjectType, Remediation: checkResult.Remediation, Details: failedResultEntries}
 			ctta = append(ctta, ctt)
 		}
 	}
