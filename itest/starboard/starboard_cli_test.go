@@ -18,6 +18,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1163,14 +1164,14 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				ctx = context.TODO()
-				object = &batchv1.CronJob{
+				object = &batchv1beta1.CronJob{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "hello" + "-" + rand.String(5),
 						Namespace: testNamespace.Name,
 					},
-					Spec: batchv1.CronJobSpec{
+					Spec: batchv1beta1.CronJobSpec{
 						Schedule: "*/1 * * * *",
-						JobTemplate: batchv1.JobTemplateSpec{
+						JobTemplate: batchv1beta1.JobTemplateSpec{
 							Spec: batchv1.JobSpec{
 								Template: corev1.PodTemplateSpec{
 									Spec: corev1.PodSpec{

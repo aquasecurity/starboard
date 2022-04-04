@@ -11,6 +11,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -148,18 +149,18 @@ func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 		Context("When CronJob is created", func() {
 
 			var ctx context.Context
-			var cronJob *batchv1.CronJob
+			var cronJob *batchv1beta1.CronJob
 
 			BeforeEach(func() {
 				ctx = context.Background()
-				cronJob = &batchv1.CronJob{
+				cronJob = &batchv1beta1.CronJob{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: inputs.PrimaryNamespace,
 						Name:      "hello-" + rand.String(5),
 					},
-					Spec: batchv1.CronJobSpec{
+					Spec: batchv1beta1.CronJobSpec{
 						Schedule: "*/1 * * * *",
-						JobTemplate: batchv1.JobTemplateSpec{
+						JobTemplate: batchv1beta1.JobTemplateSpec{
 							Spec: batchv1.JobSpec{
 								Template: corev1.PodTemplateSpec{
 									Spec: corev1.PodSpec{
@@ -324,18 +325,18 @@ func ConfigurationCheckerBehavior(inputs *Inputs) func() {
 		Context("When CronJob is created", func() {
 
 			var ctx context.Context
-			var cronJob *batchv1.CronJob
+			var cronJob *batchv1beta1.CronJob
 
 			BeforeEach(func() {
 				ctx = context.Background()
-				cronJob = &batchv1.CronJob{
+				cronJob = &batchv1beta1.CronJob{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: inputs.PrimaryNamespace,
 						Name:      "hello-" + rand.String(5),
 					},
-					Spec: batchv1.CronJobSpec{
+					Spec: batchv1beta1.CronJobSpec{
 						Schedule: "*/1 * * * *",
-						JobTemplate: batchv1.JobTemplateSpec{
+						JobTemplate: batchv1beta1.JobTemplateSpec{
 							Spec: batchv1.JobSpec{
 								Template: corev1.PodTemplateSpec{
 									Spec: corev1.PodSpec{
