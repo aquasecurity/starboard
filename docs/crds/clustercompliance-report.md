@@ -2,16 +2,16 @@
 
 The ClusterComplianceReport is a cluster-scoped resource, which represents the latest compliance control checks results.
 The report spec defines a mapping between pre-defined compliance control check ids to security scanners check ids.
-Currently, only `kube-bench` and `config-audit` security scanners are supported
+Currently, only `kube-bench` and `config-audit` security scanners are supported.
 
+The NSA compliance report is composed of two parts:
 
-The NSA compliance report is composed of two parts :
+- `spec:` represents the compliance control checks specification, check details, and the mapping to the security scanner
+  (this part is defined by the user)
+- `status:` represents the compliance control checks (as defined by spec mapping) results extracted from the security
+  scanners reports (this part is output by starboard)
 
-- `spec:` represents the compliance control checks specification, check details, and the mapping to the security scanner (this part is defined by the user)
-
-- `status:` represents the compliance control checks (as defined by spec mapping) results extracted from the security scanners reports (this part is output by starboard)
-
-The following shows a sample ClusterComplianceReport NSA specification associated with the `cluster`
+The following shows a sample ClusterComplianceReport NSA specification associated with the `cluster`:
 
 ```yaml
 apiVersion: aquasecurity.github.io/v1alpha1
@@ -25,7 +25,7 @@ metadata:
     app.kubernetes.io/instance: starboard-operator
     app.kubernetes.io/managed-by: kubectl
     app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/version: 0.15.0
+    app.kubernetes.io/version: {{ git.tag[1:] }}
   name: nsa
   resourceVersion: '15745'
   uid: d11e8af1-daac-457d-96ea-45be4b043814
