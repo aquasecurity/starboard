@@ -3,8 +3,9 @@ package compliance
 import (
 	"context"
 	"fmt"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"strings"
+
+	"github.com/aquasecurity/starboard/pkg/operator/etc"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -247,7 +248,7 @@ func (w *cm) createScanCheckResult(results []*ScannerCheckResult) []v1alpha1.Sca
 		var ctt v1alpha1.ScannerCheckResult
 		failedResultEntries := make([]v1alpha1.ResultDetails, 0)
 		for _, crd := range checkResult.Details {
-			if len(failedResultEntries) > w.config.ClusterComplianceFailEntriesLimit {
+			if len(failedResultEntries) >= w.config.ClusterComplianceFailEntriesLimit {
 				continue
 			}
 			//control check detail relevant to fail checks only

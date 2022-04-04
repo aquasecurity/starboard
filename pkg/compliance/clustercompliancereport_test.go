@@ -35,7 +35,8 @@ func loadResource(filePath string, resource interface{}) error {
 
 var _ = ginkgo.Describe("cluster compliance report", func() {
 	config := etc.Config{
-		Namespace: "starboard-operator",
+		Namespace:                         "starboard-operator",
+		ClusterComplianceFailEntriesLimit: 1,
 	}
 	logger := log.Log.WithName("operator")
 
@@ -60,7 +61,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		).Build()
 
 		// create compliance controller
-		instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger), Clock: ext.NewSystemClock()}
+		instance := ClusterComplianceReportReconciler{Logger: logger, Client: client, Mgr: NewMgr(client, logger, config), Clock: ext.NewSystemClock()}
 
 		// trigger compliance report generation
 		_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
@@ -151,7 +152,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		// create new client
 		clientWithComplianceSpecOnly := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(&clusterComplianceSpec).Build()
 		// create compliance controller
-		complianceControllerInstance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: clientWithComplianceSpecOnly, Mgr: NewMgr(clientWithComplianceSpecOnly, logger), Clock: ext.NewSystemClock()}
+		complianceControllerInstance := ClusterComplianceReportReconciler{Logger: logger, Client: clientWithComplianceSpecOnly, Mgr: NewMgr(clientWithComplianceSpecOnly, logger, config), Clock: ext.NewSystemClock()}
 		reconcileReport, err := complianceControllerInstance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 		Expect(err).ToNot(HaveOccurred())
 

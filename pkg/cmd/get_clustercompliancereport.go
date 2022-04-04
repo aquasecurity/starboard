@@ -3,11 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/compliance"
+	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
-	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -50,7 +52,11 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 				return err
 			}
 			// generate compliance and compliance failure detail reports
-			complianceMgr := compliance.NewMgr(kubeClient, logger)
+			operatorConfig, err := etc.GetOperatorConfig()
+			if err != nil {
+				return fmt.Errorf("getting client config: %w", err)
+			}
+			complianceMgr := compliance.NewMgr(kubeClient, logger, operatorConfig)
 			err = complianceMgr.GenerateComplianceReport(ctx, report.Spec)
 			if err != nil {
 				return fmt.Errorf("failed to generate report: %w", err)
