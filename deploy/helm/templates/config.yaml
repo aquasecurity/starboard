@@ -63,6 +63,9 @@ data:
   {{- if .ignoreUnfixed }}
   trivy.ignoreUnfixed: {{ .ignoreUnfixed | quote }}
   {{- end }}
+  {{- if .useEcrRoleCreds }}
+  trivy.useEcrRoleCreds: {{ .useEcrRoleCreds | quote }}
+  {{- end }}
   {{- if .timeout }}
   trivy.timeout: {{ .timeout | quote }}
   {{- end }}
