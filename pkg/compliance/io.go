@@ -64,7 +64,7 @@ func (w *cm) GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportS
 	//create cluster compliance details report
 	err = w.createComplianceDetailReport(ctx, spec, smd, checkIdsToResults, st)
 	if err != nil {
-		return fmt.Errorf("failed to create compliance detail report name: %s with error %v", strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "details")), err)
+		return fmt.Errorf("failed to create compliance detail report name: %s with error %w", strings.ToLower(fmt.Sprintf("%s-%s", spec.Name, "details")), err)
 	}
 	//generate cluster compliance report
 	updatedReport, err := w.createComplianceReport(ctx, spec, st, controlChecks)
