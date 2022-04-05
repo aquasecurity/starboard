@@ -45,6 +45,10 @@ These guidelines will help you get started with the Starboard project.
 - When addressing comments, try to fix each suggestion in a separate commit.
 - Tests are not required at this point as Starboard is evolving fast, but if you can include tests that will be appreciated.
 
+#### Conventional Commits
+It is not that strict, but we use the [Conventional commits](https://www.conventionalcommits.org) in this repository.
+Each commit message doesn't have to follow conventions as long as it is clear and descriptive since it will be squashed and merged.
+
 ## Set up your Development Environment
 
 1. Install Go
