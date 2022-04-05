@@ -18,6 +18,7 @@ nav:
           - Upgrade: operator/installation/upgrade.md
       - Getting Started: operator/getting-started.md
       - Configuration: operator/configuration.md
+      - Troubleshooting: operator/troubleshooting.md
   - Starboard CLI:
       - Overview: cli/index.md
       - Installation:
@@ -28,22 +29,27 @@ nav:
       - Getting Started: cli/getting-started.md
       - Troubleshooting: cli/troubleshooting.md
   - Settings: settings.md
-  - Integrations:
-      - Vulnerability Scanners:
-          - Overview: integrations/vulnerability-scanners/index.md
-          - Trivy: integrations/vulnerability-scanners/trivy.md
-          - Aqua Enterprise: integrations/vulnerability-scanners/aqua-enterprise.md
-      - Configuration Checkers:
-          - Overview: integrations/config-checkers/index.md
-          - Polaris: integrations/config-checkers/polaris.md
-          - Conftest: integrations/config-checkers/conftest.md
+  - Vulnerability Scanning:
+      - Overview: vulnerability-scanning/index.md
+      - Trivy Scanner: vulnerability-scanning/trivy.md
+      - Aqua Enterprise Scanner: vulnerability-scanning/aqua-enterprise.md
+      - Private Registries: vulnerability-scanning/private-registries.md
+      - Managed Registries: vulnerability-scanning/managed-registries.md
+  - Configuration Auditing:
+      - Overview: configuration-auditing/index.md
+      - Built-in Configuration Audit Policies: configuration-auditing/built-in-policies.md
       - Infrastructure Scanners:
-          - Overview: integrations/infra-scanners/index.md
-      - Private Registries: integrations/private-registries.md
-      - Managed Registries: integrations/managed-registries.md
+          - Overview: configuration-auditing/infrastructure-scanners/index.md
+      - Pluggable Scanners:
+          - Overview: configuration-auditing/pluggable-scanners/index.md
+          - Polaris: configuration-auditing/pluggable-scanners/polaris.md
+          - Conftest: configuration-auditing/pluggable-scanners/conftest.md
+  - Integrations:
       - Octant Plugin: integrations/octant.md
       - Lens Extension: integrations/lens.md
+      - Prometheus Exporter: integrations/prometheus.md
   - Tutorials:
+      - Writing Custom Configuration Audit Policies: tutorials/writing-custom-configuration-audit-policies.md
       - Manage Access to Security Reports: tutorials/manage_access_to_security_reports.md
   - Custom Resource Definitions:
       - Overview: crds/index.md
@@ -53,6 +59,10 @@ nav:
       - ClusterConfigAuditReport: crds/clusterconfigaudit-report.md
       - CISKubeBenchReport: crds/ciskubebench-report.md
       - KubeHunterReport: crds/kubehunter-report.md
+      - ClusterComplianceReport: crds/clustercompliance-report.md
+      - ClusterComplianceDetailReport: crds/clustercompliancedetail-report.md
+  - Compliance Reports:
+      - National Security Agency: compliance/nsa-1.0.md
   - Frequently Asked Questions: faq.md
   - Further Reading: further-reading.md
 
@@ -89,8 +99,8 @@ extra:
   version:
     provider: mike
   var:
-    prev_git_tag: "v0.14.1"
-    chart_version: 0.10.0
+    prev_git_tag: "v0.15.0"
+    chart_version: 0.10.1
 
 # Requires pip install mkdocs-macros-plugin
 plugins:

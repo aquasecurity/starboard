@@ -60,7 +60,11 @@ func (r *ClusterComplianceReportReconciler) generateComplianceReport(ctx context
 			return fmt.Errorf("failed to check report cron expression %w", err)
 		}
 		if utils.DurationExceeded(durationToNextGeneration) {
-			return r.Mgr.GenerateComplianceReport(ctx, report.Spec)
+			err = r.Mgr.GenerateComplianceReport(ctx, report.Spec)
+			if err != nil {
+				log.Error(err, "failed to generate compliance report")
+			}
+			return err
 		}
 		log.V(1).Info("RequeueAfter", "durationToNextGeneration", durationToNextGeneration)
 		ctrlResult.RequeueAfter = durationToNextGeneration

@@ -89,5 +89,5 @@ schema can be integrated with Starboard.
     to perform scans and vary in output formats for a relatively common goal, which is inspecting deployment descriptors
     for known configuration pitfalls.
 
-[Polaris]: ./../integrations/config-checkers/polaris.md
-[Conftest]: ./../integrations/config-checkers/conftest.md
+[Polaris]: ./../configuration-auditing/pluggable-scanners/polaris.md
+[Conftest]: ./../configuration-auditing/pluggable-scanners/conftest.md

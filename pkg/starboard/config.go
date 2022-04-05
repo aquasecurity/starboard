@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -29,6 +30,7 @@ func NewScheme() *runtime.Scheme {
 	_ = corev1.AddToScheme(scheme)
 	_ = appsv1.AddToScheme(scheme)
 	_ = batchv1.AddToScheme(scheme)
+	_ = batchv1beta1.AddToScheme(scheme)
 	_ = rbacv1.AddToScheme(scheme)
 	_ = networkingv1.AddToScheme(scheme)
 	_ = policyv1beta1.AddToScheme(scheme)
@@ -79,8 +81,8 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: "Trivy",
 		keyConfigAuditReportsScanner:   "Polaris",
 
-		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.5",
-		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.6.3",
+		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.6",
+		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.6.5",
 		"kube-hunter.quick":    "false",
 	}
 }

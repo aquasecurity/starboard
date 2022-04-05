@@ -142,7 +142,7 @@ open nginx.deploy.html
   `starboard help`.
 * Read up on [Infrastructure Scanners] integrated with Starboard.
 
-[Trivy]: ./../integrations/vulnerability-scanners/trivy.md
+[Trivy]: ./../vulnerability-scanning/trivy.md
 [Custom Resource Definitions]: ./../crds/index.md
 [Katacoda]: https://www.katacoda.com/courses/kubernetes/playground/
 [Play with Kubernetes]: http://labs.play-with-k8s.com/
@@ -151,4 +151,4 @@ open nginx.deploy.html
 [kind]: https://kind.sigs.k8s.io/docs/
 [kube-bench]: https://github.com/aquasecurity/kube-bench
 [kube-hunter]: https://github.com/aquasecurity/kube-hunter
-[Infrastructure Scanners]: ./../integrations/infra-scanners/index.md
+[Infrastructure Scanners]: ./../configuration-auditing/infrastructure-scanners/index.md

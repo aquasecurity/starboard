@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -465,9 +466,9 @@ func TestGetPodSpec(t *testing.T) {
 		},
 		{
 			name: "Should return PodSpec for CronJob",
-			object: &batchv1.CronJob{
-				Spec: batchv1.CronJobSpec{
-					JobTemplate: batchv1.JobTemplateSpec{
+			object: &batchv1beta1.CronJob{
+				Spec: batchv1beta1.CronJobSpec{
+					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
 								Spec: corev1.PodSpec{
