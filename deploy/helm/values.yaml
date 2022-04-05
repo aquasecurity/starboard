@@ -118,6 +118,12 @@ trivy:
   #
   # noProxy:
 
+  # Allows to fetch the ECR Login Token if the Service is running in AWS and the EC2-VM has an Instance-Role assigned.
+  # It also needs k8s KIAM (https://github.com/uswitch/kiam) to be in place which allowed Assuming Roles to specify
+  # dedicated permissions for the Finale Role which has the rights to get login credentials.
+  #
+  # useEcrRoleCreds: false
+
   # Registries without SSL. There can be multiple registries with different keys.
   nonSslRegistries: {}
   #  pocRegistry: poc.myregistry.harbor.com.pl
@@ -434,6 +440,11 @@ serviceAccount:
 
 # podAnnotations annotations added to the operator's pod
 podAnnotations: {}
+
+# podAnnotations example for to get the ECR-Credentials fetch working via AWS-Roles
+#
+# podAnnotations: 
+    # iam.amazonaws.com/role: <yourRolewithPermissions>
 
 podSecurityContext: {}
   # fsGroup: 2000

@@ -2,9 +2,12 @@ package trivy
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
@@ -13,12 +16,20 @@ import (
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/google/go-containerregistry/pkg/name"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	AWSECR_Image_Regex = "^\\d+\\.dkr\\.ecr\\.(\\w+-\\w+-\\d+)\\.amazonaws\\.com\\/"
 )
 
 const (
@@ -43,6 +54,7 @@ const (
 	keyTrivyGitHubToken            = "trivy.githubToken"
 	keyTrivySkipFiles              = "trivy.skipFiles"
 	keyTrivySkipDirs               = "trivy.skipDirs"
+	keyTrivyUseECRRoleCreds        = "trivy.useEcrRoleCreds"
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
@@ -63,6 +75,11 @@ const (
 	Standalone   Mode = "Standalone"
 	ClientServer Mode = "ClientServer"
 )
+
+type ecr_credentials struct {
+	username string
+	password string
+}
 
 // Command to scan image or filesystem.
 type Command string
@@ -119,6 +136,14 @@ func (c Config) GetCommand() (Command, error) {
 
 func (c Config) GetServerURL() (string, error) {
 	return c.GetRequiredData(keyTrivyServerURL)
+}
+
+func (c Config) UseECRCredentials() bool {
+	if c.Data[keyTrivyUseECRRoleCreds] == "true" {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (c Config) GetServerInsecure() bool {
@@ -574,31 +599,49 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			})
 		}
 
-		if _, ok := credentials[c.Name]; ok && secret != nil {
-			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
-			registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(c.Image) != "" {
+			var aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(c.Image))
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
+			}
+
+			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
-				Name: "TRIVY_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryUsernameKey,
-					},
-				},
-			}, corev1.EnvVar{
-				Name: "TRIVY_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryPasswordKey,
-					},
-				},
+				Name:  "TRIVY_USERNAME",
+				Value: creds.username,
 			})
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_PASSWORD",
+				Value: creds.password,
+			})
+		} else {
+			if _, ok := credentials[c.Name]; ok && secret != nil {
+				registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
+				registryPasswordKey := fmt.Sprintf("%s.password", c.Name)
+
+				env = append(env, corev1.EnvVar{
+					Name: "TRIVY_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryUsernameKey,
+						},
+					},
+				}, corev1.EnvVar{
+					Name: "TRIVY_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryPasswordKey,
+						},
+					},
+				})
+			}
 		}
 
 		env, err = p.appendTrivyInsecureEnv(config, c.Image, env)
@@ -839,115 +882,132 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			},
 		}
 
-		if _, ok := credentials[container.Name]; ok && secret != nil {
-			registryUsernameKey := fmt.Sprintf("%s.username", container.Name)
-			registryPasswordKey := fmt.Sprintf("%s.password", container.Name)
+		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(container.Image) != "" {
+			var aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(container.Image))
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
+			}
+			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
-				Name: "TRIVY_USERNAME",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryUsernameKey,
-					},
-				},
-			}, corev1.EnvVar{
-				Name: "TRIVY_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: registryPasswordKey,
-					},
-				},
+				Name:  "TRIVY_USERNAME",
+				Value: creds.username,
 			})
-		}
-
-		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
-		if err != nil {
-			return corev1.PodSpec{}, nil, err
-		}
-
-		env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
-		if err != nil {
-			return corev1.PodSpec{}, nil, err
-		}
-
-		if config.GetServerInsecure() {
 			env = append(env, corev1.EnvVar{
-				Name:  "TRIVY_INSECURE",
-				Value: "true",
+				Name:  "TRIVY_PASSWORD",
+				Value: creds.password,
 			})
-		}
+		} else {
+			if _, ok := credentials[container.Name]; ok && secret != nil {
+				registryUsernameKey := fmt.Sprintf("%s.username", container.Name)
+				registryPasswordKey := fmt.Sprintf("%s.password", container.Name)
 
-		if config.IgnoreFileExists() {
-			volumes = []corev1.Volume{
-				{
-					Name: ignoreFileVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
+				env = append(env, corev1.EnvVar{
+					Name: "TRIVY_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: trivyConfigName,
+								Name: secret.Name,
 							},
-							Items: []corev1.KeyToPath{
-								{
-									Key:  keyTrivyIgnoreFile,
-									Path: ".trivyignore",
+							Key: registryUsernameKey,
+						},
+					},
+				}, corev1.EnvVar{
+					Name: "TRIVY_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: secret.Name,
+							},
+							Key: registryPasswordKey,
+						},
+					},
+				})
+			}
+
+			env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
+			}
+
+			env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
+			}
+
+			if config.GetServerInsecure() {
+				env = append(env, corev1.EnvVar{
+					Name:  "TRIVY_INSECURE",
+					Value: "true",
+				})
+			}
+
+			if config.IgnoreFileExists() {
+				volumes = []corev1.Volume{
+					{
+						Name: ignoreFileVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: trivyConfigName,
+								},
+								Items: []corev1.KeyToPath{
+									{
+										Key:  keyTrivyIgnoreFile,
+										Path: ".trivyignore",
+									},
 								},
 							},
 						},
 					},
-				},
+				}
+
+				volumeMounts = []corev1.VolumeMount{
+					{
+						Name:      ignoreFileVolumeName,
+						MountPath: "/etc/trivy/.trivyignore",
+						SubPath:   ".trivyignore",
+					},
+				}
+
+				env = append(env, corev1.EnvVar{
+					Name:  "TRIVY_IGNOREFILE",
+					Value: "/etc/trivy/.trivyignore",
+				})
 			}
 
-			volumeMounts = []corev1.VolumeMount{
-				{
-					Name:      ignoreFileVolumeName,
-					MountPath: "/etc/trivy/.trivyignore",
-					SubPath:   ".trivyignore",
-				},
+			requirements, err := config.GetResourceRequirements()
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
 			}
 
-			env = append(env, corev1.EnvVar{
-				Name:  "TRIVY_IGNOREFILE",
-				Value: "/etc/trivy/.trivyignore",
+			optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
+			if err != nil {
+				return corev1.PodSpec{}, nil, err
+			}
+
+			containers = append(containers, corev1.Container{
+				Name:                     container.Name,
+				Image:                    trivyImageRef,
+				ImagePullPolicy:          corev1.PullIfNotPresent,
+				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+				Env:                      env,
+				Command: []string{
+					"trivy",
+				},
+				Args: []string{
+					"--quiet",
+					"client",
+					"--format",
+					"json",
+					"--remote",
+					trivyServerURL,
+					optionalMirroredImage,
+				},
+				VolumeMounts: volumeMounts,
+				Resources:    requirements,
 			})
 		}
-
-		requirements, err := config.GetResourceRequirements()
-		if err != nil {
-			return corev1.PodSpec{}, nil, err
-		}
-
-		optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
-		if err != nil {
-			return corev1.PodSpec{}, nil, err
-		}
-
-		containers = append(containers, corev1.Container{
-			Name:                     container.Name,
-			Image:                    trivyImageRef,
-			ImagePullPolicy:          corev1.PullIfNotPresent,
-			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-			Env:                      env,
-			Command: []string{
-				"trivy",
-			},
-			Args: []string{
-				"--quiet",
-				"client",
-				"--format",
-				"json",
-				"--remote",
-				trivyServerURL,
-				optionalMirroredImage,
-			},
-			VolumeMounts: volumeMounts,
-			Resources:    requirements,
-		})
 	}
 
 	return corev1.PodSpec{
@@ -1364,4 +1424,44 @@ func constructEnvVarSourceFromConfigMap(envName, configName, configKey string) (
 		},
 	}
 	return
+}
+
+func CheckAwsEcrPrivateRegistry(ImageUrl string) string {
+	if len(regexp.MustCompile(AWSECR_Image_Regex).FindAllStringSubmatch(ImageUrl, -1)) != 0 {
+		return regexp.MustCompile(AWSECR_Image_Regex).FindAllStringSubmatch(ImageUrl, -1)[0][1]
+	}
+	return ""
+}
+
+func GetAuthorizationToken(AwsEcrRegion string) ([][]string, error) {
+	svc := ecr.New(session.New(aws.NewConfig().WithRegion(AwsEcrRegion)))
+	input := &ecr.GetAuthorizationTokenInput{}
+
+	result, err := svc.GetAuthorizationToken(input)
+	if err != nil {
+		var errormsg string
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				errormsg = "GetAuthorizationToken (AWS-API): " + ecr.ErrCodeServerException + ", " + aerr.Error()
+			case ecr.ErrCodeInvalidParameterException:
+				errormsg = "GetAuthorizationToken (AWS-API): " + ecr.ErrCodeInvalidParameterException + ", " + aerr.Error()
+			default:
+				errormsg = "GetAuthorizationToken (AWS-API): " + aerr.Error()
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+		return nil, errors.New((errormsg))
+	}
+
+	var credentials = *result.AuthorizationData[0].AuthorizationToken
+
+	if len(credentials) > 0 {
+		sDec, _ := base64.StdEncoding.DecodeString(credentials)
+		pattern := regexp.MustCompile("^(AWS):(.+)$")
+		return pattern.FindAllStringSubmatch(string(sDec), -1), nil
+	} else {
+		return nil, errors.New("GetAuthorizationToken: Error during retrival and base64 decoding operation.")
+	}
 }
