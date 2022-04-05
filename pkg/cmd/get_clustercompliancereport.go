@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io"
 
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/compliance"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -51,12 +52,15 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 			if err != nil {
 				return err
 			}
-			// generate compliance and compliance failure detail reports
-			operatorConfig, err := etc.GetOperatorConfig()
+			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 			if err != nil {
-				return fmt.Errorf("getting client config: %w", err)
+				return err
 			}
-			complianceMgr := compliance.NewMgr(kubeClient, logger, operatorConfig)
+			starboardConfig, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+			if err != nil {
+				return err
+			}
+			complianceMgr := compliance.NewMgr(kubeClient, logger, starboardConfig)
 			err = complianceMgr.GenerateComplianceReport(ctx, report.Spec)
 			if err != nil {
 				return fmt.Errorf("failed to generate report: %w", err)

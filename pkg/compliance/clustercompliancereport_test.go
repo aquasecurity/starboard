@@ -8,7 +8,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/ginkgo"
@@ -34,12 +33,8 @@ func loadResource(filePath string, resource interface{}) error {
 }
 
 var _ = ginkgo.Describe("cluster compliance report", func() {
-	config := etc.Config{
-		Namespace:                         "starboard-operator",
-		ClusterComplianceFailEntriesLimit: 1,
-	}
 	logger := log.Log.WithName("operator")
-
+	config := getStarboardConfig()
 	ginkgo.Context("reconcile compliance spec report with cis-bench anc audit-config data and validate compliance reports data and requeue", func() {
 		var cisBenchList v1alpha1.CISKubeBenchReportList
 		err := loadResource("./testdata/fixture/cisBenchmarkReportList.json", &cisBenchList)
@@ -216,4 +211,8 @@ func getDetailReport(ctx context.Context, namespaceName types.NamespacedName, cl
 		return nil, err
 	}
 	return &report, nil
+}
+
+func getStarboardConfig() starboard.ConfigData {
+	return starboard.ConfigData{"compliance.failEntriesLimit": "1"}
 }

@@ -87,8 +87,6 @@ spec:
               value: {{ .Values.operator.configAuditScannerBuiltIn | quote }}
             - name: OPERATOR_CLUSTER_COMPLIANCE_ENABLED
               value: {{ .Values.operator.clusterComplianceEnabled | quote }}
-            - name: OPERATOR_CLUSTER_COMPLIANCE_FAIL_ENTRIES_LIMIT
-              value: {{ .Values.operator.ClusterComplianceFailEntriesLimit | quote }}
             {{- if gt (int .Values.operator.replicas) 1 }}
             - name: OPERATOR_LEADER_ELECTION_ENABLED
               value: "true"

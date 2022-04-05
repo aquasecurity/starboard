@@ -269,6 +269,32 @@ func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
 		})
 	}
 }
+func TestConfigData_GetComplianceFailEntriesLimit(t *testing.T) {
+	testCases := []struct {
+		name       string
+		configData starboard.ConfigData
+		want       int
+	}{
+		{
+			name:       "Should return compliance fail entries limit default value",
+			configData: starboard.ConfigData{},
+			want:       10,
+		},
+		{
+			name: "Should return compliance fail entries limit from config data",
+			configData: starboard.ConfigData{
+				"compliance.failEntriesLimit": "15",
+			},
+			want: 15,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotLimit := tc.configData.ComplianceFailEntriesLimit()
+			assert.Equal(t, tc.want, gotLimit)
+		})
+	}
+}
 
 func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	testCases := []struct {

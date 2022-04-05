@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
@@ -25,7 +25,7 @@ type Mgr interface {
 	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) error
 }
 
-func NewMgr(client client.Client, log logr.Logger, config etc.Config) Mgr {
+func NewMgr(client client.Client, log logr.Logger, config starboard.ConfigData) Mgr {
 	return &cm{
 		client: client,
 		log:    log,
@@ -36,7 +36,7 @@ func NewMgr(client client.Client, log logr.Logger, config etc.Config) Mgr {
 type cm struct {
 	client client.Client
 	log    logr.Logger
-	config etc.Config
+	config starboard.ConfigData
 }
 
 type summaryTotal struct {
@@ -248,7 +248,7 @@ func (w *cm) createScanCheckResult(results []*ScannerCheckResult) []v1alpha1.Sca
 		var ctt v1alpha1.ScannerCheckResult
 		failedResultEntries := make([]v1alpha1.ResultDetails, 0)
 		for _, crd := range checkResult.Details {
-			if len(failedResultEntries) >= w.config.ClusterComplianceFailEntriesLimit {
+			if len(failedResultEntries) >= w.config.ComplianceFailEntriesLimit() {
 				continue
 			}
 			//control check detail relevant to fail checks only
