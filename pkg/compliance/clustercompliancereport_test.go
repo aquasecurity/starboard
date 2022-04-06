@@ -8,7 +8,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/ginkgo"
@@ -34,11 +33,8 @@ func loadResource(filePath string, resource interface{}) error {
 }
 
 var _ = ginkgo.Describe("cluster compliance report", func() {
-	config := etc.Config{
-		Namespace: "starboard-operator",
-	}
 	logger := log.Log.WithName("operator")
-
+	config := getStarboardConfig()
 	ginkgo.Context("reconcile compliance spec report with cis-bench anc audit-config data and validate compliance reports data and requeue", func() {
 		var cisBenchList v1alpha1.CISKubeBenchReportList
 		err := loadResource("./testdata/fixture/cisBenchmarkReportList.json", &cisBenchList)
@@ -60,7 +56,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		).Build()
 
 		// create compliance controller
-		instance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: client, Mgr: NewMgr(client, logger), Clock: ext.NewSystemClock()}
+		instance := ClusterComplianceReportReconciler{Logger: logger, Client: client, Mgr: NewMgr(client, logger, config), Clock: ext.NewSystemClock()}
 
 		// trigger compliance report generation
 		_, err = instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
@@ -151,7 +147,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		// create new client
 		clientWithComplianceSpecOnly := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(&clusterComplianceSpec).Build()
 		// create compliance controller
-		complianceControllerInstance := ClusterComplianceReportReconciler{Logger: logger, Config: config, Client: clientWithComplianceSpecOnly, Mgr: NewMgr(clientWithComplianceSpecOnly, logger), Clock: ext.NewSystemClock()}
+		complianceControllerInstance := ClusterComplianceReportReconciler{Logger: logger, Client: clientWithComplianceSpecOnly, Mgr: NewMgr(clientWithComplianceSpecOnly, logger, config), Clock: ext.NewSystemClock()}
 		reconcileReport, err := complianceControllerInstance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 		Expect(err).ToNot(HaveOccurred())
 
@@ -215,4 +211,8 @@ func getDetailReport(ctx context.Context, namespaceName types.NamespacedName, cl
 		return nil, err
 	}
 	return &report, nil
+}
+
+func getStarboardConfig() starboard.ConfigData {
+	return starboard.ConfigData{"compliance.failEntriesLimit": "1"}
 }

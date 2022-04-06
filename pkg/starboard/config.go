@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	embedded "github.com/aquasecurity/starboard"
@@ -62,6 +63,7 @@ const (
 	keyScanJobTolerations                = "scanJob.tolerations"
 	keyScanJobAnnotations                = "scanJob.annotations"
 	keyScanJobPodTemplateLabels          = "scanJob.podTemplateLabels"
+	keyComplianceFailEntriesLimit        = "compliance.failEntriesLimit"
 )
 
 // ConfigData holds Starboard configuration settings as a set of key-value
@@ -81,9 +83,10 @@ func GetDefaultConfig() ConfigData {
 		keyVulnerabilityReportsScanner: "Trivy",
 		keyConfigAuditReportsScanner:   "Polaris",
 
-		"kube-bench.imageRef":  "docker.io/aquasec/kube-bench:v0.6.6",
-		"kube-hunter.imageRef": "docker.io/aquasec/kube-hunter:0.6.5",
-		"kube-hunter.quick":    "false",
+		"kube-bench.imageRef":         "docker.io/aquasec/kube-bench:v0.6.6",
+		"kube-hunter.imageRef":        "docker.io/aquasec/kube-hunter:0.6.5",
+		"kube-hunter.quick":           "false",
+		"compliance.failEntriesLimit": "10",
 	}
 }
 
@@ -207,6 +210,20 @@ func GetVersionFromImageRef(imageRef string) (string, error) {
 	}
 
 	return version, nil
+}
+
+func (c ConfigData) ComplianceFailEntriesLimit() int {
+	const defaultValue = 10
+	var value string
+	var ok bool
+	if value, ok = c[keyComplianceFailEntriesLimit]; !ok {
+		return defaultValue
+	}
+	intVal, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue
+	}
+	return intVal
 }
 
 // NewConfigManager constructs a new ConfigManager that is using kubernetes.Interface

@@ -252,9 +252,8 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		logger := ctrl.Log.WithName("reconciler").WithName("clustercompliancereport")
 		cc := &compliance.ClusterComplianceReportReconciler{
 			Logger: logger,
-			Config: operatorConfig,
 			Client: mgr.GetClient(),
-			Mgr:    compliance.NewMgr(mgr.GetClient(), logger),
+			Mgr:    compliance.NewMgr(mgr.GetClient(), logger, starboardConfig),
 			Clock:  ext.NewSystemClock(),
 		}
 		if err := cc.SetupWithManager(mgr); err != nil {
