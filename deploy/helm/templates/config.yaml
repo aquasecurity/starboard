@@ -66,6 +66,9 @@ data:
   {{- if .useEcrRoleCreds }}
   trivy.useEcrRoleCreds: {{ .useEcrRoleCreds | quote }}
   {{- end }}
+  {{- if .useEcrRoleCreds }}
+  trivy.ecrTokenRefreshTTL: {{ .ecrTokenRefreshTTL | quote }}
+  {{- end }}
   {{- if .timeout }}
   trivy.timeout: {{ .timeout | quote }}
   {{- end }}

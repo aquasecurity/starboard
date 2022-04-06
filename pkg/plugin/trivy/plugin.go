@@ -9,12 +9,14 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/docker"
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/utils"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -55,6 +57,7 @@ const (
 	keyTrivySkipFiles              = "trivy.skipFiles"
 	keyTrivySkipDirs               = "trivy.skipDirs"
 	keyTrivyUseECRRoleCreds        = "trivy.useEcrRoleCreds"
+	keyTrivyECRTokenRefreshTTL     = "trivy.ecrTokenRefreshTTL"
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
@@ -70,6 +73,9 @@ const (
 
 // Mode in which Trivy client operates.
 type Mode string
+
+var aws_creds [][]string
+var EcrTokenGen time.Time
 
 const (
 	Standalone   Mode = "Standalone"
@@ -144,6 +150,10 @@ func (c Config) UseECRCredentials() bool {
 	} else {
 		return false
 	}
+}
+
+func (c Config) GetECRRefreshTTL() (string, error) {
+	return c.GetRequiredData(keyTrivyECRTokenRefreshTTL)
 }
 
 func (c Config) GetServerInsecure() bool {
@@ -599,10 +609,19 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 			})
 		}
 
+		TTLResult, err := config.GetECRRefreshTTL()
+		if err != nil {
+			TTLResult = "0"
+		}
+
 		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(c.Image) != "" {
-			var aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(c.Image))
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
+
+			if utils.TokenTTLValidation(EcrTokenGen, TTLResult) {
+				EcrTokenGen = time.Now()
+				aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(c.Image))
+				if err != nil {
+					return corev1.PodSpec{}, nil, err
+				}
 			}
 
 			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
@@ -882,11 +901,21 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			},
 		}
 
+		TTLResult, err := config.GetECRRefreshTTL()
+		if err != nil {
+			TTLResult = "0"
+		}
+
 		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(container.Image) != "" {
-			var aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(container.Image))
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
+
+			if utils.TokenTTLValidation(EcrTokenGen, TTLResult) {
+				EcrTokenGen = time.Now()
+				aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(container.Image))
+				if err != nil {
+					return corev1.PodSpec{}, nil, err
+				}
 			}
+
 			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
@@ -1450,7 +1479,7 @@ func GetAuthorizationToken(AwsEcrRegion string) ([][]string, error) {
 				errormsg = "GetAuthorizationToken (AWS-API): " + aerr.Error()
 			}
 		} else {
-			fmt.Println(err.Error())
+			errormsg = err.Error()
 		}
 		return nil, errors.New((errormsg))
 	}

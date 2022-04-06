@@ -124,6 +124,12 @@ trivy:
   #
   # useEcrRoleCreds: false
 
+  # Set the TokenExpiry for the next AWS-Tokengeneration
+  # AWS authorization token is valid for 12 hours by default
+  # Unit is hours(h)
+  #
+  # ecrTokenRefreshTTL = 11h
+
   # Registries without SSL. There can be multiple registries with different keys.
   nonSslRegistries: {}
   #  pocRegistry: poc.myregistry.harbor.com.pl
