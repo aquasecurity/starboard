@@ -62,12 +62,6 @@
                 "namespace": "default",
                 "msg": "Container 'front-end' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
                 "status": "FAIL"
-              },
-              {
-                "name": "pod-rss-site",
-                "namespace": "default",
-                "msg": "Container 'rss-reader' of Pod 'rss-site' should set 'securityContext.readOnlyRootFilesystem' to true",
-                "status": "FAIL"
               }
             ]
           }

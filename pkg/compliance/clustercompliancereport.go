@@ -7,7 +7,6 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/utils"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +19,6 @@ import (
 
 type ClusterComplianceReportReconciler struct {
 	logr.Logger
-	etc.Config
 	client.Client
 	Mgr
 	ext.Clock

@@ -47,7 +47,7 @@ operator:
   configAuditScannerBuiltIn: true
   # kubernetesBenchmarkEnabled the flag to enable CIS Kubernetes Benchmark scanner
   kubernetesBenchmarkEnabled: true
-  # clusterComplianceEnabled the flag to enable CIS Kubernetes Benchmark scanner
+  # clusterComplianceEnabled the flag to enable cluster compliance report generation
   clusterComplianceEnabled: true
   # batchDeleteLimit the maximum number of config audit reports deleted by the operator when the plugin's config has changed.
   batchDeleteLimit: 10
@@ -176,7 +176,9 @@ trivy:
   # Trivy client to Trivy server. Only applicable in ClientServer mode.
   #
   # serverCustomHeaders: "foo=bar"
-
+compliance:
+  # failEntriesLimit the flag to limit the number of fail entries per control check in the cluster compliance detail report
+  failEntriesLimit: 10
 kubeBench:
   imageRef: docker.io/aquasec/kube-bench:v0.6.6
 
