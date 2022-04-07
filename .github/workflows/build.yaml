@@ -29,6 +29,13 @@ env:
   GO_VERSION: "1.17"
   KIND_VERSION: "v0.11.1"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
+
+# Cancel any in-flight jobs for the same PR branch so there's only one active
+# at a time.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify-code:
     name: Verify code
