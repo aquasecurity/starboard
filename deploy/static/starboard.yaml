@@ -267,9 +267,9 @@ spec:
           description: The age of the report
         - jsonPath: .report.summary.criticalCount
           type: integer
-          name: Critial
+          name: Critical
           priority: 1
-          description: The number of failed checks with critial severity
+          description: The number of failed checks with critical severity
         - jsonPath: .report.summary.highCount
           type: integer
           name: High
@@ -324,9 +324,9 @@ spec:
           description: The age of the report
         - jsonPath: .report.summary.criticalCount
           type: integer
-          name: Critial
+          name: Critical
           priority: 1
-          description: The number of failed checks with critial severity
+          description: The number of failed checks with critical severity
         - jsonPath: .report.summary.highCount
           type: integer
           name: High
