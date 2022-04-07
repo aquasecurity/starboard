@@ -157,7 +157,7 @@ that's failing:
 
 ```console
 $ kubectl get configauditreport configmap-test -o wide
-NAME             SCANNER     AGE   CRITICAL   HIGH   MEDIUM   LOW
+NAME             SCANNER     AGE   CRITICAL  HIGH   MEDIUM   LOW
 configmap-test   Starboard   24s   0         0      0        1
 ```
 
