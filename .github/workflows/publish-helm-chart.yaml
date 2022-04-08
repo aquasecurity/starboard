@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: The branch, tag or SHA to publish.
+        description: The branch, tag or SHA to publish, e.g. v0.0.1
         required: true
 env:
   HELM_REP: helm-charts
