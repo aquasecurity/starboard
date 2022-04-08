@@ -1,14 +1,18 @@
 ---
 # This is a manually triggered workflow to build and publish the MkDocs from the
-# main branch to GitHub pages at https://aquasecurity.github.io/starboard.
+# specified Git revision to GitHub pages on https://aquasecurity.github.io/starboard.
 name: Publish documentation
 
 on:
   workflow_dispatch:
     inputs:
       ref:
-        description: The branch, tag or SHA to deploy.
+        description: The branch, tag or SHA to deploy, e.g. v0.0.1
         required: true
+
+# Disable permissions granted to the GITHUB_TOKEN for all the available scopes.
+permissions: {}
+
 jobs:
   deploy:
     name: Deploy documentation

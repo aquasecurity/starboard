@@ -1,14 +1,17 @@
 ---
-# Release snapshot on CRON schedule or on demand.
+# Release snapshot on CRON schedule (every night) or on demand.
 name: Release snapshot
 
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "0 0 * * *"  # every night
+    - cron: "0 0 * * *"
 
 env:
   GO_VERSION: "1.17"
+
+# Disable permissions granted to the GITHUB_TOKEN for all the available scopes.
+permissions: {}
 
 jobs:
   release-snapshot:
