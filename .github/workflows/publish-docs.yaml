@@ -17,14 +17,16 @@ jobs:
   deploy:
     name: Deploy documentation
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@v3
+        uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846
         with:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
           persist-credentials: true
-      - uses: actions/setup-python@9c644ca2ab8e57ea0a487b5ec2f8290740378bfd
+      - uses: actions/setup-python@21c0493ecfd34b1217f0a90ec19a327f3cc0a048
         with:
           python-version: 3.x
       - run: |
