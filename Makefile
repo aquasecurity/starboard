@@ -15,6 +15,7 @@ IMAGE_TAG := dev
 STARBOARD_CLI_IMAGE := aquasec/starboard:$(IMAGE_TAG)
 STARBOARD_OPERATOR_IMAGE := aquasec/starboard-operator:$(IMAGE_TAG)
 STARBOARD_SCANNER_AQUA_IMAGE := aquasec/starboard-scanner-aqua:$(IMAGE_TAG)
+STARBOARD_OPERATOR_IMAGE_UBI8 := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8
 
 MKDOCS_IMAGE := aquasec/mkdocs-material:starboard
 MKDOCS_PORT := 8000
@@ -123,7 +124,7 @@ clean:
 
 .PHONY: docker-build
 ## Builds Docker images for all binaries
-docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-build-starboard-scanner-aqua
+docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-build-starboard-scanner-aqua docker-build-starboard-operator-ubi8
 
 ## Builds Docker image for Starboard CLI
 docker-build-starboard-cli: build-starboard-cli
@@ -132,6 +133,10 @@ docker-build-starboard-cli: build-starboard-cli
 ## Builds Docker image for Starboard operator
 docker-build-starboard-operator: build-starboard-operator
 	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
+	
+## Builds Docker image for Starboard operator ubi8
+docker-build-starboard-operator-ubi8: build-starboard-operator
+	docker build --no-cache -f build/starboard-operator-ubi8/Dockerfile.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8) bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
