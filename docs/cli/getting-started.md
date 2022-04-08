@@ -116,7 +116,7 @@ kubectl get configauditreport -o wide
 <summary>Result</summary>
 
 ```
-NAME                          SCANNER     AGE   CRITIAL   HIGH   MEDIUM   LOW
+NAME                          SCANNER     AGE   CRITICAL  HIGH   MEDIUM   LOW
 replicaset-nginx-78449c65d4   Starboard   75s   0         0      6        7
 ```
 </details>
