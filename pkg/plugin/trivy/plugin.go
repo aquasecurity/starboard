@@ -624,7 +624,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 				}
 			}
 
-			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
+			var creds = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_USERNAME",
@@ -953,90 +953,90 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 					},
 				})
 			}
+		}
 
-			env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
-			}
+		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
 
-			env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
-			}
+		env, err = p.appendTrivyNonSSLEnv(config, container.Image, env)
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
 
-			if config.GetServerInsecure() {
-				env = append(env, corev1.EnvVar{
-					Name:  "TRIVY_INSECURE",
-					Value: "true",
-				})
-			}
+		if config.GetServerInsecure() {
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_INSECURE",
+				Value: "true",
+			})
+		}
 
-			if config.IgnoreFileExists() {
-				volumes = []corev1.Volume{
-					{
-						Name: ignoreFileVolumeName,
-						VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: trivyConfigName,
-								},
-								Items: []corev1.KeyToPath{
-									{
-										Key:  keyTrivyIgnoreFile,
-										Path: ".trivyignore",
-									},
+		if config.IgnoreFileExists() {
+			volumes = []corev1.Volume{
+				{
+					Name: ignoreFileVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: trivyConfigName,
+							},
+							Items: []corev1.KeyToPath{
+								{
+									Key:  keyTrivyIgnoreFile,
+									Path: ".trivyignore",
 								},
 							},
 						},
 					},
-				}
-
-				volumeMounts = []corev1.VolumeMount{
-					{
-						Name:      ignoreFileVolumeName,
-						MountPath: "/etc/trivy/.trivyignore",
-						SubPath:   ".trivyignore",
-					},
-				}
-
-				env = append(env, corev1.EnvVar{
-					Name:  "TRIVY_IGNOREFILE",
-					Value: "/etc/trivy/.trivyignore",
-				})
-			}
-
-			requirements, err := config.GetResourceRequirements()
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
-			}
-
-			optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
-			if err != nil {
-				return corev1.PodSpec{}, nil, err
-			}
-
-			containers = append(containers, corev1.Container{
-				Name:                     container.Name,
-				Image:                    trivyImageRef,
-				ImagePullPolicy:          corev1.PullIfNotPresent,
-				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-				Env:                      env,
-				Command: []string{
-					"trivy",
 				},
-				Args: []string{
-					"--quiet",
-					"client",
-					"--format",
-					"json",
-					"--remote",
-					trivyServerURL,
-					optionalMirroredImage,
+			}
+
+			volumeMounts = []corev1.VolumeMount{
+				{
+					Name:      ignoreFileVolumeName,
+					MountPath: "/etc/trivy/.trivyignore",
+					SubPath:   ".trivyignore",
 				},
-				VolumeMounts: volumeMounts,
-				Resources:    requirements,
+			}
+
+			env = append(env, corev1.EnvVar{
+				Name:  "TRIVY_IGNOREFILE",
+				Value: "/etc/trivy/.trivyignore",
 			})
 		}
+
+		requirements, err := config.GetResourceRequirements()
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
+		optionalMirroredImage, err := GetMirroredImage(container.Image, config.GetMirrors())
+		if err != nil {
+			return corev1.PodSpec{}, nil, err
+		}
+
+		containers = append(containers, corev1.Container{
+			Name:                     container.Name,
+			Image:                    trivyImageRef,
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+			Env:                      env,
+			Command: []string{
+				"trivy",
+			},
+			Args: []string{
+				"--quiet",
+				"client",
+				"--format",
+				"json",
+				"--remote",
+				trivyServerURL,
+				optionalMirroredImage,
+			},
+			VolumeMounts: volumeMounts,
+			Resources:    requirements,
+		})
 	}
 
 	return corev1.PodSpec{
