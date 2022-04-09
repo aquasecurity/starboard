@@ -3,7 +3,8 @@
 > Kubernetes-native security toolkit.
 
 [![GitHub Release][release-img]][release]
-[![GitHub Build Actions][build-action-img]][actions]
+[![Build Action][action-build-img]][action-build]
+[![Release snapshot Action][action-release-snapshot-img]][action-release-snapshot]
 [![Coverage Status][cov-img]][cov]
 [![Go Report Card][report-card-img]][report-card]
 [![License][license-img]][license]
@@ -81,8 +82,10 @@ Join the community, and talk to us about any matter in [GitHub Discussions] or [
 
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard/releases
-[build-action-img]: https://github.com/aquasecurity/starboard/workflows/build/badge.svg
-[actions]: https://github.com/aquasecurity/starboard/actions
+[action-build-img]: https://github.com/aquasecurity/starboard/actions/workflows/build.yaml/badge.svg
+[action-build]: https://github.com/aquasecurity/starboard/actions/workflows/build.yaml
+[action-release-snapshot-img]: https://github.com/aquasecurity/starboard/actions/workflows/release-snapshot.yaml/badge.svg
+[action-release-snapshot]: https://github.com/aquasecurity/starboard/actions/workflows/release-snapshot.yaml
 [cov-img]: https://codecov.io/github/aquasecurity/starboard/branch/main/graph/badge.svg
 [cov]: https://codecov.io/github/aquasecurity/starboard
 [report-card-img]: https://goreportcard.com/badge/github.com/aquasecurity/starboard
