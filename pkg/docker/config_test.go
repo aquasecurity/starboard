@@ -214,3 +214,38 @@ func TestGetServerFromImageRef(t *testing.T) {
 		})
 	}
 }
+
+func TestBasicAuth_Decode(t *testing.T) {
+	testCases := []struct {
+		name  string
+		v     docker.BasicAuth
+		want  string
+		want1 string
+	}{
+		{
+			name: "Decode GCR",
+			v:    docker.BasicAuth("X2pzb25fa2V5OnsKICAidHlwZSI6ICJzZXJ2aWNlX2FjY291bnQiLAogICJwcm9qZWN0X2lkIjogInRlc3QiLAogICJwcml2YXRlX2tleV9pZCI6ICIzYWRhczM0YXNkYXMzNHdhZGFkIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLAogICJjbGllbnRfZW1haWwiOiAidGVzdEB0ZXN0LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAiY2xpZW50X2lkIjogIjM0MzI0MjM0MzI0MzI0IiwKICAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tL28vb2F1dGgyL2F1dGgiLAogICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwKICAiY2xpZW50X3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vcm9ib3QvdjEvbWV0YWRhdGEveDUwOS90ZXN0LWdjci1mNWRoM2g1ZyU0MHRlc3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iCn0="),
+			want: "_json_key",
+			want1: `{
+  "type": "service_account",
+  "project_id": "test",
+  "private_key_id": "3adas34asdas34wadad",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n",
+  "client_email": "test@test.iam.gserviceaccount.com",
+  "client_id": "34324234324324",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test-gcr-f5dh3h5g%40test.iam.gserviceaccount.com"
+}`,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, got1, err := tc.v.Decode()
+			require.NoError(t, err)
+			assert.Equalf(t, tc.want, got, "Decode()")
+			assert.Equalf(t, tc.want1, got1, "Decode()")
+		})
+	}
+}
