@@ -584,8 +584,8 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		{
 			name: "Standalone mode without insecure registry",
 			config: map[string]string{
-				"trivy.imageRef": "docker.io/aquasec/trivy:0.14.0",
-				"trivy.mode":     string(trivy.Standalone),
+				"trivy.imageRef":                  "docker.io/aquasec/trivy:0.14.0",
+				"trivy.mode":                      string(trivy.Standalone),
 				"trivy.dbRepository":              defaultDBRepository,
 				"trivy.resources.requests.cpu":    "100m",
 				"trivy.resources.requests.memory": "100M",
