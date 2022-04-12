@@ -37,7 +37,7 @@ builds:
       - arm
       - arm64
       - s390x
-      - ppc64
+      - ppc64le
     goarm:
       - "7"
   - id: starboard-scanner-aqua
@@ -95,7 +95,7 @@ dockers:
       - "--platform=linux/amd64"
   
   - image_templates:
-      - "docker.io/aquasec/starboard-operator:ubi8-{{ .Version }}-amd64"
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator-ubi8/Dockerfile.ubi8
@@ -103,7 +103,7 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator-ubi8"
+      - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
       - "--label=org.opencontainers.image.vendor=Aqua Security"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -169,7 +169,7 @@ dockers:
       - "--platform=linux/arm64"
 
   - image_templates:
-      - "docker.io/aquasec/starboard-operator:ubi8-{{ .Version }}-arm64"
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator-ubi8/Dockerfile.ubi8
@@ -177,7 +177,7 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator-ubi8"
+      - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
       - "--label=org.opencontainers.image.vendor=Aqua Security"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -242,7 +242,7 @@ dockers:
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/s390x"
   - image_templates:
-      - "docker.io/aquasec/starboard-operator:ubi8-{{ .Version }}-s390x"
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator-ubi8/Dockerfile.ubi8
@@ -250,7 +250,7 @@ dockers:
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator-ubi8"
+      - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
       - "--label=org.opencontainers.image.vendor=Aqua Security"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -279,15 +279,15 @@ dockers:
       - "--platform=linux/s390x"
 
   - image_templates:
-      - "docker.io/aquasec/starboard-operator:ubi8-{{ .Version }}-ppc64"
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator-ubi8/Dockerfile.ubi8
-    goarch: ppc64
+    goarch: ppc64le
     ids:
       - starboard-operator
     build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator-ubi8"
+      - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
       - "--label=org.opencontainers.image.vendor=Aqua Security"
       - "--label=org.opencontainers.image.version={{ .Version }}"
@@ -295,7 +295,7 @@ dockers:
       - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/ppc64"
+      - "--platform=linux/ppc64le"
 docker_manifests:
   - name_template: "aquasec/starboard:{{ .Version }}"
     image_templates:
@@ -314,7 +314,7 @@ docker_manifests:
       - "aquasec/starboard-scanner-aqua:{{ .Version }}-s390x"
   - name_template: "aquasec/starboard-operator:ubi8-{{ .Version }}"
     image_templates:
-      - "aquasec/starboard-scanner-aqua:ubi8-{{ .Version }}-amd64"
-      - "aquasec/starboard-scanner-aqua:ubi8-{{ .Version }}-arm64"
-      - "aquasec/starboard-scanner-aqua:ubi8-{{ .Version }}-s390x"
-      - "aquasec/starboard-scanner-aqua:ubi8-{{ .Version }}-ppc64"
+      - "aquasec/starboard-scanner-aqua:{{ .Version }}-ubi8-amd64"
+      - "aquasec/starboard-scanner-aqua:{{ .Version }}-ubi8-arm64"
+      - "aquasec/starboard-scanner-aqua:{{ .Version }}-ubi8-s390x"
+      - "aquasec/starboard-scanner-aqua:{{ .Version }}-ubi8-ppc64le"

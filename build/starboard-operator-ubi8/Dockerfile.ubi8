@@ -1,14 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal
-
-MAINTAINER admin@aquasec.com
-LABEL com.aquasec.component=starboard-operator
-LABEL product=aquasec
-LABEL com.aquasec.baseimage=registry.access.redhat.com/ubi8/ubi-minimal
-LABEL maintainer="admin@aquasec.com"
-LABEL name="Starboard-Operator ubi8"
-LABEL vendor="Aqua Security Software Ltd."
-LABEL summary="Aqua security Starboard-Operator-ubi8"
-LABEL description="Aqua Security Starboard is a Kubernetes-Native Security toolkit"
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
 RUN microdnf install yum
 RUN yum install bash-completion -y
