@@ -1,5 +1,9 @@
 # Set the default goal
 .DEFAULT_GOAL := build
+MAKEFLAGS += --no-print-directory
+
+DOCKER ?= docker
+KIND ?= kind
 
 export KUBECONFIG ?= ${HOME}/.kube/config
 
@@ -116,34 +120,52 @@ else
 	@echo "KUBECONFIG=${KUBECONFIG}"
 endif
 
-.PHONY: clean
 ## Removes build artifacts
 clean:
 	@rm -r ./bin 2> /dev/null || true
 	@rm -r ./dist 2> /dev/null || true
 
-.PHONY: docker-build
 ## Builds Docker images for all binaries
-docker-build: docker-build-starboard-cli docker-build-starboard-operator docker-build-starboard-scanner-aqua docker-build-starboard-operator-ubi8
+docker-build: \
+	docker-build-starboard-cli \
+	docker-build-starboard-operator \
+	docker-build-starboard-operator-ubi8 \
+	docker-build-starboard-scanner-aqua
 
 ## Builds Docker image for Starboard CLI
 docker-build-starboard-cli: build-starboard-cli
-	docker build --no-cache -t $(STARBOARD_CLI_IMAGE) -f build/starboard/Dockerfile bin
+	$(DOCKER) build --no-cache -t $(STARBOARD_CLI_IMAGE) -f build/starboard/Dockerfile bin
 
 ## Builds Docker image for Starboard operator
 docker-build-starboard-operator: build-starboard-operator
-	docker build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
+	$(DOCKER) build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
 	
 ## Builds Docker image for Starboard operator ubi8
 docker-build-starboard-operator-ubi8: build-starboard-operator
-	docker build --no-cache -f build/starboard-operator-ubi8/Dockerfile.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8) bin
+	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8) bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
-	docker build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f build/scanner-aqua/Dockerfile bin
+	$(DOCKER) build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f build/scanner-aqua/Dockerfile bin
 
-.PHONY: mkdocs-serve
+kind-load-images: \
+	docker-build-starboard-operator \
+	docker-build-starboard-operator-ubi8
+	$(KIND) load docker-image \
+		$(STARBOARD_OPERATOR_IMAGE) \
+		$(STARBOARD_OPERATOR_IMAGE_UBI8)
+
 ## Runs MkDocs development server to preview the documentation page
 mkdocs-serve:
-	docker build -t $(MKDOCS_IMAGE) -f build/mkdocs-material/Dockerfile bin
-	docker run --name mkdocs-serve --rm -v $(PWD):/docs -p $(MKDOCS_PORT):8000 $(MKDOCS_IMAGE)
+	$(DOCKER) build -t $(MKDOCS_IMAGE) -f build/mkdocs-material/Dockerfile bin
+	$(DOCKER) run --name mkdocs-serve --rm -v $(PWD):/docs -p $(MKDOCS_PORT):8000 $(MKDOCS_IMAGE)
+
+.PHONY: \
+	clean \
+	docker-build \
+	docker-build-starboard-cli \
+	docker-build-starboard-operator \
+	docker-build-starboard-operator-ubi8 \
+	docker-build-starboard-scanner-aqua \
+	kind-load-images \
+	mkdocs-serve
