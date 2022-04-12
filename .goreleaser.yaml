@@ -184,7 +184,6 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/arm64"
-
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
     use: buildx
@@ -202,8 +201,7 @@ dockers:
       - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/arm64"    
-
+      - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-arm64"
     use: buildx
@@ -294,7 +292,6 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/s390x"
-
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
     use: buildx
