@@ -915,7 +915,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 				}
 			}
 
-			var creds (ecr_credentials) = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
+			var creds = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_USERNAME",
@@ -1480,7 +1480,7 @@ func GetAuthorizationToken(AwsEcrRegion string) ([][]string, error) {
 		} else {
 			errormsg = err.Error()
 		}
-		return nil, errors.New((errormsg))
+		return nil, errors.New(errormsg)
 	}
 
 	var credentials = *result.AuthorizationData[0].AuthorizationToken
