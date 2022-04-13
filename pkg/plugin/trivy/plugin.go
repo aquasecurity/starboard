@@ -145,11 +145,10 @@ func (c Config) GetServerURL() (string, error) {
 }
 
 func (c Config) UseECRCredentials() bool {
-	if c.Data[keyTrivyUseECRRoleCreds] == "true" {
+	if val, ok := c.Data[keyTrivyUseECRRoleCreds]; ok && val == "true" {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func (c Config) GetECRRefreshTTL() (string, error) {
@@ -1487,9 +1486,13 @@ func GetAuthorizationToken(AwsEcrRegion string) ([][]string, error) {
 	var credentials = *result.AuthorizationData[0].AuthorizationToken
 
 	if len(credentials) > 0 {
-		sDec, _ := base64.StdEncoding.DecodeString(credentials)
-		pattern := regexp.MustCompile("^(AWS):(.+)$")
-		return pattern.FindAllStringSubmatch(string(sDec), -1), nil
+		sDec, err := base64.StdEncoding.DecodeString(credentials)
+		if err != nil {
+			return nil, errors.New("GetAuthorizationToken: Error during retrival and base64 decoding operation.")
+		} else {
+			pattern := regexp.MustCompile("^(AWS):(.+)$")
+			return pattern.FindAllStringSubmatch(string(sDec), -1), nil
+		}
 	} else {
 		return nil, errors.New("GetAuthorizationToken: Error during retrival and base64 decoding operation.")
 	}

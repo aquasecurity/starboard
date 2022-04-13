@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"time"
+
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/gorhill/cronexpr"
-	"time"
+
+	"github.com/xhit/go-str2duration/v2"
 )
 
 // NextCronDuration check if next cron activation time has exceeded if so return true
@@ -31,4 +34,17 @@ func timeToExpiration(expiresAt time.Time, clock ext.Clock) time.Duration {
 func IsTTLExpired(ttl time.Duration, creationTime time.Time, clock ext.Clock) (bool, time.Duration) {
 	durationToTTLExpiration := timeToExpiration(creationTime.Add(ttl), clock)
 	return DurationExceeded(durationToTTLExpiration), durationToTTLExpiration
+}
+
+func TokenTTLValidation(TokenGen time.Time, TokenTTL string) bool {
+	duration, err := str2duration.ParseDuration(TokenTTL)
+
+	if err != nil {
+		return false
+	}
+	if time.Now().Sub(TokenGen) >= duration {
+		return true
+	}
+	return false
+
 }
