@@ -74,9 +74,6 @@ const (
 // Mode in which Trivy client operates.
 type Mode string
 
-var aws_creds [][]string
-var EcrTokenGen time.Time
-
 const (
 	Standalone   Mode = "Standalone"
 	ClientServer Mode = "ClientServer"
@@ -249,6 +246,8 @@ type plugin struct {
 	clock          ext.Clock
 	idGenerator    ext.IDGenerator
 	objectResolver *kube.ObjectResolver
+	aws_creds      [][]string
+	ecr_tokengen   time.Time
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using an
@@ -614,16 +613,16 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		}
 
 		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(c.Image) != "" {
-
-			if utils.TokenTTLValidation(EcrTokenGen, TTLResult) {
-				EcrTokenGen = time.Now()
-				aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(c.Image))
+			fmt.Println("TOKEN PRINT: ", p.ecr_tokengen, " - ", TTLResult)
+			if utils.TokenTTLValidation(p.ecr_tokengen, TTLResult) {
+				p.aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(c.Image))
 				if err != nil {
 					return corev1.PodSpec{}, nil, err
 				}
+				p.ecr_tokengen = p.clock.Now()
 			}
 
-			var creds = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
+			var creds = ecr_credentials{p.aws_creds[0][1], p.aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_USERNAME",
@@ -907,15 +906,15 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 
 		if config.UseECRCredentials() && CheckAwsEcrPrivateRegistry(container.Image) != "" {
 
-			if utils.TokenTTLValidation(EcrTokenGen, TTLResult) {
-				EcrTokenGen = time.Now()
-				aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(container.Image))
+			if utils.TokenTTLValidation(p.ecr_tokengen, TTLResult) {
+				p.aws_creds, err = GetAuthorizationToken(CheckAwsEcrPrivateRegistry(container.Image))
 				if err != nil {
 					return corev1.PodSpec{}, nil, err
 				}
+				p.ecr_tokengen = p.clock.Now()
 			}
 
-			var creds = ecr_credentials{aws_creds[0][1], aws_creds[0][2]}
+			var creds = ecr_credentials{p.aws_creds[0][1], p.aws_creds[0][2]}
 
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_USERNAME",
@@ -1462,7 +1461,8 @@ func CheckAwsEcrPrivateRegistry(ImageUrl string) string {
 }
 
 func GetAuthorizationToken(AwsEcrRegion string) ([][]string, error) {
-	svc := ecr.New(session.New(aws.NewConfig().WithRegion(AwsEcrRegion)))
+
+	svc := ecr.New(session.Must(session.NewSession()), aws.NewConfig().WithRegion(AwsEcrRegion))
 	input := &ecr.GetAuthorizationTokenInput{}
 
 	result, err := svc.GetAuthorizationToken(input)
