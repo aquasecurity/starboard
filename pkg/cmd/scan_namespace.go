@@ -8,6 +8,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"io"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/kubernetes/pkg/printers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
+	"time"
 )
 
 const (
@@ -31,6 +33,7 @@ func NewScanNamespaceCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.Co
 		RunE:  ScanNamespace(buildInfo, cf, out),
 	}
 	cmd.PersistentFlags().StringP("output", "o", "", "Output format. One of yaml|json")
+	cmd.PersistentFlags().Bool("silent", false, "Silent progress bar printout")
 
 	registerScannerOpts(cmd)
 
@@ -69,11 +72,16 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 		// scan config audit for misconfiguration
 		go func(scanErr chan error, configReportChan chan *v1alpha1.ConfigAuditReportList) {
 			defer wg.Done()
+			if len(allResources) == 0 {
+				return
+			}
+			bar := getProgressBar(len(allResources), "Resource Config", cmd)
 			scanner := configauditreport.NewScanner(buildInfo, kubeClient)
 			list := &v1alpha1.ConfigAuditReportList{
 				Items: []v1alpha1.ConfigAuditReport{},
 			}
 			for _, resource := range allResources {
+				bar.Add(1)
 				reportBuilder, err := scanner.Scan(ctx, resource)
 				report, err := reportBuilder.GetReport()
 				if err != nil {
@@ -81,9 +89,10 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 					return
 				}
 				list.Items = append(list.Items, report)
+				time.Sleep(50 * time.Millisecond)
 			}
+			bar.Finish()
 			configReportChan <- list
-			close(configReportChan)
 		}(scanErr, configAuditReportChan)
 
 		// scan workloads for vulnerabilities
@@ -96,6 +105,11 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 				return
 			}
 			workloads := getWorkloadResources(allResources)
+			if len(workloads) == 0 {
+				return
+			}
+			bar := getProgressBar(len(workloads), "Workload Vulnerabilities", cmd)
+
 			vulnScanner, err := getVulnerabilityScanner(ctx, cmd, kubeClientset, buildInfo, kubeClient)
 			if err != nil {
 				scanErr <- err
@@ -105,6 +119,7 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 				Items: []v1alpha1.VulnerabilityReport{},
 			}
 			for _, workload := range workloads {
+				bar.Add(1)
 				reports, err := vulnScanner.Scan(ctx, workload)
 				if err != nil {
 					scanErr <- err
@@ -113,9 +128,10 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 				for _, report := range reports {
 					list.Items = append(list.Items, report)
 				}
+				time.Sleep(50 * time.Millisecond)
 			}
+			bar.Finish()
 			reportChan <- list
-			close(reportChan)
 		}(scanErr, vulnerabilityReportChan)
 		wg.Wait()
 		if err := checkScanningErrors(scanErr); err != nil {
@@ -134,12 +150,14 @@ func printScannerReports(cmd *cobra.Command, configReportChan chan *v1alpha1.Con
 	if err != nil {
 		return err
 	}
+	close(configReportChan)
 	for cReport := range configReportChan {
 		err := printer.PrintObj(cReport, outWriter)
 		if err != nil {
 			return err
 		}
 	}
+	close(vulnReportChan)
 	for vReport := range vulnReportChan {
 		err := printer.PrintObj(vReport, outWriter)
 		if err != nil {
@@ -208,4 +226,22 @@ func getVulnerabilityScanner(ctx context.Context, cmd *cobra.Command, kubeClient
 	}
 	scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
 	return scanner, nil
+}
+
+func getProgressBar(size int, title string, cmd *cobra.Command) *progressbar.ProgressBar {
+	silent := cmd.Flag("silent").Value.String()
+	if silent == "true" {
+		return progressbar.DefaultSilent(int64(size), title)
+	}
+	return progressbar.NewOptions(size,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetWidth(15),
+		progressbar.OptionSetDescription(fmt.Sprintf("[cyan][reset] Scanning %s...", title)),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}))
 }
