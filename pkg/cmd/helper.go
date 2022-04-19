@@ -124,26 +124,6 @@ func getNamespaceGVR() []schema.GroupVersionResource {
 	}
 }
 
-func getClusterGVR() []schema.GroupVersionResource {
-	return []schema.GroupVersionResource{
-		{
-			Version:  V1Version,
-			Group:    RbacGroup,
-			Resource: ClusterRoles,
-		},
-		{
-			Version:  V1Version,
-			Group:    RbacGroup,
-			Resource: ClusterRoleBindings,
-		},
-		{
-			Version:  V1beta1Version,
-			Group:    PolicyGroup,
-			Resource: PodSecurityPolicy,
-		},
-	}
-}
-
 func getResources(ctx context.Context, client dynamic.Interface, namespace string, gvrs []schema.GroupVersionResource) ([]kube.ObjectRef, error) {
 	ObjRefs := make([]kube.ObjectRef, 0)
 	for _, gvr := range gvrs {
@@ -165,4 +145,14 @@ func getResources(ctx context.Context, client dynamic.Interface, namespace strin
 		}
 	}
 	return ObjRefs, nil
+}
+
+func getWorkloadResources(allResources []kube.ObjectRef) []kube.ObjectRef {
+	workloads := make([]kube.ObjectRef, 0)
+	for _, resource := range allResources {
+		if kube.IsWorkload(string(resource.Kind)) {
+			workloads = append(workloads, resource)
+		}
+	}
+	return workloads
 }

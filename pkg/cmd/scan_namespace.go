@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
@@ -21,6 +20,7 @@ import (
 
 const (
 	namespaceCmdShort = "Run a variety of checks to ensure that a given workload is configured using best practices and has no vulnerabilities"
+	NumOfScanners     = 2
 )
 
 func NewScanNamespaceCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
@@ -55,14 +55,17 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 		scheme := starboard.NewScheme()
 		// scan for config audit
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
+		if err != nil {
+			return err
+		}
 		allResources, err := getResources(ctx, dynaClient, namespace, getNamespaceGVR())
 		if err != nil {
 			return err
 		}
 		var wg sync.WaitGroup
-		wg.Add(2)
-		scanErr := make(chan error, 2)
-		configReportChan := make(chan *v1alpha1.ConfigAuditReportList, 1)
+		wg.Add(NumOfScanners)
+		scanErr := make(chan error, NumOfScanners)
+		configAuditReportChan := make(chan *v1alpha1.ConfigAuditReportList, 1)
 		// scan config audit for misconfiguration
 		go func(scanErr chan error, configReportChan chan *v1alpha1.ConfigAuditReportList) {
 			defer wg.Done()
@@ -81,10 +84,10 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 			}
 			configReportChan <- list
 			close(configReportChan)
-		}(scanErr, configReportChan)
+		}(scanErr, configAuditReportChan)
 
-		// scan workload for vulnerabilities
-		vulnReportChan := make(chan *v1alpha1.VulnerabilityReportList, 1)
+		// scan workloads for vulnerabilities
+		vulnerabilityReportChan := make(chan *v1alpha1.VulnerabilityReportList, 1)
 		go func(scanErr chan error, reportChan chan *v1alpha1.VulnerabilityReportList) {
 			defer wg.Done()
 			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
@@ -113,25 +116,46 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 			}
 			reportChan <- list
 			close(reportChan)
-		}(scanErr, vulnReportChan)
+		}(scanErr, vulnerabilityReportChan)
 		wg.Wait()
-		if len(scanErr) != 0 {
-			for e := range scanErr {
-				return e
-			}
+		if err := checkScanningErrors(scanErr); err != nil {
+			return err
 		}
-		printer, err := getPrinter(cmd)
+		err = printScannerReports(cmd, configAuditReportChan, vulnerabilityReportChan, outWriter)
 		if err != nil {
 			return err
 		}
-		for cReport := range configReportChan {
-			printer.PrintObj(cReport, outWriter)
-		}
-		for vReport := range vulnReportChan {
-			printer.PrintObj(vReport, outWriter)
-		}
 		return nil
 	}
+}
+
+func printScannerReports(cmd *cobra.Command, configReportChan chan *v1alpha1.ConfigAuditReportList, vulnReportChan chan *v1alpha1.VulnerabilityReportList, outWriter io.Writer) error {
+	printer, err := getPrinter(cmd)
+	if err != nil {
+		return err
+	}
+	for cReport := range configReportChan {
+		err := printer.PrintObj(cReport, outWriter)
+		if err != nil {
+			return err
+		}
+	}
+	for vReport := range vulnReportChan {
+		err := printer.PrintObj(vReport, outWriter)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkScanningErrors(scanErr chan error) error {
+	if len(scanErr) != 0 {
+		for e := range scanErr {
+			return e
+		}
+	}
+	return nil
 }
 
 func getNamespaceFromArg(args []string) (string, error) {
@@ -139,16 +163,6 @@ func getNamespaceFromArg(args []string) (string, error) {
 		return "", fmt.Errorf("required namespace arg not define")
 	}
 	return args[0], nil
-}
-
-func getWorkloadResources(allResources []kube.ObjectRef) []kube.ObjectRef {
-	workloads := make([]kube.ObjectRef, 0)
-	for _, resource := range allResources {
-		if kube.IsWorkload(string(resource.Kind)) {
-			workloads = append(workloads, resource)
-		}
-	}
-	return workloads
 }
 
 func getPrinter(cmd *cobra.Command) (printers.ResourcePrinter, error) {
