@@ -5,29 +5,28 @@ import (
 	"fmt"
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
-	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/kubernetes/pkg/printers"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
-	"time"
 )
 
 const (
 	namespaceCmdShort = "Run a variety of checks to ensure that a given workload is configured using best practices and has no vulnerabilities"
-	NumOfScanners     = 2
 )
 
 func NewScanNamespaceCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "namespace",
+		Use:   "namespace (NAMESPACE)",
 		Short: namespaceCmdShort,
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  ScanNamespace(buildInfo, cf, out),
@@ -55,89 +54,62 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 		if err != nil {
 			return err
 		}
-		scheme := starboard.NewScheme()
 		// scan for config audit
+		allResources, err := getObjectsRef(ctx, dynaClient, namespace, getNamespaceGVR())
+		if err != nil {
+			return err
+		}
+		if len(allResources) == 0 {
+			return nil
+		}
+		var wg sync.WaitGroup
+		var numOfScanners = 1
+		scheme := starboard.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 		if err != nil {
 			return err
 		}
-		allResources, err := getResources(ctx, dynaClient, namespace, getNamespaceGVR())
+		configScanner := configauditreport.NewScanner(buildInfo, kubeClient)
+		workloads := getWorkloadObjectRef(allResources)
+
+		if len(workloads) > 0 {
+			numOfScanners++
+		}
+		wg.Add(numOfScanners)
+		scanErr := make(chan error, numOfScanners)
+		reportChan := make(chan runtime.Object, numOfScanners)
+		// scan config audit for misconfiguration
+		go func(scanErr chan error, configReportChan chan runtime.Object) {
+			defer wg.Done()
+			configAuditReport, err := scanResourceConfig(ctx, allResources, cmd, configScanner)
+			if err != nil {
+				scanErr <- err
+				return
+			}
+			reportChan <- configAuditReport
+		}(scanErr, reportChan)
+
+		// scan workloads for vulnerabilities
+		vulnerabilityScanner, err := getVulnerabilityScanner(ctx, cmd, kubeConfig, buildInfo, kubeClient)
 		if err != nil {
 			return err
 		}
-		var wg sync.WaitGroup
-		wg.Add(NumOfScanners)
-		scanErr := make(chan error, NumOfScanners)
-		configAuditReportChan := make(chan *v1alpha1.ConfigAuditReportList, 1)
-		// scan config audit for misconfiguration
-		go func(scanErr chan error, configReportChan chan *v1alpha1.ConfigAuditReportList) {
-			defer wg.Done()
-			if len(allResources) == 0 {
-				return
-			}
-			bar := getProgressBar(len(allResources), "Resource Config", cmd)
-			scanner := configauditreport.NewScanner(buildInfo, kubeClient)
-			list := &v1alpha1.ConfigAuditReportList{
-				Items: []v1alpha1.ConfigAuditReport{},
-			}
-			for _, resource := range allResources {
-				bar.Add(1)
-				reportBuilder, err := scanner.Scan(ctx, resource)
-				report, err := reportBuilder.GetReport()
+		if len(workloads) > 0 {
+			go func(scanErr chan error, reportChan chan runtime.Object) {
+				defer wg.Done()
+				vulnerabilityReport, err := scanVulnerabilities(ctx, workloads, cmd, vulnerabilityScanner)
 				if err != nil {
 					scanErr <- err
 					return
 				}
-				list.Items = append(list.Items, report)
-				time.Sleep(50 * time.Millisecond)
-			}
-			bar.Finish()
-			configReportChan <- list
-		}(scanErr, configAuditReportChan)
-
-		// scan workloads for vulnerabilities
-		vulnerabilityReportChan := make(chan *v1alpha1.VulnerabilityReportList, 1)
-		go func(scanErr chan error, reportChan chan *v1alpha1.VulnerabilityReportList) {
-			defer wg.Done()
-			kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
-			if err != nil {
-				scanErr <- err
-				return
-			}
-			workloads := getWorkloadResources(allResources)
-			if len(workloads) == 0 {
-				return
-			}
-			bar := getProgressBar(len(workloads), "Workload Vulnerabilities", cmd)
-
-			vulnScanner, err := getVulnerabilityScanner(ctx, cmd, kubeClientset, buildInfo, kubeClient)
-			if err != nil {
-				scanErr <- err
-				return
-			}
-			list := &v1alpha1.VulnerabilityReportList{
-				Items: []v1alpha1.VulnerabilityReport{},
-			}
-			for _, workload := range workloads {
-				bar.Add(1)
-				reports, err := vulnScanner.Scan(ctx, workload)
-				if err != nil {
-					scanErr <- err
-					return
-				}
-				for _, report := range reports {
-					list.Items = append(list.Items, report)
-				}
-				time.Sleep(50 * time.Millisecond)
-			}
-			bar.Finish()
-			reportChan <- list
-		}(scanErr, vulnerabilityReportChan)
+				reportChan <- vulnerabilityReport
+			}(scanErr, reportChan)
+		}
 		wg.Wait()
 		if err := checkScanningErrors(scanErr); err != nil {
 			return err
 		}
-		err = printScannerReports(cmd, configAuditReportChan, vulnerabilityReportChan, outWriter)
+		err = printScannerReports(cmd, outWriter, reportChan)
 		if err != nil {
 			return err
 		}
@@ -145,35 +117,41 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 	}
 }
 
-func printScannerReports(cmd *cobra.Command, configReportChan chan *v1alpha1.ConfigAuditReportList, vulnReportChan chan *v1alpha1.VulnerabilityReportList, outWriter io.Writer) error {
-	printer, err := getPrinter(cmd)
-	if err != nil {
-		return err
+func scanVulnerabilities(ctx context.Context, workloads []kube.ObjectRef, cmd *cobra.Command, vulnerabilityScanner *vulnerabilityreport.Scanner) (*v1alpha1.VulnerabilityReportList, error) {
+	bar := getProgressBar(len(workloads), "Vulnerabilities", cmd)
+	list := &v1alpha1.VulnerabilityReportList{
+		Items: []v1alpha1.VulnerabilityReport{},
 	}
-	close(configReportChan)
-	for cReport := range configReportChan {
-		err := printer.PrintObj(cReport, outWriter)
+	for _, workload := range workloads {
+		bar.Add(1)
+		reports, err := vulnerabilityScanner.Scan(ctx, workload)
 		if err != nil {
-			return err
+			return nil, err
+		}
+		for _, report := range reports {
+			list.Items = append(list.Items, report)
 		}
 	}
-	close(vulnReportChan)
-	for vReport := range vulnReportChan {
-		err := printer.PrintObj(vReport, outWriter)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	bar.Finish()
+	return list, nil
 }
 
-func checkScanningErrors(scanErr chan error) error {
-	if len(scanErr) != 0 {
-		for e := range scanErr {
-			return e
-		}
+func scanResourceConfig(ctx context.Context, allResources []kube.ObjectRef, cmd *cobra.Command, configScanner *configauditreport.Scanner) (runtime.Object, error) {
+	bar := getProgressBar(len(allResources), "Resource Config", cmd)
+	list := &v1alpha1.ConfigAuditReportList{
+		Items: []v1alpha1.ConfigAuditReport{},
 	}
-	return nil
+	for _, resource := range allResources {
+		bar.Add(1)
+		reportBuilder, err := configScanner.Scan(ctx, resource)
+		report, err := reportBuilder.GetReport()
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, report)
+	}
+	bar.Finish()
+	return list, nil
 }
 
 func getNamespaceFromArg(args []string) (string, error) {
@@ -183,29 +161,8 @@ func getNamespaceFromArg(args []string) (string, error) {
 	return args[0], nil
 }
 
-func getPrinter(cmd *cobra.Command) (printers.ResourcePrinter, error) {
-	format := cmd.Flag("output").Value.String()
-	var printer printers.ResourcePrinter
-
-	switch format {
-	case "yaml", "json":
-		printer, err := genericclioptions.NewPrintFlags("").
-			WithTypeSetter(starboard.NewScheme()).
-			WithDefaultOutput(format).
-			ToPrinter()
-		if err != nil {
-			return nil, err
-		}
-		return printer, nil
-	case "":
-		printer = printers.NewTablePrinter()
-		return printer, nil
-	default:
-		return nil, fmt.Errorf("invalid output format %q, allowed formats are: yaml,json", format)
-	}
-}
-
-func getVulnerabilityScanner(ctx context.Context, cmd *cobra.Command, kubeClientset *kubernetes.Clientset, buildInfo starboard.BuildInfo, kubeClient client.Client) (*vulnerabilityreport.Scanner, error) {
+func getVulnerabilityScanner(ctx context.Context, cmd *cobra.Command, kubeConfig *rest.Config, buildInfo starboard.BuildInfo, kubeClient client.Client) (*vulnerabilityreport.Scanner, error) {
+	kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
 	config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
 	if err != nil {
 		return nil, err
@@ -226,22 +183,4 @@ func getVulnerabilityScanner(ctx context.Context, cmd *cobra.Command, kubeClient
 	}
 	scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
 	return scanner, nil
-}
-
-func getProgressBar(size int, title string, cmd *cobra.Command) *progressbar.ProgressBar {
-	silent := cmd.Flag("silent").Value.String()
-	if silent == "true" {
-		return progressbar.DefaultSilent(int64(size), title)
-	}
-	return progressbar.NewOptions(size,
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionSetDescription(fmt.Sprintf("[cyan][reset] Scanning %s...", title)),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}))
 }

@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"io"
+
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
-	"io"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
