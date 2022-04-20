@@ -42,7 +42,6 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 		if err != nil {
 			return err
 		}
-		// scan for config audit
 		allResources, err := getObjectsRef(ctx, kubeConfig, namespace, getNamespaceGVR())
 		if err != nil {
 			return err
@@ -56,16 +55,16 @@ func ScanNamespace(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 			return err
 		}
 		configScanner := configauditreport.NewScanner(buildInfo, kubeClient)
-		scanFuncs := []func() (runtime.Object, error){ScanResourceConfig(ctx, allResources, cmd, configScanner)}
+		scanFuncs := []func() (runtime.Object, error){scanResourceConfig(ctx, allResources, cmd, configScanner)}
 		workloads := getWorkloadObjectRef(allResources)
 		if len(workloads) > 0 {
 			vulnerabilityScanner, err := getVulnerabilityScanner(ctx, cmd, kubeConfig, buildInfo, kubeClient)
 			if err != nil {
 				return err
 			}
-			scanFuncs = append(scanFuncs, ScanVulnerabilities(ctx, workloads, cmd, vulnerabilityScanner))
+			scanFuncs = append(scanFuncs, scanVulnerabilities(ctx, workloads, cmd, vulnerabilityScanner))
 		}
-		reportChan, errChan := ExecuteChecks(scanFuncs)
+		reportChan, errChan := executeChecks(scanFuncs)
 		if err := checkScanningErrors(errChan); err != nil {
 			return err
 		}

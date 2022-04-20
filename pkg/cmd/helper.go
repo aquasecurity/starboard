@@ -178,10 +178,10 @@ func getWorkloadObjectRef(allResources []kube.ObjectRef) []kube.ObjectRef {
 	return workloads
 }
 
-func getProgressBar(size int, title string, cmd *cobra.Command) Bar {
+func NewProgressBar(size int, title string, cmd *cobra.Command) Bar {
 	silent := cmd.Flag("silent").Value.String()
 	if silent == "true" {
-		return &DummyProgressBar{}
+		return &dummyProgressBar{}
 	}
 	return pb.New(size).SetRefreshRate(time.Second).SetWidth(80).SetMaxWidth(80).Prefix(fmt.Sprintf("Scanning %s...", title)).Start()
 }
@@ -190,15 +190,15 @@ type Bar interface {
 	Add(add int) int
 	Finish()
 }
-type DummyProgressBar struct {
+type dummyProgressBar struct {
 }
 
-func (dm DummyProgressBar) Add(add int) int {
+func (dm dummyProgressBar) Add(add int) int {
 	// do nothing
 	return 0
 }
 
-func (dm DummyProgressBar) Finish() {
+func (dm dummyProgressBar) Finish() {
 	// do nothing
 }
 
@@ -250,13 +250,13 @@ func printScannerReports(cmd *cobra.Command, outWriter io.Writer, reportChan <-c
 	return nil
 }
 
-func ExecuteChecks(scanFuncs []func() (runtime.Object, error)) (chan runtime.Object, chan error) {
+func executeChecks(scanFuncs []func() (runtime.Object, error)) (chan runtime.Object, chan error) {
 	errChan := make(chan error, len(scanFuncs))
 	reportChan := make(chan runtime.Object, len(scanFuncs))
 	var wg sync.WaitGroup
 	wg.Add(len(scanFuncs))
 	for _, sf := range scanFuncs {
-		go Work(&wg, errChan, reportChan, sf)
+		go work(&wg, errChan, reportChan, sf)
 	}
 	wg.Wait()
 	close(reportChan)
@@ -264,7 +264,7 @@ func ExecuteChecks(scanFuncs []func() (runtime.Object, error)) (chan runtime.Obj
 	return reportChan, errChan
 }
 
-func Work(wg *sync.WaitGroup, scanErr chan<- error, reportChan chan<- runtime.Object, scanFuncs func() (runtime.Object, error)) {
+func work(wg *sync.WaitGroup, scanErr chan<- error, reportChan chan<- runtime.Object, scanFuncs func() (runtime.Object, error)) {
 	func(errChan chan<- error, reportChan chan<- runtime.Object) {
 		defer wg.Done()
 		reports, err := scanFuncs()
@@ -276,9 +276,9 @@ func Work(wg *sync.WaitGroup, scanErr chan<- error, reportChan chan<- runtime.Ob
 	}(scanErr, reportChan)
 }
 
-func ScanVulnerabilities(ctx context.Context, workloads []kube.ObjectRef, cmd *cobra.Command, vulnerabilityScanner *vulnerabilityreport.Scanner) func() (runtime.Object, error) {
+func scanVulnerabilities(ctx context.Context, workloads []kube.ObjectRef, cmd *cobra.Command, vulnerabilityScanner *vulnerabilityreport.Scanner) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
-		bar := getProgressBar(len(workloads), "Vulnerabilities", cmd)
+		bar := NewProgressBar(len(workloads), "Vulnerabilities", cmd)
 		list := &v1alpha1.VulnerabilityReportList{
 			Items: []v1alpha1.VulnerabilityReport{},
 		}
@@ -297,9 +297,9 @@ func ScanVulnerabilities(ctx context.Context, workloads []kube.ObjectRef, cmd *c
 	}
 }
 
-func ScanResourceConfig(ctx context.Context, allResources []kube.ObjectRef, cmd *cobra.Command, configScanner *configauditreport.Scanner) func() (runtime.Object, error) {
+func scanResourceConfig(ctx context.Context, allResources []kube.ObjectRef, cmd *cobra.Command, configScanner *configauditreport.Scanner) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
-		bar := getProgressBar(len(allResources), "Resource Config", cmd)
+		bar := NewProgressBar(len(allResources), "Resource Config", cmd)
 		list := &v1alpha1.ConfigAuditReportList{
 			Items: []v1alpha1.ConfigAuditReport{},
 		}
