@@ -194,11 +194,6 @@ const (
 	keyGrypeUpdateURL      = "grype.updateURL"
 	keyGrypeAddMissingCPEs = "grype.addMissingCPEs"
 	keyGrypeRegAuthority   = "grype.regAuthority"
-
-	keyResourcesRequestsCPU    = "grype.resources.requests.cpu"
-	keyResourcesRequestsMemory = "grype.resources.requests.memory"
-	keyResourcesLimitsCPU      = "grype.resources.limits.cpu"
-	keyResourcesLimitsMemory   = "grype.resources.limits.memory"
 )
 
 type JobSpecTestCase struct {
