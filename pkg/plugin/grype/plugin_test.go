@@ -19,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -207,7 +206,7 @@ type JobSpecTestCase struct {
 
 	Config             map[string]string
 	ExpectedConfigName string
-	WorkloadSpec       client.Object
+	WorkloadSpec       *corev1.Pod
 
 	// ExpectedSecrets []corev1.Secret
 	ExpectedJobSpec corev1.PodSpec
@@ -462,6 +461,45 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 	scheme.Config["grype.scheme"] = "podman"
 	scheme.ExpectedJobSpec.Containers[0].Args[0] = "podman:nginx:1.16"
 	testCases = append(testCases, scheme)
+
+	//test insecure settings
+	insecure := NewJobSpecTestCase("Should set insecure env var")
+	insecure.Config["grype.insecureRegistryPrefixes"] = "foo, bar, ba"
+	insecure.WorkloadSpec.Spec.Containers[0].Image = "bar/nginx:1.16"
+	insecure.ExpectedJobSpec.Containers[0].Args[0] = "bar/nginx:1.16"
+	insecure.ExpectedJobSpec.Containers[0].Env = append(insecure.ExpectedJobSpec.Containers[0].Env,
+		corev1.EnvVar{
+			Name:  "GRYPE_REGISTRY_INSECURE_SKIP_TLS_VERIFY",
+			Value: "true",
+		},
+	)
+	testCases = append(testCases, insecure)
+
+	//not insecure
+	notInsecure := NewJobSpecTestCase("Should NOT set insecure env var")
+	notInsecure.Config["grype.insecureRegistryPrefixes"] = "notFoo, bar"
+	notInsecure.WorkloadSpec.Spec.Containers[0].Image = "foobar/nginx:1.16"
+	notInsecure.ExpectedJobSpec.Containers[0].Args[0] = "foobar/nginx:1.16"
+	testCases = append(testCases, notInsecure)
+
+	//no SSL
+	noSSL := NewJobSpecTestCase("Should set no SSL env var")
+	noSSL.Config["grype.nonSSLRegistyPrefixes"] = "foo, http://bar, http://ba"
+	noSSL.WorkloadSpec.Spec.Containers[0].Image = "http://bar/nginx:1.16"
+	noSSL.ExpectedJobSpec.Containers[0].Args[0] = "http://bar/nginx:1.16"
+	noSSL.ExpectedJobSpec.Containers[0].Env = append(noSSL.ExpectedJobSpec.Containers[0].Env,
+		corev1.EnvVar{
+			Name:  "GRYPE_REGISTRY_INSECURE_USE_HTTP",
+			Value: "true",
+		},
+	)
+	testCases = append(testCases, noSSL)
+
+	noNoSSL := NewJobSpecTestCase("Should NOT set no SSL env var")
+	noNoSSL.Config["grype.nonSSLRegistyPrefixes"] = "foo, http://notBar"
+	noNoSSL.WorkloadSpec.Spec.Containers[0].Image = "http://bar/nginx:1.16"
+	noNoSSL.ExpectedJobSpec.Containers[0].Args[0] = "http://bar/nginx:1.16"
+	testCases = append(testCases, noNoSSL)
 
 	// Test cases when starboard is enabled with option to run job in the namespace of workload
 	for _, tc := range testCases {
