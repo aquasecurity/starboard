@@ -27,17 +27,19 @@ const (
 )
 
 const (
-	keyGrypeImageRef       = "grype.imageRef"
-	keyGrypeScheme         = "grype.scheme"
-	keyGrypePath           = "grype.path"
-	keyGrypeOnlyFixed      = "grype.onlyFixed"
-	keyGrypeExcludePaths   = "grype.exclude"
-	keyGrypeHTTPProxy      = "grype.httpProxy"
-	keyGrypeHTTPSProxy     = "grype.httpsProxy"
-	keyGrypeNoProxy        = "grype.noProxy"
-	keyGrypeUpdateURL      = "grype.updateURL"
-	keyGrypeAddMissingCPEs = "grype.addMissingCPEs"
-	keyGrypeRegAuthority   = "grype.regAuthority"
+	keyGrypeImageRef                 = "grype.imageRef"
+	keyGrypeScheme                   = "grype.scheme"
+	keyGrypePath                     = "grype.path"
+	keyGrypeOnlyFixed                = "grype.onlyFixed"
+	keyGrypeExcludePaths             = "grype.exclude"
+	keyGrypeHTTPProxy                = "grype.httpProxy"
+	keyGrypeHTTPSProxy               = "grype.httpsProxy"
+	keyGrypeNoProxy                  = "grype.noProxy"
+	keyGrypeUpdateURL                = "grype.updateURL"
+	keyGrypeAddMissingCPEs           = "grype.addMissingCPEs"
+	keyGrypeRegAuthority             = "grype.regAuthority"
+	keyGrypeInsecureRegistryPrefixes = "grype.insecureRegistryPrefixes"
+	keyGrypeNonSSLRegistryPrefixes   = "grype.nonSSLRegistyPrefixes"
 
 	keyResourcesRequestsCPU    = "grype.resources.requests.cpu"
 	keyResourcesRequestsMemory = "grype.resources.requests.memory"
@@ -335,6 +337,34 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 				Value: "false",
 			},
 		)
+
+		//check if we have to set insecure settings
+		if val, ok := config.Data[keyGrypeInsecureRegistryPrefixes]; ok {
+			for _, prefix := range strings.Split(val, ",") {
+				if strings.HasPrefix(c.Image, strings.Trim(prefix, " ")) {
+					env = append(env,
+						corev1.EnvVar{
+							Name:  "GRYPE_REGISTRY_INSECURE_SKIP_TLS_VERIFY",
+							Value: "true",
+						},
+					)
+					break
+				}
+			}
+		}
+		if val, ok := config.Data[keyGrypeNonSSLRegistryPrefixes]; ok {
+			for _, prefix := range strings.Split(val, ",") {
+				if strings.HasPrefix(c.Image, strings.Trim(prefix, " ")) {
+					env = append(env,
+						corev1.EnvVar{
+							Name:  "GRYPE_REGISTRY_INSECURE_USE_HTTP",
+							Value: "true",
+						},
+					)
+					break
+				}
+			}
+		}
 
 		if _, ok := credentials[c.Name]; ok && secret != nil {
 			registryUsernameKey := fmt.Sprintf("%s.username", c.Name)
