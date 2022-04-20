@@ -7,6 +7,7 @@ This plugin is derived from the Trivy plugin.
 
 # Notes on configuration
 Most of the settings correspond directly to the settings mentioned in grype documentation.
+In order to set optional parameters, e.g. `grype.onlyFixed`, they have to be set to `true`
 There are two settings that are specific to this plugin:
 
 key | description 
