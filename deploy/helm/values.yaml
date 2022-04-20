@@ -179,6 +179,18 @@ trivy:
 
   dbRepository: "ghcr.io/aquasecurity/trivy-db"
 
+grype:
+  createConfig: true
+  imageRef: "anchore/grype:0.34.7"
+  updateURL: "https://toolbox-data.anchore.io/grype/databases/listing.json"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100M
+    limits:
+      cpu: 500m
+      memory: 500M
+
 compliance:
   # failEntriesLimit the flag to limit the number of fail entries per control check in the cluster compliance detail report
   failEntriesLimit: 10
