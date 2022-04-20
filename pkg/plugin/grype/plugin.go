@@ -38,6 +38,9 @@ const (
 	keyGrypeUpdateURL                = "grype.updateURL"
 	keyGrypeAddMissingCPEs           = "grype.addMissingCPEs"
 	keyGrypeRegAuthority             = "grype.regAuthority"
+	keyGrypeRegUsername              = "grype.regUsername"
+	keyGrypeRegPassword              = "grype.regPassword"
+	keyGrypeRegToken                 = "grype.regToken"
 	keyGrypeInsecureRegistryPrefixes = "grype.insecureRegistryPrefixes"
 	keyGrypeNonSSLRegistryPrefixes   = "grype.nonSSLRegistyPrefixes"
 
@@ -311,11 +314,47 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 			corev1.EnvVar{
 				Name: "GRYPE_REGISTRY_AUTH_AUTHORITY",
 				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: grypeConfigName,
 						},
 						Key:      keyGrypeRegAuthority,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "GRYPE_REGISTRY_AUTH_USERNAME",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: grypeConfigName,
+						},
+						Key:      keyGrypeRegUsername,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "GRYPE_REGISTRY_AUTH_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: grypeConfigName,
+						},
+						Key:      keyGrypeRegPassword,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "GRYPE_REGISTRY_AUTH_TOKEN",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: grypeConfigName,
+						},
+						Key:      keyGrypeRegToken,
 						Optional: pointer.BoolPtr(true),
 					},
 				},
