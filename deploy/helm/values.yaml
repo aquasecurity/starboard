@@ -476,3 +476,19 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+additionalPolicies:
+  library: {}
+    # kubernetes.rego: |
+    #   << REGO >>
+    # utils.rego: |
+    #   << REGO >>
+  policy: {}
+    # access_to_host_pid:
+    #   rego: |
+    #     << REGO >>
+    #   kinds: Workload
+    # configmap_with_sensitive_data:
+    #   rego: |
+    #     << REGO >>
+    #   kinds: ConfigMap
