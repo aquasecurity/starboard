@@ -4,7 +4,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"time"
+
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/plugin"
+	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"go.uber.org/multierr"
+	_ "go.uber.org/multierr"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -25,7 +36,6 @@ const (
 	BatchGroup             = "batch"
 	RbacGroup              = "rbac"
 	NetworkingGroup        = "networking"
-	PolicyGroup            = "policy"
 	V1Version              = "v1"
 	V1beta1Version         = "v1Beta1"
 	Deployments            = "deployments"
@@ -44,9 +54,6 @@ const (
 	Ingresss               = "ingresss"
 	ResourceQuotas         = "resourceQuotas"
 	LimitRanges            = "limitranges"
-	ClusterRoleBindings    = "clusterrolebindings"
-	ClusterRoles           = "clusterroles"
-	PodSecurityPolicy      = "podsecuritypolicys"
 )
 
 func getNamespaceGVR() []schema.GroupVersionResource {
@@ -134,8 +141,12 @@ func getNamespaceGVR() []schema.GroupVersionResource {
 	}
 }
 
-func getObjectsRef(ctx context.Context, client dynamic.Interface, namespace string, gvrs []schema.GroupVersionResource) ([]kube.ObjectRef, error) {
+func getObjectsRef(ctx context.Context, inConfig *rest.Config, namespace string, gvrs []schema.GroupVersionResource) ([]kube.ObjectRef, error) {
 	ObjRefs := make([]kube.ObjectRef, 0)
+	client, err := dynamic.NewForConfig(inConfig)
+	if err != nil {
+		return nil, err
+	}
 	for _, gvr := range gvrs {
 		var dclient dynamic.ResourceInterface
 		if len(namespace) == 0 {
@@ -213,22 +224,22 @@ func getPrinter(cmd *cobra.Command) (printers.ResourcePrinter, error) {
 	}
 }
 
-func checkScanningErrors(scanErr chan error) error {
-	close(scanErr)
-	if len(scanErr) != 0 {
-		for e := range scanErr {
-			return e
+func checkScanningErrors(errChan <-chan error) error {
+	scanErr := make([]error, 0)
+	if len(errChan) != 0 {
+		for e := range errChan {
+			scanErr = append(scanErr, e)
 		}
+		return multierr.Combine(scanErr...)
 	}
 	return nil
 }
 
-func printScannerReports(cmd *cobra.Command, outWriter io.Writer, reportChan chan runtime.Object) error {
+func printScannerReports(cmd *cobra.Command, outWriter io.Writer, reportChan <-chan runtime.Object) error {
 	printer, err := getPrinter(cmd)
 	if err != nil {
 		return err
 	}
-	close(reportChan)
 	for cReport := range reportChan {
 		err := printer.PrintObj(cReport, outWriter)
 		if err != nil {
@@ -237,4 +248,95 @@ func printScannerReports(cmd *cobra.Command, outWriter io.Writer, reportChan cha
 
 	}
 	return nil
+}
+
+func ExecuteChecks(scanFuncs []func() (runtime.Object, error)) (chan runtime.Object, chan error) {
+	errChan := make(chan error, len(scanFuncs))
+	reportChan := make(chan runtime.Object, len(scanFuncs))
+	var wg sync.WaitGroup
+	wg.Add(len(scanFuncs))
+	for _, sf := range scanFuncs {
+		go Work(&wg, errChan, reportChan, sf)
+	}
+	wg.Wait()
+	close(reportChan)
+	close(errChan)
+	return reportChan, errChan
+}
+
+func Work(wg *sync.WaitGroup, scanErr chan<- error, reportChan chan<- runtime.Object, scanFuncs func() (runtime.Object, error)) {
+	func(errChan chan<- error, reportChan chan<- runtime.Object) {
+		defer wg.Done()
+		reports, err := scanFuncs()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		reportChan <- reports
+	}(scanErr, reportChan)
+}
+
+func ScanVulnerabilities(ctx context.Context, workloads []kube.ObjectRef, cmd *cobra.Command, vulnerabilityScanner *vulnerabilityreport.Scanner) func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		bar := getProgressBar(len(workloads), "Vulnerabilities", cmd)
+		list := &v1alpha1.VulnerabilityReportList{
+			Items: []v1alpha1.VulnerabilityReport{},
+		}
+		for _, workload := range workloads {
+			bar.Add(1)
+			reports, err := vulnerabilityScanner.Scan(ctx, workload)
+			if err != nil {
+				return nil, err
+			}
+			for _, report := range reports {
+				list.Items = append(list.Items, report)
+			}
+		}
+		bar.Finish()
+		return list, nil
+	}
+}
+
+func ScanResourceConfig(ctx context.Context, allResources []kube.ObjectRef, cmd *cobra.Command, configScanner *configauditreport.Scanner) func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		bar := getProgressBar(len(allResources), "Resource Config", cmd)
+		list := &v1alpha1.ConfigAuditReportList{
+			Items: []v1alpha1.ConfigAuditReport{},
+		}
+		for _, resource := range allResources {
+			bar.Add(1)
+			reportBuilder, err := configScanner.Scan(ctx, resource)
+			report, err := reportBuilder.GetReport()
+			if err != nil {
+				return nil, err
+			}
+			list.Items = append(list.Items, report)
+		}
+		bar.Finish()
+		return list, nil
+	}
+}
+
+func getVulnerabilityScanner(ctx context.Context, cmd *cobra.Command, kubeConfig *rest.Config, buildInfo starboard.BuildInfo, kubeClient client.Client) (*vulnerabilityreport.Scanner, error) {
+	kubeClientset, err := kubernetes.NewForConfig(kubeConfig)
+	config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opts, err := getScannerOpts(cmd)
+	if err != nil {
+		return nil, err
+	}
+	plugin, pluginContext, err := plugin.NewResolver().
+		WithBuildInfo(buildInfo).
+		WithNamespace(starboard.NamespaceName).
+		WithServiceAccountName(starboard.ServiceAccountName).
+		WithConfig(config).
+		WithClient(kubeClient).
+		GetVulnerabilityPlugin()
+	if err != nil {
+		return nil, err
+	}
+	scanner := vulnerabilityreport.NewScanner(kubeClientset, kubeClient, plugin, pluginContext, config, opts)
+	return scanner, nil
 }
