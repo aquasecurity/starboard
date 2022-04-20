@@ -522,8 +522,9 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 		fixVersion = strings.TrimSuffix(fixVersion, ", ")
 
 		var score *float64 = pointer.Float64Ptr(0)
+		vulRegex, _ := regexp.Compile(`3\..*`)
 		for _, cvs := range vul.CVSs {
-			if matched, err := regexp.MatchString("3\\..*", cvs.Version); matched && err == nil {
+			if vulRegex.Match([]byte(cvs.Version)) {
 				score = cvs.Metrics.BaseScore
 			}
 		}
@@ -621,20 +622,4 @@ func (p *plugin) parseImageRef(imageRef string) (v1alpha1.Registry, v1alpha1.Art
 		artifact.Digest = t.DigestStr()
 	}
 	return registry, artifact, nil
-}
-
-func constructEnvVarSourceFromConfigMap(envName, configName, configKey string) (res corev1.EnvVar) {
-	res = corev1.EnvVar{
-		Name: envName,
-		ValueFrom: &corev1.EnvVarSource{
-			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: configName,
-				},
-				Key:      configKey,
-				Optional: pointer.BoolPtr(true),
-			},
-		},
-	}
-	return
 }
