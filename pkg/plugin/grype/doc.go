@@ -1,2 +1,2 @@
-// Package grype provides primitives for working with Trivy.
+// Package grype provides primitives for working with Grype.
 package grype

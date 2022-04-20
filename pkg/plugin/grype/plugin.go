@@ -94,6 +94,10 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 	return nil
 }
 
+func (c *Config) GetImageRef() (string, error) {
+	return c.GetRequiredData(keyGrypeImageRef)
+}
+
 type plugin struct {
 	clock          ext.Clock
 	idGenerator    ext.IDGenerator
@@ -162,19 +166,17 @@ const (
 	grypeDBLocation      = "/tmp/grypedb"
 )
 
-// In the Standalone mode there is the init container responsible for
-// downloading the latest Grype DB file from GitHub and storing it to the
-// emptyDir volume shared with main containers. In other words, the init
-// container runs the following Grype command:
+// There is an init container to cache the Grype DB, which will be stored in an
+// emptyDir volume and shared across the scanning containers. Most configuration
+// is done via the environment of the scanning containers
 //
-//     grype --cache-dir /tmp/grype/.cache image --download-db-only
+//     grype db update
 //
 // The number of main containers correspond to the number of containers
 // defined for the scanned workload. Each container runs the Grype image scan
 // command and skips the database download:
 //
-//     grype --cache-dir /tmp/grype/.cache image --skip-update \
-//       --format json <container image>
+//     grype <container image> --skip-update --quiet --output json
 func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -295,19 +297,15 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 
 	for _, c := range spec.Containers {
 
+		//optionally add schema
+		scanImage := ""
+		if val, ok := config.Data[keyGrypeScheme]; ok {
+			scanImage = val + ":" + c.Image
+		} else {
+			scanImage = c.Image
+		}
+
 		env := append(commonEnv,
-			corev1.EnvVar{
-				Name: "GRYPE_DB_UPDATE_URL",
-				ValueFrom: &corev1.EnvVarSource{
-					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: grypeConfigName,
-						},
-						Key:      keyGrypeUpdateURL,
-						Optional: pointer.BoolPtr(false),
-					},
-				},
-			},
 			corev1.EnvVar{
 				Name: "GRYPE_REGISTRY_AUTH_AUTHORITY",
 				ValueFrom: &corev1.EnvVarSource{
@@ -376,7 +374,7 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 		// }
 
 		args := []string{
-			c.Image,
+			scanImage,
 			"--skip-update",
 			"--quiet",
 			"--output",
@@ -429,7 +427,8 @@ func (p *plugin) appendGrypeOptionalArg(config Config, args []string, arg string
 	if val, ok := config.Data[key]; ok && val == "true" {
 		return append(args, arg), nil
 	} else if !ok {
-		return args, fmt.Errorf("Invalid config key provided: %s", key)
+		//ignore if optional key is not in config.data
+		return args, nil
 	} else {
 		return args, nil
 	}
