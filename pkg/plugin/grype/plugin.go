@@ -132,7 +132,7 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, client client.Clien
 func (p *plugin) Init(ctx starboard.PluginContext) error {
 	return ctx.EnsureConfig(starboard.PluginConfig{
 		Data: map[string]string{
-			keyGrypeImageRef:  "anchore/grype:0.34.7",
+			keyGrypeImageRef:  "anchore/grype:v0.35.0",
 			keyGrypeUpdateURL: defaultUpdateURL,
 
 			keyResourcesRequestsCPU:    "100m",
@@ -287,9 +287,6 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Env:                      commonEnv,
-		Command: []string{
-			"grype",
-		},
 		Args: []string{
 			"db",
 			"update",
@@ -463,12 +460,9 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 			ImagePullPolicy:          corev1.PullIfNotPresent,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			Env:                      env,
-			Command: []string{
-				"grype",
-			},
-			Args:         args,
-			Resources:    requirements,
-			VolumeMounts: volumeMounts,
+			Args:                     args,
+			Resources:                requirements,
+			VolumeMounts:             volumeMounts,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               pointer.BoolPtr(false),
 				AllowPrivilegeEscalation: pointer.BoolPtr(false),
@@ -479,6 +473,8 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 			},
 		})
 	}
+
+	fmt.Println(initContainer)
 
 	return corev1.PodSpec{
 		Affinity:                     starboard.LinuxNodeAffinity(),
