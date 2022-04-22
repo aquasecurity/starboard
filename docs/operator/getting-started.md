@@ -117,6 +117,11 @@ as well as the ConfigAuditReport named `replicaset-nginx-78449c65d46` are automa
     deployment descriptor. This is useful to identify vulnerabilities that impact only the running workloads.
 
 !!! tip
+    If you only want the latest ReplicaSet in your Deployment to be scanned for config audit, you can set the value
+    of the `OPERATOR_CONFIG_AUDIT_SCANNER_SCAN_ONLY_CURRENT_REVISIONS` environment variable to `true` in the operator's
+    deployment descriptor. This is useful to identify config issues that impact only the running workloads.
+
+!!! tip
     You can get and describe `vulnerabilityreports` and `configauditreports` as built-in Kubernetes objects:
     ```
     kubectl get vulnerabilityreport replicaset-nginx-5fbc65fff-nginx -o json

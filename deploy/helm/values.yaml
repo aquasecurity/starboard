@@ -53,6 +53,8 @@ operator:
   batchDeleteLimit: 10
   # vulnerabilityScannerScanOnlyCurrentRevisions the flag to only create vulnerability scans on the current revision of a deployment.
   vulnerabilityScannerScanOnlyCurrentRevisions: false
+  # configAuditScannerScanOnlyCurrentRevisions the flag to only create config audit scans on the current revision of a deployment.
+  configAuditScannerScanOnlyCurrentRevisions: false
   # batchDeleteDelay the duration to wait before deleting another batch of config audit reports.
   batchDeleteDelay: 10s
 image:

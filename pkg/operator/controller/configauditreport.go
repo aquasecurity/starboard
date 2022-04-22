@@ -156,6 +156,18 @@ func (r *ConfigAuditReportReconciler) reconcileResource(resourceKind kube.Kind) 
 			}
 		}
 
+		if r.Config.ConfigAuditScannerScanOnlyCurrentRevisions && resourceKind == kube.KindReplicaSet {
+			controller := metav1.GetControllerOf(resource)
+			activeReplicaSet, err := r.IsActiveReplicaSet(ctx, resource, controller)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed checking current revision: %w", err)
+			}
+			if !activeReplicaSet {
+				log.V(1).Info("Ignoring inactive ReplicaSet", "controllerKind", controller.Kind, "controllerName", controller.Name)
+				return ctrl.Result{}, nil
+			}
+		}
+
 		// Skip processing if a resource is a Job controlled by CronJob.
 		if resourceKind == kube.KindJob {
 			controller := metav1.GetControllerOf(resource)
