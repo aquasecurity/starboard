@@ -45,10 +45,10 @@ func TestConfig_GetImageRef(t *testing.T) {
 			name: "Should return image reference from config data",
 			configData: grype.Config{PluginConfig: starboard.PluginConfig{
 				Data: map[string]string{
-					"grype.imageRef": "anchore/grype:0.34.7",
+					"grype.imageRef": "anchore/grype:v0.35.0",
 				},
 			}},
-			expectedImageRef: "anchore/grype:0.34.7",
+			expectedImageRef: "anchore/grype:v0.35.0",
 		},
 	}
 
@@ -169,7 +169,7 @@ func TestPlugin_Init(t *testing.T) {
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
-				"grype.imageRef":  "anchore/grype:0.34.7",
+				"grype.imageRef":  "anchore/grype:v0.35.0",
 				"grype.updateURL": defaultUpdateURL,
 
 				"grype.resources.requests.cpu":    "100m",
@@ -182,11 +182,12 @@ func TestPlugin_Init(t *testing.T) {
 }
 
 const (
-	grypeDBLocation        = "/tmp/grypedb"
+	grypeDBLocation        = "/tmp"
 	keyGrypeImageRef       = "grype.imageRef"
 	keyGrypeScheme         = "grype.scheme"
 	keyGrypePath           = "grype.path"
 	keyGrypeOnlyFixed      = "grype.onlyFixed"
+	keyGrypePlatform       = "grype.platform"
 	keyGrypeExcludePaths   = "grype.exclude"
 	keyGrypeHTTPProxy      = "grype.httpProxy"
 	keyGrypeHTTPSProxy     = "grype.httpsProxy"
@@ -194,6 +195,9 @@ const (
 	keyGrypeUpdateURL      = "grype.updateURL"
 	keyGrypeAddMissingCPEs = "grype.addMissingCPEs"
 	keyGrypeRegAuthority   = "grype.regAuthority"
+	keyGrypeRegUsername    = "grype.regUsername"
+	keyGrypeRegPassword    = "grype.regPassword"
+	keyGrypeRegToken       = "grype.regToken"
 )
 
 type JobSpecTestCase struct {
@@ -327,9 +331,6 @@ func NewJobSpecTestCase(Name string) JobSpecTestCase {
 				ImagePullPolicy:          corev1.PullIfNotPresent,
 				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 				Env:                      commonEnv,
-				Command: []string{
-					"grype",
-				},
 				Args: []string{
 					"db",
 					"update",
@@ -359,11 +360,59 @@ func NewJobSpecTestCase(Name string) JobSpecTestCase {
 					corev1.EnvVar{
 						Name: "GRYPE_REGISTRY_AUTH_AUTHORITY",
 						ValueFrom: &corev1.EnvVarSource{
-							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+							SecretKeyRef: &corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: j.ExpectedConfigName,
 								},
 								Key:      keyGrypeRegAuthority,
+								Optional: pointer.BoolPtr(true),
+							},
+						},
+					},
+					corev1.EnvVar{
+						Name: "GRYPE_REGISTRY_AUTH_USERNAME",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: j.ExpectedConfigName,
+								},
+								Key:      keyGrypeRegUsername,
+								Optional: pointer.BoolPtr(true),
+							},
+						},
+					},
+					corev1.EnvVar{
+						Name: "GRYPE_REGISTRY_AUTH_PASSWORD",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: j.ExpectedConfigName,
+								},
+								Key:      keyGrypeRegPassword,
+								Optional: pointer.BoolPtr(true),
+							},
+						},
+					},
+					corev1.EnvVar{
+						Name: "GRYPE_REGISTRY_AUTH_TOKEN",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: j.ExpectedConfigName,
+								},
+								Key:      keyGrypeRegToken,
+								Optional: pointer.BoolPtr(true),
+							},
+						},
+					},
+					corev1.EnvVar{
+						Name: "GRYPE_PLATFORM",
+						ValueFrom: &corev1.EnvVarSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: j.ExpectedConfigName,
+								},
+								Key:      keyGrypePlatform,
 								Optional: pointer.BoolPtr(true),
 							},
 						},
@@ -385,12 +434,8 @@ func NewJobSpecTestCase(Name string) JobSpecTestCase {
 						Value: "false",
 					},
 				),
-				Command: []string{
-					"grype",
-				},
 				Args: []string{
 					"nginx:1.16",
-					"--skip-update",
 					"--quiet",
 					"--output",
 					"json",
@@ -760,7 +805,7 @@ var (
 		},
 		"descriptor": {
 		 "name": "grype",
-		 "version": "0.34.7",
+		 "version": "v0.35.0",
 		 "configuration": {
 		  "configPath": "",
 		  "output": "json",
@@ -817,7 +862,7 @@ var (
 		Scanner: v1alpha1.Scanner{
 			Name:    "Grype",
 			Vendor:  "Anchore Inc.",
-			Version: "0.34.7",
+			Version: "v0.35.0",
 		},
 		Registry: v1alpha1.Registry{
 			Server: "index.docker.io",
@@ -912,7 +957,7 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 			Namespace: "starboard-ns",
 		},
 		Data: map[string]string{
-			"grype.imageRef": "anchore/grype:0.34.7",
+			"grype.imageRef": "anchore/grype:v0.35.0",
 		},
 	}
 
@@ -940,7 +985,7 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 				Scanner: v1alpha1.Scanner{
 					Name:    "Grype",
 					Vendor:  "Anchore Inc.",
-					Version: "0.34.7",
+					Version: "v0.35.0",
 				},
 				Registry: v1alpha1.Registry{
 					Server: "core.harbor.domain",

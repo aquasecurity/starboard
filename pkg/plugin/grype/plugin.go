@@ -29,8 +29,8 @@ const (
 const (
 	keyGrypeImageRef                 = "grype.imageRef"
 	keyGrypeScheme                   = "grype.scheme"
-	keyGrypePath                     = "grype.path"
 	keyGrypeOnlyFixed                = "grype.onlyFixed"
+	keyGrypePlatform                 = "grype.platform"
 	keyGrypeExcludePaths             = "grype.exclude"
 	keyGrypeHTTPProxy                = "grype.httpProxy"
 	keyGrypeHTTPSProxy               = "grype.httpsProxy"
@@ -168,7 +168,7 @@ const (
 	tmpVolumeName        = "tmp"
 	ignoreFileVolumeName = "ignorefile"
 	FsSharedVolumeName   = "starboard"
-	grypeDBLocation      = "/tmp/grypedb"
+	grypeDBLocation      = "/tmp"
 )
 
 // There is an init container to cache the Grype DB, which will be stored in an
@@ -357,6 +357,18 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 				},
 			},
 			corev1.EnvVar{
+				Name: "GRYPE_PLATFORM",
+				ValueFrom: &corev1.EnvVarSource{
+					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: grypeConfigName,
+						},
+						Key:      keyGrypePlatform,
+						Optional: pointer.BoolPtr(true),
+					},
+				},
+			},
+			corev1.EnvVar{
 				Name: "GRYPE_EXCLUDE",
 				ValueFrom: &corev1.EnvVarSource{
 					ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
@@ -429,19 +441,8 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 			})
 		}
 
-		// env, err = p.appendGrypeInsecureEnv(config, c.Image, env)
-		// if err != nil {
-		// 	return corev1.PodSpec{}, nil, err
-		// }
-
-		// env, err = p.appendGrypeNonSSLEnv(config, c.Image, env)
-		// if err != nil {
-		// 	return corev1.PodSpec{}, nil, err
-		// }
-
 		args := []string{
 			scanImage,
-			"--skip-update",
 			"--quiet",
 			"--output",
 			"json",
@@ -474,8 +475,6 @@ func (p *plugin) getPodSpec(ctx starboard.PluginContext, config Config, workload
 		})
 	}
 
-	fmt.Println(initContainer)
-
 	return corev1.PodSpec{
 		Affinity:                     starboard.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
@@ -498,40 +497,6 @@ func (p *plugin) appendGrypeOptionalArg(config Config, args []string, arg string
 		return args, nil
 	}
 }
-
-// func (p *plugin) appendGrypeInsecureEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
-// 	ref, err := name.ParseReference(image)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	insecureRegistries := config.GetInsecureRegistries()
-// 	if insecureRegistries[ref.Context().RegistryStr()] {
-// 		env = append(env, corev1.EnvVar{
-// 			Name:  "GRYPE_REGISTRY_INSECURE_SKIP_TLS_VERIFY",
-// 			Value: "true",
-// 		})
-// 	}
-
-// 	return env, nil
-// }
-
-// func (p *plugin) appendGrypeNonSSLEnv(config Config, image string, env []corev1.EnvVar) ([]corev1.EnvVar, error) {
-// 	ref, err := name.ParseReference(image)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	nonSSLRegistries := config.GetNonSSLRegistries()
-// 	if nonSSLRegistries[ref.Context().RegistryStr()] {
-// 		env = append(env, corev1.EnvVar{
-// 			Name:  "GRYPE_REGISTRY_INSECURE_USE_HTTP",
-// 			Value: "true",
-// 		})
-// 	}
-
-// 	return env, nil
-// }
 
 func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
 	config, err := p.newConfigFrom(ctx)

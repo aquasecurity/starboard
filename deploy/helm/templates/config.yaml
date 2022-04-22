@@ -134,11 +134,11 @@ data:
   {{- if .scheme }}
   grype.scheme: {{ .scheme | quote }}
   {{- end }}
-  {{- if .path }}
-  grype.path: {{ .path | quote }}
-  {{- end }}
   {{- if .onlyFixed }}
   grype.onlyFixed: {{ .onlyFixed | quote }}
+  {{- end }}
+  {{- if .platform }}
+  grype.platform: {{ .platform | quote }}
   {{- end }}
   {{- if .excludePaths }}
   grype.excludePaths: {{ .excludePaths | quote }}

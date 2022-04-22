@@ -73,7 +73,7 @@ service:
     prometheus.io/path: /metrics
 
 starboard:
-  # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
+  # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy`, `Aqua` or `Grype`.
   vulnerabilityReportsPlugin: "Trivy"
   # configAuditReportsPlugin the name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`.
   configAuditReportsPlugin: "Polaris"
@@ -180,9 +180,45 @@ trivy:
   dbRepository: "ghcr.io/aquasecurity/trivy-db"
 
 grype:
+  # create Grype config (true|false)
   createConfig: true
-  imageRef: "anchore/grype:0.34.7"
+
+  # image ref to be used in the grype scan jobs
+  imageRef: "anchore/grype:v0.35.0"
+
+  # updateURL, where the vulnerability databases should be pulled from, refer to grype documentation for this 
   updateURL: "https://toolbox-data.anchore.io/grype/databases/listing.json"
+
+  # if a specific scheme is required for scanning, provide it here
+  # scheme:
+
+  # if you need to specify the platform of the scanned images
+  # platform
+
+  # glob pattern of paths to exlude
+  # excludePaths:
+
+  # proxy settings
+  # httpProx:
+  # httpsPorxy:
+  # noProxy:
+
+  # add CPEs, if they are missing
+  # addMissingCPEs: "true"
+
+  # INSECURE: comma separated list of prefixes for registries where tls verification should be skipped
+  # insecureRegistryPrefixes:
+
+  # INSECURE: comaa separated list of prefixes for registries that support HTTP only
+  # nonSSLRegistriesPrefixes:
+
+  # secret values for registry authentication
+  # regAuthority: ***
+  # regUsername: ***
+  # regPassword: ***
+  # regToken: ***
+
+  # resources
   resources:
     requests:
       cpu: 100m
