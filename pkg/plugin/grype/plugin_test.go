@@ -948,6 +948,240 @@ var (
 			},
 		},
 	}
+
+	sampleRelVulReportAsString = `{
+		"matches": [
+		 {
+		  "vulnerability": {
+		   "id": "CVE-2021-28831",
+		   "dataSource": "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28831",
+		   "namespace": "alpine:3.10",
+		   "severity": "High",
+		   "urls": [
+			"http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28831"
+		   ],
+		   "cvss": [],
+		   "fix": {
+			"versions": [
+			 "1.30.1-r5"
+			],
+			"state": "fixed"
+		   },
+		   "advisories": []
+		  },
+		  "relatedVulnerabilities": [
+		   {
+			"id": "CVE-2021-28831",
+			"dataSource": "https://nvd.nist.gov/vuln/detail/CVE-2021-28831",
+			"namespace": "nvd",
+			"severity": "High",
+			"urls": [
+			 "https://git.busybox.net/busybox/commit/?id=f25d254dfd4243698c31a4f3153d4ac72aa9e9bd",
+			 "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/ZASBW7QRRLY5V2R44MQ4QQM4CZIDHM2U/",
+			 "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/Z7ZIFKPRR32ZYA3WAA2NXFA3QHHOU6FJ/",
+			 "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/3UDQGJRECXFS5EZVDH2OI45FMO436AC4/",
+			 "https://lists.debian.org/debian-lts-announce/2021/04/msg00001.html",
+			 "https://security.gentoo.org/glsa/202105-09"
+			],
+			"description": "decompress_gunzip.c in BusyBox through 1.32.1 mishandles the error bit on the huft_build result pointer, with a resultant invalid free or segmentation fault, via malformed gzip data.",
+			"cvss": [
+			 {
+			  "version": "2.0",
+			  "vector": "AV:N/AC:L/Au:N/C:N/I:N/A:P",
+			  "metrics": {
+			   "baseScore": 5,
+			   "exploitabilityScore": 10,
+			   "impactScore": 2.9
+			  },
+			  "vendorMetadata": {}
+			 },
+			 {
+			  "version": "3.1",
+			  "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+			  "metrics": {
+			   "baseScore": 7.5,
+			   "exploitabilityScore": 3.9,
+			   "impactScore": 3.6
+			  },
+			  "vendorMetadata": {}
+			 }
+			]
+		   }
+		  ],
+		  "matchDetails": [
+		   {
+			"type": "exact-direct-match",
+			"matcher": "apk-matcher",
+			"searchedBy": {
+			 "distro": {
+			  "type": "alpine",
+			  "version": "3.10.7"
+			 },
+			 "namespace": "alpine:3.10",
+			 "package": {
+			  "name": "busybox",
+			  "version": "1.30.1-r4"
+			 }
+			},
+			"found": {
+			 "versionConstraint": "< 1.30.1-r5 (apk)"
+			}
+		   }
+		  ],
+		  "artifact": {
+		   "name": "busybox",
+		   "version": "1.30.1-r4",
+		   "type": "apk",
+		   "locations": [
+			{
+			 "path": "/lib/apk/db/installed",
+			 "layerID": "sha256:3cb2494d9fa711bd96908ce5bcf4f7e82e26df6c9ddc28c3809f7e54905dc1f2"
+			}
+		   ],
+		   "language": "",
+		   "licenses": [
+			"GPL-2.0"
+		   ],
+		   "cpes": [
+			"cpe:2.3:a:busybox:busybox:1.30.1-r4:*:*:*:*:*:*:*"
+		   ],
+		   "purl": "pkg:alpine/busybox@1.30.1-r4?arch=x86_64&upstream=busybox&distro=alpine-3.10.7",
+		   "upstreams": [
+			{
+			 "name": "busybox"
+			}
+		   ]
+		  }
+		 }
+		],
+		"source": {
+		 "type": "image",
+		 "target": {
+		  "userInput": "alpine:3.10.7",
+		  "imageID": "sha256:d1bb6234ef26de7a1976176b36eb0f518b3d3d9e6a46e2da2ae6eb0b4d99d87d",
+		  "manifestDigest": "sha256:668ff9bbf5a284e630019bd3dcb80340ac69e71c1b38182e95583022a00b067d",
+		  "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+		  "tags": [],
+		  "imageSize": 5572037,
+		  "layers": [
+		   {
+			"mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+			"digest": "sha256:3cb2494d9fa711bd96908ce5bcf4f7e82e26df6c9ddc28c3809f7e54905dc1f2",
+			"size": 5572037
+		   }
+		  ],
+		  "manifest": "ewogICAic2NoZW1hVmVyc2lvbiI6IDIsCiAgICJtZWRpYVR5cGUiOiAiYXBwbGljYXRpb24vdm5kLmRvY2tlci5kaXN0cmlidXRpb24ubWFuaWZlc3QudjIranNvbiIsCiAgICJjb25maWciOiB7CiAgICAgICJtZWRpYVR5cGUiOiAiYXBwbGljYXRpb24vdm5kLmRvY2tlci5jb250YWluZXIuaW1hZ2UudjEranNvbiIsCiAgICAgICJzaXplIjogMTQ3MiwKICAgICAgImRpZ2VzdCI6ICJzaGEyNTY6ZDFiYjYyMzRlZjI2ZGU3YTE5NzYxNzZiMzZlYjBmNTE4YjNkM2Q5ZTZhNDZlMmRhMmFlNmViMGI0ZDk5ZDg3ZCIKICAgfSwKICAgImxheWVycyI6IFsKICAgICAgewogICAgICAgICAibWVkaWFUeXBlIjogImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuaW1hZ2Uucm9vdGZzLmRpZmYudGFyLmd6aXAiLAogICAgICAgICAic2l6ZSI6IDI3OTcxNzksCiAgICAgICAgICJkaWdlc3QiOiAic2hhMjU2OmM4YmM2NmUyNjM2ZjgxMzNkZjQzNGUxYmNlNzQxYjZiN2ZiMjE1MTVlN2M4YTU1NGE4MDViNzNmNWZkYWUyZGUiCiAgICAgIH0KICAgXQp9",
+		  "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJIb3N0bmFtZSI6IiIsIkRvbWFpbm5hbWUiOiIiLCJVc2VyIjoiIiwiQXR0YWNoU3RkaW4iOmZhbHNlLCJBdHRhY2hTdGRvdXQiOmZhbHNlLCJBdHRhY2hTdGRlcnIiOmZhbHNlLCJUdHkiOmZhbHNlLCJPcGVuU3RkaW4iOmZhbHNlLCJTdGRpbk9uY2UiOmZhbHNlLCJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiQ21kIjpbIi9iaW4vc2giXSwiSW1hZ2UiOiJzaGEyNTY6YjNkODQ2YWM4ZWFhNGE1ZjQwZDcyOWZjODIzMWM2ZDY4ZDQ5MjNkZGM4NTM1MGQxYWIxMTQ3OWRlM2NhZDllZiIsIlZvbHVtZXMiOm51bGwsIldvcmtpbmdEaXIiOiIiLCJFbnRyeXBvaW50IjpudWxsLCJPbkJ1aWxkIjpudWxsLCJMYWJlbHMiOm51bGx9LCJjb250YWluZXIiOiI5OWI0ZDFjZDgzZTg1MTNhNThkMDU5YjdkMWU4N2Q0NDdiZWFlM2QyYmQ2ZGI3NmEwZTJiZjQ0YzJmNzQxYzZlIiwiY29udGFpbmVyX2NvbmZpZyI6eyJIb3N0bmFtZSI6Ijk5YjRkMWNkODNlOCIsIkRvbWFpbm5hbWUiOiIiLCJVc2VyIjoiIiwiQXR0YWNoU3RkaW4iOmZhbHNlLCJBdHRhY2hTdGRvdXQiOmZhbHNlLCJBdHRhY2hTdGRlcnIiOmZhbHNlLCJUdHkiOmZhbHNlLCJPcGVuU3RkaW4iOmZhbHNlLCJTdGRpbk9uY2UiOmZhbHNlLCJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiQ21kIjpbIi9iaW4vc2giLCItYyIsIiMobm9wKSAiLCJDTUQgW1wiL2Jpbi9zaFwiXSJdLCJJbWFnZSI6InNoYTI1NjpiM2Q4NDZhYzhlYWE0YTVmNDBkNzI5ZmM4MjMxYzZkNjhkNDkyM2RkYzg1MzUwZDFhYjExNDc5ZGUzY2FkOWVmIiwiVm9sdW1lcyI6bnVsbCwiV29ya2luZ0RpciI6IiIsIkVudHJ5cG9pbnQiOm51bGwsIk9uQnVpbGQiOm51bGwsIkxhYmVscyI6e319LCJjcmVhdGVkIjoiMjAyMS0wMy0yNVQyMjoxOTo0OC44MDM1NDY3NTZaIiwiZG9ja2VyX3ZlcnNpb24iOiIxOS4wMy4xMiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDIxLTAzLTI1VDIyOjE5OjQ4LjYyNTI4NjE0MVoiLCJjcmVhdGVkX2J5IjoiL2Jpbi9zaCAtYyAjKG5vcCkgQUREIGZpbGU6NDE2ODU5NTBiNjA3ZmU5MGUwODg2Yzg1N2U0ZWZkYWZhYjFlNDNhMDlkZWYxNzRhNGVhOTdmOGVjNjI0MzcwYiBpbiAvICJ9LHsiY3JlYXRlZCI6IjIwMjEtMDMtMjVUMjI6MTk6NDguODAzNTQ2NzU2WiIsImNyZWF0ZWRfYnkiOiIvYmluL3NoIC1jICMobm9wKSAgQ01EIFtcIi9iaW4vc2hcIl0iLCJlbXB0eV9sYXllciI6dHJ1ZX1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6M2NiMjQ5NGQ5ZmE3MTFiZDk2OTA4Y2U1YmNmNGY3ZTgyZTI2ZGY2YzlkZGMyOGMzODA5ZjdlNTQ5MDVkYzFmMiJdfX0=",
+		  "repoDigests": [
+		   "index.docker.io/library/alpine@sha256:f2fa517acf6123318bc893c411f34570cea193367b33bd3be1d90c7fbefe72a5"
+		  ],
+		  "architecture": "",
+		  "os": ""
+		 }
+		},
+		"distro": {
+		 "name": "alpine",
+		 "version": "3.10.7",
+		 "idLike": []
+		},
+		"descriptor": {
+		 "name": "grype",
+		 "version": "0.34.7",
+		 "configuration": {
+		  "configPath": "",
+		  "output": "json",
+		  "file": "",
+		  "distro": "",
+		  "add-cpes-if-none": false,
+		  "output-template-file": "",
+		  "quiet": true,
+		  "check-for-app-update": true,
+		  "only-fixed": false,
+		  "platform": "",
+		  "search": {
+		   "scope": "Squashed",
+		   "unindexed-archives": false,
+		   "indexed-archives": true
+		  },
+		  "ignore": null,
+		  "exclude": [],
+		  "db": {
+		   "cache-dir": "/.cache/grype/db",
+		   "update-url": "https://toolbox-data.anchore.io/grype/databases/listing.json",
+		   "ca-cert": "",
+		   "auto-update": true,
+		   "validate-by-hash-on-start": false
+		  },
+		  "dev": {
+		   "profile-cpu": false,
+		   "profile-mem": false
+		  },
+		  "fail-on-severity": "",
+		  "registry": {
+		   "insecure-skip-tls-verify": false,
+		   "insecure-use-http": false,
+		   "auth": []
+		  },
+		  "log": {
+		   "structured": false,
+		   "level": "",
+		   "file": ""
+		  }
+		 },
+		 "db": {
+		  "built": "2022-04-25T08:19:48Z",
+		  "schemaVersion": 3,
+		  "location": "/.cache/grype/db/3",
+		  "checksum": "sha256:0780fcce7a17641f6486a7d1554161201793bf4621c1351848164a17478215eb",
+		  "error": null
+		 }
+		}
+	   }`
+
+	sampleRelVulReport = v1alpha1.VulnerabilityReportData{
+		UpdateTimestamp: metav1.NewTime(fixedTime),
+		Scanner: v1alpha1.Scanner{
+			Name:    "Grype",
+			Vendor:  "Anchore Inc.",
+			Version: "v0.35.0",
+		},
+		Registry: v1alpha1.Registry{
+			Server: "index.docker.io",
+		},
+		Artifact: v1alpha1.Artifact{
+			Repository: "library/alpine",
+			Tag:        "3.10.7",
+		},
+		Summary: v1alpha1.VulnerabilitySummary{
+			CriticalCount: 0,
+			HighCount:     1,
+			MediumCount:   0,
+			LowCount:      0,
+			NoneCount:     0,
+			UnknownCount:  0,
+		},
+		Vulnerabilities: []v1alpha1.Vulnerability{
+			{
+				VulnerabilityID:  "CVE-2021-28831",
+				Resource:         "busybox",
+				InstalledVersion: "1.30.1-r4",
+				FixedVersion:     "1.30.1-r5",
+				Severity:         v1alpha1.SeverityHigh,
+				Title:            "busybox",
+				Description:      "decompress_gunzip.c in BusyBox through 1.32.1 mishandles the error bit on the huft_build result pointer, with a resultant invalid free or segmentation fault, via malformed gzip data.",
+				PrimaryLink:      "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28831",
+				Score:            pointer.Float64(7.5),
+				Links: []string{
+					"https://git.busybox.net/busybox/commit/?id=f25d254dfd4243698c31a4f3153d4ac72aa9e9bd",
+					"https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/ZASBW7QRRLY5V2R44MQ4QQM4CZIDHM2U/",
+					"https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/Z7ZIFKPRR32ZYA3WAA2NXFA3QHHOU6FJ/",
+					"https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/3UDQGJRECXFS5EZVDH2OI45FMO436AC4/",
+					"https://lists.debian.org/debian-lts-announce/2021/04/msg00001.html",
+					"https://security.gentoo.org/glsa/202105-09",
+				},
+			},
+		},
+	}
 )
 
 func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
@@ -974,6 +1208,13 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 			input:          sampleReportAsString,
 			expectedError:  nil,
 			expectedReport: sampleReport,
+		},
+		{
+			name:           "Should read info from related vulnerabilities",
+			imageRef:       "alpine:3.10.7",
+			input:          sampleRelVulReportAsString,
+			expectedError:  nil,
+			expectedReport: sampleRelVulReport,
 		},
 		{
 			name:          "Should convert vulnerability report in JSON format when OS is not detected",
