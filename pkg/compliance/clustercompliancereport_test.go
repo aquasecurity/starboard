@@ -8,7 +8,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		err = loadResource("./testdata/fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
 		Expect(err).ToNot(HaveOccurred())
 		// generate client with cis-bench,audit-config and compliance spec
-		client := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists(
+		client := fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithLists(
 			&cisBenchList,
 			&confAuditList,
 		).WithObjects(
@@ -145,7 +145,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		var clusterComplianceSpec v1alpha1.ClusterComplianceReport
 		err := loadResource("./testdata/fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
 		// create new client
-		clientWithComplianceSpecOnly := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(&clusterComplianceSpec).Build()
+		clientWithComplianceSpecOnly := fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithObjects(&clusterComplianceSpec).Build()
 		// create compliance controller
 		complianceControllerInstance := ClusterComplianceReportReconciler{Logger: logger, Client: clientWithComplianceSpecOnly, Mgr: NewMgr(clientWithComplianceSpecOnly, logger, config), Clock: ext.NewSystemClock()}
 		reconcileReport, err := complianceControllerInstance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
@@ -213,6 +213,6 @@ func getDetailReport(ctx context.Context, namespaceName types.NamespacedName, cl
 	return &report, nil
 }
 
-func getStarboardConfig() starboard.ConfigData {
-	return starboard.ConfigData{"compliance.failEntriesLimit": "1"}
+func getStarboardConfig() trivyoperator.ConfigData {
+	return trivyoperator.ConfigData{"compliance.failEntriesLimit": "1"}
 }

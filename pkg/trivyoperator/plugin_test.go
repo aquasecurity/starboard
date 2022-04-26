@@ -1,9 +1,9 @@
-package starboard_test
+package trivyoperator_test
 
 import (
 	"testing"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +12,8 @@ import (
 
 func TestGetPluginConfigMapName(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
-	name := starboard.GetPluginConfigMapName("Conftest")
-	g.Expect(name).To(gomega.Equal("starboard-conftest-config"))
+	name := trivyoperator.GetPluginConfigMapName("Conftest")
+	g.Expect(name).To(gomega.Equal("trivyoperator-conftest-config"))
 }
 
 func TestPluginContext_GetConfig(t *testing.T) {
@@ -22,11 +22,11 @@ func TestPluginContext_GetConfig(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
 
 		client := fake.NewClientBuilder().
-			WithScheme(starboard.NewScheme()).
+			WithScheme(trivyoperator.NewScheme()).
 			WithObjects(&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "starboard-polaris-config",
-					Namespace: "starboard-ns",
+					Name:      "trivyoperator-polaris-config",
+					Namespace: "trivyoperator-ns",
 				},
 				Data: map[string]string{
 					"foo": "bar",
@@ -34,9 +34,9 @@ func TestPluginContext_GetConfig(t *testing.T) {
 			}).
 			Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName("polaris").
-			WithNamespace("starboard-ns").
+			WithNamespace("trivyoperator-ns").
 			WithClient(client).
 			Get()
 
@@ -44,7 +44,7 @@ func TestPluginContext_GetConfig(t *testing.T) {
 
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(cm).To(gomega.Equal(
-			starboard.PluginConfig{
+			trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -55,19 +55,19 @@ func TestPluginContext_GetConfig(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
 
 		client := fake.NewClientBuilder().
-			WithScheme(starboard.NewScheme()).
+			WithScheme(trivyoperator.NewScheme()).
 			WithObjects(&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "starboard-polaris-config",
-					Namespace: "starboard-ns",
+					Name:      "trivyoperator-polaris-config",
+					Namespace: "trivyoperator-ns",
 				},
 				Data: map[string]string{
 					"foo": "bar",
 				},
 			}, &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "starboard-polaris-config",
-					Namespace: "starboard-ns",
+					Name:      "trivyoperator-polaris-config",
+					Namespace: "trivyoperator-ns",
 				},
 				Data: map[string][]byte{
 					"secret": []byte("pa$$word"),
@@ -75,9 +75,9 @@ func TestPluginContext_GetConfig(t *testing.T) {
 			}).
 			Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName("polaris").
-			WithNamespace("starboard-ns").
+			WithNamespace("trivyoperator-ns").
 			WithClient(client).
 			Get()
 
@@ -85,7 +85,7 @@ func TestPluginContext_GetConfig(t *testing.T) {
 
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(cm).To(gomega.Equal(
-			starboard.PluginConfig{
+			trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -38,11 +38,11 @@ $ %[1]s get vulnerabilityreports deployment/nginx -o yaml
 `
 )
 
-func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
+func NewRootCmd(buildInfo trivyoperator.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) *cobra.Command {
 	var cf *genericclioptions.ConfigFlags
 
 	rootCmd := &cobra.Command{
-		Use:           "starboard",
+		Use:           "trivyoperator",
 		Short:         shortMessage,
 		Long:          fmt.Sprintf(longMessage, buildInfo.Executable),
 		SilenceErrors: true,
@@ -70,7 +70,7 @@ func NewRootCmd(buildInfo starboard.BuildInfo, args []string, outWriter io.Write
 
 // Run is the entry point of the Starboard CLI. It runs the specified
 // command based on the specified args.
-func Run(version starboard.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
+func Run(version trivyoperator.BuildInfo, args []string, outWriter io.Writer, errWriter io.Writer) error {
 
 	initFlags()
 

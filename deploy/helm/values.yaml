@@ -1,10 +1,10 @@
-# Default values for the starboard-operator Helm chart, these are used to render
+# Default values for the trivy-operator Helm chart, these are used to render
 # the templates into valid k8s Resources.
 
 # managedBy is similar to .Release.Service but allows to overwrite the value
 managedBy: Helm
 
-# targetNamespace defines where you want starboard-operator to operate. By
+# targetNamespace defines where you want trivy-operator to operate. By
 # default, it's a blank string to select all namespaces, but you can specify
 # another namespace, or a comma separated list of namespaces.
 targetNamespaces: ""
@@ -23,7 +23,7 @@ operator:
 
   # leaderElectionId determines the name of the resource that leader election
   # will use for holding the leader lock.
-  leaderElectionId: "starboard-lock"
+  leaderElectionId: "trivyoperator-lock"
 
   # logDevMode the flag to enable development mode (more human-readable output, extra stack traces and logging information, etc)
   logDevMode: false
@@ -58,7 +58,7 @@ operator:
   # batchDeleteDelay the duration to wait before deleting another batch of config audit reports.
   batchDeleteDelay: 10s
 image:
-  repository: "docker.io/aquasec/starboard-operator"
+  repository: "docker.io/aquasec/trivy-operator"
   # tag is an override of the image tag, which is by default set by the
   # appVersion field in Chart.yaml.
   tag: ""
@@ -66,7 +66,7 @@ image:
   pullSecrets: []
 
 # service only expose a metrics endpoint for prometheus to scrape,
-# starboard-operator does not have a user interface.
+# trivy-operator does not have a user interface.
 service:
   type: ClusterIP
   metricsPort: 80
@@ -74,7 +74,7 @@ service:
     prometheus.io/scrape: "true"
     prometheus.io/path: /metrics
 
-starboard:
+trivyOperator:
   # vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports. Either `Trivy` or `Aqua`.
   vulnerabilityReportsPlugin: "Trivy"
   # configAuditReportsPlugin the name of the plugin that generates config audit reports. Either `Polaris` or `Conftest`.

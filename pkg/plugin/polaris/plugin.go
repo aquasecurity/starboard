@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -227,7 +227,7 @@ exemptions:
 
 // Config defines configuration params for this plugin.
 type Config struct {
-	starboard.PluginConfig
+	trivyoperator.PluginConfig
 }
 
 // GetImageRef returns upstream Polaris container image reference.
@@ -306,13 +306,13 @@ func (p *plugin) SupportedKinds() []kube.Kind {
 	return supportedKinds
 }
 
-func (p *plugin) IsApplicable(_ starboard.PluginContext, _ client.Object) (bool, string, error) {
+func (p *plugin) IsApplicable(_ trivyoperator.PluginContext, _ client.Object) (bool, string, error) {
 	return true, "", nil
 }
 
 // Init ensures the default Config required by this plugin.
-func (p *plugin) Init(ctx starboard.PluginContext) error {
-	return ctx.EnsureConfig(starboard.PluginConfig{
+func (p *plugin) Init(ctx trivyoperator.PluginContext) error {
+	return ctx.EnsureConfig(trivyoperator.PluginConfig{
 		Data: map[string]string{
 			keyImageRef:                "quay.io/fairwinds/polaris:4.2",
 			keyConfigYaml:              DefaultConfigYAML,
@@ -324,7 +324,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (p *plugin) ConfigHash(ctx starboard.PluginContext, _ kube.Kind) (string, error) {
+func (p *plugin) ConfigHash(ctx trivyoperator.PluginContext, _ kube.Kind) (string, error) {
 	cm, err := ctx.GetConfig()
 	if err != nil {
 		return "", err
@@ -339,7 +339,7 @@ func (p *plugin) ConfigHash(ctx starboard.PluginContext, _ kube.Kind) (string, e
 	return kube.ComputeHash(data), nil
 }
 
-func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+func (p *plugin) newConfigFrom(ctx trivyoperator.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
 		return Config{}, fmt.Errorf("getting config: %w", err)
@@ -347,7 +347,7 @@ func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
 	return Config{PluginConfig: pluginConfig}, nil
 }
 
-func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) GetScanJobSpec(ctx trivyoperator.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, fmt.Errorf("constructing config from plugin context: %w", err)
@@ -366,14 +366,14 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(true),
 		RestartPolicy:                corev1.RestartPolicyNever,
-		Affinity:                     starboard.LinuxNodeAffinity(),
+		Affinity:                     trivyoperator.LinuxNodeAffinity(),
 		Volumes: []corev1.Volume{
 			{
 				Name: configVolume,
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: starboard.GetPluginConfigMapName(ctx.GetName()),
+							Name: trivyoperator.GetPluginConfigMapName(ctx.GetName()),
 						},
 					},
 				},
@@ -389,13 +389,13 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name:      configVolume,
-						MountPath: "/etc/starboard",
+						MountPath: "/etc/trivyoperator",
 					},
 				},
 				Command: []string{"sh"},
 				Args: []string{
 					"-c",
-					"polaris audit --log-level error --config /etc/starboard/polaris.config.yaml --resource " + sourceName + " 2> /dev/null",
+					"polaris audit --log-level error --config /etc/trivyoperator/polaris.config.yaml --resource " + sourceName + " 2> /dev/null",
 				},
 				SecurityContext: &corev1.SecurityContext{
 					Privileged:               pointer.BoolPtr(false),
@@ -415,7 +415,7 @@ func (p *plugin) GetContainerName() string {
 	return polarisContainerName
 }
 
-func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+func (p *plugin) ParseConfigAuditReportData(ctx trivyoperator.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("constructing config from plugin context: %w", err)
@@ -478,7 +478,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting image ref: %w", err)
 	}
 
-	version, err := starboard.GetVersionFromImageRef(imageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting version from image ref: %w", err)
 	}

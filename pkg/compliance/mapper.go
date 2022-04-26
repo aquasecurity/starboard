@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/emirpasic/gods/sets/hashset"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -103,7 +103,7 @@ func mapComplianceScannerToResource(cli client.Client, ctx context.Context, reso
 				continue
 			}
 			labels := map[string]string{
-				starboard.LabelResourceKind: objNameString,
+				trivyoperator.LabelResourceKind: objNameString,
 			}
 			matchingLabel := client.MatchingLabels(labels)
 			objList := getObjListByName(scanner)

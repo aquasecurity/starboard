@@ -7,7 +7,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestReadWriter(t *testing.T) {
-	kubernetesScheme := starboard.NewScheme()
+	kubernetesScheme := trivyoperator.NewScheme()
 
 	t.Run("Should create CISKubeBenchReport", func(t *testing.T) {
 		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).Build()
@@ -25,8 +25,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: string(kube.KindNode),
-					starboard.LabelResourceName: "control-plane",
+					trivyoperator.LabelResourceKind: string(kube.KindNode),
+					trivyoperator.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchReportData{
@@ -58,8 +58,8 @@ func TestReadWriter(t *testing.T) {
 				Name:            "control-plane",
 				ResourceVersion: "1",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: string(kube.KindNode),
-					starboard.LabelResourceName: "control-plane",
+					trivyoperator.LabelResourceKind: string(kube.KindNode),
+					trivyoperator.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchReportData{
@@ -86,8 +86,8 @@ func TestReadWriter(t *testing.T) {
 					Name:            "control-plane",
 					ResourceVersion: "0",
 					Labels: map[string]string{
-						starboard.LabelResourceKind: string(kube.KindNode),
-						starboard.LabelResourceName: "control-plane",
+						trivyoperator.LabelResourceKind: string(kube.KindNode),
+						trivyoperator.LabelResourceName: "control-plane",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchReportData{
@@ -110,8 +110,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: string(kube.KindNode),
-					starboard.LabelResourceName: "control-plane",
+					trivyoperator.LabelResourceKind: string(kube.KindNode),
+					trivyoperator.LabelResourceName: "control-plane",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchReportData{
@@ -142,8 +142,8 @@ func TestReadWriter(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: string(kube.KindNode),
-					starboard.LabelResourceName: "control-plane",
+					trivyoperator.LabelResourceKind: string(kube.KindNode),
+					trivyoperator.LabelResourceName: "control-plane",
 				},
 				ResourceVersion: "1",
 			},
@@ -171,8 +171,8 @@ func TestReadWriter(t *testing.T) {
 					Name:            "control-plane",
 					ResourceVersion: "1",
 					Labels: map[string]string{
-						starboard.LabelResourceKind: string(kube.KindNode),
-						starboard.LabelResourceName: "control-plane",
+						trivyoperator.LabelResourceKind: string(kube.KindNode),
+						trivyoperator.LabelResourceName: "control-plane",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchReportData{
@@ -193,8 +193,8 @@ func TestReadWriter(t *testing.T) {
 					Name:            "worker",
 					ResourceVersion: "1",
 					Labels: map[string]string{
-						starboard.LabelResourceKind: string(kube.KindNode),
-						starboard.LabelResourceName: "worker",
+						trivyoperator.LabelResourceKind: string(kube.KindNode),
+						trivyoperator.LabelResourceName: "worker",
 					},
 				},
 				Report: v1alpha1.CISKubeBenchReportData{
@@ -226,8 +226,8 @@ func TestReadWriter(t *testing.T) {
 				Name:            "worker",
 				ResourceVersion: "1",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: string(kube.KindNode),
-					starboard.LabelResourceName: "worker",
+					trivyoperator.LabelResourceKind: string(kube.KindNode),
+					trivyoperator.LabelResourceName: "worker",
 				},
 			},
 			Report: v1alpha1.CISKubeBenchReportData{

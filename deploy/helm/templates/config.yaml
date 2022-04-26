@@ -2,24 +2,24 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard
+  name: trivy-operator
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 data:
-  {{- with .Values.starboard.scanJobTolerations }}
+  {{- with .Values.trivyOperator.scanJobTolerations }}
   scanJob.tolerations: {{ . | toJson | quote }}
   {{- end }}
-  {{- with .Values.starboard.scanJobAnnotations }}
+  {{- with .Values.trivyOperator.scanJobAnnotations }}
   scanJob.annotations: {{ . | quote }}
   {{- end }}
-  {{- with .Values.starboard.scanJobPodTemplateLabels }}
+  {{- with .Values.trivyOperator.scanJobPodTemplateLabels }}
   scanJob.podTemplateLabels: {{ . | quote }}
   {{- end }}
   {{- if .Values.operator.vulnerabilityScannerEnabled }}
-  vulnerabilityReports.scanner: {{ .Values.starboard.vulnerabilityReportsPlugin | quote }}
+  vulnerabilityReports.scanner: {{ .Values.trivyOperator.vulnerabilityReportsPlugin | quote }}
   {{- end }}
   {{- if .Values.operator.configAuditScannerEnabled }}
-  configAuditReports.scanner: {{ .Values.starboard.configAuditReportsPlugin | quote }}
+  configAuditReports.scanner: {{ .Values.trivyOperator.configAuditReportsPlugin | quote }}
   {{- end }}
   {{- if .Values.operator.kubernetesBenchmarkEnabled }}
   kube-bench.imageRef: {{ required ".Values.kubeBench.imageRef is required" .Values.kubeBench.imageRef | quote }}
@@ -31,19 +31,19 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: starboard
+  name: trivy-operator
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
-{{- if eq .Values.starboard.vulnerabilityReportsPlugin "Trivy" }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
+{{- if eq .Values.trivyOperator.vulnerabilityReportsPlugin "Trivy" }}
 {{- with .Values.trivy }}
 {{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-trivy-config
+  name: trivy-operator-trivy-config
   labels:
-    {{- include "starboard-operator.labels" $ | nindent 4 }}
+    {{- include "trivy-operator.labels" $ | nindent 4 }}
 data:
   trivy.imageRef: {{ required ".Values.trivy.imageRef is required" .imageRef | quote }}
   trivy.mode: {{ .mode | quote }}
@@ -102,9 +102,9 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: starboard-trivy-config
+  name: trivy-operator-trivy-config
   labels:
-    {{- include "starboard-operator.labels" $ | nindent 4 }}
+    {{- include "trivy-operator.labels" $ | nindent 4 }}
 data:
   {{- if .githubToken }}
   trivy.githubToken: {{ .githubToken | b64enc | quote }}
@@ -120,16 +120,16 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
+{{- if eq .Values.trivyOperator.configAuditReportsPlugin "Conftest" }}
 {{- with .Values.conftest }}
 {{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-conftest-config
+  name: trivy-operator-conftest-config
   labels:
-    {{- include "starboard-operator.labels" $ | nindent 4 }}
+    {{- include "trivy-operator.labels" $ | nindent 4 }}
 data:
   conftest.imageRef: {{ required ".Values.conftest.imageRef is required" .imageRef | quote }}
   {{- with .resources }}
@@ -148,16 +148,16 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- if eq .Values.starboard.configAuditReportsPlugin "Polaris" }}
+{{- if eq .Values.trivyOperator.configAuditReportsPlugin "Polaris" }}
 {{- with .Values.polaris }}
 {{- if .createConfig }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-polaris-config
+  name: trivy-operator-polaris-config
   labels:
-    {{- include "starboard-operator.labels" $ | nindent 4 }}
+    {{- include "trivy-operator.labels" $ | nindent 4 }}
 data:
   polaris.imageRef: {{ required ".Values.polaris.imageRef is required" .imageRef | quote }}
   {{- with .resources }}
@@ -171,14 +171,14 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- if eq .Values.starboard.vulnerabilityReportsPlugin "Aqua" }}
+{{- if eq .Values.trivyOperator.vulnerabilityReportsPlugin "Aqua" }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-aqua-config
+  name: trivy-operator-aqua-config
   labels:
-     {{- include "starboard-operator.labels" . | nindent 4 }}
+     {{- include "trivy-operator.labels" . | nindent 4 }}
 data:
   aqua.imageRef: {{ required ".Values.aqua.imageRef is required!" .Values.aqua.imageRef | quote }}
   aqua.serverURL: {{ required ".Values.aqua.serverURL is required!" .Values.aqua.serverURL | quote }}
@@ -186,9 +186,9 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: starboard-aqua-config
+  name: trivy-operator-aqua-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 data:
   aqua.username: {{ required ".Values.aqua.username is required!" .Values.aqua.username | b64enc | quote }}
   aqua.password: {{ required ".Values.aqua.password is required!" .Values.aqua.password | b64enc | quote }}

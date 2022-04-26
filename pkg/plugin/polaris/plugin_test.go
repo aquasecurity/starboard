@@ -11,7 +11,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/polaris"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,7 +39,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}{
 		{
 			name:          "Should return empty requirements by default",
-			config:        polaris.Config{PluginConfig: starboard.PluginConfig{}},
+			config:        polaris.Config{PluginConfig: trivyoperator.PluginConfig{}},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -48,7 +48,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			config: polaris.Config{PluginConfig: starboard.PluginConfig{
+			config: polaris.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"polaris.resources.requests.cpu":    "800m",
 					"polaris.resources.requests.memory": "200M",
@@ -70,7 +70,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			config: polaris.Config{PluginConfig: starboard.PluginConfig{
+			config: polaris.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"polaris.resources.requests.cpu": "roughly 100",
 				},
@@ -109,10 +109,10 @@ func TestPlugin_IsApplicable(t *testing.T) {
 
 		client := fake.NewClientBuilder().Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(polaris.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 
@@ -130,10 +130,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		client := fake.NewClientBuilder().Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(polaris.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 
@@ -143,8 +143,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-polaris-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-polaris-config",
 		}, &cm)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(cm).To(Equal(corev1.ConfigMap{
@@ -153,10 +153,10 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "starboard-polaris-config",
-				Namespace: "starboard-ns",
+				Name:      "trivyoperator-polaris-config",
+				Namespace: "trivyoperator-ns",
 				Labels: map[string]string{
-					"app.kubernetes.io/managed-by": "starboard",
+					"app.kubernetes.io/managed-by": "trivyoperator",
 				},
 				ResourceVersion: "1",
 			},
@@ -176,8 +176,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		client := fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            "starboard-polaris-config",
-				Namespace:       "starboard-ns",
+				Name:            "trivyoperator-polaris-config",
+				Namespace:       "trivyoperator-ns",
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
@@ -187,10 +187,10 @@ func TestPlugin_Init(t *testing.T) {
 			},
 		}).Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(polaris.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 
@@ -200,8 +200,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-polaris-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-polaris-config",
 		}, &cm)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(cm).To(Equal(corev1.ConfigMap{
@@ -210,8 +210,8 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            "starboard-polaris-config",
-				Namespace:       "starboard-ns",
+				Name:            "trivyoperator-polaris-config",
+				Namespace:       "trivyoperator-ns",
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
@@ -253,17 +253,17 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(true),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				Volumes: []corev1.Volume{
 					{
 						Name: "config",
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: starboard.GetPluginConfigMapName(polaris.Plugin),
+									Name: trivyoperator.GetPluginConfigMapName(polaris.Plugin),
 								},
 							},
 						},
@@ -288,13 +288,13 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "config",
-								MountPath: "/etc/starboard",
+								MountPath: "/etc/trivyoperator",
 							},
 						},
 						Command: []string{"sh"},
 						Args: []string{
 							"-c",
-							"polaris audit --log-level error --config /etc/starboard/polaris.config.yaml --resource default/Deployment.apps/v1/nginx 2> /dev/null",
+							"polaris audit --log-level error --config /etc/trivyoperator/polaris.config.yaml --resource default/Deployment.apps/v1/nginx 2> /dev/null",
 						},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.BoolPtr(false),
@@ -315,14 +315,14 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			g := NewGomegaWithT(t)
 
-			pluginContext := starboard.NewPluginContext().
+			pluginContext := trivyoperator.NewPluginContext().
 				WithName(polaris.Plugin).
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "starboard-polaris-config",
-						Namespace: "starboard-ns",
+						Name:      "trivyoperator-polaris-config",
+						Namespace: "trivyoperator-ns",
 					},
 					Data: tc.config,
 				}).Build()).Get()
@@ -352,14 +352,14 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		_ = testReport.Close()
 	}()
 
-	pluginContext := starboard.NewPluginContext().
+	pluginContext := trivyoperator.NewPluginContext().
 		WithName(polaris.Plugin).
-		WithNamespace("starboard-ns").
-		WithServiceAccountName("starboard-sa").
+		WithNamespace("trivyoperator-ns").
+		WithServiceAccountName("trivyoperator-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "starboard-polaris-config",
-				Namespace: "starboard-ns",
+				Name:      "trivyoperator-polaris-config",
+				Namespace: "trivyoperator-ns",
 			},
 			Data: map[string]string{
 				"polaris.imageRef": "quay.io/fairwinds/polaris:" + polarisVersion,
@@ -419,15 +419,15 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 
 func TestPlugin_ConfigHash(t *testing.T) {
 
-	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
-		return starboard.NewPluginContext().
+	newPluginContextWithConfigData := func(data map[string]string) trivyoperator.PluginContext {
+		return trivyoperator.NewPluginContext().
 			WithName(polaris.Plugin).
-			WithNamespace("starboard-ns").
+			WithNamespace("trivyoperator-ns").
 			WithClient(fake.NewClientBuilder().
 				WithObjects(&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "starboard-polaris-config",
-						Namespace: "starboard-ns",
+						Name:      "trivyoperator-polaris-config",
+						Namespace: "trivyoperator-ns",
 					},
 					Data: data,
 				}).

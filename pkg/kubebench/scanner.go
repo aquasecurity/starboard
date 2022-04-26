@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/runner"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -26,16 +26,16 @@ type Scanner struct {
 	scheme     *runtime.Scheme
 	clientset  kubernetes.Interface
 	logsReader kube.LogsReader
-	plugin     Plugin
-	config     starboard.ConfigData
-	opts       kube.ScannerOpts
+	plugin Plugin
+	config trivyoperator.ConfigData
+	opts   kube.ScannerOpts
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
 	plugin Plugin,
-	config starboard.ConfigData,
+	config trivyoperator.ConfigData,
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
@@ -126,8 +126,8 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 	}
 
 	labelsSet := labels.Set{
-		starboard.LabelResourceKind: string(kube.KindNode),
-		starboard.LabelResourceName: node.Name,
+		trivyoperator.LabelResourceKind: string(kube.KindNode),
+		trivyoperator.LabelResourceName: node.Name,
 	}
 
 	podTemplateLabelsSet := make(labels.Set)
@@ -141,7 +141,7 @@ func (s *Scanner) prepareKubeBenchJob(node corev1.Node) (*batchv1.Job, error) {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "scan-cisbenchmark-" + kube.ComputeHash(node.Name),
-			Namespace: starboard.NamespaceName,
+			Namespace: trivyoperator.NamespaceName,
 			Labels:    labelsSet,
 		},
 		Spec: batchv1.JobSpec{
@@ -187,7 +187,7 @@ func (k *kubeBenchPlugin) GetScanJobSpec(node corev1.Node) (corev1.PodSpec, erro
 		return corev1.PodSpec{}, err
 	}
 	return corev1.PodSpec{
-		ServiceAccountName:           starboard.ServiceAccountName,
+		ServiceAccountName:           trivyoperator.ServiceAccountName,
 		AutomountServiceAccountToken: pointer.BoolPtr(true),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		HostPID:                      true,
@@ -314,7 +314,7 @@ func (k *kubeBenchPlugin) ParseCISKubeBenchReportData(logsStream io.ReadCloser) 
 	if err != nil {
 		return v1alpha1.CISKubeBenchReportData{}, err
 	}
-	version, err := starboard.GetVersionFromImageRef(imageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.CISKubeBenchReportData{}, err
 	}

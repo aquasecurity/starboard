@@ -30,11 +30,11 @@ all: build
 .PHONY: build
 build: build-starboard-cli build-starboard-operator build-starboard-scanner-aqua
 
-## Builds the starboard binary
+## Builds the trivyoperator binary
 build-starboard-cli: $(SOURCES)
 	CGO_ENABLED=0 go build -o ./bin/starboard ./cmd/starboard/main.go
 
-## Builds the starboard-operator binary
+## Builds the trivy-operator binary
 build-starboard-operator: $(SOURCES)
 	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-operator ./cmd/starboard-operator/main.go
 

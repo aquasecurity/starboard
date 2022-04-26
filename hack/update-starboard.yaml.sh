@@ -11,8 +11,8 @@ cat $CRD_DIR/vulnerabilityreports.crd.yaml \
   $CRD_DIR/ciskubebenchreports.crd.yaml \
   $CRD_DIR/clustercompliancereports.crd.yaml \
   $CRD_DIR/clustercompliancedetailreports.crd.yaml \
-  $STATIC_DIR/01-starboard-operator.ns.yaml \
-  $STATIC_DIR/02-starboard-operator.rbac.yaml \
-  $STATIC_DIR/03-starboard-operator.config.yaml \
-  $STATIC_DIR/04-starboard-operator.policies.yaml \
-  $STATIC_DIR/05-starboard-operator.deployment.yaml > $STATIC_DIR/starboard.yaml
+  $STATIC_DIR/01-trivy-operator.ns.yaml \
+  $STATIC_DIR/02-trivy-operator.rbac.yaml \
+  $STATIC_DIR/03-trivy-operator.config.yaml \
+  $STATIC_DIR/04-trivy-operator.policies.yaml \
+  $STATIC_DIR/05-trivy-operator.deployment.yaml > $STATIC_DIR/trivy-operator.yaml

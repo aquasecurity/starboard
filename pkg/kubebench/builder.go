@@ -5,7 +5,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -45,8 +45,8 @@ func (b *Builder) Get() (v1alpha1.CISKubeBenchReport, error) {
 	}
 
 	labels := map[string]string{
-		starboard.LabelResourceKind: kind,
-		starboard.LabelResourceName: b.controller.GetName(),
+		trivyoperator.LabelResourceKind: kind,
+		trivyoperator.LabelResourceName: b.controller.GetName(),
 	}
 
 	reportName := b.reportName()

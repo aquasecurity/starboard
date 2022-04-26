@@ -10,7 +10,7 @@ import (
 	embedded "github.com/aquasecurity/trivy-operator"
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -25,24 +25,24 @@ import (
 )
 
 const (
-	clusterRoleStarboard        = "starboard"
-	clusterRoleBindingStarboard = "starboard"
+	clusterRoleStarboard        = "trivyoperator"
+	clusterRoleBindingStarboard = "trivyoperator"
 )
 
 var (
 	namespace = &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: starboard.NamespaceName,
+			Name: trivyoperator.NamespaceName,
 			Labels: labels.Set{
-				starboard.LabelK8SAppManagedBy: "starboard",
+				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 	}
 	serviceAccount = &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: starboard.ServiceAccountName,
+			Name: trivyoperator.ServiceAccountName,
 			Labels: labels.Set{
-				starboard.LabelK8SAppManagedBy: "starboard",
+				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -51,7 +51,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleStarboard,
 			Labels: labels.Set{
-				starboard.LabelK8SAppManagedBy: "starboard",
+				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -104,7 +104,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleBindingStarboard,
 			Labels: labels.Set{
-				starboard.LabelK8SAppManagedBy: "starboard",
+				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -115,29 +115,29 @@ var (
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      starboard.ServiceAccountName,
-				Namespace: starboard.NamespaceName,
+				Name:      trivyoperator.ServiceAccountName,
+				Namespace: trivyoperator.NamespaceName,
 			},
 		},
 	}
 )
 
 type Installer struct {
-	buildInfo     starboard.BuildInfo
+	buildInfo     trivyoperator.BuildInfo
 	client        client.Client
 	clientset     kubernetes.Interface
 	clientsetext  extapi.ApiextensionsV1Interface
-	configManager starboard.ConfigManager
+	configManager trivyoperator.ConfigManager
 }
 
-// NewInstaller constructs an Installer with the given starboard.ConfigManager and kubernetes.Interface.
+// NewInstaller constructs an Installer with the given trivyoperator.ConfigManager and kubernetes.Interface.
 func NewInstaller(
-	buildInfo starboard.BuildInfo,
+	buildInfo trivyoperator.BuildInfo,
 	// TODO Get rid of kubernetes.Interface and ApiextensionsV1Interface and use just client.Client
 	clientset kubernetes.Interface,
 	clientsetext extapi.ApiextensionsV1Interface,
 	client client.Client,
-	configManager starboard.ConfigManager,
+	configManager trivyoperator.ConfigManager,
 ) *Installer {
 	return &Installer{
 		buildInfo:     buildInfo,
@@ -245,8 +245,8 @@ func (m *Installer) Install(ctx context.Context) error {
 
 	pluginResolver := plugin.NewResolver().
 		WithBuildInfo(m.buildInfo).
-		WithNamespace(starboard.NamespaceName).
-		WithServiceAccountName(starboard.ServiceAccountName).
+		WithNamespace(trivyoperator.NamespaceName).
+		WithServiceAccountName(trivyoperator.ServiceAccountName).
 		WithConfig(config).
 		WithClient(m.client)
 
@@ -297,8 +297,8 @@ func (m *Installer) cleanupRBAC(ctx context.Context) (err error) {
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
-	klog.V(3).Infof("Deleting ServiceAccount %q", starboard.NamespaceName+"/"+starboard.ServiceAccountName)
-	err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Delete(ctx, starboard.ServiceAccountName, metav1.DeleteOptions{})
+	klog.V(3).Infof("Deleting ServiceAccount %q", trivyoperator.NamespaceName+"/"+trivyoperator.ServiceAccountName)
+	err = m.clientset.CoreV1().ServiceAccounts(trivyoperator.NamespaceName).Delete(ctx, trivyoperator.ServiceAccountName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return
 	}
@@ -311,8 +311,8 @@ var (
 )
 
 func (m *Installer) cleanupNamespace(ctx context.Context) error {
-	klog.V(3).Infof("Deleting Namespace %q", starboard.NamespaceName)
-	err := m.clientset.CoreV1().Namespaces().Delete(ctx, starboard.NamespaceName, metav1.DeleteOptions{})
+	klog.V(3).Infof("Deleting Namespace %q", trivyoperator.NamespaceName)
+	err := m.clientset.CoreV1().Namespaces().Delete(ctx, trivyoperator.NamespaceName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -320,9 +320,9 @@ func (m *Installer) cleanupNamespace(ctx context.Context) error {
 		select {
 		// This case controls the polling interval
 		case <-time.After(cleanupPollingInterval):
-			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, starboard.NamespaceName, metav1.GetOptions{})
+			_, err := m.clientset.CoreV1().Namespaces().Get(ctx, trivyoperator.NamespaceName, metav1.GetOptions{})
 			if errors.IsNotFound(err) {
-				klog.V(3).Infof("Deleted Namespace %q", starboard.NamespaceName)
+				klog.V(3).Infof("Deleted Namespace %q", trivyoperator.NamespaceName)
 				return nil
 			}
 		// This case caters for polling timeout
@@ -348,14 +348,14 @@ func (m *Installer) createNamespaceIfNotFound(ctx context.Context, ns *corev1.Na
 
 func (m *Installer) createServiceAccountIfNotFound(ctx context.Context, sa *corev1.ServiceAccount) (err error) {
 	name := sa.Name
-	_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Get(ctx, name, metav1.GetOptions{})
+	_, err = m.clientset.CoreV1().ServiceAccounts(trivyoperator.NamespaceName).Get(ctx, name, metav1.GetOptions{})
 	switch {
 	case err == nil:
-		klog.V(3).Infof("ServiceAccount %q already exists", starboard.NamespaceName+"/"+name)
+		klog.V(3).Infof("ServiceAccount %q already exists", trivyoperator.NamespaceName+"/"+name)
 		return
 	case errors.IsNotFound(err):
-		klog.V(3).Infof("Creating ServiceAccount %q", starboard.NamespaceName+"/"+name)
-		_, err = m.clientset.CoreV1().ServiceAccounts(starboard.NamespaceName).Create(ctx, sa, metav1.CreateOptions{})
+		klog.V(3).Infof("Creating ServiceAccount %q", trivyoperator.NamespaceName+"/"+name)
+		_, err = m.clientset.CoreV1().ServiceAccounts(trivyoperator.NamespaceName).Create(ctx, sa, metav1.CreateOptions{})
 		return
 	}
 	return

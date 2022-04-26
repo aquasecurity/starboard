@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -111,18 +111,18 @@ func IsClusterScopedKind(kind string) bool {
 // ObjectRefToLabels encodes the specified ObjectRef as a set of labels.
 //
 // If Object's name cannot be used as the value of the
-// starboard.LabelResourceName label, as a fallback, this method will calculate
+// trivyoperator.LabelResourceName label, as a fallback, this method will calculate
 // a hash of the Object's name and use it as the value of the
-// starboard.LabelResourceNameHash label.
+// trivyoperator.LabelResourceNameHash label.
 func ObjectRefToLabels(obj ObjectRef) map[string]string {
 	labels := map[string]string{
-		starboard.LabelResourceKind:      string(obj.Kind),
-		starboard.LabelResourceNamespace: obj.Namespace,
+		trivyoperator.LabelResourceKind:      string(obj.Kind),
+		trivyoperator.LabelResourceNamespace: obj.Namespace,
 	}
 	if len(validation.IsValidLabelValue(obj.Name)) == 0 {
-		labels[starboard.LabelResourceName] = obj.Name
+		labels[trivyoperator.LabelResourceName] = obj.Name
 	} else {
-		labels[starboard.LabelResourceNameHash] = ComputeHash(obj.Name)
+		labels[trivyoperator.LabelResourceNameHash] = ComputeHash(obj.Name)
 	}
 	return labels
 }
@@ -133,38 +133,38 @@ func ObjectToObjectMeta(obj client.Object, meta *metav1.ObjectMeta) error {
 	if meta.Labels == nil {
 		meta.Labels = make(map[string]string)
 	}
-	meta.Labels[starboard.LabelResourceKind] = obj.GetObjectKind().GroupVersionKind().Kind
-	meta.Labels[starboard.LabelResourceNamespace] = obj.GetNamespace()
+	meta.Labels[trivyoperator.LabelResourceKind] = obj.GetObjectKind().GroupVersionKind().Kind
+	meta.Labels[trivyoperator.LabelResourceNamespace] = obj.GetNamespace()
 	if len(validation.IsValidLabelValue(obj.GetName())) == 0 {
-		meta.Labels[starboard.LabelResourceName] = obj.GetName()
+		meta.Labels[trivyoperator.LabelResourceName] = obj.GetName()
 	} else {
-		meta.Labels[starboard.LabelResourceNameHash] = ComputeHash(obj.GetName())
+		meta.Labels[trivyoperator.LabelResourceNameHash] = ComputeHash(obj.GetName())
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
 		}
-		meta.Annotations[starboard.LabelResourceName] = obj.GetName()
+		meta.Annotations[trivyoperator.LabelResourceName] = obj.GetName()
 	}
 	return nil
 }
 
 func ObjectRefFromObjectMeta(objectMeta metav1.ObjectMeta) (ObjectRef, error) {
-	if _, found := objectMeta.Labels[starboard.LabelResourceKind]; !found {
-		return ObjectRef{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceKind)
+	if _, found := objectMeta.Labels[trivyoperator.LabelResourceKind]; !found {
+		return ObjectRef{}, fmt.Errorf("required label does not exist: %s", trivyoperator.LabelResourceKind)
 	}
 	var objname string
-	if _, found := objectMeta.Labels[starboard.LabelResourceName]; !found {
-		if _, found := objectMeta.Annotations[starboard.LabelResourceName]; found {
-			objname = objectMeta.Annotations[starboard.LabelResourceName]
+	if _, found := objectMeta.Labels[trivyoperator.LabelResourceName]; !found {
+		if _, found := objectMeta.Annotations[trivyoperator.LabelResourceName]; found {
+			objname = objectMeta.Annotations[trivyoperator.LabelResourceName]
 		} else {
-			return ObjectRef{}, fmt.Errorf("required label does not exist: %s", starboard.LabelResourceName)
+			return ObjectRef{}, fmt.Errorf("required label does not exist: %s", trivyoperator.LabelResourceName)
 		}
 	} else {
-		objname = objectMeta.Labels[starboard.LabelResourceName]
+		objname = objectMeta.Labels[trivyoperator.LabelResourceName]
 	}
 	return ObjectRef{
-		Kind:      Kind(objectMeta.Labels[starboard.LabelResourceKind]),
+		Kind:      Kind(objectMeta.Labels[trivyoperator.LabelResourceKind]),
 		Name:      objname,
-		Namespace: objectMeta.Labels[starboard.LabelResourceNamespace],
+		Namespace: objectMeta.Labels[trivyoperator.LabelResourceNamespace],
 	}, nil
 }
 
@@ -224,7 +224,7 @@ func ObjectRefFromKindAndObjectKey(kind Kind, name client.ObjectKey) ObjectRef {
 
 // ComputeSpecHash computes hash of the specified K8s client.Object. The hash is
 // used to indicate whether the client.Object should be rescanned or not by
-// adding it as the starboard.LabelResourceSpecHash label to an instance of a
+// adding it as the trivyoperator.LabelResourceSpecHash label to an instance of a
 // security report.
 func ComputeSpecHash(obj client.Object) (string, error) {
 	switch t := obj.(type) {

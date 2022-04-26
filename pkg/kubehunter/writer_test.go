@@ -7,7 +7,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned/fake"
 	"github.com/aquasecurity/trivy-operator/pkg/kubehunter"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,8 +38,8 @@ func TestWriter_Write(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-cluster",
 					Labels: map[string]string{
-						starboard.LabelResourceKind: "Cluster",
-						starboard.LabelResourceName: "my-cluster",
+						trivyoperator.LabelResourceKind: "Cluster",
+						trivyoperator.LabelResourceName: "my-cluster",
 					},
 				},
 				Report: v1alpha1.KubeHunterReportData{
@@ -56,8 +56,8 @@ func TestWriter_Write(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "my-cluster",
 				Labels: map[string]string{
-					starboard.LabelResourceKind: "Cluster",
-					starboard.LabelResourceName: "my-cluster",
+					trivyoperator.LabelResourceKind: "Cluster",
+					trivyoperator.LabelResourceName: "my-cluster",
 				},
 			},
 			Report: v1alpha1.KubeHunterReportData{
@@ -87,8 +87,8 @@ func TestWriter_Write(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-cluster",
 					Labels: map[string]string{
-						starboard.LabelResourceKind: "Cluster",
-						starboard.LabelResourceName: "my-cluster",
+						trivyoperator.LabelResourceKind: "Cluster",
+						trivyoperator.LabelResourceName: "my-cluster",
 					},
 				},
 				Report: v1alpha1.KubeHunterReportData{

@@ -3,9 +3,9 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "starboard-operator.serviceAccountName" . }}
+  name: {{ include "trivy-operator.serviceAccountName" . }}
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
   {{- with .Values.serviceAccount.annotations }}
   annotations:
     {{- . | toYaml | nindent 4 }}
@@ -17,9 +17,9 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "starboard-operator.fullname" . }}
+  name: {{ include "trivy-operator.fullname" . }}
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ""
@@ -165,15 +165,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "starboard-operator.fullname" . }}
+  name: {{ include "trivy-operator.fullname" . }}
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "starboard-operator.fullname" . }}
+  name: {{ include "trivy-operator.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "starboard-operator.serviceAccountName" . }}
+    name: {{ include "trivy-operator.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

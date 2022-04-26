@@ -5,7 +5,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/trivy-operator/pkg/kubehunter"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -46,11 +46,11 @@ func ScanKubeHunterReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Co
 		if err != nil {
 			return err
 		}
-		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+		config, err := trivyoperator.NewConfigManager(kubeClientset, trivyoperator.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		scanner := kubehunter.NewScanner(starboard.NewScheme(), kubeClientset, config, opts)
+		scanner := kubehunter.NewScanner(trivyoperator.NewScheme(), kubeClientset, config, opts)
 		report, err := scanner.Scan(ctx)
 		if err != nil {
 			return err

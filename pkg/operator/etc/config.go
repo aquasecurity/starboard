@@ -13,7 +13,7 @@ type Config struct {
 	Namespace                                    string         `env:"OPERATOR_NAMESPACE"`
 	TargetNamespaces                             string         `env:"OPERATOR_TARGET_NAMESPACES"`
 	ExcludeNamespaces                            string         `env:"OPERATOR_EXCLUDE_NAMESPACES"`
-	ServiceAccount                               string         `env:"OPERATOR_SERVICE_ACCOUNT" envDefault:"starboard-operator"`
+	ServiceAccount                               string         `env:"OPERATOR_SERVICE_ACCOUNT" envDefault:"trivy-operator"`
 	LogDevMode                                   bool           `env:"OPERATOR_LOG_DEV_MODE" envDefault:"false"`
 	ScanJobTimeout                               time.Duration  `env:"OPERATOR_SCAN_JOB_TIMEOUT" envDefault:"5m"`
 	ConcurrentScanJobsLimit                      int            `env:"OPERATOR_CONCURRENT_SCAN_JOBS_LIMIT" envDefault:"10"`
@@ -41,7 +41,7 @@ type Config struct {
 	ConfigAuditScannerBuiltIn bool `env:"OPERATOR_CONFIG_AUDIT_SCANNER_BUILTIN" envDefault:"true"`
 
 	LeaderElectionEnabled bool   `env:"OPERATOR_LEADER_ELECTION_ENABLED" envDefault:"false"`
-	LeaderElectionID      string `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"starboard-lock"`
+	LeaderElectionID      string `env:"OPERATOR_LEADER_ELECTION_ID" envDefault:"trivyoperator-lock"`
 }
 
 // GetOperatorConfig loads Config from environment variables.

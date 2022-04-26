@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -57,11 +57,11 @@ func TestReportBuilder(t *testing.T) {
 					},
 				},
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ReplicaSet",
-					starboard.LabelResourceName:      "some-owner",
-					starboard.LabelResourceNamespace: "qa",
-					starboard.LabelResourceSpecHash:  "xyz",
-					starboard.LabelPluginConfigHash:  "nop",
+					trivyoperator.LabelResourceKind:      "ReplicaSet",
+					trivyoperator.LabelResourceName:      "some-owner",
+					trivyoperator.LabelResourceNamespace: "qa",
+					trivyoperator.LabelResourceSpecHash:  "xyz",
+					trivyoperator.LabelPluginConfigHash:  "nop",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{},
@@ -100,14 +100,14 @@ func TestReportBuilder(t *testing.T) {
 					},
 				},
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ClusterRole",
-					starboard.LabelResourceNameHash:  "6f69bb5b79",
-					starboard.LabelResourceNamespace: "",
-					starboard.LabelResourceSpecHash:  "xyz",
-					starboard.LabelPluginConfigHash:  "nop",
+					trivyoperator.LabelResourceKind:      "ClusterRole",
+					trivyoperator.LabelResourceNameHash:  "6f69bb5b79",
+					trivyoperator.LabelResourceNamespace: "",
+					trivyoperator.LabelResourceSpecHash:  "xyz",
+					trivyoperator.LabelPluginConfigHash:  "nop",
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:controller:node-controller",
+					trivyoperator.LabelResourceName: "system:controller:node-controller",
 				},
 			},
 			Report: v1alpha1.ConfigAuditReportData{},
@@ -123,19 +123,19 @@ func (p *testPlugin) SupportedKinds() []kube.Kind {
 	return []kube.Kind{}
 }
 
-func (p *testPlugin) IsApplicable(_ starboard.PluginContext, _ client.Object) (bool, string, error) {
+func (p *testPlugin) IsApplicable(_ trivyoperator.PluginContext, _ client.Object) (bool, string, error) {
 	return true, "", nil
 }
 
-func (p *testPlugin) Init(_ starboard.PluginContext) error {
+func (p *testPlugin) Init(_ trivyoperator.PluginContext) error {
 	return nil
 }
 
-func (p *testPlugin) GetScanJobSpec(_ starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *testPlugin) GetScanJobSpec(_ trivyoperator.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	return corev1.PodSpec{}, nil, nil
 }
 
-func (p *testPlugin) ParseConfigAuditReportData(_ starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+func (p *testPlugin) ParseConfigAuditReportData(_ trivyoperator.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
 	return v1alpha1.ConfigAuditReportData{}, nil
 }
 
@@ -143,7 +143,7 @@ func (p *testPlugin) GetContainerName() string {
 	return ""
 }
 
-func (p *testPlugin) ConfigHash(_ starboard.PluginContext, _ kube.Kind) (string, error) {
+func (p *testPlugin) ConfigHash(_ trivyoperator.PluginContext, _ kube.Kind) (string, error) {
 	return p.configHash, nil
 }
 
@@ -155,10 +155,10 @@ func TestScanJobBuilder(t *testing.T) {
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).
-			WithPluginContext(starboard.NewPluginContext().
+			WithPluginContext(trivyoperator.NewPluginContext().
 				WithName("plugin-test").
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
 			WithObject(&appsv1.ReplicaSet{
@@ -176,15 +176,15 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-64d65c457",
-				Namespace: "starboard-ns",
+				Namespace: "trivyoperator-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "755877d4bb",
-					starboard.LabelPluginConfigHash:         "hash-test",
-					starboard.LabelConfigAuditReportScanner: "plugin-test",
-					starboard.LabelK8SAppManagedBy:          "starboard",
-					starboard.LabelResourceKind:             "ReplicaSet",
-					starboard.LabelResourceName:             "nginx-6799fc88d8",
-					starboard.LabelResourceNamespace:        "prod-ns",
+					trivyoperator.LabelResourceSpecHash:         "755877d4bb",
+					trivyoperator.LabelPluginConfigHash:         "hash-test",
+					trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
+					trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+					trivyoperator.LabelResourceKind:             "ReplicaSet",
+					trivyoperator.LabelResourceName:             "nginx-6799fc88d8",
+					trivyoperator.LabelResourceNamespace:        "prod-ns",
 				},
 			},
 			Spec: batchv1.JobSpec{
@@ -194,13 +194,13 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "755877d4bb",
-							starboard.LabelPluginConfigHash:         "hash-test",
-							starboard.LabelConfigAuditReportScanner: "plugin-test",
-							starboard.LabelK8SAppManagedBy:          "starboard",
-							starboard.LabelResourceKind:             "ReplicaSet",
-							starboard.LabelResourceName:             "nginx-6799fc88d8",
-							starboard.LabelResourceNamespace:        "prod-ns",
+							trivyoperator.LabelResourceSpecHash:         "755877d4bb",
+							trivyoperator.LabelPluginConfigHash:         "hash-test",
+							trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
+							trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+							trivyoperator.LabelResourceKind:             "ReplicaSet",
+							trivyoperator.LabelResourceName:             "nginx-6799fc88d8",
+							trivyoperator.LabelResourceNamespace:        "prod-ns",
 						},
 					},
 					Spec: corev1.PodSpec{},
@@ -215,10 +215,10 @@ func TestScanJobBuilder(t *testing.T) {
 			WithPlugin(&testPlugin{
 				configHash: "hash-test",
 			}).
-			WithPluginContext(starboard.NewPluginContext().
+			WithPluginContext(trivyoperator.NewPluginContext().
 				WithName("plugin-test").
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
 			WithObject(&rbacv1.ClusterRole{
@@ -236,18 +236,18 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-5bfbdd65c9",
-				Namespace: "starboard-ns",
+				Namespace: "trivyoperator-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "7c48697ccf",
-					starboard.LabelPluginConfigHash:         "hash-test",
-					starboard.LabelConfigAuditReportScanner: "plugin-test",
-					starboard.LabelK8SAppManagedBy:          "starboard",
-					starboard.LabelResourceKind:             "ClusterRole",
-					starboard.LabelResourceNameHash:         "6f69bb5b79",
-					starboard.LabelResourceNamespace:        "",
+					trivyoperator.LabelResourceSpecHash:         "7c48697ccf",
+					trivyoperator.LabelPluginConfigHash:         "hash-test",
+					trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
+					trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+					trivyoperator.LabelResourceKind:             "ClusterRole",
+					trivyoperator.LabelResourceNameHash:         "6f69bb5b79",
+					trivyoperator.LabelResourceNamespace:        "",
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:controller:node-controller",
+					trivyoperator.LabelResourceName: "system:controller:node-controller",
 				},
 			},
 			Spec: batchv1.JobSpec{
@@ -257,16 +257,16 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "7c48697ccf",
-							starboard.LabelPluginConfigHash:         "hash-test",
-							starboard.LabelConfigAuditReportScanner: "plugin-test",
-							starboard.LabelK8SAppManagedBy:          "starboard",
-							starboard.LabelResourceKind:             "ClusterRole",
-							starboard.LabelResourceNameHash:         "6f69bb5b79",
-							starboard.LabelResourceNamespace:        "",
+							trivyoperator.LabelResourceSpecHash:         "7c48697ccf",
+							trivyoperator.LabelPluginConfigHash:         "hash-test",
+							trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
+							trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+							trivyoperator.LabelResourceKind:             "ClusterRole",
+							trivyoperator.LabelResourceNameHash:         "6f69bb5b79",
+							trivyoperator.LabelResourceNamespace:        "",
 						},
 						Annotations: map[string]string{
-							starboard.LabelResourceName: "system:controller:node-controller",
+							trivyoperator.LabelResourceName: "system:controller:node-controller",
 						},
 					},
 					Spec: corev1.PodSpec{},

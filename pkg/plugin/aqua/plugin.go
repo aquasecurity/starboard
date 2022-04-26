@@ -9,7 +9,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/docker"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -46,7 +46,7 @@ const (
 
 // Config defines configuration params for this plugin.
 type Config struct {
-	starboard.PluginConfig
+	trivyoperator.PluginConfig
 }
 
 func (c Config) GetCommand() (Command, error) {
@@ -118,14 +118,14 @@ func (c Config) setResourceLimit(configKey string, k8sResourceList *corev1.Resou
 
 type plugin struct {
 	idGenerator ext.IDGenerator
-	buildInfo   starboard.BuildInfo
+	buildInfo   trivyoperator.BuildInfo
 }
 
 // NewPlugin constructs a new vulnerabilityreport.Plugin, which is using
 // the Aqua Enterprise to scan container images of Kubernetes workloads.
 func NewPlugin(
 	idGenerator ext.IDGenerator,
-	buildInfo starboard.BuildInfo,
+	buildInfo trivyoperator.BuildInfo,
 ) vulnerabilityreport.Plugin {
 	return &plugin{
 		idGenerator: idGenerator,
@@ -133,12 +133,12 @@ func NewPlugin(
 	}
 }
 
-func (s *plugin) Init(_ starboard.PluginContext) error {
+func (s *plugin) Init(_ trivyoperator.PluginContext) error {
 	// Do nothing
 	return nil
 }
 
-func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, object client.Object,
+func (s *plugin) GetScanJobSpec(ctx trivyoperator.PluginContext, object client.Object,
 	_ map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	config, err := s.newConfigFrom(ctx)
 	if err != nil {
@@ -161,7 +161,7 @@ func (s *plugin) GetScanJobSpec(ctx starboard.PluginContext, object client.Objec
 	}
 }
 
-func (s *plugin) getPodSpecForImageCommand(ctx starboard.PluginContext, config Config,
+func (s *plugin) getPodSpecForImageCommand(ctx trivyoperator.PluginContext, config Config,
 	object client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	spec, err := kube.GetPodSpec(object)
 	if err != nil {
@@ -225,17 +225,17 @@ func (s *plugin) getPodSpecForImageCommand(ctx starboard.PluginContext, config C
 	}, nil, nil
 }
 
-func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, config Config,
+func (s *plugin) newScanJobContainer(ctx trivyoperator.PluginContext, config Config,
 	podContainer corev1.Container) (corev1.Container, error) {
 	aquaImageRef, err := s.getImageRef(ctx)
 	if err != nil {
 		return corev1.Container{}, err
 	}
-	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(aquaImageRef)
 	if err != nil {
 		return corev1.Container{}, err
 	}
-	pluginConfigName := starboard.GetPluginConfigMapName(aquaPlugin)
+	pluginConfigName := trivyoperator.GetPluginConfigMapName(aquaPlugin)
 
 	requirements, err := config.GetResourceRequirements()
 	if err != nil {
@@ -244,13 +244,13 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, config Config,
 
 	return corev1.Container{
 		Name:                     podContainer.Name,
-		Image:                    fmt.Sprintf("aquasec/starboard-scanner-aqua:%s", s.buildInfo.Version),
+		Image:                    fmt.Sprintf("aquasec/trivyoperator-scanner-aqua:%s", s.buildInfo.Version),
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Command: []string{
 			"/bin/sh",
 			"-c",
-			fmt.Sprintf("/usr/local/bin/starboard-scanner-aqua --version $(AQUA_VERSION) "+
+			fmt.Sprintf("/usr/local/bin/trivyoperator-scanner-aqua --version $(AQUA_VERSION) "+
 				"--host $(AQUA_CSP_HOST) --user $(AQUA_CSP_USERNAME) --password $(AQUA_CSP_PASSWORD) %s 2> %s",
 				podContainer.Image,
 				corev1.TerminationMessagePathDefault),
@@ -280,10 +280,10 @@ func (s *plugin) newScanJobContainer(ctx starboard.PluginContext, config Config,
 }
 
 const (
-	FsSharedVolumeName = "starboard-aqua"
+	FsSharedVolumeName = "trivyoperator-aqua"
 )
 
-func (s *plugin) getPodSpecForFileSystemCommand(ctx starboard.PluginContext, config Config, object client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (s *plugin) getPodSpecForFileSystemCommand(ctx trivyoperator.PluginContext, config Config, object client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	spec, err := kube.GetPodSpec(object)
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -352,8 +352,8 @@ func (s *plugin) getPodSpecForFileSystemCommand(ctx starboard.PluginContext, con
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command: []string{
 						"cp",
-						"/usr/local/bin/starboard-scanner-aqua",
-						"/var/aqua/starboard-scanner-aqua",
+						"/usr/local/bin/trivyoperator-scanner-aqua",
+						"/var/aqua/trivyoperator-scanner-aqua",
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -386,7 +386,7 @@ func (s *plugin) newScanJobContainerFSCommand(config Config, podContainer corev1
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		Command: []string{
-			"/var/aqua/starboard-scanner-aqua",
+			"/var/aqua/trivyoperator-scanner-aqua",
 		},
 		Args: []string{
 			"--version",
@@ -415,13 +415,13 @@ func (s *plugin) newScanJobContainerFSCommand(config Config, podContainer corev1
 	}, nil
 }
 
-func (s *plugin) ParseVulnerabilityReportData(_ starboard.PluginContext, _ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
+func (s *plugin) ParseVulnerabilityReportData(_ trivyoperator.PluginContext, _ string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
 	var report v1alpha1.VulnerabilityReportData
 	err := json.NewDecoder(logsReader).Decode(&report)
 	return report, err
 }
 
-func (s *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
+func (s *plugin) getImageRef(ctx trivyoperator.PluginContext) (string, error) {
 	config, err := ctx.GetConfig()
 	if err != nil {
 		return "", err
@@ -429,7 +429,7 @@ func (s *plugin) getImageRef(ctx starboard.PluginContext) (string, error) {
 	return config.GetRequiredData(keyAquaScannerImage)
 }
 
-func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+func (s *plugin) newConfigFrom(ctx trivyoperator.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
 		return Config{}, err
@@ -437,12 +437,12 @@ func (s *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
 	return Config{PluginConfig: pluginConfig}, nil
 }
 
-func (s *plugin) getEnvFromConfig(ctx starboard.PluginContext, secretName string) ([]corev1.EnvVar, error) {
+func (s *plugin) getEnvFromConfig(ctx trivyoperator.PluginContext, secretName string) ([]corev1.EnvVar, error) {
 	aquaImageRef, err := s.getImageRef(ctx)
 	if err != nil {
 		return nil, err
 	}
-	version, err := starboard.GetVersionFromImageRef(aquaImageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(aquaImageRef)
 	if err != nil {
 		return nil, err
 	}

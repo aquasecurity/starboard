@@ -1,5 +1,5 @@
 apiVersion: v2
-name: starboard-operator
+name: trivy-operator
 description: Keeps security report resources updated
 type: application
 
@@ -17,11 +17,11 @@ appVersion: 0.15.4
 
 keywords:
   - aquasecurity
-  - starboard
+  - trivyoperator
   - trivy
-# home: https://github.com/aquasecurity/starboard
+# home: https://github.com/aquasecurity/trivy-operator
 sources:
-  - https://github.com/aquasecurity/starboard
+  - https://github.com/aquasecurity/trivy-operator
 # maintainers: # (optional)
 #   - name: The maintainers name (required for each maintainer)
 #     email: The maintainers email (optional for each maintainer)

@@ -122,7 +122,7 @@ report:
             - msg: Container 'nginx' of Pod 'nginx-jr99v' should set 'securityContext.allowPrivilegeEscalation'
                 to false
               name: pod-nginx-jr99v
-              namespace: starboard-itest
+              namespace: trivyoperator-itest
               status: FAIL
           id: KSV001
           objectType: Pod
@@ -174,7 +174,7 @@ report:
             - msg: Container 'nginx' of Pod 'nginx-jr99v' should set 'securityContext.readOnlyRootFilesystem'
                 to true
               name: pod-nginx-jr99v
-              namespace: starboard-itest
+              namespace: trivyoperator-itest
               status: FAIL
           id: KSV014
           objectType: Pod
@@ -202,7 +202,7 @@ report:
             - msg: Container of Pod 'nginx-jr99v' should set 'spec.automountServiceAccountToken'
                 to false
               name: pod-nginx-jr99v
-              namespace: starboard-itest
+              namespace: trivyoperator-itest
               status: FAIL
           id: KSV036
           objectType: Pod
@@ -222,10 +222,10 @@ report:
       severity: MEDIUM
     - checkResults:
         - details:
-            - msg: Container 'starboard-operator' of ReplicaSet 'starboard-operator-7cf866c47b'
+            - msg: Container 'trivy-operator' of ReplicaSet 'trivy-operator-7cf866c47b'
                 should set 'securityContext.runAsNonRoot' to true
-              name: replicaset-starboard-operator-7cf866c47b
-              namespace: starboard-system
+              name: replicaset-trivy-operator-7cf866c47b
+              namespace: trivyoperator-system
               status: FAIL
             - msg: Container 'coredns' of ReplicaSet 'coredns-96cc4f57d' should set 'securityContext.runAsNonRoot'
                 to true
@@ -237,10 +237,10 @@ report:
               name: replicaset-coredns-5789895cd
               namespace: kube-system
               status: FAIL
-            - msg: Container 'starboard-operator' of ReplicaSet 'starboard-operator-c94dd56d'
+            - msg: Container 'trivy-operator' of ReplicaSet 'trivy-operator-c94dd56d'
                 should set 'securityContext.runAsNonRoot' to true
-              name: replicaset-starboard-operator-c94dd56d
-              namespace: starboard-system
+              name: replicaset-trivy-operator-c94dd56d
+              namespace: trivyoperator-system
               status: FAIL
             - msg: Container 'local-path-provisioner' of ReplicaSet 'local-path-provisioner-84bb864455'
                 should set 'securityContext.runAsNonRoot' to true
@@ -274,7 +274,7 @@ report:
             - msg: Container 'nginx' of Pod 'nginx-jr99v' should set 'securityContext.runAsNonRoot'
                 to true
               name: pod-nginx-jr99v
-              namespace: starboard-itest
+              namespace: trivyoperator-itest
               status: FAIL
           id: KSV012
           objectType: Pod

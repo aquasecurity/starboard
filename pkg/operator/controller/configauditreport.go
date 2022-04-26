@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -30,13 +30,13 @@ import (
 type ConfigAuditReportReconciler struct {
 	logr.Logger
 	etc.Config
-	starboard.ConfigData
+	trivyoperator.ConfigData
 	client.Client
 	kube.ObjectResolver
 	LimitChecker
 	kube.LogsReader
 	configauditreport.Plugin
-	starboard.PluginContext
+	trivyoperator.PluginContext
 	configauditreport.ReadWriter
 }
 
@@ -314,8 +314,8 @@ func (r *ConfigAuditReportReconciler) hasReport(ctx context.Context, owner kube.
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		return report.Labels[trivyoperator.LabelResourceSpecHash] == podSpecHash &&
+			report.Labels[trivyoperator.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -326,8 +326,8 @@ func (r *ConfigAuditReportReconciler) hasClusterReport(ctx context.Context, owne
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		return report.Labels[trivyoperator.LabelResourceSpecHash] == podSpecHash &&
+			report.Labels[trivyoperator.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -342,7 +342,7 @@ func (r *ConfigAuditReportReconciler) hasActiveScanJob(ctx context.Context, obj 
 		}
 		return false, nil, fmt.Errorf("getting pod from cache: %w", err)
 	}
-	if job.Labels[starboard.LabelResourceSpecHash] == hash {
+	if job.Labels[trivyoperator.LabelResourceSpecHash] == hash {
 		return true, job, nil
 	}
 	return false, nil, nil
@@ -399,13 +399,13 @@ func (r *ConfigAuditReportReconciler) processCompleteScanJob(ctx context.Context
 		return fmt.Errorf("getting object from object ref: %w", err)
 	}
 
-	resourceSpecHash, ok := job.Labels[starboard.LabelResourceSpecHash]
+	resourceSpecHash, ok := job.Labels[trivyoperator.LabelResourceSpecHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", starboard.LabelResourceSpecHash)
+		return fmt.Errorf("expected label %s not set", trivyoperator.LabelResourceSpecHash)
 	}
-	pluginConfigHash, ok := job.Labels[starboard.LabelPluginConfigHash]
+	pluginConfigHash, ok := job.Labels[trivyoperator.LabelPluginConfigHash]
 	if !ok {
-		return fmt.Errorf("expected label %s not set", starboard.LabelPluginConfigHash)
+		return fmt.Errorf("expected label %s not set", trivyoperator.LabelPluginConfigHash)
 	}
 
 	hasReport, err := r.hasReport(ctx, ownerRef, resourceSpecHash, pluginConfigHash)

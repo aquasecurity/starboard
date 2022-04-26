@@ -7,20 +7,20 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/policy"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Scanner struct {
-	buildInfo      starboard.BuildInfo
-	scheme         *runtime.Scheme
+	buildInfo trivyoperator.BuildInfo
+	scheme    *runtime.Scheme
 	client         client.Client
 	objectResolver *kube.ObjectResolver
 }
 
-func NewScanner(buildInfo starboard.BuildInfo, client client.Client) *Scanner {
+func NewScanner(buildInfo trivyoperator.BuildInfo, client client.Client) *Scanner {
 	return &Scanner{
 		buildInfo: buildInfo,
 		scheme:    client.Scheme(),
@@ -109,11 +109,11 @@ func (s *Scanner) policies(ctx context.Context) (*policy.Policies, error) {
 	cm := &corev1.ConfigMap{}
 
 	err := s.client.Get(ctx, client.ObjectKey{
-		Namespace: starboard.NamespaceName,
-		Name:      starboard.PoliciesConfigMapName,
+		Namespace: trivyoperator.NamespaceName,
+		Name:      trivyoperator.PoliciesConfigMapName,
 	}, cm)
 	if err != nil {
-		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", starboard.NamespaceName, starboard.PoliciesConfigMapName, err)
+		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", trivyoperator.NamespaceName, trivyoperator.PoliciesConfigMapName, err)
 	}
 	return policy.NewPolicies(cm.Data), nil
 }

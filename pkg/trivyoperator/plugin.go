@@ -1,4 +1,4 @@
-package starboard
+package trivyoperator
 
 import (
 	"context"
@@ -44,7 +44,7 @@ type PluginContext interface {
 	// GetServiceAccountName return the name of the K8s Service Account used to run workloads
 	// created by Starboard.
 	GetServiceAccountName() string
-	// GetStarboardConfig returns starboard configuration.
+	// GetStarboardConfig returns trivyoperator configuration.
 	GetStarboardConfig() ConfigData
 }
 
@@ -52,7 +52,7 @@ type PluginContext interface {
 // with the given name.
 // TODO Rename to GetPluginConfigObjectName as this method is used to determine the name of ConfigMaps and Secrets.
 func GetPluginConfigMapName(pluginName string) string {
-	return "starboard-" + strings.ToLower(pluginName) + "-config"
+	return "trivyoperator-" + strings.ToLower(pluginName) + "-config"
 }
 
 type pluginContext struct {
@@ -73,7 +73,7 @@ func (p *pluginContext) EnsureConfig(config PluginConfig) error {
 			Namespace: p.namespace,
 			Name:      GetPluginConfigMapName(p.name),
 			Labels: labels.Set{
-				LabelK8SAppManagedBy: "starboard",
+				LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 		Data: config.Data,
@@ -90,7 +90,7 @@ func (p *pluginContext) GetConfig() (PluginConfig, error) {
 
 	err := p.client.Get(context.Background(), types.NamespacedName{
 		Namespace: p.namespace,
-		Name:      fmt.Sprintf("starboard-%s-config", strings.ToLower(p.GetName())),
+		Name:      fmt.Sprintf("trivyoperator-%s-config", strings.ToLower(p.GetName())),
 	}, cm)
 	if err != nil {
 		return PluginConfig{}, err
@@ -98,7 +98,7 @@ func (p *pluginContext) GetConfig() (PluginConfig, error) {
 
 	err = p.client.Get(context.Background(), types.NamespacedName{
 		Namespace: p.namespace,
-		Name:      fmt.Sprintf("starboard-%s-config", strings.ToLower(p.GetName())),
+		Name:      fmt.Sprintf("trivyoperator-%s-config", strings.ToLower(p.GetName())),
 	}, secret)
 
 	var secretData map[string][]byte

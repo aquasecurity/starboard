@@ -13,7 +13,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/conftest"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -34,7 +34,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 	t.Run("Should return error when kinds are not defined for policy", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		config := conftest.Config{
-			PluginConfig: starboard.PluginConfig{
+			PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"conftest.library.kubernetes.rego":        "<REGO_A>",
 					"conftest.library.utils.rego":             "<REGO_B>",
@@ -49,7 +49,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 	t.Run("Should return error when policy is not found", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		config := conftest.Config{
-			PluginConfig: starboard.PluginConfig{
+			PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"conftest.policy.access_to_host_pid.kinds": "Workload",
 				},
@@ -63,7 +63,7 @@ func TestConfig_GetPoliciesByKind(t *testing.T) {
 
 		g := NewGomegaWithT(t)
 		config := conftest.Config{
-			PluginConfig: starboard.PluginConfig{
+			PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
 
@@ -115,7 +115,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 	}{
 		{
 			name:          "Should return empty requirements by default",
-			config:        conftest.Config{PluginConfig: starboard.PluginConfig{}},
+			config:        conftest.Config{PluginConfig: trivyoperator.PluginConfig{}},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{},
@@ -124,7 +124,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return configured resource requirement",
-			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+			config: conftest.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu":    "800m",
 					"conftest.resources.requests.memory": "200M",
@@ -146,7 +146,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		},
 		{
 			name: "Should return error if resource is not parseable",
-			config: conftest.Config{PluginConfig: starboard.PluginConfig{
+			config: conftest.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"conftest.resources.requests.cpu": "roughly 100",
 				},
@@ -224,17 +224,17 @@ deny[res] {
 			client := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:            "starboard-conftest-config",
-						Namespace:       "starboard-ns",
+						Name:            "trivyoperator-conftest-config",
+						Namespace:       "trivyoperator-ns",
 						ResourceVersion: "0",
 					},
 					Data: tc.configData,
 				}).Build()
 
-			pluginContext := starboard.NewPluginContext().
+			pluginContext := trivyoperator.NewPluginContext().
 				WithName(conftest.Plugin).
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				WithClient(client).
 				Get()
 
@@ -256,10 +256,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		instance := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(conftest.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 		err := instance.Init(pluginContext)
@@ -267,8 +267,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-conftest-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-conftest-config",
 		}, &cm)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(cm).To(Equal(corev1.ConfigMap{
@@ -277,10 +277,10 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "starboard-conftest-config",
-				Namespace: "starboard-ns",
+				Name:      "trivyoperator-conftest-config",
+				Namespace: "trivyoperator-ns",
 				Labels: map[string]string{
-					"app.kubernetes.io/managed-by": "starboard",
+					"app.kubernetes.io/managed-by": "trivyoperator",
 				},
 				ResourceVersion: "1",
 			},
@@ -300,8 +300,8 @@ func TestPlugin_Init(t *testing.T) {
 		client := fake.NewClientBuilder().WithObjects(
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            "starboard-conftest-config",
-					Namespace:       "starboard-ns",
+					Name:            "trivyoperator-conftest-config",
+					Namespace:       "trivyoperator-ns",
 					ResourceVersion: "0",
 				},
 				Data: map[string]string{
@@ -309,10 +309,10 @@ func TestPlugin_Init(t *testing.T) {
 				},
 			}).Build()
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(conftest.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 
@@ -322,8 +322,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-conftest-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-conftest-config",
 		}, &cm)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(cm).To(Equal(corev1.ConfigMap{
@@ -332,8 +332,8 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            "starboard-conftest-config",
-				Namespace:       "starboard-ns",
+				Name:            "trivyoperator-conftest-config",
+				Namespace:       "trivyoperator-ns",
 				ResourceVersion: "0",
 			},
 			Data: map[string]string{
@@ -346,14 +346,14 @@ func TestPlugin_Init(t *testing.T) {
 func TestPlugin_GetScanJobSpec(t *testing.T) {
 	g := NewGomegaWithT(t)
 	sequence := ext.NewSimpleIDGenerator()
-	pluginContext := starboard.NewPluginContext().
+	pluginContext := trivyoperator.NewPluginContext().
 		WithName(conftest.Plugin).
-		WithNamespace("starboard-ns").
-		WithServiceAccountName("starboard-sa").
+		WithNamespace("trivyoperator-ns").
+		WithServiceAccountName("trivyoperator-sa").
 		WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "starboard-conftest-config",
-				Namespace: "starboard-ns",
+				Name:      "trivyoperator-conftest-config",
+				Namespace: "trivyoperator-ns",
 			},
 			Data: map[string]string{
 				"conftest.imageRef": "openpolicyagent/conftest:v0.23.0",
@@ -396,10 +396,10 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(jobSpec).To(MatchFields(IgnoreExtras, Fields{
-		"ServiceAccountName":           Equal("starboard-sa"),
+		"ServiceAccountName":           Equal("trivyoperator-sa"),
 		"AutomountServiceAccountToken": PointTo(BeFalse()),
 		"RestartPolicy":                Equal(corev1.RestartPolicyNever),
-		"Affinity":                     Equal(starboard.LinuxNodeAffinity()),
+		"Affinity":                     Equal(trivyoperator.LinuxNodeAffinity()),
 		"Volumes": ConsistOf(
 			MatchFields(IgnoreExtras, Fields{
 				"Name": Equal("scan-configauditreport-789cbb5cc4-volume"),
@@ -495,7 +495,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				Path: "cpu_not_limited.rego",
 			},
 			corev1.KeyToPath{
-				Key:  "starboard.workload.yaml",
+				Key:  "trivyoperator.workload.yaml",
 				Path: "workload.yaml",
 			},
 		),
@@ -504,14 +504,14 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-789cbb5cc4-volume",
-				Namespace: "starboard-ns",
+				Namespace: "trivyoperator-ns",
 			},
 			StringData: map[string]string{
 				"conftest.library.kubernetes.rego":        "<REGO>",
 				"conftest.library.utils.rego":             "<REGO>",
 				"conftest.policy.access_to_host_pid.rego": "<REGO>",
 				"conftest.policy.cpu_not_limited.rego":    "<REGO>",
-				"starboard.workload.yaml": `metadata:
+				"trivyoperator.workload.yaml": `metadata:
   creationTimestamp: null
   name: nginx
   namespace: default
@@ -532,14 +532,14 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title.json")
 		logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(conftest.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "starboard-conftest-config",
-					Namespace: "starboard-ns",
+					Name:      "trivyoperator-conftest-config",
+					Namespace: "trivyoperator-ns",
 				},
 				Data: map[string]string{
 					"conftest.imageRef": "openpolicyagent/conftest:v0.30.0",
@@ -674,14 +674,14 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
 		logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title_id.json")
 		logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(conftest.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(fake.NewClientBuilder().WithObjects(&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "starboard-conftest-config",
-					Namespace: "starboard-ns",
+					Name:      "trivyoperator-conftest-config",
+					Namespace: "trivyoperator-ns",
 				},
 				Data: map[string]string{
 					"conftest.imageRef": "openpolicyagent/conftest:v0.30.0",
@@ -813,15 +813,15 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 }
 func TestPlugin_ConfigHash(t *testing.T) {
 
-	newPluginContextWithConfigData := func(data map[string]string) starboard.PluginContext {
-		return starboard.NewPluginContext().
+	newPluginContextWithConfigData := func(data map[string]string) trivyoperator.PluginContext {
+		return trivyoperator.NewPluginContext().
 			WithName("Conftest").
-			WithNamespace("starboard-ns").
+			WithNamespace("trivyoperator-ns").
 			WithClient(fake.NewClientBuilder().
 				WithObjects(&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "starboard-conftest-config",
-						Namespace: "starboard-ns",
+						Name:      "trivyoperator-conftest-config",
+						Namespace: "trivyoperator-ns",
 					},
 					Data: data,
 				}).

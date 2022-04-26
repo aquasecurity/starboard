@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 )
 
-func NewVersionCmd(buildInfo starboard.BuildInfo, outWriter io.Writer) *cobra.Command {
+func NewVersionCmd(buildInfo trivyoperator.BuildInfo, outWriter io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version information",

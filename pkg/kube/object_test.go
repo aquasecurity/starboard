@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -165,9 +165,9 @@ func TestObjectRefToLabels(t *testing.T) {
 				Namespace: "production",
 			},
 			labels: map[string]string{
-				starboard.LabelResourceKind:      "Pod",
-				starboard.LabelResourceNamespace: "production",
-				starboard.LabelResourceName:      "my-pod",
+				trivyoperator.LabelResourceKind:      "Pod",
+				trivyoperator.LabelResourceNamespace: "production",
+				trivyoperator.LabelResourceName:      "my-pod",
 			},
 		},
 		{
@@ -177,9 +177,9 @@ func TestObjectRefToLabels(t *testing.T) {
 				Name: "system:controller:namespace-controller",
 			},
 			labels: map[string]string{
-				starboard.LabelResourceKind:      "ClusterRole",
-				starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:namespace-controller"),
-				starboard.LabelResourceNamespace: "",
+				trivyoperator.LabelResourceKind:      "ClusterRole",
+				trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:controller:namespace-controller"),
+				trivyoperator.LabelResourceNamespace: "",
 			},
 		},
 	}
@@ -212,9 +212,9 @@ func TestObjectToObjectMeta(t *testing.T) {
 			},
 			expected: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "Pod",
-					starboard.LabelResourceName:      "my-pod",
-					starboard.LabelResourceNamespace: "production",
+					trivyoperator.LabelResourceKind:      "Pod",
+					trivyoperator.LabelResourceName:      "my-pod",
+					trivyoperator.LabelResourceNamespace: "production",
 				},
 			},
 		},
@@ -232,12 +232,12 @@ func TestObjectToObjectMeta(t *testing.T) {
 			},
 			expected: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ClusterRole",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
-					starboard.LabelResourceNamespace: "",
+					trivyoperator.LabelResourceKind:      "ClusterRole",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					trivyoperator.LabelResourceNamespace: "",
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:controller:node-controller",
+					trivyoperator.LabelResourceName: "system:controller:node-controller",
 				},
 			},
 		},
@@ -264,14 +264,14 @@ func TestObjectToObjectMeta(t *testing.T) {
 				Labels: map[string]string{
 					"foo": "bar",
 
-					starboard.LabelResourceKind:      "ClusterRole",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
-					starboard.LabelResourceNamespace: "",
+					trivyoperator.LabelResourceKind:      "ClusterRole",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:controller:node-controller"),
+					trivyoperator.LabelResourceNamespace: "",
 				},
 				Annotations: map[string]string{
 					"kee": "pass",
 
-					starboard.LabelResourceName: "system:controller:node-controller",
+					trivyoperator.LabelResourceName: "system:controller:node-controller",
 				},
 			},
 		},
@@ -541,7 +541,7 @@ func TestGetPodSpec(t *testing.T) {
 
 func TestObjectResolver_RelatedReplicaSetName(t *testing.T) {
 
-	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+	instance := &kube.ObjectResolver{Client: fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithObjects(
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "nginx",
@@ -666,12 +666,12 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Test Role",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "Role",
-					starboard.LabelResourceNamespace: "kube-system",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:admin"),
+					trivyoperator.LabelResourceKind:      "Role",
+					trivyoperator.LabelResourceNamespace: "kube-system",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:admin"),
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:admin",
+					trivyoperator.LabelResourceName: "system:admin",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindRole, Name: "system:admin", Namespace: "kube-system"},
@@ -680,12 +680,12 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Test RoleBinding",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "RoleBinding",
-					starboard.LabelResourceNamespace: "kube-system",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:admin:binding"),
+					trivyoperator.LabelResourceKind:      "RoleBinding",
+					trivyoperator.LabelResourceNamespace: "kube-system",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:admin:binding"),
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:admin:binding",
+					trivyoperator.LabelResourceName: "system:admin:binding",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindRoleBinding, Name: "system:admin:binding", Namespace: "kube-system"},
@@ -694,12 +694,12 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Kind ClusterRole",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ClusterRole",
-					starboard.LabelResourceNamespace: "",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:netnode"),
+					trivyoperator.LabelResourceKind:      "ClusterRole",
+					trivyoperator.LabelResourceNamespace: "",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:netnode"),
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:netnode",
+					trivyoperator.LabelResourceName: "system:netnode",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindClusterRole, Name: "system:netnode"},
@@ -708,12 +708,12 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Kind ClusterRoleBinding",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ClusterRoleBinding",
-					starboard.LabelResourceNamespace: "",
-					starboard.LabelResourceNameHash:  kube.ComputeHash("system:netnode:binding"),
+					trivyoperator.LabelResourceKind:      "ClusterRoleBinding",
+					trivyoperator.LabelResourceNamespace: "",
+					trivyoperator.LabelResourceNameHash:  kube.ComputeHash("system:netnode:binding"),
 				},
 				Annotations: map[string]string{
-					starboard.LabelResourceName: "system:netnode:binding",
+					trivyoperator.LabelResourceName: "system:netnode:binding",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindClusterRoleBindings, Name: "system:netnode:binding"},
@@ -722,9 +722,9 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Kind Pod",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "Pod",
-					starboard.LabelResourceNamespace: "default",
-					starboard.LabelResourceName:      "nginx-pod",
+					trivyoperator.LabelResourceKind:      "Pod",
+					trivyoperator.LabelResourceNamespace: "default",
+					trivyoperator.LabelResourceName:      "nginx-pod",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindPod, Name: "nginx-pod", Namespace: "default"},
@@ -733,9 +733,9 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Kind Deployment",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "Deployment",
-					starboard.LabelResourceNamespace: "default",
-					starboard.LabelResourceName:      "nginx-deployment",
+					trivyoperator.LabelResourceKind:      "Deployment",
+					trivyoperator.LabelResourceNamespace: "default",
+					trivyoperator.LabelResourceName:      "nginx-deployment",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindDeployment, Name: "nginx-deployment", Namespace: "default"},
@@ -744,22 +744,22 @@ func TestObjectRefFromObjectMeta(t *testing.T) {
 			name: "Kind DaemonSet",
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "DaemonSet",
-					starboard.LabelResourceNamespace: "default",
-					starboard.LabelResourceName:      "nginx-ds",
+					trivyoperator.LabelResourceKind:      "DaemonSet",
+					trivyoperator.LabelResourceNamespace: "default",
+					trivyoperator.LabelResourceName:      "nginx-ds",
 				},
 			},
 			expected: kube.ObjectRef{Kind: kube.KindDaemonSet, Name: "nginx-ds", Namespace: "default"},
 		},
 		{
-			name: fmt.Sprintf("Should return error when %s label is missing", starboard.LabelResourceKind),
+			name: fmt.Sprintf("Should return error when %s label is missing", trivyoperator.LabelResourceKind),
 			object: metav1.ObjectMeta{
 				Labels: map[string]string{
-					starboard.LabelResourceName:      "nginx",
-					starboard.LabelResourceNamespace: "default",
+					trivyoperator.LabelResourceName:      "nginx",
+					trivyoperator.LabelResourceNamespace: "default",
 				},
 			},
-			expectedError: "required label does not exist: starboard.resource.kind",
+			expectedError: "required label does not exist: trivyoperator.resource.kind",
 		},
 	}
 
@@ -953,7 +953,7 @@ func TestObjectResolver_ReportOwner(t *testing.T) {
 		},
 	}
 
-	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+	testClient := fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithObjects(
 		nginxDeploy,
 		nginxReplicaSet,
 		nginxPod,
@@ -1159,7 +1159,7 @@ func TestObjectResolver_IsActiveReplicaSet(t *testing.T) {
 			},
 		},
 	}
-	testClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
+	testClient := fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithObjects(
 		nginxDeploy,
 		nginxReplicaSet,
 		notActiveNginxReplicaSet,

@@ -7,7 +7,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/runner"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/hashicorp/go-version"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -33,13 +33,13 @@ type Scanner struct {
 	clientset  kubernetes.Interface
 	opts       kube.ScannerOpts
 	logsReader kube.LogsReader
-	config     starboard.ConfigData
+	config     trivyoperator.ConfigData
 }
 
 func NewScanner(
 	scheme *runtime.Scheme,
 	clientset kubernetes.Interface,
-	config starboard.ConfigData,
+	config trivyoperator.ConfigData,
 	opts kube.ScannerOpts,
 ) *Scanner {
 	return &Scanner{
@@ -126,7 +126,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 		podSecurityContext       *corev1.PodSecurityContext
 		containerSecurityContext *corev1.SecurityContext
 	)
-	ver, err := starboard.GetVersionFromImageRef(imageRef)
+	ver, err := trivyoperator.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("scan-kubehunterreports-%s", kube.ComputeHash("cluster")),
-			Namespace: starboard.NamespaceName,
+			Namespace: trivyoperator.NamespaceName,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:          pointer.Int32Ptr(0),
@@ -164,10 +164,10 @@ func (s *Scanner) prepareKubeHunterJob() (*batchv1.Job, error) {
 					Labels:      scanJobPodTemplateLabels,
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: starboard.ServiceAccountName,
+					ServiceAccountName: trivyoperator.ServiceAccountName,
 					RestartPolicy:      corev1.RestartPolicyNever,
 					HostPID:            true,
-					Affinity:           starboard.LinuxNodeAffinity(),
+					Affinity:           trivyoperator.LinuxNodeAffinity(),
 					Tolerations:        scanJobTolerations,
 					SecurityContext:    podSecurityContext,
 					Containers: []corev1.Container{

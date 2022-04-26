@@ -35,25 +35,25 @@ func TestGetContainerImagesFromJob(t *testing.T) {
 
 	t.Run("Should return error when annotation is not set", func(t *testing.T) {
 		_, err := kube.GetContainerImagesFromJob(&batchv1.Job{})
-		require.EqualError(t, err, "required annotation not set: starboard.container-images")
+		require.EqualError(t, err, "required annotation not set: trivyoperator.container-images")
 	})
 
 	t.Run("Should return error when annotation is set but has invalid value", func(t *testing.T) {
 		_, err := kube.GetContainerImagesFromJob(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
-					"starboard.container-images": ``,
+					"trivyoperator.container-images": ``,
 				},
 			},
 		})
-		require.EqualError(t, err, "parsing annotation: starboard.container-images: unexpected end of JSON input")
+		require.EqualError(t, err, "parsing annotation: trivyoperator.container-images: unexpected end of JSON input")
 	})
 
 	t.Run("Should return ContainerImages when annotation is set", func(t *testing.T) {
 		images, err := kube.GetContainerImagesFromJob(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
-					"starboard.container-images": `{"nginx":"nginx:1.16","sidecar":"sidecar:1.32.7"}`,
+					"trivyoperator.container-images": `{"nginx":"nginx:1.16","sidecar":"sidecar:1.32.7"}`,
 				},
 			},
 		})

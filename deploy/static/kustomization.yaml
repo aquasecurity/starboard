@@ -1,6 +1,6 @@
 resources:
-  - starboard.yaml
+  - trivy-operator.yaml
 images:
-  - name: docker.io/aquasec/starboard-operator
-    newName: docker.io/aquasec/starboard-operator
+  - name: docker.io/aquasec/trivy-operator
+    newName: docker.io/aquasec/trivy-operator
     newTag: dev

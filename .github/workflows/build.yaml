@@ -130,7 +130,7 @@ jobs:
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./itest/starboard/coverage.txt
+          files: ./itest/trivyoperator/coverage.txt
   itest-trivy-operator:
     name: Run integration tests / Trivy Operator
     needs:
@@ -234,7 +234,7 @@ jobs:
     if: "false"  # TODO It's broken on a release candidate PRs because it's using container image that has not been released yet.
     name: Test Helm Chart
     needs:
-      - itest-starboard-cli
+      - itest-trivyoperator-cli
       - itest-trivy-operator
       - integration-operator-conftest
     runs-on: ubuntu-20.04

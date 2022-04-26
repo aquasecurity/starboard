@@ -7,7 +7,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,11 +48,11 @@ func ScanKubeBenchReports(cf *genericclioptions.ConfigFlags) func(cmd *cobra.Com
 		if err != nil {
 			return err
 		}
-		config, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+		config, err := trivyoperator.NewConfigManager(kubeClientset, trivyoperator.NamespaceName).Read(ctx)
 		if err != nil {
 			return err
 		}
-		scheme := starboard.NewScheme()
+		scheme := trivyoperator.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{
 			Scheme: scheme,
 		})

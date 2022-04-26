@@ -7,7 +7,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/itest/matcher"
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,10 +37,10 @@ func TestVulnerabilityReportMatcher(t *testing.T) {
 				Name:      "pod-nginx-pod-nginx-container",
 				Namespace: "default",
 				Labels: map[string]string{
-					starboard.LabelContainerName:     "nginx-container",
-					starboard.LabelResourceKind:      "Pod",
-					starboard.LabelResourceName:      "nginx-pod",
-					starboard.LabelResourceNamespace: "default",
+					trivyoperator.LabelContainerName:     "nginx-container",
+					trivyoperator.LabelResourceKind:      "Pod",
+					trivyoperator.LabelResourceName:      "nginx-pod",
+					trivyoperator.LabelResourceNamespace: "default",
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{
@@ -90,9 +90,9 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 				Name:      "replicaset-nginx-6d4cf56db6",
 				Namespace: "default",
 				Labels: map[string]string{
-					starboard.LabelResourceKind:      "ReplicaSet",
-					starboard.LabelResourceName:      "nginx-6d4cf56db6",
-					starboard.LabelResourceNamespace: "default",
+					trivyoperator.LabelResourceKind:      "ReplicaSet",
+					trivyoperator.LabelResourceName:      "nginx-6d4cf56db6",
+					trivyoperator.LabelResourceNamespace: "default",
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{

@@ -12,7 +12,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
 	"github.com/aquasecurity/trivy-operator/pkg/report/templates"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ func (h *workloadReporter) RetrieveData(workload kube.ObjectRef) (templates.Work
 
 	vulnsReports := map[string]v1alpha1.VulnerabilityReportData{}
 	for _, vulnerabilityReport := range vulnerabilityReports {
-		containerName, ok := vulnerabilityReport.Labels[starboard.LabelContainerName]
+		containerName, ok := vulnerabilityReport.Labels[trivyoperator.LabelContainerName]
 		if !ok {
 			continue
 		}

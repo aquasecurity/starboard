@@ -47,7 +47,7 @@ between Rego policy and applicable kinds. It's also hard to distinguish helpers 
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  namespace: starboard-operator
+  namespace: trivy-operator
   name: starboard-conftest-config
 data:
   conftest.imageRef: openpolicyagent/conftest:v0.30.0
@@ -78,7 +78,7 @@ If a Rego policy is applicable to any K8s resource, the kind can be expressed as
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  namespace: starboard-operator
+  namespace: trivy-operator
   name: starboard-conftest-config
   annotations:
     # Introduce a way to version configuration schema.

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/aquasecurity/trivy-operator/pkg/cmd"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"k8s.io/klog/v2"
 
 	// Load all known auth plugins
@@ -26,7 +26,7 @@ func main() {
 	defer klog.Flush()
 	klog.InitFlags(nil)
 
-	if err := cmd.Run(starboard.BuildInfo{
+	if err := cmd.Run(trivyoperator.BuildInfo{
 		Version:    version,
 		Commit:     commit,
 		Date:       date,
@@ -39,7 +39,7 @@ func main() {
 
 func executable(args []string) string {
 	if strings.HasPrefix(filepath.Base(args[0]), "kubectl-") {
-		return "kubectl starboard"
+		return "kubectl trivyoperator"
 	}
-	return "starboard"
+	return "trivyoperator"
 }

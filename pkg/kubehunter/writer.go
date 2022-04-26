@@ -7,7 +7,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,8 +34,8 @@ func (w *writer) Write(ctx context.Context, report v1alpha1.KubeHunterReportData
 		ObjectMeta: metav1.ObjectMeta{
 			Name: cluster,
 			Labels: map[string]string{
-				starboard.LabelResourceKind: "Cluster",
-				starboard.LabelResourceName: cluster,
+				trivyoperator.LabelResourceKind: "Cluster",
+				trivyoperator.LabelResourceName: cluster,
 			},
 		},
 		Report: report,

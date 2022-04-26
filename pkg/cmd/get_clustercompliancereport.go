@@ -9,7 +9,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/compliance"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,7 +32,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger := ctrl.Log.WithName("reconciler").WithName("clustercompliancereport")
 			ctx := context.Background()
-			scheme := starboard.NewScheme()
+			scheme := trivyoperator.NewScheme()
 			kubeConfig, err := cf.ToRESTConfig()
 			if err != nil {
 				return fmt.Errorf("failed to create kubeConfig: %w", err)
@@ -56,7 +56,7 @@ func NewGetClusterComplianceReportsCmd(executable string, cf *genericclioptions.
 			if err != nil {
 				return err
 			}
-			starboardConfig, err := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName).Read(ctx)
+			starboardConfig, err := trivyoperator.NewConfigManager(kubeClientset, trivyoperator.NamespaceName).Read(ctx)
 			if err != nil {
 				return err
 			}

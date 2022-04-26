@@ -9,7 +9,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/itest/starboard-operator/behavior"
 	"github.com/aquasecurity/trivy-operator/pkg/operator"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	buildInfo = starboard.BuildInfo{
+	buildInfo = trivyoperator.BuildInfo{
 		Version: "dev",
 		Commit:  "none",
 		Date:    "unknown",
@@ -56,7 +56,7 @@ var _ = BeforeSuite(func() {
 	kubeConfig, err := ctrl.GetConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	scheme = starboard.NewScheme()
+	scheme = trivyoperator.NewScheme()
 	kubeClient, err = client.New(kubeConfig, client.Options{
 		Scheme: scheme,
 	})

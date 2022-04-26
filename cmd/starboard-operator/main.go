@@ -6,7 +6,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/operator"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -18,7 +18,7 @@ var (
 	commit  = "none"
 	date    = "unknown"
 
-	buildInfo = starboard.BuildInfo{
+	buildInfo = trivyoperator.BuildInfo{
 		Version: version,
 		Commit:  commit,
 		Date:    date,
@@ -29,10 +29,10 @@ var (
 	setupLog = log.Log.WithName("main")
 )
 
-// main is the entrypoint of the Starboard Operator executable command.
+// main is the entrypoint of the Trivy Operator executable command.
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "unable to run starboard operator: %v\n", err)
+		fmt.Fprintf(os.Stderr, "unable to run trivy operator: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -1,10 +1,10 @@
-package starboard_test
+package trivyoperator_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,27 +18,27 @@ import (
 func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 	testCases := []struct {
 		name            string
-		configData      starboard.ConfigData
+		configData      trivyoperator.ConfigData
 		expectedError   string
-		expectedScanner starboard.Scanner
+		expectedScanner trivyoperator.Scanner
 	}{
 		{
 			name: "Should return Trivy",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"vulnerabilityReports.scanner": "Trivy",
 			},
 			expectedScanner: "Trivy",
 		},
 		{
 			name: "Should return Aqua",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"vulnerabilityReports.scanner": "Aqua",
 			},
 			expectedScanner: "Aqua",
 		},
 		{
 			name:          "Should return error when value is not set",
-			configData:    starboard.ConfigData{},
+			configData:    trivyoperator.ConfigData{},
 			expectedError: "property vulnerabilityReports.scanner not set",
 		},
 	}
@@ -58,27 +58,27 @@ func TestConfigData_GetVulnerabilityReportsScanner(t *testing.T) {
 func TestConfigData_GetConfigAuditReportsScanner(t *testing.T) {
 	testCases := []struct {
 		name            string
-		configData      starboard.ConfigData
+		configData      trivyoperator.ConfigData
 		expectedError   string
-		expectedScanner starboard.Scanner
+		expectedScanner trivyoperator.Scanner
 	}{
 		{
 			name: "Should return Polaris",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"configAuditReports.scanner": "Polaris",
 			},
 			expectedScanner: "Polaris",
 		},
 		{
 			name: "Should return Conftest",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"configAuditReports.scanner": "Conftest",
 			},
 			expectedScanner: "Conftest",
 		},
 		{
 			name:          "Should return error when value is not set",
-			configData:    starboard.ConfigData{},
+			configData:    trivyoperator.ConfigData{},
 			expectedError: "property configAuditReports.scanner not set",
 		},
 	}
@@ -97,30 +97,30 @@ func TestConfigData_GetConfigAuditReportsScanner(t *testing.T) {
 
 func TestConfigData_GetScanJobTolerations(t *testing.T) {
 	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    []corev1.Toleration
+		name     string
+		config   trivyoperator.ConfigData
+		expected []corev1.Toleration
 		expectError string
 	}{
 		{
 			name:     "no scanJob.tolerations in ConfigData",
-			config:   starboard.ConfigData{},
+			config:   trivyoperator.ConfigData{},
 			expected: []corev1.Toleration(nil),
 		},
 		{
 			name:        "scanJob.tolerations value is not json",
-			config:      starboard.ConfigData{"scanJob.tolerations": `lolwut`},
+			config:      trivyoperator.ConfigData{"scanJob.tolerations": `lolwut`},
 			expected:    []corev1.Toleration(nil),
 			expectError: "invalid character 'l' looking for beginning of value",
 		},
 		{
 			name:     "empty JSON array",
-			config:   starboard.ConfigData{"scanJob.tolerations": `[]`},
+			config:   trivyoperator.ConfigData{"scanJob.tolerations": `[]`},
 			expected: []corev1.Toleration{},
 		},
 		{
 			name: "one valid toleration",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"}]`},
 			expected: []corev1.Toleration{{
 				Key:      "key1",
@@ -131,7 +131,7 @@ func TestConfigData_GetScanJobTolerations(t *testing.T) {
 		},
 		{
 			name: "multiple valid tolerations",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.tolerations": `[{"key":"key1","operator":"Equal","value":"value1","effect":"NoSchedule"},
 					  {"key":"key2","operator":"Equal","value":"value2","effect":"NoSchedule"}]`},
 			expected: []corev1.Toleration{
@@ -166,14 +166,14 @@ func TestConfigData_GetScanJobTolerations(t *testing.T) {
 
 func TestConfigData_GetScanJobAnnotations(t *testing.T) {
 	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    map[string]string
+		name     string
+		config   trivyoperator.ConfigData
+		expected map[string]string
 		expectError string
 	}{
 		{
 			name: "scan job annotations can be fetched successfully",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.annotations": "a.b=c.d/e,foo=bar",
 			},
 			expected: map[string]string{
@@ -183,12 +183,12 @@ func TestConfigData_GetScanJobAnnotations(t *testing.T) {
 		},
 		{
 			name:     "gracefully deal with unprovided annotations",
-			config:   starboard.ConfigData{},
+			config:   trivyoperator.ConfigData{},
 			expected: map[string]string{},
 		},
 		{
 			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.annotations": "foo",
 			},
 			expected:    map[string]string{},
@@ -196,7 +196,7 @@ func TestConfigData_GetScanJobAnnotations(t *testing.T) {
 		},
 		{
 			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.annotations": "foo=bar,a=b=c",
 			},
 			expected:    map[string]string{},
@@ -219,14 +219,14 @@ func TestConfigData_GetScanJobAnnotations(t *testing.T) {
 
 func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
 	testCases := []struct {
-		name        string
-		config      starboard.ConfigData
-		expected    labels.Set
+		name     string
+		config   trivyoperator.ConfigData
+		expected labels.Set
 		expectError string
 	}{
 		{
 			name: "scan job template labels can be fetched successfully",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.podTemplateLabels": "a.b=c.d/e,foo=bar",
 			},
 			expected: labels.Set{
@@ -236,12 +236,12 @@ func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
 		},
 		{
 			name:     "gracefully deal with unprovided annotations",
-			config:   starboard.ConfigData{},
+			config:   trivyoperator.ConfigData{},
 			expected: labels.Set{},
 		},
 		{
 			name: "raise an error on being provided with annotations in wrong format",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.podTemplateLabels": "foo",
 			},
 			expected:    labels.Set{},
@@ -249,7 +249,7 @@ func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
 		},
 		{
 			name: "raise an error on being provided with template labels in wrong format",
-			config: starboard.ConfigData{
+			config: trivyoperator.ConfigData{
 				"scanJob.podTemplateLabels": "foo=bar,a=b=c",
 			},
 			expected:    labels.Set{},
@@ -272,17 +272,17 @@ func TestConfigData_GetScanJobPodTemplateLabels(t *testing.T) {
 func TestConfigData_GetComplianceFailEntriesLimit(t *testing.T) {
 	testCases := []struct {
 		name       string
-		configData starboard.ConfigData
+		configData trivyoperator.ConfigData
 		want       int
 	}{
 		{
 			name:       "Should return compliance fail entries limit default value",
-			configData: starboard.ConfigData{},
+			configData: trivyoperator.ConfigData{},
 			want:       10,
 		},
 		{
 			name: "Should return compliance fail entries limit from config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"compliance.failEntriesLimit": "15",
 			},
 			want: 15,
@@ -298,19 +298,19 @@ func TestConfigData_GetComplianceFailEntriesLimit(t *testing.T) {
 
 func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 	testCases := []struct {
-		name             string
-		configData       starboard.ConfigData
-		expectedError    string
+		name          string
+		configData    trivyoperator.ConfigData
+		expectedError string
 		expectedImageRef string
 	}{
 		{
 			name:          "Should return error",
-			configData:    starboard.ConfigData{},
+			configData:    trivyoperator.ConfigData{},
 			expectedError: "property kube-bench.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"kube-bench.imageRef": "gcr.io/aquasecurity/kube-bench:0.4.0",
 			},
 			expectedImageRef: "gcr.io/aquasecurity/kube-bench:0.4.0",
@@ -332,19 +332,19 @@ func TestConfigData_GetKubeBenchImageRef(t *testing.T) {
 
 func TestConfigData_GetKubeHunterImageRef(t *testing.T) {
 	testCases := []struct {
-		name             string
-		configData       starboard.ConfigData
-		expectedError    string
+		name          string
+		configData    trivyoperator.ConfigData
+		expectedError string
 		expectedImageRef string
 	}{
 		{
 			name:          "Should return error",
-			configData:    starboard.ConfigData{},
+			configData:    trivyoperator.ConfigData{},
 			expectedError: "property kube-hunter.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"kube-hunter.imageRef": "gcr.io/aquasecurity/kube-hunter:0.4.0",
 			},
 			expectedImageRef: "gcr.io/aquasecurity/kube-hunter:0.4.0",
@@ -367,30 +367,30 @@ func TestConfigData_GetKubeHunterImageRef(t *testing.T) {
 func TestConfigData_GetKubeHunterQuick(t *testing.T) {
 	testCases := []struct {
 		name          string
-		configData    starboard.ConfigData
+		configData    trivyoperator.ConfigData
 		expectedError string
 		expectedQuick bool
 	}{
 		{
 			name:          "Should return false when parameter is not set",
-			configData:    starboard.ConfigData{},
+			configData:    trivyoperator.ConfigData{},
 			expectedQuick: false,
 		}, {
 			name: "Should return error when quick is set to something other than \"false\" or \"true\" in config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"kube-hunter.quick": "not-a-boolean",
 			},
 			expectedError: "property kube-hunter.quick must be either \"false\" or \"true\", got \"not-a-boolean\"",
 		}, {
 			name: "Should return false when quick is set to \"false\" in config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"kube-hunter.quick": "false",
 			},
 			expectedQuick: false,
 		},
 		{
 			name: "Should return true when quick is set to \"true\" in config data",
-			configData: starboard.ConfigData{
+			configData: trivyoperator.ConfigData{
 				"kube-hunter.quick": "true",
 			},
 			expectedQuick: true,
@@ -439,7 +439,7 @@ func TestGetVersionFromImageRef(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.imageRef, func(t *testing.T) {
-			version, _ := starboard.GetVersionFromImageRef(tc.imageRef)
+			version, _ := trivyoperator.GetVersionFromImageRef(tc.imageRef)
 			assert.Equal(t, tc.expectedVersion, version)
 		})
 	}
@@ -449,8 +449,8 @@ func TestConfigManager_Read(t *testing.T) {
 	clientset := fake.NewSimpleClientset(
 		&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: starboard.NamespaceName,
-				Name:      starboard.ConfigMapName,
+				Namespace: trivyoperator.NamespaceName,
+				Name:      trivyoperator.ConfigMapName,
 			},
 			Data: map[string]string{
 				"foo": "bar",
@@ -458,8 +458,8 @@ func TestConfigManager_Read(t *testing.T) {
 		},
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: starboard.NamespaceName,
-				Name:      starboard.SecretName,
+				Namespace: trivyoperator.NamespaceName,
+				Name:      trivyoperator.SecretName,
 			},
 			Data: map[string][]byte{
 				"baz": []byte("s3cret"),
@@ -467,11 +467,11 @@ func TestConfigManager_Read(t *testing.T) {
 		},
 	)
 
-	data, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).
+	data, err := trivyoperator.NewConfigManager(clientset, trivyoperator.NamespaceName).
 		Read(context.TODO())
 
 	require.NoError(t, err)
-	assert.Equal(t, starboard.ConfigData{
+	assert.Equal(t, trivyoperator.ConfigData{
 		"foo": "bar",
 		"baz": "s3cret",
 	}, data)
@@ -482,31 +482,31 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 	t.Run("Should create ConfigMaps and Secret", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
 
-		namespace := "starboard-ns"
+		namespace := "trivyoperator-ns"
 		clientset := fake.NewSimpleClientset()
 
-		err := starboard.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
+		err := trivyoperator.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 
 		cm, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+			Get(context.TODO(), trivyoperator.ConfigMapName, metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
-		g.Expect(cm.Data).To(gomega.BeEquivalentTo(starboard.GetDefaultConfig()))
+		g.Expect(cm.Data).To(gomega.BeEquivalentTo(trivyoperator.GetDefaultConfig()))
 
 		secret, err := clientset.CoreV1().Secrets(namespace).
-			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+			Get(context.TODO(), trivyoperator.SecretName, metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(secret.Data).To(gomega.BeEmpty())
 	})
 
 	t.Run("Should not modify ConfigMaps nor Secret", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
-		namespace := "starboard-ns"
+		namespace := "trivyoperator-ns"
 		clientset := fake.NewSimpleClientset(
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: namespace,
-					Name:      starboard.ConfigMapName,
+					Name:      trivyoperator.ConfigMapName,
 				},
 				Data: map[string]string{
 					"foo":                        "bar",
@@ -516,7 +516,7 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			&corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: namespace,
-					Name:      starboard.SecretName,
+					Name:      trivyoperator.SecretName,
 				},
 				Data: map[string][]byte{
 					"baz": []byte("s3cret"),
@@ -525,7 +525,7 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: namespace,
-					Name:      starboard.GetPluginConfigMapName("Conftest"),
+					Name:      trivyoperator.GetPluginConfigMapName("Conftest"),
 				},
 				Data: map[string]string{
 					"conftest.policy.my-check.rego": "<REGO>",
@@ -533,11 +533,11 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 			},
 		)
 
-		err := starboard.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
+		err := trivyoperator.NewConfigManager(clientset, namespace).EnsureDefault(context.TODO())
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 
 		cm, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+			Get(context.TODO(), trivyoperator.ConfigMapName, metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(cm.Data).To(gomega.Equal(map[string]string{
 			"foo":                        "bar",
@@ -545,22 +545,22 @@ func TestConfigManager_EnsureDefault(t *testing.T) {
 		}))
 
 		secret, err := clientset.CoreV1().Secrets(namespace).
-			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+			Get(context.TODO(), trivyoperator.SecretName, metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(secret.Data).To(gomega.Equal(map[string][]byte{
 			"baz": []byte("s3cret"),
 		}))
 
 		pluginConfig, err := clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName("Conftest"), metav1.GetOptions{})
+			Get(context.TODO(), trivyoperator.GetPluginConfigMapName("Conftest"), metav1.GetOptions{})
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(pluginConfig.Data).To(gomega.Equal(map[string]string{
 			"conftest.policy.my-check.rego": "<REGO>",
 		}))
 
 		_, err = clientset.CoreV1().ConfigMaps(namespace).
-			Get(context.TODO(), starboard.GetPluginConfigMapName("Polaris"), metav1.GetOptions{})
-		g.Expect(err).To(gomega.MatchError(`configmaps "starboard-polaris-config" not found`))
+			Get(context.TODO(), trivyoperator.GetPluginConfigMapName("Polaris"), metav1.GetOptions{})
+		g.Expect(err).To(gomega.MatchError(`configmaps "trivyoperator-polaris-config" not found`))
 	})
 
 }
@@ -569,7 +569,7 @@ func TestConfigManager_Delete(t *testing.T) {
 
 	t.Run("Should not return error when ConfigMap and secret do not exist", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset()
-		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
+		err := trivyoperator.NewConfigManager(clientset, trivyoperator.NamespaceName).Delete(context.TODO())
 		require.NoError(t, err)
 	})
 
@@ -577,8 +577,8 @@ func TestConfigManager_Delete(t *testing.T) {
 		clientset := fake.NewSimpleClientset(
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: starboard.NamespaceName,
-					Name:      starboard.ConfigMapName,
+					Namespace: trivyoperator.NamespaceName,
+					Name:      trivyoperator.ConfigMapName,
 				},
 				Data: map[string]string{
 					"foo": "bar",
@@ -586,8 +586,8 @@ func TestConfigManager_Delete(t *testing.T) {
 			},
 			&corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: starboard.NamespaceName,
-					Name:      starboard.SecretName,
+					Namespace: trivyoperator.NamespaceName,
+					Name:      trivyoperator.SecretName,
 				},
 				Data: map[string][]byte{
 					"baz": []byte("s3cret"),
@@ -595,15 +595,15 @@ func TestConfigManager_Delete(t *testing.T) {
 			},
 		)
 
-		err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Delete(context.TODO())
+		err := trivyoperator.NewConfigManager(clientset, trivyoperator.NamespaceName).Delete(context.TODO())
 		require.NoError(t, err)
 
-		_, err = clientset.CoreV1().ConfigMaps(starboard.NamespaceName).
-			Get(context.TODO(), starboard.ConfigMapName, metav1.GetOptions{})
+		_, err = clientset.CoreV1().ConfigMaps(trivyoperator.NamespaceName).
+			Get(context.TODO(), trivyoperator.ConfigMapName, metav1.GetOptions{})
 		assert.True(t, errors.IsNotFound(err))
 
-		_, err = clientset.CoreV1().Secrets(starboard.NamespaceName).
-			Get(context.TODO(), starboard.SecretName, metav1.GetOptions{})
+		_, err = clientset.CoreV1().Secrets(trivyoperator.NamespaceName).
+			Get(context.TODO(), trivyoperator.SecretName, metav1.GetOptions{})
 		assert.True(t, errors.IsNotFound(err))
 	})
 }

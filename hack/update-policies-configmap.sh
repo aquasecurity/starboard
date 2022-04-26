@@ -5,7 +5,7 @@ DEFSEC_DIR=$TMPDIR/defsec
 
 git clone --branch v0.25.0 git@github.com:aquasecurity/defsec.git $DEFSEC_DIR
 
-kubectl create configmap starboard-policies-config --namespace starboard-system \
+kubectl create configmap trivy-operator-policies-config --namespace trivy-system \
   --from-file=library.kubernetes.rego=$DEFSEC_DIR/rules/kubernetes/lib/kubernetes.rego \
   --from-file=library.utils.rego=$DEFSEC_DIR/rules/kubernetes/lib/utils.rego \
   --from-file=policy.CPU_not_limited.rego=$DEFSEC_DIR/rules/kubernetes/policies/general/CPU_not_limited.rego \
@@ -82,4 +82,4 @@ kubectl create configmap starboard-policies-config --namespace starboard-system 
   --from-literal=policy.3_runs_as_root.kinds=Workload \
   --from-literal=policy.4_runs_with_a_root_gid.kinds=Workload \
   --from-literal=policy.5_runtime_default_seccomp_profile_not_set.kinds=Workload \
-  --dry-run=client -o yaml > $SCRIPT_ROOT/deploy/static/04-starboard-operator.policies.yaml
+  --dry-run=client -o yaml > $SCRIPT_ROOT/deploy/static/04-trivy-operator.policies.yaml

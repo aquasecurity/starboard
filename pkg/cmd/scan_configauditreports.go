@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,7 +14,7 @@ const (
 	configAuditCmdShort = "Run a variety of checks to ensure that a given workload is configured using best practices"
 )
 
-func NewScanConfigAuditReportsCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewScanConfigAuditReportsCmd(buildInfo trivyoperator.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configauditreports",
 		Short: configAuditCmdShort,
@@ -27,7 +27,7 @@ func NewScanConfigAuditReportsCmd(buildInfo starboard.BuildInfo, cf *genericclio
 	return cmd
 }
 
-func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
+func ScanConfigAuditReports(buildInfo trivyoperator.BuildInfo, cf *genericclioptions.ConfigFlags) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
@@ -46,7 +46,7 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}
-		scheme := starboard.NewScheme()
+		scheme := trivyoperator.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 		scanner := configauditreport.NewScanner(buildInfo, kubeClient)
 		reportBuilder, err := scanner.Scan(ctx, workload)

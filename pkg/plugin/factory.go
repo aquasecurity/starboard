@@ -9,22 +9,22 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/conftest"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/polaris"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/trivy"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	Trivy    starboard.Scanner = "Trivy"
-	Aqua     starboard.Scanner = "Aqua"
-	Polaris  starboard.Scanner = "Polaris"
-	Conftest starboard.Scanner = "Conftest"
+	Trivy    trivyoperator.Scanner = "Trivy"
+	Aqua     trivyoperator.Scanner = "Aqua"
+	Polaris  trivyoperator.Scanner = "Polaris"
+	Conftest trivyoperator.Scanner = "Conftest"
 )
 
 type Resolver struct {
-	buildInfo          starboard.BuildInfo
-	config             starboard.ConfigData
-	namespace          string
+	buildInfo trivyoperator.BuildInfo
+	config    trivyoperator.ConfigData
+	namespace string
 	serviceAccountName string
 	client             client.Client
 }
@@ -33,12 +33,12 @@ func NewResolver() *Resolver {
 	return &Resolver{}
 }
 
-func (r *Resolver) WithBuildInfo(buildInfo starboard.BuildInfo) *Resolver {
+func (r *Resolver) WithBuildInfo(buildInfo trivyoperator.BuildInfo) *Resolver {
 	r.buildInfo = buildInfo
 	return r
 }
 
-func (r *Resolver) WithConfig(config starboard.ConfigData) *Resolver {
+func (r *Resolver) WithConfig(config trivyoperator.ConfigData) *Resolver {
 	r.config = config
 	return r
 }
@@ -64,13 +64,13 @@ func (r *Resolver) WithClient(client client.Client) *Resolver {
 // mode, and Aqua Enterprise scanner.
 //
 // You could add your own scanner by implementing the vulnerabilityreport.Plugin interface.
-func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboard.PluginContext, error) {
+func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, trivyoperator.PluginContext, error) {
 	scanner, err := r.config.GetVulnerabilityReportsScanner()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pluginContext := starboard.NewPluginContext().
+	pluginContext := trivyoperator.NewPluginContext().
 		WithName(string(scanner)).
 		WithNamespace(r.namespace).
 		WithServiceAccountName(r.serviceAccountName).
@@ -92,13 +92,13 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 // Starboard supports Polaris and Conftest as configuration auditing tools.
 //
 // You could add your own scanner by implementing the configauditreport.Plugin interface.
-func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, starboard.PluginContext, error) {
+func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, trivyoperator.PluginContext, error) {
 	scanner, err := r.config.GetConfigAuditReportsScanner()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pluginContext := starboard.NewPluginContext().
+	pluginContext := trivyoperator.NewPluginContext().
 		WithName(string(scanner)).
 		WithNamespace(r.namespace).
 		WithServiceAccountName(r.serviceAccountName).

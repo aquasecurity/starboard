@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/predicate"
 	"github.com/aquasecurity/trivy-operator/pkg/policy"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -35,11 +35,11 @@ import (
 type ResourceController struct {
 	logr.Logger
 	etc.Config
-	starboard.ConfigData
+	trivyoperator.ConfigData
 	client.Client
 	kube.ObjectResolver
 	ReadWriter
-	starboard.BuildInfo
+	trivyoperator.BuildInfo
 }
 
 func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
@@ -98,7 +98,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(&corev1.ConfigMap{}, builder.WithPredicates(
 				predicate.Not(predicate.IsBeingTerminated),
-				predicate.HasName(starboard.PoliciesConfigMapName),
+				predicate.HasName(trivyoperator.PoliciesConfigMapName),
 				predicate.InNamespace(r.Config.Namespace),
 			)).
 			Complete(r.reconcileConfig(resource.kind))
@@ -124,7 +124,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(&corev1.ConfigMap{}, builder.WithPredicates(
 				predicate.Not(predicate.IsBeingTerminated),
-				predicate.HasName(starboard.PoliciesConfigMapName),
+				predicate.HasName(trivyoperator.PoliciesConfigMapName),
 				predicate.InNamespace(r.Config.Namespace))).
 			Complete(r.reconcileClusterConfig(resource.kind))
 		if err != nil {
@@ -251,8 +251,8 @@ func (r *ResourceController) hasReport(ctx context.Context, owner kube.ObjectRef
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		return report.Labels[trivyoperator.LabelResourceSpecHash] == podSpecHash &&
+			report.Labels[trivyoperator.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -263,8 +263,8 @@ func (r *ResourceController) hasClusterReport(ctx context.Context, owner kube.Ob
 		return false, err
 	}
 	if report != nil {
-		return report.Labels[starboard.LabelResourceSpecHash] == podSpecHash &&
-			report.Labels[starboard.LabelPluginConfigHash] == pluginConfigHash, nil
+		return report.Labels[trivyoperator.LabelResourceSpecHash] == podSpecHash &&
+			report.Labels[trivyoperator.LabelPluginConfigHash] == pluginConfigHash, nil
 	}
 	return false, nil
 }
@@ -274,10 +274,10 @@ func (r *ResourceController) policies(ctx context.Context) (*policy.Policies, er
 
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: r.Config.Namespace,
-		Name:      starboard.PoliciesConfigMapName,
+		Name:      trivyoperator.PoliciesConfigMapName,
 	}, cm)
 	if err != nil {
-		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", r.Config.Namespace, starboard.PoliciesConfigMapName, err)
+		return nil, fmt.Errorf("failed getting policies from configmap: %s/%s: %w", r.Config.Namespace, trivyoperator.PoliciesConfigMapName, err)
 	}
 	return policy.NewPolicies(cm.Data), nil
 }
@@ -342,8 +342,8 @@ func (r *ResourceController) reconcileConfig(kind kube.Kind) reconcile.Func {
 		}
 
 		labelSelector, err := labels.Parse(fmt.Sprintf("%s!=%s,%s=%s",
-			starboard.LabelPluginConfigHash, configHash,
-			starboard.LabelResourceKind, kind))
+			trivyoperator.LabelPluginConfigHash, configHash,
+			trivyoperator.LabelResourceKind, kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing label selector: %w", err)
 		}
@@ -407,8 +407,8 @@ func (r *ResourceController) reconcileClusterConfig(kind kube.Kind) reconcile.Fu
 		}
 
 		labelSelector, err := labels.Parse(fmt.Sprintf("%s!=%s,%s=%s",
-			starboard.LabelPluginConfigHash, configHash,
-			starboard.LabelResourceKind, kind))
+			trivyoperator.LabelPluginConfigHash, configHash,
+			trivyoperator.LabelResourceKind, kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing label selector: %w", err)
 		}

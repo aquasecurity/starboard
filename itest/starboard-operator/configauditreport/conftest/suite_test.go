@@ -15,7 +15,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/operator"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/conftest"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	buildInfo = starboard.BuildInfo{
+	buildInfo = trivyoperator.BuildInfo{
 		Version: "dev",
 		Commit:  "none",
 		Date:    "unknown",
@@ -69,7 +69,7 @@ var _ = BeforeSuite(func() {
 	operatorConfig, err := etc.GetOperatorConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	operatorConfig.Namespace = "starboard-system"
+	operatorConfig.Namespace = "trivyoperator-system"
 	operatorConfig.TargetNamespaces = "default"
 
 	// Disable vulnerability scanner and CIS Benchmarks
@@ -85,7 +85,7 @@ var _ = BeforeSuite(func() {
 	kubeConfig, err := ctrl.GetConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	scheme = starboard.NewScheme()
+	scheme = trivyoperator.NewScheme()
 	kubeClient, err = client.New(kubeConfig, client.Options{
 		Scheme: scheme,
 	})
@@ -104,7 +104,7 @@ var _ = BeforeSuite(func() {
 
 	starboardCM, err = createOrUpdateConfigMap(ctx, client.ObjectKey{
 		Namespace: operatorConfig.Namespace,
-		Name:      starboard.ConfigMapName,
+		Name:      trivyoperator.ConfigMapName,
 	},
 		map[string]string{
 			"configAuditReports.scanner": "Conftest",
@@ -113,7 +113,7 @@ var _ = BeforeSuite(func() {
 
 	conftestCM, err = createOrUpdateConfigMap(ctx, client.ObjectKey{
 		Namespace: operatorConfig.Namespace,
-		Name:      starboard.GetPluginConfigMapName("Conftest"),
+		Name:      trivyoperator.GetPluginConfigMapName("Conftest"),
 	}, map[string]string{
 		"conftest.imageRef": "docker.io/openpolicyagent/conftest:v0.30.0",
 

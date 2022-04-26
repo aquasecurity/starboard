@@ -7,13 +7,13 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/report"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewReportCmd(info starboard.BuildInfo, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
+func NewReportCmd(info trivyoperator.BuildInfo, cf *genericclioptions.ConfigFlags, out io.Writer) *cobra.Command {
 	return &cobra.Command{
 		Use:   "report (NAME | TYPE/NAME)",
 		Short: "Generate an HTML security report for a specified Kubernetes object",
@@ -53,7 +53,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: starboard.NewScheme()})
+			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: trivyoperator.NewScheme()})
 			ns, _, err := cf.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err

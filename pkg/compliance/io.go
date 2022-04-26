@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
@@ -25,7 +25,7 @@ type Mgr interface {
 	GenerateComplianceReport(ctx context.Context, spec v1alpha1.ReportSpec) error
 }
 
-func NewMgr(client client.Client, log logr.Logger, config starboard.ConfigData) Mgr {
+func NewMgr(client client.Client, log logr.Logger, config trivyoperator.ConfigData) Mgr {
 	return &cm{
 		client: client,
 		log:    log,
@@ -36,7 +36,7 @@ func NewMgr(client client.Client, log logr.Logger, config starboard.ConfigData) 
 type cm struct {
 	client client.Client
 	log    logr.Logger
-	config starboard.ConfigData
+	config trivyoperator.ConfigData
 }
 
 type summaryTotal struct {

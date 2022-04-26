@@ -27,7 +27,7 @@ var (
 	kubeBenchReportsCRD []byte
 	//go:embed deploy/crd/kubehunterreports.crd.yaml
 	kubeHunterReportsCRD []byte
-	//go:embed  deploy/static/04-starboard-operator.policies.yaml
+	//go:embed  deploy/static/04-trivy-operator.policies.yaml
 	policies []byte
 
 	//go:embed deploy/specs/nsa-1.0.yaml

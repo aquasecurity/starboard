@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -41,7 +41,7 @@ type CISKubeBenchReportReconciler struct {
 	LimitChecker
 	kubebench.ReadWriter
 	kubebench.Plugin
-	starboard.ConfigData
+	trivyoperator.ConfigData
 }
 
 func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -175,10 +175,10 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 	}
 
 	labelsSet := labels.Set{
-		starboard.LabelResourceKind:           string(kube.KindNode),
-		starboard.LabelResourceName:           node.Name,
-		starboard.LabelK8SAppManagedBy:        starboard.AppStarboard,
-		starboard.LabelKubeBenchReportScanner: "true",
+		trivyoperator.LabelResourceKind:           string(kube.KindNode),
+		trivyoperator.LabelResourceName:           node.Name,
+		trivyoperator.LabelK8SAppManagedBy:        trivyoperator.AppStarboard,
+		trivyoperator.LabelKubeBenchReportScanner: "true",
 	}
 
 	podTemplateLabelsSet := make(labels.Set)

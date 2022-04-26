@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: starboard-system
+  name: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl

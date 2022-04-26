@@ -10,7 +10,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/itest/helper"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,14 +29,14 @@ var (
 var (
 	starboardCLILogLevel = "0"
 
-	versionInfo = starboard.BuildInfo{
+	versionInfo = trivyoperator.BuildInfo{
 		Version: "dev",
 		Commit:  "none",
 		Date:    "unknown",
 	}
 	testNamespace = &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "starboard-itest",
+			Name: "trivyoperator-itest",
 		},
 	}
 	privateRegistryConfig = &helper.PrivateRegistryConfig{}
@@ -71,7 +71,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	kubeClient, err = client.New(config, client.Options{
-		Scheme: starboard.NewScheme(),
+		Scheme: trivyoperator.NewScheme(),
 	})
 	Expect(err).ToNot(HaveOccurred())
 

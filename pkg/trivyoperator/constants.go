@@ -1,4 +1,4 @@
-package starboard
+package trivyoperator
 
 const (
 	Banner = `Starboard is an Aqua Security open source project.
@@ -9,31 +9,31 @@ Learn about our open source work and portfolio on https://www.aquasec.com/produc
 const (
 	// NamespaceName the name of the namespace in which Starboard stores its
 	// configuration and where it runs scan jobs.
-	NamespaceName = "starboard"
+	NamespaceName = "trivyoperator"
 
 	// ServiceAccountName the name of the service account used to provide
 	// identity for scan jobs run by Starboard.
-	ServiceAccountName = "starboard"
+	ServiceAccountName = "trivyoperator"
 
 	// ConfigMapName the name of the ConfigMap where Starboard stores its
 	// configuration.
-	ConfigMapName = "starboard"
+	ConfigMapName = "trivyoperator"
 
 	// SecretName the name of the secret where Starboard stores is sensitive
 	// configuration.
-	SecretName = "starboard"
+	SecretName = "trivyoperator"
 
 	// PoliciesConfigMapName the name of the ConfigMap used to store OPA Rego
 	// policies.
-	PoliciesConfigMapName = "starboard-policies-config"
+	PoliciesConfigMapName = "trivyoperator-policies-config"
 )
 
 const (
-	LabelResourceKind      = "starboard.resource.kind"
-	LabelResourceName      = "starboard.resource.name"
-	LabelResourceNameHash  = "starboard.resource.name-hash"
-	LabelResourceNamespace = "starboard.resource.namespace"
-	LabelContainerName     = "starboard.container.name"
+	LabelResourceKind      = "trivyoperator.resource.kind"
+	LabelResourceName      = "trivyoperator.resource.name"
+	LabelResourceNameHash  = "trivyoperator.resource.name-hash"
+	LabelResourceNamespace = "trivyoperator.resource.namespace"
+	LabelContainerName     = "trivyoperator.container.name"
 	LabelResourceSpecHash  = "resource-spec-hash"
 	LabelPluginConfigHash  = "plugin-config-hash"
 
@@ -42,9 +42,9 @@ const (
 	LabelKubeBenchReportScanner     = "kubeBenchReport.scanner"
 
 	LabelK8SAppManagedBy = "app.kubernetes.io/managed-by"
-	AppStarboard         = "starboard"
+	AppStarboard         = "trivyoperator"
 )
 
 const (
-	AnnotationContainerImages = "starboard.container-images"
+	AnnotationContainerImages = "trivyoperator.container-images"
 )

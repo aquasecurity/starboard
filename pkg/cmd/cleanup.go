@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewCleanupCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
+func NewCleanupCmd(buildInfo trivyoperator.BuildInfo, cf *genericclioptions.ConfigFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "uninstall",
 		Aliases: []string{"cleanup"},
@@ -29,12 +29,12 @@ func NewCleanupCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFl
 			if err != nil {
 				return err
 			}
-			scheme := starboard.NewScheme()
+			scheme := trivyoperator.NewScheme()
 			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 			if err != nil {
 				return err
 			}
-			configManager := starboard.NewConfigManager(kubeClientset, starboard.NamespaceName)
+			configManager := trivyoperator.NewConfigManager(kubeClientset, trivyoperator.NamespaceName)
 			installer := NewInstaller(buildInfo, kubeClientset, apiExtensionsClientset, kubeClient, configManager)
 			return installer.Uninstall(context.Background())
 		},

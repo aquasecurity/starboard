@@ -5,7 +5,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,8 +38,8 @@ func TestBuilder(t *testing.T) {
 				},
 			},
 			Labels: map[string]string{
-				starboard.LabelResourceKind: "Node",
-				starboard.LabelResourceName: "control-plane",
+				trivyoperator.LabelResourceKind: "Node",
+				trivyoperator.LabelResourceName: "control-plane",
 			},
 		},
 		Report: v1alpha1.CISKubeBenchReportData{},

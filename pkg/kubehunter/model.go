@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,7 +31,7 @@ func OutputFrom(config Config, reader io.Reader) (v1alpha1.KubeHunterReportData,
 	if err != nil {
 		return v1alpha1.KubeHunterReportData{}, err
 	}
-	version, err := starboard.GetVersionFromImageRef(imageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.KubeHunterReportData{}, err
 	}

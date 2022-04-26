@@ -4,7 +4,7 @@ metadata:
   name: starboard
 spec:
   version: "{{ .TagName }}"
-  homepage: https://github.com/aquasecurity/starboard
+  homepage: https://github.com/aquasecurity/trivyoperator
   shortDescription: >-
     Toolkit for finding risks in kubernetes resources
   description: |+2
@@ -23,65 +23,65 @@ spec:
         matchLabels:
           os: darwin
           arch: amd64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_darwin_x86_64.tar.gz" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_darwin_x86_64.tar.gz" .TagName | indent 6}}
       files:
-        - from: starboard
+        - from: trivyoperator
           to: .
         - from: LICENSE
           to: .
-      bin: starboard
+      bin: trivyoperator
     - selector:
         matchLabels:
           os: linux
           arch: amd64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_x86_64.tar.gz" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_linux_x86_64.tar.gz" .TagName | indent 6}}
       files:
-        - from: starboard
+        - from: trivyoperator
           to: .
         - from: LICENSE
           to: .
-      bin: starboard
+      bin: trivyoperator
     - selector:
         matchLabels:
           os: windows
           arch: amd64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_x86_64.zip" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_windows_x86_64.zip" .TagName | indent 6}}
       files:
-        - from: starboard.exe
+        - from: trivyoperator.exe
           to: .
         - from: LICENSE
           to: .
-      bin: starboard.exe
+      bin: trivyoperator.exe
     - selector:
         matchLabels:
           os: darwin
           arch: arm64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_darwin_ARM64.tar.gz" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_darwin_ARM64.tar.gz" .TagName | indent 6}}
       files:
-        - from: starboard
+        - from: trivyoperator
           to: .
         - from: LICENSE
           to: .
-      bin: starboard
+      bin: trivyoperator
     - selector:
         matchLabels:
           os: linux
           arch: arm64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_linux_ARM64.tar.gz" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_linux_ARM64.tar.gz" .TagName | indent 6}}
       files:
-        - from: starboard
+        - from: trivyoperator
           to: .
         - from: LICENSE
           to: .
-      bin: starboard
+      bin: trivyoperator
     - selector:
         matchLabels:
           os: windows
           arch: arm64
-      {{addURIAndSha "https://github.com/aquasecurity/starboard/releases/download/{{ .TagName }}/starboard_windows_ARM64.zip" .TagName | indent 6}}
+      {{addURIAndSha "https://github.com/aquasecurity/trivyoperator/releases/download/{{ .TagName }}/starboard_windows_ARM64.zip" .TagName | indent 6}}
       files:
-        - from: starboard.exe
+        - from: trivyoperator.exe
           to: .
         - from: LICENSE
           to: .
-      bin: starboard.exe
+      bin: trivyoperator.exe

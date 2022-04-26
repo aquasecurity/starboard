@@ -11,7 +11,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/trivy"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,12 +40,12 @@ func TestConfig_GetImageRef(t *testing.T) {
 	}{
 		{
 			name:          "Should return error",
-			configData:    trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			configData:    trivy.Config{PluginConfig: trivyoperator.PluginConfig{}},
 			expectedError: "property trivy.imageRef not set",
 		},
 		{
 			name: "Should return image reference from config data",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.imageRef": "gcr.io/aquasecurity/trivy:0.8.0",
 				},
@@ -76,7 +76,7 @@ func TestConfig_GetMode(t *testing.T) {
 	}{
 		{
 			name: "Should return Standalone",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.mode": "Standalone",
 				},
@@ -85,7 +85,7 @@ func TestConfig_GetMode(t *testing.T) {
 		},
 		{
 			name: "Should return ClientServer",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.mode": "ClientServer",
 				},
@@ -94,12 +94,12 @@ func TestConfig_GetMode(t *testing.T) {
 		},
 		{
 			name:          "Should return error when value is not set",
-			configData:    trivy.Config{PluginConfig: starboard.PluginConfig{}},
+			configData:    trivy.Config{PluginConfig: trivyoperator.PluginConfig{}},
 			expectedError: "property trivy.mode not set",
 		},
 		{
 			name: "Should return error when value is not allowed",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.mode": "P2P",
 				},
@@ -129,7 +129,7 @@ func TestConfig_GetCommand(t *testing.T) {
 	}{
 		{
 			name: "Should return image",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.command": "image",
 				},
@@ -138,14 +138,14 @@ func TestConfig_GetCommand(t *testing.T) {
 		},
 		{
 			name: "Should return image when value is not set",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{},
 			}},
 			expectedCommand: trivy.Image,
 		},
 		{
 			name: "Should return filesystem",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.command": "filesystem",
 				},
@@ -154,7 +154,7 @@ func TestConfig_GetCommand(t *testing.T) {
 		},
 		{
 			name: "Should return error when value is not allowed",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.command": "ls",
 				},
@@ -185,7 +185,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		{
 			name: "Should return empty requirements by default",
 			config: trivy.Config{
-				PluginConfig: starboard.PluginConfig{},
+				PluginConfig: trivyoperator.PluginConfig{},
 			},
 			expectedError: "",
 			expectedRequirements: corev1.ResourceRequirements{
@@ -196,7 +196,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		{
 			name: "Should return configured resource requirement",
 			config: trivy.Config{
-				PluginConfig: starboard.PluginConfig{
+				PluginConfig: trivyoperator.PluginConfig{
 					Data: map[string]string{
 						"trivy.dbRepository":              defaultDBRepository,
 						"trivy.resources.requests.cpu":    "800m",
@@ -221,7 +221,7 @@ func TestConfig_GetResourceRequirements(t *testing.T) {
 		{
 			name: "Should return error if resource is not parseable",
 			config: trivy.Config{
-				PluginConfig: starboard.PluginConfig{
+				PluginConfig: trivyoperator.PluginConfig{
 					Data: map[string]string{
 						"trivy.resources.requests.cpu": "roughly 100",
 					},
@@ -251,7 +251,7 @@ func TestConfig_IgnoreFileExists(t *testing.T) {
 	}{
 		{
 			name: "Should return false",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -260,7 +260,7 @@ func TestConfig_IgnoreFileExists(t *testing.T) {
 		},
 		{
 			name: "Should return true",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 					"trivy.ignoreFile": `# Accept the risk
@@ -290,7 +290,7 @@ func TestConfig_IgnoreUnfixed(t *testing.T) {
 	}{
 		{
 			name: "Should return false",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -299,7 +299,7 @@ func TestConfig_IgnoreUnfixed(t *testing.T) {
 		},
 		{
 			name: "Should return true",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo":                 "bar",
 					"trivy.ignoreUnfixed": "true",
@@ -309,7 +309,7 @@ func TestConfig_IgnoreUnfixed(t *testing.T) {
 		},
 		{
 			name: "Should return false when set it as false",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo":                 "bar",
 					"trivy.ignoreUnfixed": "false",
@@ -334,7 +334,7 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 	}{
 		{
 			name: "Should return nil map when there is no key with trivy.insecureRegistry. prefix",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -343,7 +343,7 @@ func TestConfig_GetInsecureRegistries(t *testing.T) {
 		},
 		{
 			name: "Should return insecure registries in map",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo":                                "bar",
 					"trivy.insecureRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
@@ -373,7 +373,7 @@ func TestConfig_GetNonSSLRegistries(t *testing.T) {
 	}{
 		{
 			name: "Should return nil map when there is no key with trivy.nonSslRegistry. prefix",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -382,7 +382,7 @@ func TestConfig_GetNonSSLRegistries(t *testing.T) {
 		},
 		{
 			name: "Should return insecure registries in map",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo":                              "bar",
 					"trivy.nonSslRegistry.pocRegistry": "poc.myregistry.harbor.com.pl",
@@ -412,7 +412,7 @@ func TestConfig_GetMirrors(t *testing.T) {
 	}{
 		{
 			name: "Should return empty map when there is no key with trivy.mirrors.registry. prefix",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"foo": "bar",
 				},
@@ -421,7 +421,7 @@ func TestConfig_GetMirrors(t *testing.T) {
 		},
 		{
 			name: "Should return mirrors in a map",
-			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+			configData: trivy.Config{PluginConfig: trivyoperator.PluginConfig{
 				Data: map[string]string{
 					"trivy.registry.mirror.docker.io": "mirror.io",
 				},
@@ -444,10 +444,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), client)
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(trivy.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 		err := instance.Init(pluginContext)
@@ -455,8 +455,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-trivy-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-trivy-config",
 		}, &cm)
 		require.NoError(t, err)
 		assert.Equal(t, corev1.ConfigMap{
@@ -465,10 +465,10 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "starboard-trivy-config",
-				Namespace: "starboard-ns",
+				Name:      "trivyoperator-trivy-config",
+				Namespace: "trivyoperator-ns",
 				Labels: map[string]string{
-					"app.kubernetes.io/managed-by": "starboard",
+					"app.kubernetes.io/managed-by": "trivyoperator",
 				},
 				ResourceVersion: "1",
 			},
@@ -495,8 +495,8 @@ func TestPlugin_Init(t *testing.T) {
 					Kind:       "ConfigMap",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            "starboard-trivy-config",
-					Namespace:       "starboard-ns",
+					Name:            "trivyoperator-trivy-config",
+					Namespace:       "trivyoperator-ns",
 					ResourceVersion: "1",
 				},
 				Data: map[string]string{
@@ -508,10 +508,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), client)
 
-		pluginContext := starboard.NewPluginContext().
+		pluginContext := trivyoperator.NewPluginContext().
 			WithName(trivy.Plugin).
-			WithNamespace("starboard-ns").
-			WithServiceAccountName("starboard-sa").
+			WithNamespace("trivyoperator-ns").
+			WithServiceAccountName("trivyoperator-sa").
 			WithClient(client).
 			Get()
 		err := instance.Init(pluginContext)
@@ -519,8 +519,8 @@ func TestPlugin_Init(t *testing.T) {
 
 		var cm corev1.ConfigMap
 		err = client.Get(context.Background(), types.NamespacedName{
-			Namespace: "starboard-ns",
-			Name:      "starboard-trivy-config",
+			Namespace: "trivyoperator-ns",
+			Name:      "trivyoperator-trivy-config",
 		}, &cm)
 		require.NoError(t, err)
 		assert.Equal(t, corev1.ConfigMap{
@@ -529,8 +529,8 @@ func TestPlugin_Init(t *testing.T) {
 				Kind:       "ConfigMap",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            "starboard-trivy-config",
-				Namespace:       "starboard-ns",
+				Name:            "trivyoperator-trivy-config",
+				Namespace:       "trivyoperator-ns",
 				ResourceVersion: "1",
 			},
 			Data: map[string]string{
@@ -564,7 +564,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 		ValueFrom: &corev1.EnvVarSource{
 			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: "starboard-trivy-config",
+					Name: "trivyoperator-trivy-config",
 				},
 				Key:      "trivy.timeout",
 				Optional: pointer.BoolPtr(true),
@@ -615,9 +615,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					tmpVolume,
@@ -634,7 +634,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -646,7 +646,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -658,7 +658,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -671,7 +671,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -715,7 +715,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -727,7 +727,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -740,7 +740,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -752,7 +752,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -764,7 +764,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -776,7 +776,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -788,7 +788,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -864,9 +864,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 					},
 				}},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					tmpVolume,
@@ -883,7 +883,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -895,7 +895,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -907,7 +907,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -919,7 +919,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -963,7 +963,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -975,7 +975,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -988,7 +988,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -1000,7 +1000,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -1012,7 +1012,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1024,7 +1024,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1036,7 +1036,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1116,9 +1116,9 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					tmpVolume,
@@ -1135,7 +1135,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1147,7 +1147,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1159,7 +1159,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1171,7 +1171,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -1215,7 +1215,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -1227,7 +1227,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -1240,7 +1240,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -1252,7 +1252,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -1264,7 +1264,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1276,7 +1276,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1288,7 +1288,7 @@ func TestPlugin_GetScanJobSpec(t *testing.T) {
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1372,9 +1372,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					tmpVolume,
@@ -1383,7 +1383,7 @@ CVE-2019-1543`,
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "starboard-trivy-config",
+									Name: "trivyoperator-trivy-config",
 								},
 								Items: []corev1.KeyToPath{
 									{
@@ -1407,7 +1407,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1419,7 +1419,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1431,7 +1431,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1443,7 +1443,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -1487,7 +1487,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -1499,7 +1499,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -1512,7 +1512,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -1524,7 +1524,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -1536,7 +1536,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1548,7 +1548,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1560,7 +1560,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1647,9 +1647,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					tmpVolume,
@@ -1666,7 +1666,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1678,7 +1678,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1690,7 +1690,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1703,7 +1703,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -1747,7 +1747,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -1759,7 +1759,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -1772,7 +1772,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -1784,7 +1784,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -1796,7 +1796,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1808,7 +1808,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1820,7 +1820,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1896,9 +1896,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
 					{
@@ -1912,7 +1912,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1924,7 +1924,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1936,7 +1936,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -1948,7 +1948,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -1960,7 +1960,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -1973,7 +1973,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -1985,7 +1985,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -1997,7 +1997,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverTokenHeader",
 										Optional: pointer.BoolPtr(true),
@@ -2009,7 +2009,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverToken",
 										Optional: pointer.BoolPtr(true),
@@ -2021,7 +2021,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverCustomHeaders",
 										Optional: pointer.BoolPtr(true),
@@ -2086,9 +2086,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
 					{
@@ -2102,7 +2102,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2114,7 +2114,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2126,7 +2126,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2138,7 +2138,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -2150,7 +2150,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -2163,7 +2163,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -2175,7 +2175,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -2187,7 +2187,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverTokenHeader",
 										Optional: pointer.BoolPtr(true),
@@ -2199,7 +2199,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverToken",
 										Optional: pointer.BoolPtr(true),
@@ -2211,7 +2211,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverCustomHeaders",
 										Optional: pointer.BoolPtr(true),
@@ -2277,9 +2277,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
 					{
@@ -2293,7 +2293,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2305,7 +2305,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2317,7 +2317,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2329,7 +2329,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -2341,7 +2341,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -2354,7 +2354,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -2366,7 +2366,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -2378,7 +2378,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverTokenHeader",
 										Optional: pointer.BoolPtr(true),
@@ -2390,7 +2390,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverToken",
 										Optional: pointer.BoolPtr(true),
@@ -2402,7 +2402,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverCustomHeaders",
 										Optional: pointer.BoolPtr(true),
@@ -2472,9 +2472,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Containers: []corev1.Container{
 					{
@@ -2488,7 +2488,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2500,7 +2500,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2512,7 +2512,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2524,7 +2524,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -2536,7 +2536,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -2549,7 +2549,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -2561,7 +2561,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -2573,7 +2573,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverTokenHeader",
 										Optional: pointer.BoolPtr(true),
@@ -2585,7 +2585,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverToken",
 										Optional: pointer.BoolPtr(true),
@@ -2597,7 +2597,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverCustomHeaders",
 										Optional: pointer.BoolPtr(true),
@@ -2671,9 +2671,9 @@ CVE-2019-1543`,
 				},
 			},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					{
@@ -2681,7 +2681,7 @@ CVE-2019-1543`,
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "starboard-trivy-config",
+									Name: "trivyoperator-trivy-config",
 								},
 								Items: []corev1.KeyToPath{
 									{
@@ -2705,7 +2705,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2717,7 +2717,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2729,7 +2729,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2741,7 +2741,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -2753,7 +2753,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.ignoreUnfixed",
 										Optional: pointer.BoolPtr(true),
@@ -2766,7 +2766,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -2778,7 +2778,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -2790,7 +2790,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverTokenHeader",
 										Optional: pointer.BoolPtr(true),
@@ -2802,7 +2802,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverToken",
 										Optional: pointer.BoolPtr(true),
@@ -2814,7 +2814,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.serverCustomHeaders",
 										Optional: pointer.BoolPtr(true),
@@ -2890,9 +2890,9 @@ CVE-2019-1543`,
 					NodeName: "kind-control-pane",
 				}},
 			expectedJobSpec: corev1.PodSpec{
-				Affinity:                     starboard.LinuxNodeAffinity(),
+				Affinity:                     trivyoperator.LinuxNodeAffinity(),
 				RestartPolicy:                corev1.RestartPolicyNever,
-				ServiceAccountName:           "starboard-sa",
+				ServiceAccountName:           "trivyoperator-sa",
 				AutomountServiceAccountToken: pointer.BoolPtr(false),
 				Volumes: []corev1.Volume{
 					{
@@ -2930,7 +2930,7 @@ CVE-2019-1543`,
 							{
 								Name:      trivy.FsSharedVolumeName,
 								ReadOnly:  false,
-								MountPath: "/var/starboard",
+								MountPath: "/var/trivyoperator",
 							},
 						},
 					},
@@ -2945,7 +2945,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2957,7 +2957,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2969,7 +2969,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -2982,7 +2982,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.githubToken",
 										Optional: pointer.BoolPtr(true),
@@ -2996,7 +2996,7 @@ CVE-2019-1543`,
 						Args: []string{
 							"--download-db-only",
 							"--cache-dir",
-							"/var/starboard/trivy-db",
+							"/var/trivyoperator/trivy-db",
 							"--db-repository", defaultDBRepository,
 						},
 						Resources: corev1.ResourceRequirements{
@@ -3013,7 +3013,7 @@ CVE-2019-1543`,
 							{
 								Name:      trivy.FsSharedVolumeName,
 								ReadOnly:  false,
-								MountPath: "/var/starboard",
+								MountPath: "/var/trivyoperator",
 							},
 						},
 					},
@@ -3030,7 +3030,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.severity",
 										Optional: pointer.BoolPtr(true),
@@ -3042,7 +3042,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipFiles",
 										Optional: pointer.BoolPtr(true),
@@ -3054,7 +3054,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.skipDirs",
 										Optional: pointer.BoolPtr(true),
@@ -3066,7 +3066,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpProxy",
 										Optional: pointer.BoolPtr(true),
@@ -3078,7 +3078,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.httpsProxy",
 										Optional: pointer.BoolPtr(true),
@@ -3090,7 +3090,7 @@ CVE-2019-1543`,
 								ValueFrom: &corev1.EnvVarSource{
 									ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "starboard-trivy-config",
+											Name: "trivyoperator-trivy-config",
 										},
 										Key:      "trivy.noProxy",
 										Optional: pointer.BoolPtr(true),
@@ -3104,7 +3104,7 @@ CVE-2019-1543`,
 						Args: []string{
 							"--skip-update",
 							"--cache-dir",
-							"/var/starboard/trivy-db",
+							"/var/trivyoperator/trivy-db",
 							"--quiet",
 							"fs",
 							"--format",
@@ -3125,7 +3125,7 @@ CVE-2019-1543`,
 							{
 								Name:      trivy.FsSharedVolumeName,
 								ReadOnly:  false,
-								MountPath: "/var/starboard",
+								MountPath: "/var/trivyoperator",
 							},
 						},
 						SecurityContext: &corev1.SecurityContext{
@@ -3150,16 +3150,16 @@ CVE-2019-1543`,
 			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "starboard-trivy-config",
-						Namespace: "starboard-ns",
+						Name:      "trivyoperator-trivy-config",
+						Namespace: "trivyoperator-ns",
 					},
 					Data: tc.config,
 				},
 			).Build()
-			pluginContext := starboard.NewPluginContext().
+			pluginContext := trivyoperator.NewPluginContext().
 				WithName(trivy.Plugin).
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				WithClient(fakeclient).
 				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
@@ -3208,9 +3208,9 @@ CVE-2019-1543`,
 				ServiceAccountName: "nginx-sa",
 			}},
 		expectedJobSpec: corev1.PodSpec{
-			Affinity:                     starboard.LinuxNodeAffinity(),
+			Affinity:                     trivyoperator.LinuxNodeAffinity(),
 			RestartPolicy:                corev1.RestartPolicyNever,
-			ServiceAccountName:           "starboard-sa",
+			ServiceAccountName:           "trivyoperator-sa",
 			AutomountServiceAccountToken: pointer.BoolPtr(false),
 			Volumes: []corev1.Volume{
 				{
@@ -3248,7 +3248,7 @@ CVE-2019-1543`,
 						{
 							Name:      trivy.FsSharedVolumeName,
 							ReadOnly:  false,
-							MountPath: "/var/starboard",
+							MountPath: "/var/trivyoperator",
 						},
 					},
 				},
@@ -3263,7 +3263,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.httpProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3275,7 +3275,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.httpsProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3287,7 +3287,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.noProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3300,7 +3300,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								SecretKeyRef: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.githubToken",
 									Optional: pointer.BoolPtr(true),
@@ -3314,7 +3314,7 @@ CVE-2019-1543`,
 					Args: []string{
 						"--download-db-only",
 						"--cache-dir",
-						"/var/starboard/trivy-db",
+						"/var/trivyoperator/trivy-db",
 						"--db-repository", defaultDBRepository,
 					},
 					Resources: corev1.ResourceRequirements{
@@ -3331,7 +3331,7 @@ CVE-2019-1543`,
 						{
 							Name:      trivy.FsSharedVolumeName,
 							ReadOnly:  false,
-							MountPath: "/var/starboard",
+							MountPath: "/var/trivyoperator",
 						},
 					},
 				},
@@ -3348,7 +3348,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.severity",
 									Optional: pointer.BoolPtr(true),
@@ -3360,7 +3360,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.skipFiles",
 									Optional: pointer.BoolPtr(true),
@@ -3372,7 +3372,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.skipDirs",
 									Optional: pointer.BoolPtr(true),
@@ -3384,7 +3384,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.httpProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3396,7 +3396,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.httpsProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3408,7 +3408,7 @@ CVE-2019-1543`,
 							ValueFrom: &corev1.EnvVarSource{
 								ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "starboard-trivy-config",
+										Name: "trivyoperator-trivy-config",
 									},
 									Key:      "trivy.noProxy",
 									Optional: pointer.BoolPtr(true),
@@ -3422,7 +3422,7 @@ CVE-2019-1543`,
 					Args: []string{
 						"--skip-update",
 						"--cache-dir",
-						"/var/starboard/trivy-db",
+						"/var/trivyoperator/trivy-db",
 						"--quiet",
 						"fs",
 						"--format",
@@ -3443,7 +3443,7 @@ CVE-2019-1543`,
 						{
 							Name:      trivy.FsSharedVolumeName,
 							ReadOnly:  false,
-							MountPath: "/var/starboard",
+							MountPath: "/var/trivyoperator",
 						},
 					},
 					SecurityContext: &corev1.SecurityContext{
@@ -3460,24 +3460,24 @@ CVE-2019-1543`,
 			SecurityContext: &corev1.PodSecurityContext{},
 		},
 	}}
-	// Test cases when starboard is enabled with option to run job in the namespace of workload
+	// Test cases when trivyoperator is enabled with option to run job in the namespace of workload
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeclient := fake.NewClientBuilder().WithObjects(
 				&corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "starboard-trivy-config",
-						Namespace: "starboard-ns",
+						Name:      "trivyoperator-trivy-config",
+						Namespace: "trivyoperator-ns",
 					},
 					Data: tc.config,
 				},
 			).Build()
-			pluginContext := starboard.NewPluginContext().
+			pluginContext := trivyoperator.NewPluginContext().
 				WithName(trivy.Plugin).
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				WithClient(fakeclient).
-				WithStarboardConfig(map[string]string{starboard.KeyVulnerabilityScansInSameNamespace: "true"}).
+				WithStarboardConfig(map[string]string{trivyoperator.KeyVulnerabilityScansInSameNamespace: "true"}).
 				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
@@ -3572,8 +3572,8 @@ var (
 func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "starboard-trivy-config",
-			Namespace: "starboard-ns",
+			Name:      "trivyoperator-trivy-config",
+			Namespace: "trivyoperator-ns",
 		},
 		Data: map[string]string{
 			"trivy.imageRef": "aquasec/trivy:0.9.1",
@@ -3635,10 +3635,10 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeClient := fake.NewClientBuilder().WithObjects(config).Build()
-			ctx := starboard.NewPluginContext().
+			ctx := trivyoperator.NewPluginContext().
 				WithName("Trivy").
-				WithNamespace("starboard-ns").
-				WithServiceAccountName("starboard-sa").
+				WithNamespace("trivyoperator-ns").
+				WithServiceAccountName("trivyoperator-sa").
 				WithClient(fakeClient).
 				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeClient)

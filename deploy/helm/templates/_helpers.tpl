@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "starboard-operator.name" -}}
+{{- define "trivy-operator.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -11,7 +11,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this
 (by the DNS naming spec). If release name contains chart name it will be used
 as a full name.
 */}}
-{{- define "starboard-operator.fullname" -}}
+{{- define "trivy-operator.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -27,18 +27,18 @@ as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "starboard-operator.chart" -}}
+{{- define "trivy-operator.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "starboard-operator.labels" -}}
+{{- define "trivy-operator.labels" -}}
 {{- if eq .Values.managedBy "Helm" -}}
-helm.sh/chart: {{ include "starboard-operator.chart" . }}
+helm.sh/chart: {{ include "trivy-operator.chart" . }}
 {{ end -}}
-{{ include "starboard-operator.selectorLabels" . }}
+{{ include "trivy-operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -48,17 +48,17 @@ app.kubernetes.io/managed-by: {{ .Values.managedBy }}
 {{/*
 Selector labels.
 */}}
-{{- define "starboard-operator.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "starboard-operator.name" . }}
+{{- define "trivy-operator.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "trivy-operator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use.
 */}}
-{{- define "starboard-operator.serviceAccountName" -}}
+{{- define "trivy-operator.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "starboard-operator.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "trivy-operator.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

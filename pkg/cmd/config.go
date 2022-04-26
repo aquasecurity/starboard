@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -32,7 +32,7 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 			if err != nil {
 				return err
 			}
-			config, err := starboard.NewConfigManager(clientset, starboard.NamespaceName).Read(ctx)
+			config, err := trivyoperator.NewConfigManager(clientset, trivyoperator.NamespaceName).Read(ctx)
 			if err != nil {
 				return err
 			}
@@ -48,7 +48,7 @@ func NewConfigCmd(cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra
 	return cmd
 }
 
-func getFilteredValues(data starboard.ConfigData, localFlags *LocalFlags) (string, error) {
+func getFilteredValues(data trivyoperator.ConfigData, localFlags *LocalFlags) (string, error) {
 	if localFlags.get != "" {
 		value := data[localFlags.get]
 		if value != "" {

@@ -24,7 +24,7 @@ type Writer interface {
 
 // Reader is the interface that wraps methods for finding v1alpha1.ConfigAuditReport
 // and v1alpha1.ClusterConfigAuditReport objects.
-// TODO(danielpacak): Consider returning starboard.ResourceNotFound error instead of returning nil.
+// TODO(danielpacak): Consider returning trivyoperator.ResourceNotFound error instead of returning nil.
 type Reader interface {
 
 	// FindReportByOwner returns a v1alpha1.ConfigAuditReport owned by the given

@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/predicate"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,14 +25,14 @@ type PluginsConfigReconciler struct {
 	logr.Logger
 	etc.Config
 	client.Client
-	starboard.PluginContext
+	trivyoperator.PluginContext
 	configauditreport.Plugin
 }
 
 func (r *PluginsConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	opts := builder.WithPredicates(
 		predicate.Not(predicate.IsBeingTerminated),
-		predicate.HasName(starboard.GetPluginConfigMapName(r.PluginContext.GetName())),
+		predicate.HasName(trivyoperator.GetPluginConfigMapName(r.PluginContext.GetName())),
 		predicate.InNamespace(r.Config.Namespace))
 
 	for _, kind := range r.Plugin.SupportedKinds() {
@@ -76,8 +76,8 @@ func (r *PluginsConfigReconciler) reconcileConfig(kind kube.Kind) reconcile.Func
 		}
 
 		labelSelector, err := labels.Parse(fmt.Sprintf("%s!=%s,%s=%s",
-			starboard.LabelPluginConfigHash, configHash,
-			starboard.LabelResourceKind, kind))
+			trivyoperator.LabelPluginConfigHash, configHash,
+			trivyoperator.LabelResourceKind, kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing label selector: %w", err)
 		}
@@ -136,8 +136,8 @@ func (r *PluginsConfigReconciler) reconcileClusterConfig(kind kube.Kind) reconci
 		}
 
 		labelSelector, err := labels.Parse(fmt.Sprintf("%s!=%s,%s=%s",
-			starboard.LabelPluginConfigHash, configHash,
-			starboard.LabelResourceKind, kind))
+			trivyoperator.LabelPluginConfigHash, configHash,
+			trivyoperator.LabelResourceKind, kind))
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing label selector: %w", err)
 		}

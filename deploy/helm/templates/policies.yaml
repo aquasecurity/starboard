@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-policies-config
+  name: trivy-operator-policies-config
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 data:
   library.kubernetes.rego: "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
     {\n\thas_field(input, \"review\")\n\thas_field(input.review, \"object\")\n}\n\nobject

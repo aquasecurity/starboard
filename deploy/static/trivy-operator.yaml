@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   name: vulnerabilityreports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -247,7 +247,7 @@ kind: CustomResourceDefinition
 metadata:
   name: configauditreports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -303,7 +303,7 @@ kind: CustomResourceDefinition
 metadata:
   name: clusterconfigauditreports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -359,7 +359,7 @@ kind: CustomResourceDefinition
 metadata:
   name: ciskubebenchreports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -409,7 +409,7 @@ kind: CustomResourceDefinition
 metadata:
   name: clustercompliancereports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -546,7 +546,7 @@ kind: CustomResourceDefinition
 metadata:
   name: clustercompliancedetailreports.aquasecurity.github.io
   labels:
-    app.kubernetes.io/managed-by: starboard
+    app.kubernetes.io/managed-by: trivy-operator
     app.kubernetes.io/version: "0.15.4"
 spec:
   group: aquasecurity.github.io
@@ -586,31 +586,31 @@ spec:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: starboard-system
+  name: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: starboard-operator
-  namespace: starboard-system
+  name: trivy-operator
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: starboard-operator
+  name: trivy-operator
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 rules:
@@ -756,51 +756,51 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: starboard-operator
+  name: trivy-operator
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: starboard-operator
+  name: trivy-operator
 subjects:
   - kind: ServiceAccount
-    name: starboard-operator
-    namespace: starboard-system
+    name: trivy-operator
+    namespace: trivy-system
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: starboard
-  namespace: starboard-system
+  name: trivy-operator
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: starboard-trivy-config
-  namespace: starboard-system
+  name: trivy-operator-trivy-config
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard
-  namespace: starboard-system
+  name: trivy-operator
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 data:
@@ -812,11 +812,11 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-trivy-config
-  namespace: starboard-system
+  name: trivy-operator-trivy-config
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 data:
@@ -833,11 +833,11 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-polaris-config
-  namespace: starboard-system
+  name: trivy-operator-polaris-config
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 data:
@@ -1034,11 +1034,11 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: starboard-policies-config
-  namespace: starboard-system
+  name: trivy-operator-policies-config
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 data:
@@ -1903,11 +1903,11 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: starboard-operator
-  namespace: starboard-system
+  name: trivy-operator
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
   annotations:
@@ -1920,17 +1920,17 @@ spec:
       targetPort: metrics
       name: metrics
   selector:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: starboard-operator
-  namespace: starboard-system
+  name: trivy-operator
+  namespace: trivy-system
   labels:
-    app.kubernetes.io/name: starboard-operator
-    app.kubernetes.io/instance: starboard-operator
+    app.kubernetes.io/name: trivy-operator
+    app.kubernetes.io/instance: trivy-operator
     app.kubernetes.io/version: "0.15.4"
     app.kubernetes.io/managed-by: kubectl
 spec:
@@ -1939,29 +1939,29 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: starboard-operator
-      app.kubernetes.io/instance: starboard-operator
+      app.kubernetes.io/name: trivy-operator
+      app.kubernetes.io/instance: trivy-operator
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: starboard-operator
-        app.kubernetes.io/instance: starboard-operator
+        app.kubernetes.io/name: trivy-operator
+        app.kubernetes.io/instance: trivy-operator
     spec:
-      serviceAccountName: starboard-operator
+      serviceAccountName: trivy-operator
       automountServiceAccountToken: true
       containers:
-        - name: "starboard-operator"
-          image: "docker.io/aquasec/starboard-operator:0.15.4"
+        - name: "trivy-operator"
+          image: "docker.io/aquasec/trivy-operator:0.15.4"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPERATOR_NAMESPACE
-              value: "starboard-system"
+              value: "trivy-system"
             - name: OPERATOR_TARGET_NAMESPACES
               value: ""
             - name: OPERATOR_EXCLUDE_NAMESPACES
-              value: "kube-system,starboard-system"
+              value: "kube-system,trivy-system"
             - name: OPERATOR_SERVICE_ACCOUNT
-              value: "starboard-operator"
+              value: "trivy-operator"
             - name: OPERATOR_LOG_DEV_MODE
               value: "false"
             - name: OPERATOR_SCAN_JOB_TIMEOUT

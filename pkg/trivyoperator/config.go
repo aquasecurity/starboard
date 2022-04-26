@@ -1,4 +1,4 @@
-package starboard
+package trivyoperator
 
 import (
 	"context"
@@ -251,7 +251,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 				Namespace: c.namespace,
 				Name:      ConfigMapName,
 				Labels: labels.Set{
-					LabelK8SAppManagedBy: "starboard",
+					LabelK8SAppManagedBy: "trivyoperator",
 				},
 			},
 			Data: GetDefaultConfig(),
@@ -283,7 +283,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 			Namespace: c.namespace,
 			Name:      SecretName,
 			Labels: labels.Set{
-				LabelK8SAppManagedBy: "starboard",
+				LabelK8SAppManagedBy: "trivyoperator",
 			},
 		},
 	}

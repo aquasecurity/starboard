@@ -12,7 +12,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/operator/controller"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,7 +28,7 @@ var (
 
 // Start starts all registered reconcilers and blocks until the context is cancelled.
 // Returns an error if there is an error starting any reconciler.
-func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig etc.Config) error {
+func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfig etc.Config) error {
 	installMode, operatorNamespace, targetNamespaces, err := operatorConfig.ResolveInstallMode()
 	if err != nil {
 		return fmt.Errorf("resolving install mode: %w", err)
@@ -40,7 +40,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 
 	// Set the default manager options.
 	options := manager.Options{
-		Scheme:                 starboard.NewScheme(),
+		Scheme:                 trivyoperator.NewScheme(),
 		MetricsBindAddress:     operatorConfig.MetricsBindAddress,
 		HealthProbeBindAddress: operatorConfig.HealthProbeBindAddress,
 	}
@@ -53,12 +53,12 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 
 	switch installMode {
 	case etc.OwnNamespace:
-		// Add support for OwnNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
-		// and OPERATOR_TARGET_NAMESPACES (e.g. `starboard-operator`).
+		// Add support for OwnNamespace set in OPERATOR_NAMESPACE (e.g. `trivy-operator`)
+		// and OPERATOR_TARGET_NAMESPACES (e.g. `trivy-operator`).
 		setupLog.Info("Constructing client cache", "namespace", targetNamespaces[0])
 		options.Namespace = targetNamespaces[0]
 	case etc.SingleNamespace:
-		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
+		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `trivy-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default`).
 		cachedNamespaces := append(targetNamespaces, operatorNamespace)
 		if operatorConfig.CISKubernetesBenchmarkEnabled {
@@ -68,7 +68,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
 		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
 	case etc.MultiNamespace:
-		// Add support for MultiNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
+		// Add support for MultiNamespace set in OPERATOR_NAMESPACE (e.g. `trivy-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default,kube-system`).
 		// Note that you may face performance issues when using this mode with a high number of namespaces.
 		// More: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
@@ -114,7 +114,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		return err
 	}
 
-	configManager := starboard.NewConfigManager(kubeClientset, operatorNamespace)
+	configManager := trivyoperator.NewConfigManager(kubeClientset, operatorNamespace)
 	err = configManager.EnsureDefault(context.Background())
 	if err != nil {
 		return err

@@ -3,12 +3,12 @@ package cmd
 import (
 	"io"
 
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewGetCmd(buildInfo starboard.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
+func NewGetCmd(buildInfo trivyoperator.BuildInfo, cf *genericclioptions.ConfigFlags, outWriter io.Writer) *cobra.Command {
 	getCmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get security reports",

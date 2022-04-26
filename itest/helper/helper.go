@@ -9,7 +9,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/docker"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/caarlos0/env/v6"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -290,10 +290,10 @@ func (b *VulnerabilityReportBuilder) Build() *v1alpha1.VulnerabilityReport {
 			Name:      b.name,
 			Namespace: b.namespace,
 			Labels: map[string]string{
-				starboard.LabelContainerName:     "nginx", // TODO Make it configurable
-				starboard.LabelResourceKind:      string(b.ownerKind),
-				starboard.LabelResourceName:      b.ownerName,
-				starboard.LabelResourceNamespace: b.namespace,
+				trivyoperator.LabelContainerName:     "nginx", // TODO Make it configurable
+				trivyoperator.LabelResourceKind:      string(b.ownerKind),
+				trivyoperator.LabelResourceName:      b.ownerName,
+				trivyoperator.LabelResourceNamespace: b.namespace,
 			},
 		},
 		Report: v1alpha1.VulnerabilityReportData{
@@ -360,9 +360,9 @@ func (h *Helper) HasVulnerabilityReportOwnedBy(obj client.Object) func() (bool, 
 		}
 		var reportList v1alpha1.VulnerabilityReportList
 		err = h.kubeClient.List(context.Background(), &reportList, client.MatchingLabels{
-			starboard.LabelResourceKind:      gvk.Kind,
-			starboard.LabelResourceName:      obj.GetName(),
-			starboard.LabelResourceNamespace: obj.GetNamespace(),
+			trivyoperator.LabelResourceKind:      gvk.Kind,
+			trivyoperator.LabelResourceName:      obj.GetName(),
+			trivyoperator.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
 			return false, err
@@ -379,9 +379,9 @@ func (h *Helper) HasConfigAuditReportOwnedBy(obj client.Object) func() (bool, er
 		}
 		var reportsList v1alpha1.ConfigAuditReportList
 		err = h.kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
-			starboard.LabelResourceKind:      gvk.Kind,
-			starboard.LabelResourceName:      obj.GetName(),
-			starboard.LabelResourceNamespace: obj.GetNamespace(),
+			trivyoperator.LabelResourceKind:      gvk.Kind,
+			trivyoperator.LabelResourceName:      obj.GetName(),
+			trivyoperator.LabelResourceNamespace: obj.GetNamespace(),
 		})
 		if err != nil {
 			return false, err
@@ -398,9 +398,9 @@ func (h *Helper) DeleteConfigAuditReportOwnedBy(obj client.Object) error {
 	}
 	var reportsList v1alpha1.ConfigAuditReportList
 	err = h.kubeClient.List(context.Background(), &reportsList, client.MatchingLabels{
-		starboard.LabelResourceKind:      gvk.Kind,
-		starboard.LabelResourceName:      obj.GetName(),
-		starboard.LabelResourceNamespace: obj.GetNamespace(),
+		trivyoperator.LabelResourceKind:      gvk.Kind,
+		trivyoperator.LabelResourceName:      obj.GetName(),
+		trivyoperator.LabelResourceNamespace: obj.GetNamespace(),
 	})
 	if err != nil {
 		return err

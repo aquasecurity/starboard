@@ -8,7 +8,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,7 +37,7 @@ var (
 // of the actual v1alpha1.VulnerabilityReport.
 func IsVulnerabilityReportForContainerOwnedBy(containerName string, owner client.Object) types.GomegaMatcher {
 	return &vulnerabilityReportMatcher{
-		scheme:        starboard.NewScheme(),
+		scheme:        trivyoperator.NewScheme(),
 		containerName: containerName,
 		owner:         owner,
 	}
@@ -65,7 +65,7 @@ func (m *vulnerabilityReportMatcher) Match(actual interface{}) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	keys[starboard.LabelContainerName] = Equal(m.containerName)
+	keys[trivyoperator.LabelContainerName] = Equal(m.containerName)
 
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
@@ -148,7 +148,7 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf("%T expects a %T", configAuditReportMatcher{}, v1alpha1.ConfigAuditReport{})
 	}
-	gvk, err := apiutil.GVKForObject(m.owner, starboard.NewScheme())
+	gvk, err := apiutil.GVKForObject(m.owner, trivyoperator.NewScheme())
 	if err != nil {
 		return false, err
 	}
@@ -156,9 +156,9 @@ func (m *configAuditReportMatcher) Match(actual interface{}) (bool, error) {
 	matcher := MatchFields(IgnoreExtras, Fields{
 		"ObjectMeta": MatchFields(IgnoreExtras, Fields{
 			"Labels": MatchKeys(IgnoreExtras, Keys{
-				starboard.LabelResourceKind:      Equal(gvk.Kind),
-				starboard.LabelResourceName:      Equal(m.owner.GetName()),
-				starboard.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
+				trivyoperator.LabelResourceKind:      Equal(gvk.Kind),
+				trivyoperator.LabelResourceName:      Equal(m.owner.GetName()),
+				trivyoperator.LabelResourceNamespace: Equal(m.owner.GetNamespace()),
 			}),
 			"OwnerReferences": ConsistOf(metav1.OwnerReference{
 				APIVersion:         gvk.GroupVersion().Identifier(),

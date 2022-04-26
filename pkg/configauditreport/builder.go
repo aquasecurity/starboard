@@ -8,7 +8,7 @@ import (
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,9 +21,9 @@ import (
 )
 
 type ScanJobBuilder struct {
-	plugin            Plugin
-	pluginContext     starboard.PluginContext
-	timeout           time.Duration
+	plugin        Plugin
+	pluginContext trivyoperator.PluginContext
+	timeout       time.Duration
 	object            client.Object
 	tolerations       []corev1.Toleration
 	annotations       map[string]string
@@ -39,7 +39,7 @@ func (s *ScanJobBuilder) WithPlugin(plugin Plugin) *ScanJobBuilder {
 	return s
 }
 
-func (s *ScanJobBuilder) WithPluginContext(pluginContext starboard.PluginContext) *ScanJobBuilder {
+func (s *ScanJobBuilder) WithPluginContext(pluginContext trivyoperator.PluginContext) *ScanJobBuilder {
 	s.pluginContext = pluginContext
 	return s
 }
@@ -88,10 +88,10 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 	}
 
 	labelsSet := labels.Set{
-		starboard.LabelResourceSpecHash:         resourceSpecHash,
-		starboard.LabelPluginConfigHash:         pluginConfigHash,
-		starboard.LabelConfigAuditReportScanner: s.pluginContext.GetName(),
-		starboard.LabelK8SAppManagedBy:          starboard.AppStarboard,
+		trivyoperator.LabelResourceSpecHash:         resourceSpecHash,
+		trivyoperator.LabelPluginConfigHash:         pluginConfigHash,
+		trivyoperator.LabelConfigAuditReportScanner: s.pluginContext.GetName(),
+		trivyoperator.LabelK8SAppManagedBy:          trivyoperator.AppStarboard,
 	}
 
 	podTemplateLabelsSet := make(labels.Set)
@@ -201,10 +201,10 @@ func (b *ReportBuilder) reportName() string {
 func (b *ReportBuilder) GetClusterReport() (v1alpha1.ClusterConfigAuditReport, error) {
 	labelsSet := make(labels.Set)
 	if b.resourceSpecHash != "" {
-		labelsSet[starboard.LabelResourceSpecHash] = b.resourceSpecHash
+		labelsSet[trivyoperator.LabelResourceSpecHash] = b.resourceSpecHash
 	}
 	if b.pluginConfigHash != "" {
-		labelsSet[starboard.LabelPluginConfigHash] = b.pluginConfigHash
+		labelsSet[trivyoperator.LabelPluginConfigHash] = b.pluginConfigHash
 	}
 
 	report := v1alpha1.ClusterConfigAuditReport{
@@ -237,10 +237,10 @@ func (b *ReportBuilder) GetClusterReport() (v1alpha1.ClusterConfigAuditReport, e
 func (b *ReportBuilder) GetReport() (v1alpha1.ConfigAuditReport, error) {
 	labelsSet := make(labels.Set)
 	if b.resourceSpecHash != "" {
-		labelsSet[starboard.LabelResourceSpecHash] = b.resourceSpecHash
+		labelsSet[trivyoperator.LabelResourceSpecHash] = b.resourceSpecHash
 	}
 	if b.pluginConfigHash != "" {
-		labelsSet[starboard.LabelPluginConfigHash] = b.pluginConfigHash
+		labelsSet[trivyoperator.LabelPluginConfigHash] = b.pluginConfigHash
 	}
 
 	report := v1alpha1.ConfigAuditReport{

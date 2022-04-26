@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "starboard-operator.fullname" . }}
+  name: {{ include "trivy-operator.fullname" . }}
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
   {{- with .Values.service.annotations }}
   annotations:
     {{- . | toYaml | nindent 4 }}
@@ -16,21 +16,21 @@ spec:
       targetPort: metrics
       name: metrics
   selector:
-    {{- include "starboard-operator.selectorLabels" . | nindent 4 }}
+    {{- include "trivy-operator.selectorLabels" . | nindent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "starboard-operator.fullname" . }}
+  name: {{ include "trivy-operator.fullname" . }}
   labels:
-    {{- include "starboard-operator.labels" . | nindent 4 }}
+    {{- include "trivy-operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.operator.replicas }}
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      {{- include "starboard-operator.selectorLabels" . | nindent 6 }}
+      {{- include "trivy-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -38,9 +38,9 @@ spec:
         {{- . | toYaml | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "starboard-operator.selectorLabels" . | nindent 8 }}
+        {{- include "trivy-operator.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "starboard-operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "trivy-operator.serviceAccountName" . }}
       automountServiceAccountToken: true
       containers:
         - name: {{ .Chart.Name | quote }}
@@ -56,7 +56,7 @@ spec:
             - name: OPERATOR_EXCLUDE_NAMESPACES
               value: {{ tpl .Values.excludeNamespaces . | quote }}
             - name: OPERATOR_SERVICE_ACCOUNT
-              value: {{ include "starboard-operator.serviceAccountName" . | quote }}
+              value: {{ include "trivy-operator.serviceAccountName" . | quote }}
             - name: OPERATOR_LOG_DEV_MODE
               value: {{ .Values.operator.logDevMode | quote }}
             - name: OPERATOR_SCAN_JOB_TIMEOUT

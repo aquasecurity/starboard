@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	batchv1 "k8s.io/api/batch/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -13,7 +13,7 @@ type LimitChecker interface {
 	Check(ctx context.Context) (bool, int, error)
 }
 
-func NewLimitChecker(config etc.Config, client client.Client, starboardConfig starboard.ConfigData) LimitChecker {
+func NewLimitChecker(config etc.Config, client client.Client, starboardConfig trivyoperator.ConfigData) LimitChecker {
 	return &checker{
 		config:          config,
 		client:          client,
@@ -24,7 +24,7 @@ func NewLimitChecker(config etc.Config, client client.Client, starboardConfig st
 type checker struct {
 	config          etc.Config
 	client          client.Client
-	starboardConfig starboard.ConfigData
+	starboardConfig trivyoperator.ConfigData
 }
 
 func (c *checker) Check(ctx context.Context) (bool, int, error) {
@@ -39,10 +39,10 @@ func (c *checker) Check(ctx context.Context) (bool, int, error) {
 func (c *checker) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
 	listOptions := []client.ListOption{client.MatchingLabels{
-		starboard.LabelK8SAppManagedBy: starboard.AppStarboard,
+		trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
 	}}
 	if !c.starboardConfig.VulnerabilityScanJobsInSameNamespace() {
-		// scan jobs are running in only starboard operator namespace
+		// scan jobs are running in only trivyoperator operator namespace
 		listOptions = append(listOptions, client.InNamespace(c.config.Namespace))
 	}
 	err := c.client.List(ctx, &scanJobs, listOptions...)

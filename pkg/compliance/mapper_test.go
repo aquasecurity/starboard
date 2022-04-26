@@ -9,7 +9,7 @@ import (
 	"reflect"
 
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -112,7 +112,7 @@ func TestMapComplianceScannerToResource(t *testing.T) {
 
 func GetClient(t *testing.T, filePath ...string) client.Client {
 	if len(filePath) == 0 {
-		return fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists().Build()
+		return fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithLists().Build()
 	}
 	if len(filePath) == 2 {
 		var cisBenchList v1alpha1.CISKubeBenchReportList
@@ -125,7 +125,7 @@ func GetClient(t *testing.T, filePath ...string) client.Client {
 		if err != nil {
 			panic(err)
 		}
-		return fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithLists(&cisBenchList, &confAuditList).Build()
+		return fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithLists(&cisBenchList, &confAuditList).Build()
 	}
 	t.Error(fmt.Errorf("wrong num of file paths"))
 	return nil

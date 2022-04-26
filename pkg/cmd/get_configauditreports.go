@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,7 +52,7 @@ NAME is the name of a particular Kubernetes resource.
 			if err != nil {
 				return err
 			}
-			scheme := starboard.NewScheme()
+			scheme := trivyoperator.NewScheme()
 			kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
 			if err != nil {
 				return err

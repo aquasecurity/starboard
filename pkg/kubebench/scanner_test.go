@@ -10,7 +10,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kubebench"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ var (
 )
 
 func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
-	config := starboard.ConfigData{
+	config := trivyoperator.ConfigData{
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.6",
 	}
 	node := corev1.Node{
@@ -39,7 +39,7 @@ func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, corev1.PodSpec{
-		ServiceAccountName:           starboard.ServiceAccountName,
+		ServiceAccountName:           trivyoperator.ServiceAccountName,
 		AutomountServiceAccountToken: pointer.BoolPtr(true),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		HostPID:                      true,
@@ -152,7 +152,7 @@ func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 }
 
 func TestKubeBenchPlugin_ParseCISKubeBenchOutput(t *testing.T) {
-	config := starboard.ConfigData{
+	config := trivyoperator.ConfigData{
 		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.6",
 	}
 	var testCases = []struct {

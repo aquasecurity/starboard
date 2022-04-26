@@ -11,7 +11,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ const (
 
 const (
 	containerName        = "conftest"
-	workloadKey          = "starboard.workload.yaml"
+	workloadKey          = "trivyoperator.workload.yaml"
 	defaultCheckCategory = "Security"
 )
 
@@ -50,7 +50,7 @@ const (
 
 // Config defines configuration params for this plugin.
 type Config struct {
-	starboard.PluginConfig
+	trivyoperator.PluginConfig
 }
 
 // GetImageRef returns upstream Conftest container image reference.
@@ -188,7 +188,7 @@ func (p *plugin) SupportedKinds() []kube.Kind {
 }
 
 // IsApplicable returns true if there is at least one policy applicable to the specified object kind, false otherwise.
-func (p *plugin) IsApplicable(ctx starboard.PluginContext, obj client.Object) (bool, string, error) {
+func (p *plugin) IsApplicable(ctx trivyoperator.PluginContext, obj client.Object) (bool, string, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return false, "", err
@@ -206,8 +206,8 @@ func (p *plugin) IsApplicable(ctx starboard.PluginContext, obj client.Object) (b
 	return true, "", nil
 }
 
-func (p *plugin) Init(ctx starboard.PluginContext) error {
-	return ctx.EnsureConfig(starboard.PluginConfig{
+func (p *plugin) Init(ctx trivyoperator.PluginContext) error {
+	return ctx.EnsureConfig(trivyoperator.PluginConfig{
 		Data: map[string]string{
 			keyImageRef:                "openpolicyagent/conftest:v0.30.0",
 			keyResourcesRequestsCPU:    "50m",
@@ -218,7 +218,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (p *plugin) ConfigHash(ctx starboard.PluginContext, kind kube.Kind) (string, error) {
+func (p *plugin) ConfigHash(ctx trivyoperator.PluginContext, kind kube.Kind) (string, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return "", err
@@ -230,7 +230,7 @@ func (p *plugin) ConfigHash(ctx starboard.PluginContext, kind kube.Kind) (string
 	return kube.ComputeHash(modules), nil
 }
 
-func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) GetScanJobSpec(ctx trivyoperator.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, fmt.Errorf("constructing config from plugin context: %w", err)
@@ -255,7 +255,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 		moduleName := strings.TrimPrefix(module, keyPrefixPolicy)
 		moduleName = strings.TrimPrefix(moduleName, keyPrefixLibrary)
 
-		// Copy policies so even if the starboard-conftest-config ConfigMap has changed
+		// Copy policies so even if the trivyoperator-conftest-config ConfigMap has changed
 		// before the scan Job is run, it won't fail with references to non-existent config key error.
 		secretData[module] = script
 
@@ -298,7 +298,7 @@ func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, obj client.Object) 
 			ServiceAccountName:           ctx.GetServiceAccountName(),
 			AutomountServiceAccountToken: pointer.BoolPtr(false),
 			RestartPolicy:                corev1.RestartPolicyNever,
-			Affinity:                     starboard.LinuxNodeAffinity(),
+			Affinity:                     trivyoperator.LinuxNodeAffinity(),
 			Volumes: []corev1.Volume{
 				{
 					Name: secretName,
@@ -361,7 +361,7 @@ func (p *plugin) GetContainerName() string {
 	return containerName
 }
 
-func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
+func (p *plugin) ParseConfigAuditReportData(ctx trivyoperator.PluginContext, logsReader io.ReadCloser) (v1alpha1.ConfigAuditReportData, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("constructing config from plugin context: %w", err)
@@ -402,7 +402,7 @@ func (p *plugin) ParseConfigAuditReportData(ctx starboard.PluginContext, logsRea
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting image ref: %w", err)
 	}
 
-	version, err := starboard.GetVersionFromImageRef(imageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(imageRef)
 	if err != nil {
 		return v1alpha1.ConfigAuditReportData{}, fmt.Errorf("getting version from image ref: %w", err)
 	}
@@ -438,7 +438,7 @@ func (p *plugin) getPolicyTitleFromResult(result Result) string {
 	return p.idGenerator.GenerateID()
 }
 
-func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+func (p *plugin) newConfigFrom(ctx trivyoperator.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
 		return Config{}, fmt.Errorf("getting config: %w", err)

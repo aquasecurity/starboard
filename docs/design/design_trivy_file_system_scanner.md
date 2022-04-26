@@ -100,7 +100,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: scan-vulnerabilityreport-ab3134
-  namespace: starboard-system
+  namespace: trivyoperator-system
 spec:
   backoffLimit: 0
   template:
@@ -124,10 +124,10 @@ spec:
             - cp
             - -v
             - /usr/local/bin/trivy
-            - /var/starboard/trivy
+            - /var/trivyoperator/trivy
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/starboard
+              mountPath: /var/trivyoperator
         # The trivy-download-db container is using trivy executable binary
         # from the previous step to download Trivy vulnerability database
         # from GitHub releases page.
@@ -136,13 +136,13 @@ spec:
         - name: trivy-download-db
           image: aquasec/trivy:0.19.2
           command:
-            - /var/starboard/trivy
+            - /var/trivyoperator/trivy
             - --download-db-only
             - --cache-dir
-            - /var/starboard/trivy-db
+            - /var/trivyoperator/trivy-db
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/starboard
+              mountPath: /var/trivyoperator
       containers:
         # The nginx container is based on the container image that
         # we want to scan with Trivy. However, it has overwritten command (entrypoint)
@@ -157,16 +157,16 @@ spec:
             # Trivy must run as root, so we set UID here.
             runAsUser: 0
           command:
-            - /var/starboard/trivy
+            - /var/trivyoperator/trivy
             - --cache-dir
-            - /var/starboard/trivy-db
+            - /var/trivyoperator/trivy-db
             - fs
             - --format
             - json
             - /
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/starboard
+              mountPath: /var/trivyoperator
 ```
 
 Notice that the scan Job does not use registry credentials stored in the `private-registry` ImagePullSecret at all.

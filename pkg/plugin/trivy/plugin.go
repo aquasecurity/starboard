@@ -11,7 +11,7 @@ import (
 	"github.com/aquasecurity/trivy-operator/pkg/docker"
 	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/aquasecurity/trivy-operator/pkg/kube"
-	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
 	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	"github.com/google/go-containerregistry/pkg/name"
 	corev1 "k8s.io/api/core/v1"
@@ -77,7 +77,7 @@ const (
 
 // Config defines configuration params for this plugin.
 type Config struct {
-	starboard.PluginConfig
+	trivyoperator.PluginConfig
 }
 
 // GetImageRef returns upstream Trivy container image reference.
@@ -244,8 +244,8 @@ func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, client client.Clien
 }
 
 // Init ensures the default Config required by this plugin.
-func (p *plugin) Init(ctx starboard.PluginContext) error {
-	return ctx.EnsureConfig(starboard.PluginConfig{
+func (p *plugin) Init(ctx trivyoperator.PluginContext) error {
+	return ctx.EnsureConfig(trivyoperator.PluginConfig{
 		Data: map[string]string{
 			keyTrivyImageRef:     "docker.io/aquasec/trivy:0.25.2",
 			keyTrivySeverity:     "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
@@ -261,7 +261,7 @@ func (p *plugin) Init(ctx starboard.PluginContext) error {
 	})
 }
 
-func (p *plugin) GetScanJobSpec(ctx starboard.PluginContext, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) GetScanJobSpec(ctx trivyoperator.PluginContext, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
@@ -312,8 +312,8 @@ func (p *plugin) newSecretWithAggregateImagePullCredentials(obj client.Object, s
 const (
 	tmpVolumeName               = "tmp"
 	ignoreFileVolumeName        = "ignorefile"
-	FsSharedVolumeName          = "starboard"
-	SharedVolumeLocationOfTrivy = "/var/starboard/trivy"
+	FsSharedVolumeName          = "trivyoperator"
+	SharedVolumeLocationOfTrivy = "/var/trivyoperator/trivy"
 )
 
 // In the Standalone mode there is the init container responsible for
@@ -329,7 +329,7 @@ const (
 //
 //     trivy --cache-dir /tmp/trivy/.cache image --skip-update \
 //       --format json <container image>
-func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForStandaloneMode(ctx trivyoperator.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 
@@ -348,7 +348,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		return corev1.PodSpec{}, nil, err
 	}
 
-	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
+	trivyConfigName := trivyoperator.GetPluginConfigMapName(Plugin)
 
 	dbRepository, err := config.GetDBRepository()
 	if err != nil {
@@ -669,7 +669,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 	}
 
 	return corev1.PodSpec{
-		Affinity:                     starboard.LinuxNodeAffinity(),
+		Affinity:                     trivyoperator.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -687,7 +687,7 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 //
 //     trivy client --remote <server URL> \
 //       --format json <container image>
-func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
+func (p *plugin) getPodSpecForClientServerMode(ctx trivyoperator.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
 	var volumeMounts []corev1.VolumeMount
@@ -715,7 +715,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 
 	var containers []corev1.Container
 
-	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
+	trivyConfigName := trivyoperator.GetPluginConfigMapName(Plugin)
 
 	for _, container := range spec.Containers {
 
@@ -966,7 +966,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 	}
 
 	return corev1.PodSpec{
-		Affinity:                     starboard.LinuxNodeAffinity(),
+		Affinity:                     trivyoperator.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -981,7 +981,7 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 //
 //     trivy --quiet fs  --format json --ignore-unfixed  file/system/location
 //
-func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, config Config,
+func (p *plugin) getPodSpecForStandaloneFSMode(ctx trivyoperator.PluginContext, config Config,
 	workload client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secrets []*corev1.Secret
 	spec, err := kube.GetPodSpec(workload)
@@ -1006,7 +1006,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		return corev1.PodSpec{}, nil, err
 	}
 
-	trivyConfigName := starboard.GetPluginConfigMapName(Plugin)
+	trivyConfigName := trivyoperator.GetPluginConfigMapName(Plugin)
 
 	dbRepository, err := config.GetDBRepository()
 	if err != nil {
@@ -1022,7 +1022,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		{
 			Name:      FsSharedVolumeName,
 			ReadOnly:  false,
-			MountPath: "/var/starboard",
+			MountPath: "/var/trivyoperator",
 		},
 	}
 
@@ -1069,7 +1069,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 		Args: []string{
 			"--download-db-only",
 			"--cache-dir",
-			"/var/starboard/trivy-db",
+			"/var/trivyoperator/trivy-db",
 			"--db-repository",
 			dbRepository,
 		},
@@ -1158,7 +1158,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 			Args: []string{
 				"--skip-update",
 				"--cache-dir",
-				"/var/starboard/trivy-db",
+				"/var/trivyoperator/trivy-db",
 				"--quiet",
 				"fs",
 				"--format",
@@ -1182,7 +1182,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, conf
 	}
 
 	podSpec := corev1.PodSpec{
-		Affinity:                     starboard.LinuxNodeAffinity(),
+		Affinity:                     trivyoperator.LinuxNodeAffinity(),
 		RestartPolicy:                corev1.RestartPolicyNever,
 		ServiceAccountName:           ctx.GetServiceAccountName(),
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -1234,7 +1234,7 @@ func (p *plugin) appendTrivyNonSSLEnv(config Config, image string, env []corev1.
 	return env, nil
 }
 
-func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
+func (p *plugin) ParseVulnerabilityReportData(ctx trivyoperator.PluginContext, imageRef string, logsReader io.ReadCloser) (v1alpha1.VulnerabilityReportData, error) {
 	config, err := p.newConfigFrom(ctx)
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
@@ -1272,7 +1272,7 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
 
-	version, err := starboard.GetVersionFromImageRef(trivyImageRef)
+	version, err := trivyoperator.GetVersionFromImageRef(trivyImageRef)
 	if err != nil {
 		return v1alpha1.VulnerabilityReportData{}, err
 	}
@@ -1291,7 +1291,7 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 	}, nil
 }
 
-func (p *plugin) newConfigFrom(ctx starboard.PluginContext) (Config, error) {
+func (p *plugin) newConfigFrom(ctx trivyoperator.PluginContext) (Config, error) {
 	pluginConfig, err := ctx.GetConfig()
 	if err != nil {
 		return Config{}, err
