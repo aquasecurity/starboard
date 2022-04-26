@@ -117,6 +117,98 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
+
+
+{{- if eq .Values.starboard.vulnerabilityReportsPlugin "Grype" }}
+{{- with .Values.grype}}
+{{- if .createConfig }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: starboard-grype-config
+  labels:
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
+data:
+  grype.imageRef: {{ required ".Values.grype.imageRef is required" .imageRef | quote }}
+  {{- if .scheme }}
+  grype.scheme: {{ .scheme | quote }}
+  {{- end }}
+  {{- if .onlyFixed }}
+  grype.onlyFixed: {{ .onlyFixed | quote }}
+  {{- end }}
+  {{- if .platform }}
+  grype.platform: {{ .platform | quote }}
+  {{- end }}
+  {{- if .excludePaths }}
+  grype.excludePaths: {{ .excludePaths | quote }}
+  {{- end }}
+  {{- if .httpProxy }}
+  grype.httpProxy: {{ .httpProxy | quote }}
+  {{- end }}
+  {{- if .httpsProxy }}
+  grype.httpsProxy: {{ .httpsProxy | quote }}
+  {{- end }}
+  {{- if .noProxy }}
+  grype.noProxy: {{ .noProxy | quote }}
+  {{- end }}
+  {{- if .updateURL }}
+  grype.updateURL: {{ .updateURL | quote }}
+  {{- end }}
+  {{- if .addMissingCPEs }}
+  grype.addMissingCPEs: {{ .addMissingCPEs | quote }}
+  {{- end }}
+  {{- if .updateURL }}
+  grype.updateURL: {{ .updateURL | quote }}
+  {{- end }}
+  {{- if .insecureRegistryPrefixes }}
+  grype.insecureRegistryPrefixes: {{ .insecureRegistryPrefixes | quote }}
+  {{- end }}
+  {{- if .nonSSLRegistriesPrefixes }}
+  grype.nonSSLRegistriesPrefixes: {{ .nonSSLRegistriesPrefixes | quote }}
+  {{- end }}
+  {{- with .resources }}
+    {{- with .requests }}
+      {{- if .cpu }}
+  grype.resources.requests.cpu: {{ .cpu }}
+      {{- end }}
+      {{- if hasKey . "memory" }}
+  grype.resources.requests.memory: {{ .memory }}
+      {{- end }}
+    {{- end }}
+    {{- with .limits }}
+      {{- if .cpu }}
+  grype.resources.limits.cpu: {{ .cpu }}
+      {{- end }}
+      {{- if .memory }}
+  grype.resources.limits.memory: {{ .memory }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starboard-grype-config
+  labels:
+    {{- include "starboard-operator.labels" $ | nindent 4 }}
+data:
+  {{- if .regAuthority }}
+  grype.regAuthority: {{ .regAuthority | b64enc | quote }}
+  {{- end }}
+  {{- if .regUsername }}
+  grype.regUsername: {{ .regUsername | b64enc | quote }}
+  {{- end }}
+  {{- if .regPassword }}
+  grype.regPassword: {{ .regPassword | b64enc | quote }}
+  {{- end }}
+  {{- if .regToken }}
+  grype.regToken: {{ .regToken | b64enc | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- if eq .Values.starboard.configAuditReportsPlugin "Conftest" }}
 {{- with .Values.conftest }}
 {{- if .createConfig }}

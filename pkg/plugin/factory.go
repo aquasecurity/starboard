@@ -7,6 +7,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
+	"github.com/aquasecurity/starboard/pkg/plugin/grype"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
 	"github.com/aquasecurity/starboard/pkg/plugin/trivy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
@@ -16,6 +17,7 @@ import (
 
 const (
 	Trivy    starboard.Scanner = "Trivy"
+	Grype    starboard.Scanner = "Grype"
 	Aqua     starboard.Scanner = "Aqua"
 	Polaris  starboard.Scanner = "Polaris"
 	Conftest starboard.Scanner = "Conftest"
@@ -81,6 +83,8 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 	switch scanner {
 	case Trivy:
 		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.client), pluginContext, nil
+	case Grype:
+		return grype.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.client), pluginContext, nil
 	case Aqua:
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo), pluginContext, nil
 	}
