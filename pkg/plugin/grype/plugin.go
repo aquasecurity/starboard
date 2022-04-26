@@ -512,7 +512,20 @@ func (p *plugin) ParseVulnerabilityReportData(ctx starboard.PluginContext, image
 
 	for _, match := range report.Matches {
 		vul := match.Vulnerability
+		relVuls := match.RelatedVulnerabilities
 		artifact := match.Artifact
+
+		// take behavior of related vulnerabilities into account: https://github.com/anchore/grype/issues/734
+		// this avoids having empty CVSs in root vulnerability
+		if len(vul.CVSs) <= 0 && len(relVuls) > 0 {
+			for _, relVul := range relVuls {
+				if relVul.Id == vul.Id {
+					vul.CVSs = relVul.CVSs
+					vul.URLs = relVul.URLs
+					vul.Description = relVul.Description
+				}
+			}
+		}
 
 		fixVersion := ""
 		for _, version := range match.Vulnerability.Fix.Versions {

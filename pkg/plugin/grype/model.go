@@ -7,8 +7,9 @@ type ScanReport struct {
 }
 
 type Match struct {
-	Vulnerability Vulnerability `json:"vulnerability"`
-	Artifact      Artifact      `json:"artifact"`
+	Vulnerability          Vulnerability   `json:"vulnerability"`
+	Artifact               Artifact        `json:"artifact"`
+	RelatedVulnerabilities []Vulnerability `json:"relatedVulnerabilities"`
 }
 
 type Vulnerability struct {
