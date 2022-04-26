@@ -131,8 +131,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: ./itest/starboard/coverage.txt
-  itest-starboard-operator:
-    name: Run integration tests / Starboard Operator
+  itest-trivy-operator:
+    name: Run integration tests / Trivy Operator
     needs:
       - unit-tests
       - verify-code
@@ -169,19 +169,19 @@ jobs:
             -f deploy/crd/clustercompliancereports.crd.yaml \
             -f deploy/crd/clustercompliancedetailreports.crd.yaml \
             -f deploy/crd/ciskubebenchreports.crd.yaml
-          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.rbac.yaml
-          kubectl apply -f deploy/static/03-starboard-operator.config.yaml \
-            -f deploy/static/04-starboard-operator.policies.yaml
-          make itests-starboard-operator
+          kubectl apply -f deploy/static/01-trivy-operator.ns.yaml \
+            -f deploy/static/02-trivy-operator.rbac.yaml
+          kubectl apply -f deploy/static/03-trivy-operator.config.yaml \
+            -f deploy/static/04-trivy-operator.policies.yaml
+          make itests-trivy-operator
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-system
+          OPERATOR_NAMESPACE: trivy-system
           OPERATOR_TARGET_NAMESPACES: default
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./itest/starboard-operator/coverage.txt
+          files: ./itest/trivy-operator/coverage.txt
   integration-operator-conftest:
     name: Integration / Operator / Conftest
     needs:
@@ -220,22 +220,22 @@ jobs:
             -f deploy/crd/clustercompliancereports.crd.yaml \
             -f deploy/crd/clustercompliancedetailreports.crd.yaml \
             -f deploy/crd/ciskubebenchreports.crd.yaml
-          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.rbac.yaml
-          kubectl apply -f deploy/static/03-starboard-operator.config.yaml
+          kubectl apply -f deploy/static/01-trivy-operator.ns.yaml \
+            -f deploy/static/02-trivy-operator.rbac.yaml
+          kubectl apply -f deploy/static/03-trivy-operator.config.yaml
           make integration-operator-conftest
         env:
           KUBECONFIG: /home/runner/.kube/config
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./itest/starboard-operator/configauditreport/conftest/coverage.txt
+          files: ./itest/trivy-operator/configauditreport/conftest/coverage.txt
   test-helm-chart:
     if: "false"  # TODO It's broken on a release candidate PRs because it's using container image that has not been released yet.
     name: Test Helm Chart
     needs:
       - itest-starboard-cli
-      - itest-starboard-operator
+      - itest-trivy-operator
       - integration-operator-conftest
     runs-on: ubuntu-20.04
     steps:

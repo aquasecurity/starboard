@@ -1,5 +1,5 @@
 ---
-# This workflow is triggered whenever we release a new version of Starboard
+# This workflow is triggered whenever we release a new version of trivy-operator
 # by creating an annotated Git tag and pushing it to the upstream Git repository.
 #
 #    git tag -a v0.0.1 -m 'Release v0.0.1'
@@ -69,8 +69,8 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_TEST_CLI_LOG_LEVEL: "0"
-  itest-starboard-operator:
-    name: Run integration tests / Starboard Operator
+  itest-trivy-operator:
+    name: Run integration tests / Trivy Operator
     needs:
       - unit-tests
     runs-on: ubuntu-20.04
@@ -106,12 +106,12 @@ jobs:
             -f deploy/crd/clustercompliancereports.crd.yaml \
             -f deploy/crd/clustercompliancedetailreports.crd.yaml \
             -f deploy/crd/ciskubebenchreports.crd.yaml
-          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.rbac.yaml
-          make itests-starboard-operator
+          kubectl apply -f deploy/static/01-trivy-operator.ns.yaml \
+            -f deploy/static/02-trivy-operator.rbac.yaml
+          make itests-trivy-operator
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-system
+          OPERATOR_NAMESPACE: trivy-system
           OPERATOR_TARGET_NAMESPACES: default
   integration-operator-conftest:
     name: Integration / Operator / Conftest
@@ -150,18 +150,18 @@ jobs:
                  -f deploy/crd/clustercompliancereports.crd.yaml \
                  -f deploy/crd/clustercompliancedetailreports.crd.yaml \
                  -f deploy/crd/ciskubebenchreports.crd.yaml
-          kubectl apply -f deploy/static/01-starboard-operator.ns.yaml \
-            -f deploy/static/02-starboard-operator.rbac.yaml
+          kubectl apply -f deploy/static/01-trivy-operator.ns.yaml \
+            -f deploy/static/02-trivy-operator.rbac.yaml
           make integration-operator-conftest
         env:
           KUBECONFIG: /home/runner/.kube/config
-          OPERATOR_NAMESPACE: starboard-system
+          OPERATOR_NAMESPACE: trivy-system
           OPERATOR_TARGET_NAMESPACES: default
   release:
     name: Release
     needs:
       - itest-starboard
-      - itest-starboard-operator
+      - itest-trivy-operator
       - integration-operator-conftest
     runs-on: ubuntu-20.04
     env:
@@ -200,5 +200,5 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Update new version for plugin 'starboard' in krew-index
+      - name: Update new version for plugin 'trivy-operator' in krew-index
         uses: rajatjindal/krew-release-bot@v0.0.43

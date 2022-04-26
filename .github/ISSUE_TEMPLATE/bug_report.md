@@ -15,6 +15,6 @@ about: Tell us about a problem you are experiencing
 
 **Environment:**
 
-- Starboard version (use `starboard version`):
+- Trivy-Operator version (use `yrivy-operator version`):
 - Kubernetes version (use `kubectl version`):
 - OS (macOS 10.15, Windows 10, Ubuntu 19.10 etc):

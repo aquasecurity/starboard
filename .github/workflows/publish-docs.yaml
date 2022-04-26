@@ -1,6 +1,6 @@
 ---
 # This is a manually triggered workflow to build and publish the MkDocs from the
-# specified Git revision to GitHub pages on https://aquasecurity.github.io/starboard.
+# specified Git revision to GitHub pages on https://aquasecurity.github.io/trivy-operator.
 name: Publish documentation
 
 on:
