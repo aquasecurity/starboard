@@ -5,7 +5,7 @@
 package templates
 
 //line pkg/report/templates/namespace_report.qtpl:1
-import "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+import "github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 
 //line pkg/report/templates/namespace_report.qtpl:3
 import (

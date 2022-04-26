@@ -3,14 +3,14 @@ package plugin
 import (
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/configauditreport"
-	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
-	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
-	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
-	"github.com/aquasecurity/starboard/pkg/plugin/trivy"
-	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/aquasecurity/trivy-operator/pkg/configauditreport"
+	"github.com/aquasecurity/trivy-operator/pkg/ext"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin/aqua"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin/conftest"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin/polaris"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin/trivy"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

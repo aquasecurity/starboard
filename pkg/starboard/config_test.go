@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -1,4 +1,4 @@
-module github.com/aquasecurity/starboard
+module github.com/aquasecurity/trivy-operator
 
 go 1.17
 

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )

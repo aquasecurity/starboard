@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aquasecurity/starboard/pkg/cmd"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/cmd"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	"k8s.io/klog/v2"
 
 	// Load all known auth plugins

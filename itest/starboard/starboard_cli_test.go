@@ -1,7 +1,7 @@
 package starboard
 
 import (
-	. "github.com/aquasecurity/starboard/itest/matcher"
+	. "github.com/aquasecurity/trivy-operator/itest/matcher"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -10,12 +10,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/aquasecurity/starboard/itest/helper"
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/cmd"
-	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/starboard"
-	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
+	"github.com/aquasecurity/trivy-operator/itest/helper"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/cmd"
+	"github.com/aquasecurity/trivy-operator/pkg/kube"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"

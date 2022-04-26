@@ -9,7 +9,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"

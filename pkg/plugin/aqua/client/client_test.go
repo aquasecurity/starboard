@@ -3,7 +3,7 @@ package client_test
 import (
 	"net/http"
 
-	"github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin/aqua/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/ghttp"

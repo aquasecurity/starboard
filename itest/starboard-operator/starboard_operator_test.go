@@ -1,7 +1,7 @@
 package starboard_operator
 
 import (
-	. "github.com/aquasecurity/starboard/itest/starboard-operator/behavior"
+	. "github.com/aquasecurity/trivy-operator/itest/starboard-operator/behavior"
 	. "github.com/onsi/ginkgo"
 )
 

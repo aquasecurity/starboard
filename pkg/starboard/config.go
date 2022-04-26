@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	embedded "github.com/aquasecurity/starboard"
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	embedded "github.com/aquasecurity/trivy-operator"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/google/go-containerregistry/pkg/name"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"

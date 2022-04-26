@@ -3,8 +3,8 @@ package report
 import (
 	"testing"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/report/templates"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/report/templates"
 	"github.com/stretchr/testify/assert"
 )
 

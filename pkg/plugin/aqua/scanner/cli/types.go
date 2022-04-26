@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/aquasecurity/starboard/pkg/plugin/aqua/client"
+import "github.com/aquasecurity/trivy-operator/pkg/plugin/aqua/client"
 
 type ResourceType int
 

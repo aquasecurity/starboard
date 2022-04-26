@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 
-	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	"github.com/aquasecurity/starboard/pkg/kubehunter"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned"
+	"github.com/aquasecurity/trivy-operator/pkg/kubehunter"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"

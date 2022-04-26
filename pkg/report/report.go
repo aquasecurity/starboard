@@ -3,8 +3,8 @@ package report
 import (
 	"io"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
-	"github.com/aquasecurity/starboard/pkg/report/templates"
+	"github.com/aquasecurity/trivy-operator/pkg/kube"
+	"github.com/aquasecurity/trivy-operator/pkg/report/templates"
 )
 
 type WorkloadReporter interface {

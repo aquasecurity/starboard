@@ -3,7 +3,7 @@ package report
 import (
 	"sort"
 
-	"github.com/aquasecurity/starboard/pkg/report/templates"
+	"github.com/aquasecurity/trivy-operator/pkg/report/templates"
 )
 
 type LessFunc func(p1, p2 *templates.CheckWithCount) bool

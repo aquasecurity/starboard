@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/trivy-operator/pkg/ext"
 	"github.com/gorhill/cronexpr"
 	"time"
 )

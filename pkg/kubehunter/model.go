@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

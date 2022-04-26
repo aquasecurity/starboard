@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1alpha1 "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
+	v1alpha1 "github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned/typed/aquasecurity/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

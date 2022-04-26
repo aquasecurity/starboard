@@ -3,8 +3,8 @@
 package aquasecurity
 
 import (
-	v1alpha1 "github.com/aquasecurity/starboard/pkg/generated/informers/externalversions/aquasecurity/v1alpha1"
-	internalinterfaces "github.com/aquasecurity/starboard/pkg/generated/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/aquasecurity/trivy-operator/pkg/generated/informers/externalversions/aquasecurity/v1alpha1"
+	internalinterfaces "github.com/aquasecurity/trivy-operator/pkg/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

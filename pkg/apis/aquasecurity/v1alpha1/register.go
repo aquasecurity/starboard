@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

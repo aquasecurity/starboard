@@ -6,9 +6,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/ext"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

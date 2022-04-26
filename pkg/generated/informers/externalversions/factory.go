@@ -7,9 +7,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
-	aquasecurity "github.com/aquasecurity/starboard/pkg/generated/informers/externalversions/aquasecurity"
-	internalinterfaces "github.com/aquasecurity/starboard/pkg/generated/informers/externalversions/internalinterfaces"
+	versioned "github.com/aquasecurity/trivy-operator/pkg/generated/clientset/versioned"
+	aquasecurity "github.com/aquasecurity/trivy-operator/pkg/generated/informers/externalversions/aquasecurity"
+	internalinterfaces "github.com/aquasecurity/trivy-operator/pkg/generated/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

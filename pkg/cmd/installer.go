@@ -7,10 +7,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	embedded "github.com/aquasecurity/starboard"
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/starboard/pkg/plugin"
-	"github.com/aquasecurity/starboard/pkg/starboard"
+	embedded "github.com/aquasecurity/trivy-operator"
+	"github.com/aquasecurity/trivy-operator/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/trivy-operator/pkg/plugin"
+	"github.com/aquasecurity/trivy-operator/pkg/starboard"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	ext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
