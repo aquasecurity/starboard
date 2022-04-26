@@ -1,4 +1,4 @@
-package starboard_operator
+package trivy_operator
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy-operator/itest/helper"
-	"github.com/aquasecurity/trivy-operator/itest/starboard-operator/behavior"
+	"github.com/aquasecurity/trivy-operator/itest/trivy-operator/behavior"
 	"github.com/aquasecurity/trivy-operator/pkg/operator"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/trivyoperator"
@@ -39,12 +39,12 @@ var (
 	inputs behavior.Inputs
 )
 
-func TestStarboardOperator(t *testing.T) {
+func TestTrivyOperator(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test")
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Starboard Operator")
+	RunSpecs(t, "Trivy Operator")
 }
 
 var _ = BeforeSuite(func() {
@@ -74,7 +74,7 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
-		By("Starting Starboard operator")
+		By("Starting Trivy operator")
 		err = operator.Start(startCtx, buildInfo, operatorConfig)
 		Expect(err).ToNot(HaveOccurred())
 	}()
@@ -82,6 +82,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	By("Stopping Starboard operator")
+	By("Stopping Trivy operator")
 	stopFunc()
 })

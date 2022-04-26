@@ -120,13 +120,13 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		return err
 	}
 
-	starboardConfig, err := configManager.Read(context.Background())
+	trivyOperatorConfig, err := configManager.Read(context.Background())
 	if err != nil {
 		return err
 	}
 
 	objectResolver := kube.ObjectResolver{Client: mgr.GetClient()}
-	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient(), starboardConfig)
+	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient(), trivyOperatorConfig)
 	logsReader := kube.NewLogsReader(kubeClientset)
 	secretsReader := kube.NewSecretsReader(mgr.GetClient())
 
@@ -135,7 +135,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 			WithBuildInfo(buildInfo).
 			WithNamespace(operatorNamespace).
 			WithServiceAccountName(operatorConfig.ServiceAccount).
-			WithConfig(starboardConfig).
+			WithConfig(trivyOperatorConfig).
 			WithClient(mgr.GetClient()).
 			GetVulnerabilityPlugin()
 		if err != nil {
@@ -150,7 +150,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		if err = (&vulnerabilityreport.WorkloadController{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("vulnerabilityreport"),
 			Config:         operatorConfig,
-			ConfigData:     starboardConfig,
+			ConfigData:     trivyOperatorConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
 			LimitChecker:   limitChecker,
@@ -180,7 +180,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 			WithBuildInfo(buildInfo).
 			WithNamespace(operatorNamespace).
 			WithServiceAccountName(operatorConfig.ServiceAccount).
-			WithConfig(starboardConfig).
+			WithConfig(trivyOperatorConfig).
 			WithClient(mgr.GetClient()).
 			GetConfigAuditPlugin()
 		if err != nil {
@@ -195,7 +195,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		if err = (&controller.ConfigAuditReportReconciler{
 			Logger:         ctrl.Log.WithName("reconciler").WithName("configauditreport"),
 			Config:         operatorConfig,
-			ConfigData:     starboardConfig,
+			ConfigData:     trivyOperatorConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
 			LimitChecker:   limitChecker,
@@ -222,12 +222,12 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		if err = (&controller.CISKubeBenchReportReconciler{
 			Logger:       ctrl.Log.WithName("reconciler").WithName("ciskubebenchreport"),
 			Config:       operatorConfig,
-			ConfigData:   starboardConfig,
+			ConfigData:   trivyOperatorConfig,
 			Client:       mgr.GetClient(),
 			LogsReader:   logsReader,
 			LimitChecker: limitChecker,
 			ReadWriter:   kubebench.NewReadWriter(mgr.GetClient()),
-			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), starboardConfig),
+			Plugin:       kubebench.NewKubeBenchPlugin(ext.NewSystemClock(), trivyOperatorConfig),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup ciskubebenchreport reconciler: %w", err)
 		}
@@ -238,7 +238,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		if err = (&configauditreport.ResourceController{
 			Logger:         ctrl.Log.WithName("resourcecontroller"),
 			Config:         operatorConfig,
-			ConfigData:     starboardConfig,
+			ConfigData:     trivyOperatorConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
 			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
@@ -253,7 +253,7 @@ func Start(ctx context.Context, buildInfo trivyoperator.BuildInfo, operatorConfi
 		cc := &compliance.ClusterComplianceReportReconciler{
 			Logger: logger,
 			Client: mgr.GetClient(),
-			Mgr:    compliance.NewMgr(mgr.GetClient(), logger, starboardConfig),
+			Mgr:    compliance.NewMgr(mgr.GetClient(), logger, trivyOperatorConfig),
 			Clock:  ext.NewSystemClock(),
 		}
 		if err := cc.SetupWithManager(mgr); err != nil {

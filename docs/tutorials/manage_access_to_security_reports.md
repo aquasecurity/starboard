@@ -1,6 +1,6 @@
 # Manage Access to Security Reports
 
-In Starboard security reports are stored as [CRD] instances (e.g. VulnerabilityReport and ConfigAuditReport objects).
+In Trivy-Operator security reports are stored as [CRD] instances (e.g. VulnerabilityReport and ConfigAuditReport objects).
 
 With Kubernetes [RBAC], a cluster administrator can choose the following levels of granularity to manage access to
 security reports:
@@ -33,7 +33,7 @@ kubectl create namespace bar
 kubectl create deploy nginx --image nginx:1.16 --namespace bar
 ```
 
-When we scan them Starboard will create VulnerabilityReports which are named by revision kind (`replicaset`)
+When we scan them Trivy-Operator will create VulnerabilityReports which are named by revision kind (`replicaset`)
 concatenated with revision name (`nginx-7967dc8bfd`) and container name (`nginx`).
 
 ```

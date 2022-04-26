@@ -1,7 +1,7 @@
 package conftest
 
 import (
-	. "github.com/aquasecurity/trivy-operator/itest/starboard-operator/behavior"
+	. "github.com/aquasecurity/trivy-operator/itest/trivy-operator/behavior"
 	. "github.com/onsi/ginkgo"
 )
 

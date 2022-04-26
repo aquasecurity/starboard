@@ -21,9 +21,9 @@ import (
 )
 
 type ScanJobBuilder struct {
-	plugin        Plugin
-	pluginContext trivyoperator.PluginContext
-	timeout       time.Duration
+	plugin            Plugin
+	pluginContext     trivyoperator.PluginContext
+	timeout           time.Duration
 	object            client.Object
 	tolerations       []corev1.Toleration
 	annotations       map[string]string
@@ -91,7 +91,7 @@ func (s *ScanJobBuilder) Get() (*batchv1.Job, []*corev1.Secret, error) {
 		trivyoperator.LabelResourceSpecHash:         resourceSpecHash,
 		trivyoperator.LabelPluginConfigHash:         pluginConfigHash,
 		trivyoperator.LabelConfigAuditReportScanner: s.pluginContext.GetName(),
-		trivyoperator.LabelK8SAppManagedBy:          trivyoperator.AppStarboard,
+		trivyoperator.LabelK8SAppManagedBy:          trivyoperator.AppTrivyOperator,
 	}
 
 	podTemplateLabelsSet := make(labels.Set)

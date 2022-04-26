@@ -33,7 +33,7 @@ These guidelines will help you get started with the Starboard project.
 - Please spend a minimal amount of time giving due diligence to existing issues or discussions. Your topic might be a duplicate. If it is, please add your comment to the existing one.
 - Please give your issue or discussion a meaningful title that will be clear for future users.
 - The issue should clearly explain the reason for opening, the proposal if you have any, and any relevant technical information.
-- For technical questions, please explain in detail what you were trying to do, provide an error message if applicable, and your versions of Starboard and your environment.
+- For technical questions, please explain in detail what you were trying to do, provide an error message if applicable, and your versions of Trivy-Operator and your environment.
 
 ### Pull Requests
 
@@ -43,7 +43,7 @@ These guidelines will help you get started with the Starboard project.
 - There's no need to add or tag reviewers, if your PR is left unattended for too long, you can add a comment to bring it up to attention, optionally "@" mention one of the maintainers that was involved with the issue.
 - If a reviewer commented on your code or asked for changes, please remember to mark the discussion as resolved after you address it and re-request a review.
 - When addressing comments, try to fix each suggestion in a separate commit.
-- Tests are not required at this point as Starboard is evolving fast, but if you can include tests that will be appreciated.
+- Tests are not required at this point as Trivy-Operator is evolving fast, but if you can include tests that will be appreciated.
 
 #### Conventional Commits
 It is not that strict, but we use the [Conventional commits](https://www.conventionalcommits.org) in this repository.
@@ -58,8 +58,8 @@ Each commit message doesn't have to follow conventions as long as it is clear an
 2. Get the source code:
 
    ```
-   git clone git@github.com:aquasecurity/starboard.git
-   cd starboard
+   git clone git@github.com:aquasecurity/trivy-operator.git
+   cd trivy-operator
    ```
 3. Access to a Kubernetes cluster. We assume that you're using a [KIND][kind] cluster. To create a single-node KIND
    cluster, run:
@@ -70,11 +70,11 @@ Each commit message doesn't have to follow conventions as long as it is clear an
 
 ## Build Binaries
 
-| Binary                   | Image                                          | Description                                                   |
-|--------------------------|------------------------------------------------|---------------------------------------------------------------|
-| `starboard`              | `docker.io/aquasec/starboard:dev`              | Starboard command-line interface                              |
-| `starboard-operator`     | `docker.io/aquasec/starboard-operator:dev`     | Starboard Operator                                            |
-| `starboard-scanner-aqua` | `docker.io/aquasec/starboard-scanner-aqua:dev` | Starboard plugin to integrate with Aqua vulnerability scanner |
+| Binary               | Image                                          | Description                                                   |
+|----------------------|------------------------------------------------|---------------------------------------------------------------|
+| `starboard`          | `docker.io/aquasec/starboard:dev`              | Starboard command-line interface                              |
+| `trivy-operator`     | `docker.io/aquasec/trivy-operator:dev`         | Trivy Operator                                                |
+| `trivy-scanner-aqua` | `docker.io/aquasec/starboard-scanner-aqua:dev` | Starboard plugin to integrate with Aqua vulnerability scanner |
 
 To build all Starboard binaries, run:
 
@@ -94,7 +94,7 @@ To load Docker images into your KIND cluster, run:
 
 ```
 kind load docker-image aquasec/starboard:dev
-kind load docker-image aquasec/starboard-operator:dev
+kind load docker-image aquasec/trivy-operator:dev
 kind load docker-image aquasec/starboard-scanner-aqua:dev
 ```
 
@@ -127,7 +127,7 @@ variable is pointing to that cluster configuration file. For example:
 export KUBECONFIG=~/.kube/config
 ```
 
-There are separate integration tests for Starboard CLI and for Starboard Operator. The tests may leave the cluster in a
+There are separate integration tests for Starboard CLI and for Trivy-Operator Operator. The tests may leave the cluster in a
 dirty state, so running one test after the other may cause spurious failures.
 
 To run the integration tests for Starboard CLI with code coverage enabled, run:

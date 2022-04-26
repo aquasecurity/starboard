@@ -3,16 +3,16 @@
 [Helm], which is de facto standard package manager for Kubernetes, allows installing applications from parameterized
 YAML manifests called Helm [charts].
 
-To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Starboard
-Operator. The Helm chart supports all [Install Modes](./../configuration.md#install-modes).
+To address shortcomings of [static YAML manifests](./kubectl.md) we provide the Helm chart to deploy the Trivy-Operator.
+The Helm chart supports all [Install Modes](./../configuration.md#install-modes).
 
-As an example, let's install the operator in the `starboard-system` namespace and configure it to select all namespaces,
-except `kube-system` and `starboard-system`:
+As an example, let's install the operator in the `trivy-system` namespace and configure it to select all namespaces,
+except `kube-system` and `trivy-system`:
 
 1. Clone the chart directory:
    ```
-   git clone --depth 1 --branch {{ git.tag }} https://github.com/aquasecurity/starboard.git
-   cd starboard
+   git clone --depth 1 --branch {{ git.tag }} https://github.com/aquasecurity/trivy-operator.git
+   cd trivy-operator
    ```
    Or add Aqua chart repository:
    ```
@@ -21,37 +21,37 @@ except `kube-system` and `starboard-system`:
    ```
 2. Install the chart from a local directory:
    ```
-   helm install starboard-operator ./deploy/helm \
-     --namespace starboard-system \
+   helm install trivy-operator ./deploy/helm \
+     --namespace trivy-system \
      --create-namespace \
      --set="trivy.ignoreUnfixed=true"
    ```
    Or install the chart from the Aqua chart repository:
    ```
-   helm install starboard-operator aqua/starboard-operator \
-     --namespace starboard-system \
+   helm install trivy-operator aqua/trivy-operator \
+     --namespace trivy-system \
      --create-namespace \
      --set="trivy.ignoreUnfixed=true" \
      --version {{ var.chart_version }}
    ```
-   There are many [values] in the chart that can be set to configure Starboard.
-3. Check that the `starboard-operator` Helm release is created in the `starboard-system` namespace, and it has status
+   There are many [values] in the chart that can be set to configure Trivy-Operator.
+3. Check that the `trivy-operator` Helm release is created in the `trivy-system` namespace, and it has status
    `deployed`:
    ```console
-   $ helm list -n starboard-system
+   $ helm list -n trivy-system
    NAME              	NAMESPACE         	REVISION	UPDATED                             	STATUS  	CHART                   	APP VERSION
-   starboard-operator	starboard-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	starboard-operator-{{ var.chart_version }}	{{ git.tag[1:] }}
+   trivy-operator	trivy-system	1       	2021-01-27 20:09:53.158961 +0100 CET	deployed	trivy-operator-{{ var.chart_version }}	{{ git.tag[1:] }}
    ```
-   To confirm that the operator is running, check that the `starboard-operator` Deployment in the `starboard-system`
+   To confirm that the operator is running, check that the `trivy-operator` Deployment in the `trivy-system`
    namespace is available and all its containers are ready:
    ```console
-   $ kubectl get deployment -n starboard-system
+   $ kubectl get deployment -n trivy-system
    NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
-   starboard-operator   1/1     1            1           11m
+   trivy-operator   1/1     1            1           11m
    ```
    If for some reason it's not ready yet, check the logs of the Deployment for errors:
    ```
-   kubectl logs deployment/starboard-operator -n starboard-system
+   kubectl logs deployment/trivy-operator -n trivy-system
    ```
 
 ## Uninstall
@@ -59,7 +59,7 @@ except `kube-system` and `starboard-system`:
 You can uninstall the operator with the following command:
 
 ```
-helm uninstall starboard-operator -n starboard-system
+helm uninstall trivy-operator -n trivy-system
 ```
 
 You have to manually delete custom resource definitions created by the `helm install` command:
@@ -80,4 +80,4 @@ You have to manually delete custom resource definitions created by the `helm ins
 
 [Helm]: https://helm.sh/
 [charts]: https://helm.sh/docs/topics/charts/
-[values]: https://raw.githubusercontent.com/aquasecurity/starboard/{{ git.tag }}/deploy/helm/values.yaml
+[values]: https://raw.githubusercontent.com/aquasecurity/trivy-operator/{{ git.tag }}/deploy/helm/values.yaml

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy-operator/itest/helper"
-	"github.com/aquasecurity/trivy-operator/itest/starboard-operator/behavior"
+	"github.com/aquasecurity/trivy-operator/itest/trivy-operator/behavior"
 	"github.com/aquasecurity/trivy-operator/pkg/operator"
 	"github.com/aquasecurity/trivy-operator/pkg/operator/etc"
 	"github.com/aquasecurity/trivy-operator/pkg/plugin/conftest"
@@ -69,7 +69,7 @@ var _ = BeforeSuite(func() {
 	operatorConfig, err := etc.GetOperatorConfig()
 	Expect(err).ToNot(HaveOccurred())
 
-	operatorConfig.Namespace = "trivyoperator-system"
+	operatorConfig.Namespace = "trivy-system"
 	operatorConfig.TargetNamespaces = "default"
 
 	// Disable vulnerability scanner and CIS Benchmarks

@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Plugin defines the interface between Starboard and Kubernetes workload
+// Plugin defines the interface between trivy-operator and Kubernetes workload
 // configuration checkers / linters / sanitizers.
 type Plugin interface {
 
@@ -18,10 +18,10 @@ type Plugin interface {
 	// configuration.
 	Init(ctx trivyoperator.PluginContext) error
 
-	// GetScanJobSpec describes the pod that will be created by Starboard when
+	// GetScanJobSpec describes the pod that will be created by trivy-operator when
 	// it schedules a Kubernetes job to scan the specified workload client.Object.
 	// The plugin might return zero to many v1.Secret objects which will be
-	// created by Starboard and associated with the scan job.
+	// created by trivy-operator and associated with the scan job.
 	GetScanJobSpec(ctx trivyoperator.PluginContext, obj client.Object) (corev1.PodSpec, []*corev1.Secret, error)
 
 	// ParseConfigAuditReportData is a callback to parse and convert logs of

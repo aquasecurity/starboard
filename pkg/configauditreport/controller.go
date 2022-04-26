@@ -84,7 +84,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 	for _, resource := range resources {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
-				predicate.Not(predicate.ManagedByStarboardOperator),
+				predicate.Not(predicate.ManagedByTrivyOperator),
 				predicate.Not(predicate.IsLeaderElectionResource),
 				predicate.Not(predicate.IsBeingTerminated),
 				installModePredicate,
@@ -112,7 +112,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
-				predicate.Not(predicate.ManagedByStarboardOperator),
+				predicate.Not(predicate.ManagedByTrivyOperator),
 				predicate.Not(predicate.IsBeingTerminated),
 			)).
 			Owns(resource.ownsObject).
@@ -304,7 +304,7 @@ func (r *ResourceController) evaluate(ctx context.Context, policies *policy.Poli
 
 	return v1alpha1.ConfigAuditReportData{
 		Scanner: v1alpha1.Scanner{
-			Name:    "Starboard",
+			Name:    "Trivy-Operator",
 			Vendor:  "Aqua Security",
 			Version: r.BuildInfo.Version,
 		},

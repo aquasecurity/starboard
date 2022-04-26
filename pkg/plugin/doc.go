@@ -1,2 +1,2 @@
-// Package plugin aggregates plugins for Starboard.
+// Package plugin aggregates plugins for Trivy-Operator.
 package plugin

@@ -243,15 +243,15 @@ var _ = Describe("Predicate", func() {
 		})
 	})
 
-	Describe("When checking a ManagedByStarboardOperator predicate", func() {
-		instance := predicate.ManagedByStarboardOperator
+	Describe("When checking a ManagedByTrivyOperator predicate", func() {
+		instance := predicate.ManagedByTrivyOperator
 
-		Context("Where object is managed by Starboard operator", func() {
+		Context("Where object is managed by Trivy-Operator operator", func() {
 			It("Should return true", func() {
 				obj := &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"app.kubernetes.io/managed-by": "trivyoperator",
+							"app.kubernetes.io/managed-by": "trivy-operator",
 						},
 					},
 				}

@@ -157,8 +157,8 @@ func TestScanJobBuilder(t *testing.T) {
 			}).
 			WithPluginContext(trivyoperator.NewPluginContext().
 				WithName("plugin-test").
-				WithNamespace("trivyoperator-ns").
-				WithServiceAccountName("trivyoperator-sa").
+				WithNamespace("trivy-operator-ns").
+				WithServiceAccountName("trivy-operator-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
 			WithObject(&appsv1.ReplicaSet{
@@ -176,12 +176,12 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-64d65c457",
-				Namespace: "trivyoperator-ns",
+				Namespace: "trivy-operator-ns",
 				Labels: map[string]string{
 					trivyoperator.LabelResourceSpecHash:         "755877d4bb",
 					trivyoperator.LabelPluginConfigHash:         "hash-test",
 					trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
-					trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+					trivyoperator.LabelK8SAppManagedBy:          "trivy-operator",
 					trivyoperator.LabelResourceKind:             "ReplicaSet",
 					trivyoperator.LabelResourceName:             "nginx-6799fc88d8",
 					trivyoperator.LabelResourceNamespace:        "prod-ns",
@@ -197,7 +197,7 @@ func TestScanJobBuilder(t *testing.T) {
 							trivyoperator.LabelResourceSpecHash:         "755877d4bb",
 							trivyoperator.LabelPluginConfigHash:         "hash-test",
 							trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
-							trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+							trivyoperator.LabelK8SAppManagedBy:          "trivy-operator",
 							trivyoperator.LabelResourceKind:             "ReplicaSet",
 							trivyoperator.LabelResourceName:             "nginx-6799fc88d8",
 							trivyoperator.LabelResourceNamespace:        "prod-ns",
@@ -217,8 +217,8 @@ func TestScanJobBuilder(t *testing.T) {
 			}).
 			WithPluginContext(trivyoperator.NewPluginContext().
 				WithName("plugin-test").
-				WithNamespace("trivyoperator-ns").
-				WithServiceAccountName("trivyoperator-sa").
+				WithNamespace("trivy-operator-ns").
+				WithServiceAccountName("trivy-operator-sa").
 				Get()).
 			WithTimeout(3 * time.Second).
 			WithObject(&rbacv1.ClusterRole{
@@ -236,12 +236,12 @@ func TestScanJobBuilder(t *testing.T) {
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-5bfbdd65c9",
-				Namespace: "trivyoperator-ns",
+				Namespace: "trivy-operator-ns",
 				Labels: map[string]string{
 					trivyoperator.LabelResourceSpecHash:         "7c48697ccf",
 					trivyoperator.LabelPluginConfigHash:         "hash-test",
 					trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
-					trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+					trivyoperator.LabelK8SAppManagedBy:          "trivy-operator",
 					trivyoperator.LabelResourceKind:             "ClusterRole",
 					trivyoperator.LabelResourceNameHash:         "6f69bb5b79",
 					trivyoperator.LabelResourceNamespace:        "",
@@ -260,7 +260,7 @@ func TestScanJobBuilder(t *testing.T) {
 							trivyoperator.LabelResourceSpecHash:         "7c48697ccf",
 							trivyoperator.LabelPluginConfigHash:         "hash-test",
 							trivyoperator.LabelConfigAuditReportScanner: "plugin-test",
-							trivyoperator.LabelK8SAppManagedBy:          "trivyoperator",
+							trivyoperator.LabelK8SAppManagedBy:          "trivy-operator",
 							trivyoperator.LabelResourceKind:             "ClusterRole",
 							trivyoperator.LabelResourceNameHash:         "6f69bb5b79",
 							trivyoperator.LabelResourceNamespace:        "",

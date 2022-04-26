@@ -22,13 +22,13 @@ const (
 	// Plugin the name of this plugin.
 	aquaPlugin = "Aqua"
 
-	keyAquaScannerImage   = "aqua.imageRef"
-	keyStarboardAquaImage = "aqua.imageRefStarboardAquaScanner"
-	keyAquaCommand        = "aqua.command"
-	keyAquaCspHost        = "aqua.serverURL"
-	keyAquaUsername       = "aqua.username"
-	keyAquaPassword       = "aqua.password"
-	keyAquaRegistry       = "aqua.registry"
+	keyAquaScannerImage       = "aqua.imageRef"
+	keyTrivyOperatorAquaImage = "aqua.imageRefTrivyOperatorAquaScanner"
+	keyAquaCommand            = "aqua.command"
+	keyAquaCspHost            = "aqua.serverURL"
+	keyAquaUsername           = "aqua.username"
+	keyAquaPassword           = "aqua.password"
+	keyAquaRegistry           = "aqua.registry"
 
 	keyResourcesRequestsCPU    = "aqua.resources.requests.cpu"
 	keyResourcesRequestsMemory = "aqua.resources.requests.memory"
@@ -66,11 +66,11 @@ func (c Config) GetCommand() (Command, error) {
 		value, keyAquaCommand, Image, Filesystem)
 }
 
-func (c Config) GetStarboardAquaScannerImage() (string, error) {
+func (c Config) GetTrivyOperatorAquaScannerImage() (string, error) {
 	var ok bool
 	var value string
-	if value, ok = c.Data[keyStarboardAquaImage]; !ok {
-		return "", fmt.Errorf("property %s not set", keyStarboardAquaImage)
+	if value, ok = c.Data[keyTrivyOperatorAquaImage]; !ok {
+		return "", fmt.Errorf("property %s not set", keyTrivyOperatorAquaImage)
 	}
 	return value, nil
 }
@@ -295,7 +295,7 @@ func (s *plugin) getPodSpecForFileSystemCommand(ctx trivyoperator.PluginContext,
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
-	starboardAquaImage, err := config.GetStarboardAquaScannerImage()
+	trivyOperatorAquaImage, err := config.GetTrivyOperatorAquaScannerImage()
 	if err != nil {
 		return corev1.PodSpec{}, nil, err
 	}
@@ -348,7 +348,7 @@ func (s *plugin) getPodSpecForFileSystemCommand(ctx trivyoperator.PluginContext,
 				},
 				{
 					Name:            s.idGenerator.GenerateID(),
-					Image:           starboardAquaImage,
+					Image:           trivyOperatorAquaImage,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Command: []string{
 						"cp",

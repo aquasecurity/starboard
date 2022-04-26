@@ -36,7 +36,7 @@ var (
 	}
 	testNamespace = &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "trivyoperator-itest",
+			Name: "starboard-itest",
 		},
 	}
 	privateRegistryConfig = &helper.PrivateRegistryConfig{}

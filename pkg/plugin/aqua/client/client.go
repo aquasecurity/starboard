@@ -11,7 +11,7 @@ import (
 
 const (
 	defaultTimeout = 30 * time.Second
-	userAgent      = "StarboardSecurityOperator"
+	userAgent      = "TrivySecurityOperator"
 )
 
 var ErrNotFound = errors.New("not found")

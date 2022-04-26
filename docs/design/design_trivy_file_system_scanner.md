@@ -4,15 +4,15 @@ Authors: [Devendra Turkar], [Daniel Pacak]
 
 ## Overview
 
-Starboard currently uses Trivy in [Standalone] or [ClientServer] mode to scan and generate VulnerabilityReports for
-container images by pulling the images from remote registries. Starboard scans a specified K8s workload by running the
+Trivy-Operator currently uses Trivy in [Standalone] or [ClientServer] mode to scan and generate VulnerabilityReports for
+container images by pulling the images from remote registries. Trivy-Operator scans a specified K8s workload by running the
 Trivy executable as a K8s Job. This approach implies that Trivy does not have access to images cached by the container
-runtime on cluster nodes. Therefore, to scan images from private registries Starboard reads ImagePullSecrets specified
+runtime on cluster nodes. Therefore, to scan images from private registries Trivy-Operator reads ImagePullSecrets specified
 on workloads or on service accounts used by the workloads, and passes them down to Trivy executable as `TRIVY_USERNAME`
 and `TRIVY_PASSWORD` environment variables.
 
 Since ImagePullSecrets are not the only way to provide registry credential, the following alternatives are not
-currently supported by Starboard:
+currently supported by Trivy-Operator:
 1. Pre-pulled images
 2. [Configuring nodes to authenticate to a private registry]
 3. Vendor-specific or local extension. For example, methods described on [AWS ECR Private registry authentication].
@@ -33,7 +33,7 @@ in any other proprietary way).
 
 ### Deep Dive
 
-To scan a container image of a given K8s workload Starboard will create a corresponding container of a scan Job and
+To scan a container image of a given K8s workload Trivy-Operator will create a corresponding container of a scan Job and
 override its entrypoint to invoke Trivy filesystem scanner.
 
 This approach requires Trivy executable to be downloaded and made available to the entrypoint. We'll do that by adding
@@ -50,7 +50,7 @@ how they share data via the emptyDir volume.)
 > filesystem scanner at the time of writing this proposal.
 
 We further restrict scan Jobs to run on the same node where scanned Pod is running and never pull images from remote
-registries by setting the `ImagePullPolicy` to `Never`. To determine the node for a scan Job Starboard will list active
+registries by setting the `ImagePullPolicy` to `Never`. To determine the node for a scan Job Trivy-Operator will list active
 Pods controlled by the scanned workload. If the list is not empty it will take the node name from the first Pod,
 otherwise it will ignore the workload.
 
@@ -91,8 +91,8 @@ spec:
           image: example.registry.com/nginx:1.16
 ``` 
 
-To scan the `nginx` container of the `nginx` Deployment, Starboard will create the following scan Job in the
-`starboard-system` namespace and observe it until it's Completed or Failed.
+To scan the `nginx` container of the `nginx` Deployment, Trivy-Operator will create the following scan Job in the
+`trivy-system` namespace and observe it until it's Completed or Failed.
 
 ```yaml
 ---
@@ -100,7 +100,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: scan-vulnerabilityreport-ab3134
-  namespace: trivyoperator-system
+  namespace: trivy-operator-system
 spec:
   backoffLimit: 0
   template:
@@ -124,10 +124,10 @@ spec:
             - cp
             - -v
             - /usr/local/bin/trivy
-            - /var/trivyoperator/trivy
+            - /var/trivy-operator/trivy
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/trivyoperator
+              mountPath: /var/trivy-operator
         # The trivy-download-db container is using trivy executable binary
         # from the previous step to download Trivy vulnerability database
         # from GitHub releases page.
@@ -136,13 +136,13 @@ spec:
         - name: trivy-download-db
           image: aquasec/trivy:0.19.2
           command:
-            - /var/trivyoperator/trivy
+            - /var/trivy-operator/trivy
             - --download-db-only
             - --cache-dir
-            - /var/trivyoperator/trivy-db
+            - /var/trivy-operator/trivy-db
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/trivyoperator
+              mountPath: /var/trivy-operator
       containers:
         # The nginx container is based on the container image that
         # we want to scan with Trivy. However, it has overwritten command (entrypoint)
@@ -157,16 +157,16 @@ spec:
             # Trivy must run as root, so we set UID here.
             runAsUser: 0
           command:
-            - /var/trivyoperator/trivy
+            - /var/trivy-operator/trivy
             - --cache-dir
-            - /var/trivyoperator/trivy-db
+            - /var/trivy-operator/trivy-db
             - fs
             - --format
             - json
             - /
           volumeMounts:
             - name: scan-volume
-              mountPath: /var/trivyoperator
+              mountPath: /var/trivy-operator
 ```
 
 Notice that the scan Job does not use registry credentials stored in the `private-registry` ImagePullSecret at all.

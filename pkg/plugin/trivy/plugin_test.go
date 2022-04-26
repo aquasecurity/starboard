@@ -3477,7 +3477,7 @@ CVE-2019-1543`,
 				WithNamespace("trivyoperator-ns").
 				WithServiceAccountName("trivyoperator-sa").
 				WithClient(fakeclient).
-				WithStarboardConfig(map[string]string{trivyoperator.KeyVulnerabilityScansInSameNamespace: "true"}).
+				WithTrivyOperatorConfig(map[string]string{trivyoperator.KeyVulnerabilityScansInSameNamespace: "true"}).
 				Get()
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)

@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	clusterRoleStarboard        = "trivyoperator"
-	clusterRoleBindingStarboard = "trivyoperator"
+	clusterRoleStarboard        = "starboard"
+	clusterRoleBindingStarboard = "starboard"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: trivyoperator.NamespaceName,
 			Labels: labels.Set{
-				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
+				trivyoperator.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 	}
@@ -42,7 +42,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: trivyoperator.ServiceAccountName,
 			Labels: labels.Set{
-				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
+				trivyoperator.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		AutomountServiceAccountToken: pointer.BoolPtr(false),
@@ -51,7 +51,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleStarboard,
 			Labels: labels.Set{
-				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
+				trivyoperator.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -104,7 +104,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleBindingStarboard,
 			Labels: labels.Set{
-				trivyoperator.LabelK8SAppManagedBy: "trivyoperator",
+				trivyoperator.LabelK8SAppManagedBy: "starboard",
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -130,7 +130,7 @@ type Installer struct {
 	configManager trivyoperator.ConfigManager
 }
 
-// NewInstaller constructs an Installer with the given trivyoperator.ConfigManager and kubernetes.Interface.
+// NewInstaller constructs an Installer with the given starboard.ConfigManager and kubernetes.Interface.
 func NewInstaller(
 	buildInfo trivyoperator.BuildInfo,
 	// TODO Get rid of kubernetes.Interface and ApiextensionsV1Interface and use just client.Client

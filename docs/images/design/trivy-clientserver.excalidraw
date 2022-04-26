@@ -1,7 +1,7 @@
 {
   "type": "excalidraw",
   "version": 2,
-  "source": "https://excalidraw.com",
+  "source": "https://excalidraw-jetbrains-plugin",
   "elements": [
     {
       "type": "rectangle",
@@ -1901,8 +1901,8 @@
     },
     {
       "type": "text",
-      "version": 206,
-      "versionNonce": 1050803370,
+      "version": 211,
+      "versionNonce": 1255510003,
       "isDeleted": false,
       "id": "-P2sHI5Q72juz98DJ05Dj",
       "fillStyle": "hachure",
@@ -1915,7 +1915,7 @@
       "y": 475.52734375,
       "strokeColor": "#000000",
       "backgroundColor": "transparent",
-      "width": 313,
+      "width": 259,
       "height": 25,
       "seed": 903146102,
       "groupIds": [],
@@ -1923,15 +1923,15 @@
       "boundElementIds": [],
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Namespace: starboard-operator",
+      "text": "Namespace: trivy-operator",
       "baseline": 18,
       "textAlign": "left",
       "verticalAlign": "top"
     },
     {
       "type": "text",
-      "version": 378,
-      "versionNonce": 508520810,
+      "version": 383,
+      "versionNonce": 1464820083,
       "isDeleted": false,
       "id": "qio4lw3e6rLgUFDyoHEq0",
       "fillStyle": "hachure",
@@ -1940,11 +1940,11 @@
       "roughness": 1,
       "opacity": 100,
       "angle": 0,
-      "x": 2097.0078125,
+      "x": 2124.5078125,
       "y": 565.482421875,
       "strokeColor": "#000000",
       "backgroundColor": "transparent",
-      "width": 271,
+      "width": 216,
       "height": 25,
       "seed": 1897215094,
       "groupIds": [],
@@ -1952,7 +1952,7 @@
       "boundElementIds": [],
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Secret: starboard-operator",
+      "text": "Secret: trivy-operator",
       "baseline": 18,
       "textAlign": "center",
       "verticalAlign": "top"
@@ -2686,7 +2686,7 @@
     }
   ],
   "appState": {
-    "viewBackgroundColor": "#ffffff",
-    "gridSize": null
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
   }
 }

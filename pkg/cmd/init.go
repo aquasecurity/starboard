@@ -29,16 +29,16 @@ Kubernetes cluster:
    - "ciskubebenchreports.aquasecurity.github.io"
    - "kubehunterreports.aquasecurity.github.io"
  - RBAC objects:
-   - The "trivyoperator" ClusterRole
-   - The "trivyoperator" ClusterRoleBinding
- - The "trivyoperator" namespace with the following objects:
-   - The "trivyoperator" service account
-   - The "trivyoperator" ConfigMap
-   - The "trivyoperator" secret
-   - The "trivyoperator-trivy-config" ConfigMap
-   - The "trivyoperator-polaris-config" ConfigMap
+   - The "starboard" ClusterRole
+   - The "starboard" ClusterRoleBinding
+ - The "starboard" namespace with the following objects:
+   - The "starboard" service account
+   - The "starboard" ConfigMap
+   - The "starboard" secret
+   - The "starboard-trivy-config" ConfigMap
+   - The "starboard-polaris-config" ConfigMap
 
-The "trivyoperator" ConfigMap and the "trivyoperator" secret contain the default
+The "starboard" ConfigMap and the "starboard" secret contain the default
 config parameters. However this can be modified to change the behaviour
 of the scanners.
 

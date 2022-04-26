@@ -1,2 +1,2 @@
-// Package operator provides primitives for implementing Starboard Operator.
+// Package operator provides primitives for implementing Trivy-Operator Operator.
 package operator

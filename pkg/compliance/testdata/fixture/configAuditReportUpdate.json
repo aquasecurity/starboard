@@ -7,9 +7,9 @@
     "labels": {
       "plugin-config-hash": "78bf5dccc5",
       "resource-spec-hash": "65c6f56fd9",
-      "starboard.resource.kind": "Pod",
-      "starboard.resource.name": "rss-site",
-      "starboard.resource.namespace": "default"
+      "trivy-operator.resource.kind": "Pod",
+      "trivy-operator.resource.name": "rss-site",
+      "trivy-operator.resource.namespace": "default"
     },
     "name": "pod-rss-site",
     "namespace": "default",

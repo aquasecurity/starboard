@@ -20,7 +20,7 @@ var _ = Describe("LimitChecker", func() {
 		Namespace:               "trivy-operator",
 		ConcurrentScanJobsLimit: 2,
 	}
-	defaultStarboardConfig := trivyoperator.GetDefaultConfig()
+	defaultTrivyOperatorConfig := trivyoperator.GetDefaultConfig()
 
 	Context("When there are more jobs than limit", func() {
 
@@ -35,26 +35,26 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "trivy-operator",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-vulnerabilityreport-hash2",
 					Namespace: "trivy-operator",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-configauditreport-hash2",
 					Namespace: "trivy-operator",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 			).Build()
 
-			instance := controller.NewLimitChecker(config, client, defaultStarboardConfig)
+			instance := controller.NewLimitChecker(config, client, defaultTrivyOperatorConfig)
 			limitExceeded, jobsCount, err := instance.Check(context.TODO())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(limitExceeded).To(BeTrue())
@@ -75,12 +75,12 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "trivy-operator",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 			).Build()
 
-			instance := controller.NewLimitChecker(config, client, defaultStarboardConfig)
+			instance := controller.NewLimitChecker(config, client, defaultTrivyOperatorConfig)
 			limitExceeded, jobsCount, err := instance.Check(context.TODO())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(limitExceeded).To(BeFalse())
@@ -101,27 +101,27 @@ var _ = Describe("LimitChecker", func() {
 					Name:      "scan-vulnerabilityreport-hash1",
 					Namespace: "default",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-vulnerabilityreport-hash2",
 					Namespace: "prod",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 				&batchv1.Job{ObjectMeta: metav1.ObjectMeta{
 					Name:      "scan-configauditreport-hash3",
 					Namespace: "stage",
 					Labels: map[string]string{
-						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+						trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 					},
 				}},
 			).Build()
-			starboardConfig := defaultStarboardConfig
-			starboardConfig[trivyoperator.KeyVulnerabilityScansInSameNamespace] = "true"
-			instance := controller.NewLimitChecker(config, client, starboardConfig)
+			trivyOperatorConfig := defaultTrivyOperatorConfig
+			trivyOperatorConfig[trivyoperator.KeyVulnerabilityScansInSameNamespace] = "true"
+			instance := controller.NewLimitChecker(config, client, trivyOperatorConfig)
 			limitExceeded, jobsCount, err := instance.Check(context.TODO())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(limitExceeded).To(BeTrue())

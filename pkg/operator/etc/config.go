@@ -30,7 +30,7 @@ type Config struct {
 	ConfigAuditScannerEnabled                    bool           `env:"OPERATOR_CONFIG_AUDIT_SCANNER_ENABLED" envDefault:"false"`
 	ConfigAuditScannerScanOnlyCurrentRevisions   bool           `env:"OPERATOR_CONFIG_AUDIT_SCANNER_SCAN_ONLY_CURRENT_REVISIONS" envDefault:"false"`
 
-	// ConfigAuditScannerBuiltIn tells Starboard to use the built-in
+	// ConfigAuditScannerBuiltIn tells Trivy-Operator to use the built-in
 	// configuration audit scanner instead of Polaris or Conftest
 	// plugins.
 	//

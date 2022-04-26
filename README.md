@@ -1,4 +1,4 @@
-![Starboard logo](docs/images/starboard-logo.png)
+![Starboard logo](docs/images/trivy-operator-logo.png)
 
 > Kubernetes-native security toolkit.
 
@@ -10,7 +10,7 @@
 [![License][license-img]][license]
 [![GitHub All Releases][github-all-releases-img]][release]
 ![Docker Pulls Starboard][docker-pulls-starboard]
-![Docker Pulls Starboard Operator][docker-pulls-starboard-operator]
+![Docker Pulls Trivy Operator][docker-pulls-trivy-operator]
 
 # Introduction
 
@@ -19,11 +19,11 @@ users about security issues in Kubernetes workloads and infrastructure component
 might be, they tend to sit alongside Kubernetes, with each new product requiring users to learn a separate set of
 commands and installation steps in order to operate them and find critical security information.
 
-Starboard attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
+Trivy-Operator attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
 (Custom Resource Definitions) and from there, making security reports accessible through the Kubernetes API. This way
 users can find and view the risks that relate to different resources in what we call a Kubernetes-native way.
 
-Starboard provides:
+Trivy-Operator provides:
 
 - Automated vulnerability scanning for Kubernetes workloads.
 - Automated configuration audits for Kubernetes resources with predefined rules or custom Open Policy Agent (OPA) policies.
@@ -34,10 +34,10 @@ Starboard provides:
 - The [Octant Plugin] and the [Lens Extension] that make security reports available through familiar Kubernetes interfaces.
 
 <p align="center">
-<img src="docs/images/starboard-overview.png" alt="Starboard Overview"/>
+<img src="docs/images/trivy-operator-overview.png" alt="Starboard Overview"/>
 </p>
 
-Starboard can be used:
+Trivy-Operator can be used:
 
 - As a [Kubernetes operator] to automatically update security reports in response to workload and other changes on a
   Kubernetes cluster - for example, initiating a vulnerability scan when a new Pod is started or running CIS Benchmarks
@@ -67,7 +67,7 @@ blog.
 
 # Contributing
 
-At this early stage we would love your feedback on the overall concept of Starboard. Over time, we'd love to see
+At this early stage we would love your feedback on the overall concept of Trivy-Operator. Over time, we'd love to see
 contributions integrating different security tools so that users can access security information in standard,
 Kubernetes-native ways.
 
@@ -76,14 +76,14 @@ Kubernetes-native ways.
 * See [Roadmap] for tentative features in a 1.0.0 release.
 
 ---
-Starboard is an [Aqua Security](https://aquasec.com) open source project.  
+Trivy-Operator is an [Aqua Security](https://aquasec.com) open source project.  
 Learn about our [Open Source Work and Portfolio].  
 Join the community, and talk to us about any matter in [GitHub Discussions] or [Slack].
 
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard.svg?logo=github
-[release]: https://github.com/aquasecurity/starboard/releases
+[release]: https://github.com/aquasecurity/trivy-operator/releases
 [action-build-img]: https://github.com/aquasecurity/starboard/actions/workflows/build.yaml/badge.svg
-[action-build]: https://github.com/aquasecurity/starboard/actions/workflows/build.yaml
+[action-build]: https://github.com/aquasecurity/trivy-operator/actions/workflows/build.yaml
 [action-release-snapshot-img]: https://github.com/aquasecurity/starboard/actions/workflows/release-snapshot.yaml/badge.svg
 [action-release-snapshot]: https://github.com/aquasecurity/starboard/actions/workflows/release-snapshot.yaml
 [cov-img]: https://codecov.io/github/aquasecurity/starboard/branch/main/graph/badge.svg
@@ -98,20 +98,20 @@ Join the community, and talk to us about any matter in [GitHub Discussions] or [
 [Starboard: The Kubernetes-Native Toolkit for Unifying Security]: https://blog.aquasec.com/starboard-kubernetes-tools
 [Contributing]: CONTRIBUTING.md
 [Roadmap]: ROADMAP.md
-[GitHub Discussions]: https://github.com/aquasecurity/starboard/discussions
+[GitHub Discussions]: https://github.com/aquasecurity/trivy-operator/discussions
 [Slack]: https://slack.aquasec.com/
 [Open Source Work and Portfolio]: https://www.aquasec.com/products/open-source-projects/
 
 [Custom Resource Definitions]: https://aquasecurity.github.io/starboard/latest/crds/
-[Go module]: https://pkg.go.dev/github.com/aquasecurity/starboard/pkg
-[cli]: https://aquasecurity.github.io/starboard/latest/cli
-[Documentation]: https://aquasecurity.github.io/starboard/
-[From the Binary Releases]: https://aquasecurity.github.io/starboard/latest/cli/installation/binary-releases/
-[Static YAML Manifests]: https://aquasecurity.github.io/starboard/latest/operator/installation/kubectl/
-[getting-started-cli]: https://aquasecurity.github.io/starboard/latest/cli/getting-started/
-[getting-started-operator]: https://aquasecurity.github.io/starboard/latest/operator/getting-started/
-[Kubernetes operator]: https://aquasecurity.github.io/starboard/latest/operator
+[Go module]: https://pkg.go.dev/github.com/aquasecurity/trivy-operator/pkg
+[cli]: https://aquasecurity.github.io/trivy-operator/latest/cli
+[Documentation]: https://aquasecurity.github.io/trivy-operator/
+[From the Binary Releases]: https://aquasecurity.github.io/trivy-operator/latest/cli/installation/binary-releases/
+[Static YAML Manifests]: https://aquasecurity.github.io/trivy-operator/latest/operator/installation/kubectl/
+[getting-started-cli]: https://aquasecurity.github.io/trivy-operator/latest/cli/getting-started/
+[getting-started-operator]: https://aquasecurity.github.io/trivy-operator/latest/operator/getting-started/
+[Kubernetes operator]: https://aquasecurity.github.io/trivy-operator/latest/operator
 
-[Octant Plugin]: https://aquasecurity.github.io/starboard/latest/integrations/octant
-[Lens Extension]: https://aquasecurity.github.io/starboard/latest/integrations/lens
+[Octant Plugin]: https://aquasecurity.github.io/trivy-operator/latest/integrations/octant
+[Lens Extension]: https://aquasecurity.github.io/trivy-operator/latest/integrations/lens
 [kubectl]: https://kubernetes.io/docs/reference/kubectl

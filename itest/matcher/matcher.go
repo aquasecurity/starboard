@@ -24,7 +24,7 @@ var (
 		Version: "0.25.2",
 	}
 	builtInScanner = v1alpha1.Scanner{
-		Name:    "Starboard",
+		Name:    "Trivy-Operator",
 		Vendor:  "Aqua Security",
 		Version: "dev",
 	}

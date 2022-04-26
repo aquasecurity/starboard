@@ -13,18 +13,18 @@ type LimitChecker interface {
 	Check(ctx context.Context) (bool, int, error)
 }
 
-func NewLimitChecker(config etc.Config, client client.Client, starboardConfig trivyoperator.ConfigData) LimitChecker {
+func NewLimitChecker(config etc.Config, client client.Client, trivyOperatorConfig trivyoperator.ConfigData) LimitChecker {
 	return &checker{
-		config:          config,
-		client:          client,
-		starboardConfig: starboardConfig,
+		config:              config,
+		client:              client,
+		trivyOperatorConfig: trivyOperatorConfig,
 	}
 }
 
 type checker struct {
-	config          etc.Config
-	client          client.Client
-	starboardConfig trivyoperator.ConfigData
+	config              etc.Config
+	client              client.Client
+	trivyOperatorConfig trivyoperator.ConfigData
 }
 
 func (c *checker) Check(ctx context.Context) (bool, int, error) {
@@ -39,9 +39,9 @@ func (c *checker) Check(ctx context.Context) (bool, int, error) {
 func (c *checker) countScanJobs(ctx context.Context) (int, error) {
 	var scanJobs batchv1.JobList
 	listOptions := []client.ListOption{client.MatchingLabels{
-		trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppStarboard,
+		trivyoperator.LabelK8SAppManagedBy: trivyoperator.AppTrivyOperator,
 	}}
-	if !c.starboardConfig.VulnerabilityScanJobsInSameNamespace() {
+	if !c.trivyOperatorConfig.VulnerabilityScanJobsInSameNamespace() {
 		// scan jobs are running in only trivyoperator operator namespace
 		listOptions = append(listOptions, client.InNamespace(c.config.Namespace))
 	}

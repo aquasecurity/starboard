@@ -107,7 +107,7 @@ func TestConfigAuditReportMatcher(t *testing.T) {
 			},
 			Report: v1alpha1.ConfigAuditReportData{
 				Scanner: v1alpha1.Scanner{
-					Name:    "Starboard",
+					Name:    "Trivy-Operator",
 					Vendor:  "Aqua Security",
 					Version: "dev",
 				},

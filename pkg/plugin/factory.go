@@ -22,9 +22,9 @@ const (
 )
 
 type Resolver struct {
-	buildInfo trivyoperator.BuildInfo
-	config    trivyoperator.ConfigData
-	namespace string
+	buildInfo          trivyoperator.BuildInfo
+	config             trivyoperator.ConfigData
+	namespace          string
 	serviceAccountName string
 	client             client.Client
 }
@@ -60,7 +60,7 @@ func (r *Resolver) WithClient(client client.Client) *Resolver {
 
 // GetVulnerabilityPlugin is a factory method that instantiates the vulnerabilityreport.Plugin.
 //
-// Starboard currently supports Trivy scanner in Standalone and ClientServer
+// Trivy-Operator currently supports Trivy scanner in Standalone and ClientServer
 // mode, and Aqua Enterprise scanner.
 //
 // You could add your own scanner by implementing the vulnerabilityreport.Plugin interface.
@@ -75,7 +75,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, trivyop
 		WithNamespace(r.namespace).
 		WithServiceAccountName(r.serviceAccountName).
 		WithClient(r.client).
-		WithStarboardConfig(r.config).
+		WithTrivyOperatorConfig(r.config).
 		Get()
 
 	switch scanner {
@@ -89,7 +89,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, trivyop
 
 // GetConfigAuditPlugin is a factory method that instantiates the configauditreport.Plugin.
 //
-// Starboard supports Polaris and Conftest as configuration auditing tools.
+// Trivy-Operator supports Polaris and Conftest as configuration auditing tools.
 //
 // You could add your own scanner by implementing the configauditreport.Plugin interface.
 func (r *Resolver) GetConfigAuditPlugin() (configauditreport.Plugin, trivyoperator.PluginContext, error) {

@@ -17,26 +17,26 @@ SOURCES := $(shell find . -name '*.go')
 
 IMAGE_TAG := dev
 STARBOARD_CLI_IMAGE := aquasec/starboard:$(IMAGE_TAG)
-STARBOARD_OPERATOR_IMAGE := aquasec/starboard-operator:$(IMAGE_TAG)
+TRIVY_OPERATOR_IMAGE := aquasec/trivy-operator:$(IMAGE_TAG)
 STARBOARD_SCANNER_AQUA_IMAGE := aquasec/starboard-scanner-aqua:$(IMAGE_TAG)
-STARBOARD_OPERATOR_IMAGE_UBI8 := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8
+TRIVY_OPERATOR_IMAGE_UBI8 := aquasec/trivy-operator:$(IMAGE_TAG)-ubi8
 
-MKDOCS_IMAGE := aquasec/mkdocs-material:starboard
+MKDOCS_IMAGE := aquasec/mkdocs-material:trivy-operator
 MKDOCS_PORT := 8000
 
 .PHONY: all
 all: build
 
 .PHONY: build
-build: build-starboard-cli build-starboard-operator build-starboard-scanner-aqua
+build: build-starboard-cli build-trivy-operator build-starboard-scanner-aqua
 
-## Builds the trivyoperator binary
+## Builds the trivy-operator binary
 build-starboard-cli: $(SOURCES)
 	CGO_ENABLED=0 go build -o ./bin/starboard ./cmd/starboard/main.go
 
 ## Builds the trivy-operator binary
-build-starboard-operator: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-operator ./cmd/starboard-operator/main.go
+build-trivy-operator: $(SOURCES)
+	CGO_ENABLED=0 GOOS=linux go build -o ./bin/trivy-operator ./cmd/trivy-operator/main.go
 
 ## Builds the scanner-aqua binary
 build-starboard-scanner-aqua: $(SOURCES)
@@ -59,7 +59,7 @@ compile-templates: get-qtc
 
 .PHONY: test
 ## Runs both unit and integration tests
-test: unit-tests itests-starboard itests-starboard-operator
+test: unit-tests itests-starboard itests-trivy-operator
 
 .PHONY: unit-tests
 ## Runs unit tests with code coverage enabled
@@ -83,9 +83,9 @@ itests-starboard: check-kubeconfig get-ginkgo
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport \
 	./itest/starboard
 
-.PHONY: itests-starboard-operator
+.PHONY: itests-trivy-operator
 ## Runs integration tests for Starboard Operator with code coverage enabled
-itests-starboard-operator: check-kubeconfig get-ginkgo
+itests-trivy-operator: check-kubeconfig get-ginkgo
 	@$(GINKGO) \
 	-coverprofile=coverage.txt \
 	-coverpkg=github.com/aquasecurity/starboard/pkg/operator,\
@@ -98,7 +98,7 @@ itests-starboard-operator: check-kubeconfig get-ginkgo
 	github.com/aquasecurity/starboard/pkg/configauditreport,\
 	github.com/aquasecurity/starboard/pkg/vulnerabilityreport,\
 	github.com/aquasecurity/starboard/pkg/kubebench \
-	./itest/starboard-operator
+	./itest/trivy-operator
 
 .PHONY: integration-operator-conftest
 integration-operator-conftest: check-kubeconfig get-ginkgo
@@ -110,7 +110,7 @@ integration-operator-conftest: check-kubeconfig get-ginkgo
 	github.com/aquasecurity/starboard/pkg/plugin,\
 	github.com/aquasecurity/starboard/pkg/plugin/conftest,\
 	github.com/aquasecurity/starboard/pkg/configauditreport \
-	./itest/starboard-operator/configauditreport/conftest
+	./itest/trivy-operator/configauditreport/conftest
 
 .PHONY: check-kubeconfig
 check-kubeconfig:
@@ -128,8 +128,8 @@ clean:
 ## Builds Docker images for all binaries
 docker-build: \
 	docker-build-starboard-cli \
-	docker-build-starboard-operator \
-	docker-build-starboard-operator-ubi8 \
+	docker-build-trivy-operator \
+	docker-build-trivy-operator-ubi8 \
 	docker-build-starboard-scanner-aqua
 
 ## Builds Docker image for Starboard CLI
@@ -137,23 +137,23 @@ docker-build-starboard-cli: build-starboard-cli
 	$(DOCKER) build --no-cache -t $(STARBOARD_CLI_IMAGE) -f build/starboard/Dockerfile bin
 
 ## Builds Docker image for Starboard operator
-docker-build-starboard-operator: build-starboard-operator
-	$(DOCKER) build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
+docker-build-trivy-operator: build-trivy-operator
+	$(DOCKER) build --no-cache -t $(TRIVY_OPERATOR_IMAGE) -f build/trivy-operator/Dockerfile bin
 	
 ## Builds Docker image for Starboard operator ubi8
-docker-build-starboard-operator-ubi8: build-starboard-operator
-	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8) bin
+docker-build-trivy-operator-ubi8: build-trivy-operator
+	$(DOCKER) build --no-cache -f build/trivy-operator/Dockerfile.ubi8 -t $(TRIVY_OPERATOR_IMAGE_UBI8) bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
 	$(DOCKER) build --no-cache -t $(STARBOARD_SCANNER_AQUA_IMAGE) -f build/scanner-aqua/Dockerfile bin
 
 kind-load-images: \
-	docker-build-starboard-operator \
-	docker-build-starboard-operator-ubi8
+	docker-build-trivy-operator \
+	docker-build-trivy-operator-ubi8
 	$(KIND) load docker-image \
-		$(STARBOARD_OPERATOR_IMAGE) \
-		$(STARBOARD_OPERATOR_IMAGE_UBI8)
+		$(TRIVY_OPERATOR_IMAGE) \
+		$(TRIVY_OPERATOR_IMAGE_UBI8)
 
 ## Runs MkDocs development server to preview the documentation page
 mkdocs-serve:
@@ -164,8 +164,8 @@ mkdocs-serve:
 	clean \
 	docker-build \
 	docker-build-starboard-cli \
-	docker-build-starboard-operator \
-	docker-build-starboard-operator-ubi8 \
+	docker-build-trivy-operator \
+	docker-build-trivy-operator-ubi8 \
 	docker-build-starboard-scanner-aqua \
 	kind-load-images \
 	mkdocs-serve

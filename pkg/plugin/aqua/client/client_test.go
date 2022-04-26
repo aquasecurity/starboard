@@ -69,7 +69,7 @@ var _ = Describe("The Aqua API client", func() {
 					VerifyBasicAuth("administrator", "bdclz"),
 					VerifyMimeType("application/json"),
 					VerifyHeader(http.Header{
-						"User-Agent": []string{"StarboardSecurityOperator"},
+						"User-Agent": []string{"TrivySecurityOperator"},
 					}),
 					RespondWithJSONEncodedPtr(&statusCode, &returnedRegistries),
 				),
@@ -150,7 +150,7 @@ var _ = Describe("The Aqua API client", func() {
 					VerifyBasicAuth("administrator", "bdclz"),
 					VerifyMimeType("application/json"),
 					VerifyHeader(http.Header{
-						"User-Agent": []string{"StarboardSecurityOperator"},
+						"User-Agent": []string{"TrivySecurityOperator"},
 					}),
 					RespondWithJSONEncodedPtr(&statusCode, &returnedVulnerabilities),
 				),

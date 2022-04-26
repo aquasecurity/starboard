@@ -55,7 +55,7 @@ func (r *CISKubeBenchReportReconciler) SetupWithManager(mgr ctrl.Manager) error 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.Job{}, builder.WithPredicates(
 			InNamespace(r.Config.Namespace),
-			ManagedByStarboardOperator,
+			ManagedByTrivyOperator,
 			IsKubeBenchReportScan,
 			JobHasAnyCondition,
 		)).
@@ -177,7 +177,7 @@ func (r *CISKubeBenchReportReconciler) newScanJob(node *corev1.Node) (*batchv1.J
 	labelsSet := labels.Set{
 		trivyoperator.LabelResourceKind:           string(kube.KindNode),
 		trivyoperator.LabelResourceName:           node.Name,
-		trivyoperator.LabelK8SAppManagedBy:        trivyoperator.AppStarboard,
+		trivyoperator.LabelK8SAppManagedBy:        trivyoperator.AppTrivyOperator,
 		trivyoperator.LabelKubeBenchReportScanner: "true",
 	}
 

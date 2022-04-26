@@ -1,7 +1,7 @@
 {
   "type": "excalidraw",
   "version": 2,
-  "source": "https://excalidraw.com",
+  "source": "https://excalidraw-jetbrains-plugin",
   "elements": [
     {
       "type": "text",
@@ -27,7 +27,7 @@
       "boundElementIds": [],
       "fontSize": 36,
       "fontFamily": 1,
-      "text": "Starboard and Private Container Registries",
+      "text": "Trivy-Operator and Private Container Registries",
       "baseline": 32,
       "textAlign": "left",
       "verticalAlign": "top"
@@ -605,7 +605,7 @@
       "boundElementIds": [],
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Namespace: starboard / starboard-operator",
+      "text": "Namespace: trivy-system",
       "baseline": 18,
       "textAlign": "left",
       "verticalAlign": "top"
@@ -959,7 +959,7 @@
       "boundElementIds": [],
       "fontSize": 28,
       "fontFamily": 1,
-      "text": "Starboard CLI /\nStarboard Operator",
+      "text": "Trivy-Operator",
       "baseline": 60,
       "textAlign": "left",
       "verticalAlign": "top"
@@ -1434,7 +1434,7 @@
     }
   ],
   "appState": {
-    "viewBackgroundColor": "#ffffff",
-    "gridSize": null
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
   }
 }

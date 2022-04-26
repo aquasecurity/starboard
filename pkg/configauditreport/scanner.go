@@ -14,8 +14,8 @@ import (
 )
 
 type Scanner struct {
-	buildInfo trivyoperator.BuildInfo
-	scheme    *runtime.Scheme
+	buildInfo      trivyoperator.BuildInfo
+	scheme         *runtime.Scheme
 	client         client.Client
 	objectResolver *kube.ObjectResolver
 }
@@ -78,7 +78,7 @@ func (s *Scanner) Scan(ctx context.Context, resourceRef kube.ObjectRef) (*Report
 
 	data := v1alpha1.ConfigAuditReportData{
 		Scanner: v1alpha1.Scanner{
-			Name:    "Starboard",
+			Name:    "Trivy-Operator",
 			Vendor:  "Aqua Security",
 			Version: s.buildInfo.Version,
 		},

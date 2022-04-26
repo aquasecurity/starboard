@@ -66,7 +66,7 @@ const (
 	keyComplianceFailEntriesLimit        = "compliance.failEntriesLimit"
 )
 
-// ConfigData holds Starboard configuration settings as a set of key-value
+// ConfigData holds Trivy-operator configuration settings as a set of key-value
 // pairs.
 type ConfigData map[string]string
 
@@ -251,7 +251,7 @@ func (c *configManager) EnsureDefault(ctx context.Context) error {
 				Namespace: c.namespace,
 				Name:      ConfigMapName,
 				Labels: labels.Set{
-					LabelK8SAppManagedBy: "trivyoperator",
+					LabelK8SAppManagedBy: "trivy-operator",
 				},
 			},
 			Data: GetDefaultConfig(),

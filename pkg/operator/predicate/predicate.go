@@ -77,14 +77,14 @@ var InNamespace = func(namespace string) predicate.Predicate {
 	})
 }
 
-// ManagedByStarboardOperator is a predicate.Predicate that returns true if the
-// specified client.Object is managed by Starboard.
+// ManagedByTrivyOperator is a predicate.Predicate that returns true if the
+// specified client.Object is managed by Trivy-Operator.
 //
-// For example, pods controlled by jobs scheduled by Starboard Operator are
+// For example, pods controlled by jobs scheduled by Trivy-Operator Operator are
 // labeled with `app.kubernetes.io/managed-by=trivyoperator`.
-var ManagedByStarboardOperator = predicate.NewPredicateFuncs(func(obj client.Object) bool {
+var ManagedByTrivyOperator = predicate.NewPredicateFuncs(func(obj client.Object) bool {
 	if managedBy, ok := obj.GetLabels()[trivyoperator.LabelK8SAppManagedBy]; ok {
-		return managedBy == trivyoperator.AppStarboard
+		return managedBy == trivyoperator.AppTrivyOperator
 	}
 	return false
 })

@@ -34,7 +34,7 @@ func loadResource(filePath string, resource interface{}) error {
 
 var _ = ginkgo.Describe("cluster compliance report", func() {
 	logger := log.Log.WithName("operator")
-	config := getStarboardConfig()
+	config := getTrivyOperatorConfig()
 	ginkgo.Context("reconcile compliance spec report with cis-bench anc audit-config data and validate compliance reports data and requeue", func() {
 		var cisBenchList v1alpha1.CISKubeBenchReportList
 		err := loadResource("./testdata/fixture/cisBenchmarkReportList.json", &cisBenchList)
@@ -213,6 +213,6 @@ func getDetailReport(ctx context.Context, namespaceName types.NamespacedName, cl
 	return &report, nil
 }
 
-func getStarboardConfig() trivyoperator.ConfigData {
+func getTrivyOperatorConfig() trivyoperator.ConfigData {
 	return trivyoperator.ConfigData{"compliance.failEntriesLimit": "1"}
 }

@@ -28,7 +28,7 @@ func (c PluginConfig) GetRequiredData(key string) (string, error) {
 	return value, nil
 }
 
-// PluginContext is plugin's execution context within the Starboard toolkit.
+// PluginContext is plugin's execution context within the Trivy-operator toolkit.
 // The context is used to grant access to other methods so that this plugin
 // can interact with the toolkit.
 type PluginContext interface {
@@ -38,14 +38,14 @@ type PluginContext interface {
 	GetConfig() (PluginConfig, error)
 	// EnsureConfig ensures the PluginConfig, typically when a plugin is initialized.
 	EnsureConfig(config PluginConfig) error
-	// GetNamespace return the name of the K8s Namespace where Starboard creates Jobs
+	// GetNamespace return the name of the K8s Namespace where Trivy-operator creates Jobs
 	// and other helper objects.
 	GetNamespace() string
 	// GetServiceAccountName return the name of the K8s Service Account used to run workloads
-	// created by Starboard.
+	// created by Trivy-operator.
 	GetServiceAccountName() string
-	// GetStarboardConfig returns trivyoperator configuration.
-	GetStarboardConfig() ConfigData
+	// GetTrivyOperatorConfig returns trivyoperator configuration.
+	GetTrivyOperatorConfig() ConfigData
 }
 
 // GetPluginConfigMapName returns the name of a ConfigMap used to configure a plugin
@@ -56,11 +56,11 @@ func GetPluginConfigMapName(pluginName string) string {
 }
 
 type pluginContext struct {
-	name               string
-	client             client.Client
-	namespace          string
-	serviceAccountName string
-	starboardConfig    ConfigData
+	name                string
+	client              client.Client
+	namespace           string
+	serviceAccountName  string
+	trivyOperatorConfig ConfigData
 }
 
 func (p *pluginContext) GetName() string {
@@ -124,8 +124,8 @@ func (p *pluginContext) GetServiceAccountName() string {
 	return p.serviceAccountName
 }
 
-func (p *pluginContext) GetStarboardConfig() ConfigData {
-	return p.starboardConfig
+func (p *pluginContext) GetTrivyOperatorConfig() ConfigData {
+	return p.trivyOperatorConfig
 }
 
 type PluginContextBuilder struct {
@@ -158,8 +158,8 @@ func (b *PluginContextBuilder) WithServiceAccountName(name string) *PluginContex
 	return b
 }
 
-func (b *PluginContextBuilder) WithStarboardConfig(config ConfigData) *PluginContextBuilder {
-	b.ctx.starboardConfig = config
+func (b *PluginContextBuilder) WithTrivyOperatorConfig(config ConfigData) *PluginContextBuilder {
+	b.ctx.trivyOperatorConfig = config
 	return b
 }
 

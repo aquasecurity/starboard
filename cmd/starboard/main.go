@@ -39,7 +39,7 @@ func main() {
 
 func executable(args []string) string {
 	if strings.HasPrefix(filepath.Base(args[0]), "kubectl-") {
-		return "kubectl trivyoperator"
+		return "kubectl starboard"
 	}
-	return "trivyoperator"
+	return "starboard"
 }

@@ -81,7 +81,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
-				Not(ManagedByStarboardOperator),
+				Not(ManagedByTrivyOperator),
 				Not(IsLeaderElectionResource),
 				Not(IsBeingTerminated),
 				installModePredicate,
@@ -100,7 +100,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
-				Not(ManagedByStarboardOperator),
+				Not(ManagedByTrivyOperator),
 				Not(IsBeingTerminated),
 			)).
 			Owns(resource.ownsObject).
@@ -113,7 +113,7 @@ func (r *ConfigAuditReportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.Job{}, builder.WithPredicates(
 			InNamespace(r.Config.Namespace),
-			ManagedByStarboardOperator,
+			ManagedByTrivyOperator,
 			IsConfigAuditReportScan,
 			JobHasAnyCondition,
 		)).

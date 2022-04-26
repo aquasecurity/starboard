@@ -10,9 +10,9 @@
         "labels": {
           "plugin-config-hash": "78bf5dccc5",
           "resource-spec-hash": "65c6f56fd9",
-          "starboard.resource.kind": "Pod",
-          "starboard.resource.name": "rss-site",
-          "starboard.resource.namespace": "default"
+          "trivy-operator.resource.kind": "Pod",
+          "trivy-operator.resource.name": "rss-site",
+          "trivy-operator.resource.namespace": "default"
         },
         "name": "pod-rss-site",
         "namespace": "default",
@@ -113,9 +113,9 @@
         "labels": {
           "plugin-config-hash": "78bf5dccc5",
           "resource-spec-hash": "b6cddc7bd",
-          "starboard.resource.kind": "ReplicaSet",
-          "starboard.resource.name": "memcached-sample-6c765df685",
-          "starboard.resource.namespace": "default"
+          "trivy-operator.resource.kind": "ReplicaSet",
+          "trivy-operator.resource.name": "memcached-sample-6c765df685",
+          "trivy-operator.resource.namespace": "default"
         },
         "name": "replicaset-memcached-sample-6c765df685",
         "namespace": "default",

@@ -5,11 +5,11 @@ users about security issues in Kubernetes workloads and infrastructure component
 might be, they tend to sit alongside Kubernetes, with each new product requiring users to learn a separate set of
 commands and installation steps in order to operate them and find critical security information.
 
-Starboard attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
+Trivy-Operator attempts to integrate heterogeneous security tools by incorporating their outputs into Kubernetes CRDs
 (Custom Resource Definitions) and from there, making security reports accessible through the Kubernetes API. This way
 users can find and view the risks that relate to different resources in what we call a Kubernetes-native way.
 
-Starboard provides:
+Trivy-Operator provides:
 
 - Automated vulnerability scanning for Kubernetes workloads.
 - Automated configuration audits for Kubernetes resources with predefined rules or custom Open Policy Agent (OPA) policies.
@@ -20,11 +20,11 @@ Starboard provides:
 - The [Octant Plugin] and the [Lens Extension] that make security reports available through familiar Kubernetes interfaces.
 
 <figure>
-  <img src="./images/starboard-overview.png" />
-  <figcaption>The high-level design diagram of Starboard toolkit.</figcaption>
+  <img src="images/trivy-operator-overview.png" />
+  <figcaption>The high-level design diagram of Trivy-Operator toolkit.</figcaption>
 </figure>
 
-Starboard can be used:
+Trivy-Operator can be used:
 
 - As a [Kubernetes operator] to automatically update security reports in response to workload and other changes on a
   Kubernetes cluster - for example, initiating a vulnerability scan when a new Pod is started or running CIS Benchmarks
@@ -52,7 +52,7 @@ Starboard can be used:
 [Octant Plugin]: ./integrations/octant.md
 [Lens Extension]: integrations/lens.md
 [kubectl]: https://kubernetes.io/docs/reference/kubectl/
-[Starboard: The Kubernetes-Native Toolkit for Unifying Security]: https://blog.aquasec.com/starboard-kubernetes-tools
+[Trivy-Operator: The Kubernetes-Native Toolkit for Unifying Security]: https://blog.aquasec.com/starboard-kubernetes-tools
 [GitHub Discussions]: https://github.com/aquasecurity/starboard/discussions/
 [Slack]: https://slack.aquasec.com/
 [kubecon-video]: https://www.youtube.com/watch?v=cgcwIY1HVI0

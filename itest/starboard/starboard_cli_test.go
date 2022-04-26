@@ -38,7 +38,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	BeforeEach(func() {
 		err := cmd.Run(versionInfo, []string{
-			"trivyoperator", "install",
+			"starboard", "install",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
@@ -49,7 +49,7 @@ var _ = Describe("Starboard CLI", func() {
 		It("should install Starboard", func() {
 
 			crdList, err := customResourceDefinitions.List(context.TODO(), metav1.ListOptions{
-				LabelSelector: "app.kubernetes.io/managed-by=trivyoperator",
+				LabelSelector: "app.kubernetes.io/managed-by=trivy-operator",
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -218,7 +218,7 @@ var _ = Describe("Starboard CLI", func() {
 		It("should print the current version of the executable binary", func() {
 			out := NewBuffer()
 			err := cmd.Run(versionInfo, []string{
-				"trivyoperator",
+				"starboard",
 				"version",
 			}, out, out)
 			Expect(err).ToNot(HaveOccurred())
@@ -250,7 +250,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "pod/" + pod.Name,
 					"--namespace", pod.Namespace,
 					"-v", starboardCLILogLevel,
@@ -294,7 +294,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReports", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "pod/" + pod.Name,
 					"--namespace", pod.Namespace,
 					"-v", starboardCLILogLevel,
@@ -360,7 +360,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "po/" + pod.Name,
 					"--namespace", pod.Namespace,
 					"-v", starboardCLILogLevel,
@@ -432,7 +432,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "po/" + pod.Name,
 					"--namespace", pod.Namespace,
 					"-v", starboardCLILogLevel,
@@ -504,7 +504,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "replicaset/" + rs.Name,
 					"--namespace", rs.Namespace,
 					"-v", starboardCLILogLevel,
@@ -569,7 +569,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "rc/" + rc.Name,
 					"--namespace", rc.Namespace,
 					"-v", starboardCLILogLevel,
@@ -620,7 +620,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "deployment/" + deploy.Name,
 					"--namespace", deploy.Namespace,
 					"-v", starboardCLILogLevel,
@@ -674,7 +674,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "deployment/" + deploy.Name,
 					"--namespace", deploy.Namespace,
 					"-v", starboardCLILogLevel,
@@ -744,7 +744,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "sts/" + sts.Name,
 					"--namespace", sts.Namespace,
 					"-v", starboardCLILogLevel,
@@ -810,7 +810,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("Should create VulnerabilityReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "vulnerabilityreports", "ds/" + ds.Name,
 					"--namespace", ds.Namespace,
 					"-v", starboardCLILogLevel,
@@ -867,7 +867,7 @@ var _ = Describe("Starboard CLI", func() {
 						stderr := NewBuffer()
 
 						err := cmd.Run(versionInfo, []string{
-							"trivyoperator", "get", "vulnerabilityreports",
+							"starboard", "get", "vulnerabilityreports",
 							"deployment/" + deploy.Name,
 							"--namespace", deploy.Namespace,
 							"--output", "yaml",
@@ -969,7 +969,7 @@ var _ = Describe("Starboard CLI", func() {
 						stderr := NewBuffer()
 
 						err := cmd.Run(versionInfo, []string{
-							"trivyoperator", "get", "vulnerabilities",
+							"starboard", "get", "vulnerabilities",
 							"deployment/" + deploy.Name,
 							"--namespace", testNamespace.Name,
 							"--output", "yaml",
@@ -997,7 +997,7 @@ var _ = Describe("Starboard CLI", func() {
 						stderr := NewBuffer()
 
 						err := cmd.Run(versionInfo, []string{
-							"trivyoperator", "get", "vulnerabilities",
+							"starboard", "get", "vulnerabilities",
 							"replicaset/" + replicasetName,
 							"--namespace", testNamespace.Name,
 							"--output", "yaml",
@@ -1025,7 +1025,7 @@ var _ = Describe("Starboard CLI", func() {
 						stderr := NewBuffer()
 
 						err := cmd.Run(versionInfo, []string{
-							"trivyoperator", "get", "vulnerabilities",
+							"starboard", "get", "vulnerabilities",
 							"pod/" + podName,
 							"--namespace", testNamespace.Name,
 							"--output", "yaml",
@@ -1084,7 +1084,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create ConfigAuditReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "configauditreports", "pod" + "/" + object.GetName(),
 					"--namespace", object.GetNamespace(),
 					"-v", starboardCLILogLevel,
@@ -1118,7 +1118,7 @@ var _ = Describe("Starboard CLI", func() {
 			BeforeEach(func() {
 				ctx = context.TODO()
 				object = helper.NewPod().
-					WithRandomName("nginx-and-tomcat-trivyoperator").
+					WithRandomName("nginx-and-tomcat-starboard").
 					WithNamespace(testNamespace.Name).
 					WithContainer("nginx-container", "nginx:1.16").
 					WithContainer("tomcat-container", "tomcat:8").
@@ -1129,7 +1129,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create ConfigAuditReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "configauditreports", "pod" + "/" + object.GetName(),
 					"--namespace", object.GetNamespace(),
 					"-v", starboardCLILogLevel,
@@ -1197,7 +1197,7 @@ var _ = Describe("Starboard CLI", func() {
 
 			It("should create ConfigAuditReport", func() {
 				err := cmd.Run(versionInfo, []string{
-					"trivyoperator",
+					"starboard",
 					"scan", "configauditreports", "cronjob" + "/" + object.GetName(),
 					"--namespace", object.GetNamespace(),
 					"-v", starboardCLILogLevel,
@@ -1228,7 +1228,7 @@ var _ = Describe("Starboard CLI", func() {
 
 		It("should create CISKubeBenchReports", func() {
 			err := cmd.Run(versionInfo, []string{
-				"trivyoperator",
+				"starboard",
 				"scan", "ciskubebenchreports",
 				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
@@ -1276,7 +1276,7 @@ var _ = Describe("Starboard CLI", func() {
 		It("should create nsa compliance report", func() {
 			// create ciskubebenchreports
 			err := cmd.Run(versionInfo, []string{
-				"trivyoperator",
+				"starboard",
 				"scan", "ciskubebenchreports",
 				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
@@ -1293,7 +1293,7 @@ var _ = Describe("Starboard CLI", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			err = cmd.Run(versionInfo, []string{
-				"trivyoperator",
+				"starboard",
 				"scan", "configauditreports", "pod" + "/" + object.GetName(),
 				"--namespace", object.GetNamespace(),
 				"-v", starboardCLILogLevel,
@@ -1304,7 +1304,7 @@ var _ = Describe("Starboard CLI", func() {
 			stdout := NewBuffer()
 			stderr := NewBuffer()
 			err = cmd.Run(versionInfo, []string{
-				"trivyoperator", "get", "clustercompliancereports",
+				"starboard", "get", "clustercompliancereports",
 				"nsa", "--output", "yaml",
 				"-v", starboardCLILogLevel,
 			}, stdout, stderr)
@@ -1321,7 +1321,7 @@ var _ = Describe("Starboard CLI", func() {
 			stdout = NewBuffer()
 			stderr = NewBuffer()
 			err = cmd.Run(versionInfo, []string{
-				"trivyoperator", "get", "clustercompliancereports",
+				"starboard", "get", "clustercompliancereports",
 				"nsa", "--output", "yaml", "--detail",
 				"-v", starboardCLILogLevel,
 			}, stdout, stderr)
@@ -1357,7 +1357,7 @@ var _ = Describe("Starboard CLI", func() {
 
 		It("should create KubeHunterReport", func() {
 			err := cmd.Run(versionInfo, []string{
-				"trivyoperator",
+				"starboard",
 				"scan", "kubehunterreports",
 				"-v", starboardCLILogLevel,
 			}, GinkgoWriter, GinkgoWriter)
@@ -1375,7 +1375,7 @@ var _ = Describe("Starboard CLI", func() {
 
 	AfterEach(func() {
 		err := cmd.Run(versionInfo, []string{
-			"trivyoperator",
+			"starboard",
 			"uninstall",
 			"-v", starboardCLILogLevel,
 		}, GinkgoWriter, GinkgoWriter)

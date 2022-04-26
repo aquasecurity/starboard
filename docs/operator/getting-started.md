@@ -9,9 +9,9 @@ of these Kubernetes playgrounds:
 * [Katacoda]
 * [Play with Kubernetes]
 
-You also need the Starboard Operator to be installed in the `starboard-system` namespace, e.g. with
+You also need the Trivy-Operator to be installed in the `trivy-system` namespace, e.g. with
 [kubectl](./installation/kubectl.md) or [Helm](./installation/helm.md). Let's also assume that the operator is
-configured to discover built-in Kubernetes resources in all namespaces, except `kube-system` and `starboard-system`.
+configured to discover built-in Kubernetes resources in all namespaces, except `kube-system` and `trivy-system`.
 
 ## Workloads Scanning
 
@@ -49,7 +49,7 @@ kubectl get configauditreports -o wide
 
 ```
 NAME                          SCANNER     AGE    CRITICAL  HIGH   MEDIUM   LOW
-replicaset-nginx-78449c65d4   Starboard   2m7s   0         0      6        7
+replicaset-nginx-78449c65d4   Trivy-Operator   2m7s   0         0      6        7
 ```
 </details>
 
@@ -182,7 +182,7 @@ No resources found in default namespace.
 !!! Note
     You can define the validity period for VulnerabilityReports by setting the duration as the value of the
     `OPERATOR_VULNERABILITY_SCANNER_REPORT_TTL` environment variable. For example, setting the value to `24h`
-    would delete reports after 24 hours. When a VulnerabilityReport gets deleted Starboard Operator will automatically
+    would delete reports after 24 hours. When a VulnerabilityReport gets deleted Trivy-Operator will automatically
     rescan the underlying workload. Assuming that the vulnerability scanner has updated its vulnerability database,
     new VulnerabilityReports will contain the latest vulnerabilities.
 
@@ -248,7 +248,7 @@ kube-system      └─Pod/kube-scheduler-kind-control-plane           True     
 
 - Find out how the operator scans workloads that use container images from [Private Registries].
 - By default, the operator uses Trivy as [Vulnerability Scanner] and Polaris as [Configuration Checker], but you can
-  choose other tools that are integrated with Starboard or even implement you own plugin.
+  choose other tools that are integrated with Trivy-Operator or even implement you own plugin.
 
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [kind]: https://kind.sigs.k8s.io/docs/

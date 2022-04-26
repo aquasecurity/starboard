@@ -1,7 +1,7 @@
 {
   "type": "excalidraw",
   "version": 2,
-  "source": "https://excalidraw.com",
+  "source": "https://excalidraw-jetbrains-plugin",
   "elements": [
     {
       "type": "rectangle",
@@ -2051,8 +2051,8 @@
     },
     {
       "type": "text",
-      "version": 250,
-      "versionNonce": 194861602,
+      "version": 255,
+      "versionNonce": 1815017453,
       "isDeleted": false,
       "id": "ESnqmWcAEvQeqL8dTU9jj",
       "fillStyle": "hachure",
@@ -2065,7 +2065,7 @@
       "y": 156.98207092285156,
       "strokeColor": "#000000",
       "backgroundColor": "transparent",
-      "width": 313,
+      "width": 259,
       "height": 25,
       "seed": 1234461845,
       "groupIds": [],
@@ -2073,7 +2073,7 @@
       "boundElementIds": [],
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Namespace: starboard-operator",
+      "text": "Namespace: trivy-operator",
       "baseline": 18,
       "textAlign": "left",
       "verticalAlign": "top"

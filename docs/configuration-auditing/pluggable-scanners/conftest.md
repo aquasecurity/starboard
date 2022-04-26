@@ -24,10 +24,10 @@ deny[res] {
 To integrate Conftest scanner change the value of the `configAuditReports.scanner` property to `Conftest`:
 
 ```
-STARBOARD_NAMESPACE=<starboard_namespace>
+TRIVY_OPERATOR_NAMESPACE=<TRIVY_OPERATOR_NAMESPACE>
 ```
 ```
-kubectl patch cm starboard -n $STARBOARD_NAMESPACE \
+kubectl patch cm starboard -n $TRIVY_OPERATOR_NAMESPACE \
   --type merge \
   -p "$(cat <<EOF
 {
@@ -60,10 +60,10 @@ As an example, let's create the `starboard-conftest-config` ConfigMap with [file
 [uses_image_tag_latest.rego] policies. Those two are very common checks performed by many other tools:
 
 ```
-STARBOARD_NAMESPACE=<starboard_namespace>
+TRIVY_OPERATOR_NAMESPACE=<TRIVY_OPERATOR_NAMESPACE>
 ```
 ```
-kubectl create configmap starboard-conftest-config --namespace $STARBOARD_NAMESPACE \
+kubectl create configmap starboard-conftest-config --namespace $TRIVY_OPERATOR_NAMESPACE \
   --from-literal=conftest.imageRef=openpolicyagent/conftest:v0.30.0 \
   --from-file=conftest.library.kubernetes.rego=kubernetes/lib/kubernetes.rego \
   --from-file=conftest.library.utils.rego=kubernetes/lib/utils.rego \
@@ -77,11 +77,11 @@ kubectl create configmap starboard-conftest-config --namespace $STARBOARD_NAMESP
 
     For the operator the Helm install command may look as follows.
     ```
-    STARBOARD_NAMESPACE=<starboard_namespace>
+    TRIVY_OPERATOR_NAMESPACE=<TRIVY_OPERATOR_NAMESPACE>
     ```
     ```
     helm install starboard-operator aqua/starboard-operator \
-      --namespace $STARBOARD_NAMESPACE --create-namespace \
+      --namespace $TRIVY_OPERATOR_NAMESPACE --create-namespace \
       --set="targetNamespaces=default" \
       --set="starboard.configAuditReportsPlugin=Conftest" \
       --set-file="conftest.library.kubernetes\.rego=kubernetes/lib/kubernetes.rego" \

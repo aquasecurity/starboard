@@ -5,8 +5,8 @@
     "creationTimestamp": "2022-02-23T12:52:35Z",
     "generation": 1,
     "labels": {
-      "starboard.resource.kind": "Node",
-      "starboard.resource.name": "local-control-plane"
+      "trivy-operator.resource.kind": "Node",
+      "trivy-operator.resource.name": "local-control-plane"
     },
     "name": "local-control-plane",
     "ownerReferences": [

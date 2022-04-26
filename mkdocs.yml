@@ -1,4 +1,4 @@
-site_name: Starboard
+site_name: Trivy Operator
 site_url: https://aquasecurity.github.io/trivyoperator/
 site_description: Kubernetes-native security toolkit
 docs_dir: docs/
@@ -9,7 +9,7 @@ copyright: Copyright 2019-2022 Aqua Security Software Ltd.
 
 nav:
   - Introduction: index.md
-  - Starboard Operator:
+  - Trivy Operator:
       - Overview: operator/index.md
       - Installation:
           - kubectl: operator/installation/kubectl.md

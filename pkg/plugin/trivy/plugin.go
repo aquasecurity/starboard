@@ -991,7 +991,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx trivyoperator.PluginContext, 
 	pullPolicy := corev1.PullIfNotPresent
 	// nodeName to schedule scan job explicitly on specific node.
 	var nodeName string
-	if !ctx.GetStarboardConfig().VulnerabilityScanJobsInSameNamespace() {
+	if !ctx.GetTrivyOperatorConfig().VulnerabilityScanJobsInSameNamespace() {
 		// get nodeName from running pods.
 		nodeName, err = p.objectResolver.GetNodeName(context.Background(), workload)
 		if err != nil {
@@ -1192,7 +1192,7 @@ func (p *plugin) getPodSpecForStandaloneFSMode(ctx trivyoperator.PluginContext, 
 		SecurityContext:              &corev1.PodSecurityContext{},
 	}
 
-	if !ctx.GetStarboardConfig().VulnerabilityScanJobsInSameNamespace() {
+	if !ctx.GetTrivyOperatorConfig().VulnerabilityScanJobsInSameNamespace() {
 		// schedule scan job explicitly on specific node.
 		podSpec.NodeName = nodeName
 	}
