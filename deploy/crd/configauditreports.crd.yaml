@@ -51,7 +51,6 @@ spec:
     plural: configauditreports
     kind: ConfigAuditReport
     listKind: ConfigAuditReportList
-    categories:
-      - all
+    categories: []
     shortNames:
       - configaudit
