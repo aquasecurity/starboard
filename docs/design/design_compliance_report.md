@@ -97,7 +97,7 @@ spec:
         checks:
           - id: KSV010
       severity: 'HIGH'
-    - name:  Run with root privileges or with root group membership
+    - name: Run with root privileges or with root group membership
       description: 'Controls whether container applications can run with root privileges or with root group membership'
       id: '1.6'
       kinds:
