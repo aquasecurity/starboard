@@ -1,6 +1,8 @@
 package configauditreport_test
 
 import (
+	"encoding/json"
+	"fmt"
 	. "github.com/onsi/gomega"
 
 	"io"
@@ -233,12 +235,17 @@ func TestScanJobBuilder(t *testing.T) {
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).NotTo(BeNil())
+		b, err := json.Marshal(job)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(b))
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-5bfbdd65c9",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "7c48697ccf",
+					starboard.LabelResourceSpecHash:         "66f8596c77",
 					starboard.LabelPluginConfigHash:         "hash-test",
 					starboard.LabelConfigAuditReportScanner: "plugin-test",
 					starboard.LabelK8SAppManagedBy:          "starboard",
@@ -257,7 +264,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "7c48697ccf",
+							starboard.LabelResourceSpecHash:         "66f8596c77",
 							starboard.LabelPluginConfigHash:         "hash-test",
 							starboard.LabelConfigAuditReportScanner: "plugin-test",
 							starboard.LabelK8SAppManagedBy:          "starboard",
