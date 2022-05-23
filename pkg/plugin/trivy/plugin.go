@@ -44,6 +44,7 @@ const (
 	keyTrivySkipFiles              = "trivy.skipFiles"
 	keyTrivySkipDirs               = "trivy.skipDirs"
 	keyTrivyDBRepository           = "trivy.dbRepository"
+	keyTrivyGoogleAppCreds         = "trivy.googleAppCreds"
 
 	keyTrivyServerURL           = "trivy.serverURL"
 	keyTrivyServerTokenHeader   = "trivy.serverTokenHeader"
@@ -132,6 +133,15 @@ func (c Config) GetServerInsecure() bool {
 func (c Config) IgnoreFileExists() bool {
 	_, ok := c.Data[keyTrivyIgnoreFile]
 	return ok
+}
+
+func (c Config) GoogleCredsFileExists() bool {
+	_, ok := c.Data[keyTrivyGoogleAppCreds]
+	return ok
+}
+
+func (c Config) GetGoogleCredsFile() (string, error) {
+	return c.GetRequiredData(keyTrivyGoogleAppCreds)
 }
 
 func (c Config) IgnoreUnfixed() bool {
@@ -314,6 +324,8 @@ const (
 	ignoreFileVolumeName        = "ignorefile"
 	FsSharedVolumeName          = "starboard"
 	SharedVolumeLocationOfTrivy = "/var/starboard/trivy"
+	googleCredsVolumeName       = "google-app-creds"
+	googleCredsSecretName       = "starboard-trivy-google-creds"
 )
 
 // In the Standalone mode there is the init container responsible for
@@ -456,6 +468,23 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 		},
 	}
 
+	if config.GoogleCredsFileExists() {
+		volumes = append(volumes, corev1.Volume{
+			Name: googleCredsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: googleCredsSecretName,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      googleCredsVolumeName,
+			ReadOnly:  true,
+			MountPath: "/tmp/google-creds",
+		})
+	}
+
 	if config.IgnoreFileExists() {
 		volumes = append(volumes, corev1.Volume{
 			Name: ignoreFileVolumeName,
@@ -580,6 +609,15 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 					},
 				},
 			},
+		}
+
+		if config.GoogleCredsFileExists() {
+			googleCredsEnv, _ := config.GetGoogleCredsFile()
+			googleCredsEnv = "/tmp/google-creds/" + googleCredsEnv
+			env = append(env, corev1.EnvVar{
+				Name:  "GOOGLE_APPLICATION_CREDENTIALS",
+				Value: googleCredsEnv,
+			})
 		}
 
 		if config.IgnoreFileExists() {
@@ -881,6 +919,15 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			})
 		}
 
+		if config.GoogleCredsFileExists() {
+			googleCredsEnv, _ := config.GetGoogleCredsFile()
+			googleCredsEnv = "/tmp/google-creds/" + googleCredsEnv
+			env = append(env, corev1.EnvVar{
+				Name:  "GOOGLE_APPLICATION_CREDENTIALS",
+				Value: googleCredsEnv,
+			})
+		}
+
 		env, err = p.appendTrivyInsecureEnv(config, container.Image, env)
 		if err != nil {
 			return corev1.PodSpec{}, nil, err
@@ -895,6 +942,23 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 			env = append(env, corev1.EnvVar{
 				Name:  "TRIVY_INSECURE",
 				Value: "true",
+			})
+		}
+
+		if config.GoogleCredsFileExists() {
+			volumes = append(volumes, corev1.Volume{
+				Name: googleCredsVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: googleCredsSecretName,
+					},
+				},
+			})
+	
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      googleCredsVolumeName,
+				ReadOnly:  true,
+				MountPath: "/tmp/google-creds",
 			})
 		}
 
