@@ -134,6 +134,17 @@ data:
     }
 ```
 
+When using the Helm chart, this can be accomplished as follows:
+
+```yaml
+additionalPolicies:
+  policy:
+    recommended_labels:
+    kinds: "*"
+    rego: |-
+      ...
+```
+
 In this example, to add a new policy, you must define two data entries in the `starboard-policies-config`
 ConfigMap:
 

@@ -863,3 +863,12 @@ data:
     kubernetes.namespace]))\n\n\tres := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\":
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
+  {{- with .Values.additionalPolicies }}
+  {{- range $key, $val := .library }}
+  library.{{ $key }}: {{ $val | quote }}
+  {{- end }}
+  {{- range $key, $val := .policy }}
+  policy.{{ $key }}.rego: {{ $val.rego | quote }}
+  policy.{{ $key }}.kinds: {{ $val.kinds | quote }}
+  {{- end }}
+  {{- end }}
