@@ -8,6 +8,7 @@ We will not be accepting new features/pull requests/issues.
 we encourage you to contribute to [Trivy-Operator](https://github.com/aquasecurity/trivy-operator) and [Trivy CLI](https://github.com/aquasecurity/trivy) and influence the future of Trivy Kubernetes.
 
 for more info and [discussions](https://github.com/aquasecurity/starboard/discussions/1173)
+
 ![Starboard logo](docs/images/starboard-logo.png)
 
 > Kubernetes-native security toolkit.
