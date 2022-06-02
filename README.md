@@ -9,6 +9,8 @@ we encourage you to contribute to [Trivy-Operator](https://github.com/aquasecuri
 
 for more info and [discussions](https://github.com/aquasecurity/starboard/discussions/1173)
 
+Checkout the latest : [What's next for Trivy Q&A](https://www.youtube.com/watch?v=u3cixRRJyYg)
+
 ![Starboard logo](docs/images/starboard-logo.png)
 
 > Kubernetes-native security toolkit.
