@@ -1,9 +1,15 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5
 
+LABEL name="Starboard" \
+      vendor="Aqua Security Software Ltd." \
+      version="v0.15.7" \
+      summary="Starboard Operator."
+
 RUN microdnf install shadow-utils
 RUN useradd -u 10000 starboard
 WORKDIR /opt/bin/
 COPY starboard-operator /usr/local/bin/starboard-operator
+COPY LICENSE LICENSE
 
 USER starboard
 
