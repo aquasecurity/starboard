@@ -2,7 +2,7 @@
     "scanner": {
         "name": "kube-bench",
         "vendor": "Aqua Security",
-        "version": "v0.6.6"
+        "version": "v0.6.9"
     },
     "summary": {
         "passCount": 41,

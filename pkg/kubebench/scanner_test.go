@@ -26,7 +26,7 @@ var (
 
 func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 	config := starboard.ConfigData{
-		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.6",
+		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.9",
 	}
 	node := corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,7 +96,7 @@ func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 		Containers: []corev1.Container{
 			{
 				Name:                     "kube-bench",
-				Image:                    "docker.io/aquasec/kube-bench:v0.6.6",
+				Image:                    "docker.io/aquasec/kube-bench:v0.6.9",
 				ImagePullPolicy:          corev1.PullIfNotPresent,
 				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 				Command:                  []string{"sh"},
@@ -153,7 +153,7 @@ func TestKubeBenchPlugin_GetScanJobSpec(t *testing.T) {
 
 func TestKubeBenchPlugin_ParseCISKubeBenchOutput(t *testing.T) {
 	config := starboard.ConfigData{
-		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.6",
+		"kube-bench.imageRef": "docker.io/aquasec/kube-bench:v0.6.9",
 	}
 	var testCases = []struct {
 		name string
