@@ -1263,7 +1263,7 @@ var _ = Describe("Starboard CLI", func() {
 						"Scanner": Equal(v1alpha1.Scanner{
 							Name:    "kube-bench",
 							Vendor:  "Aqua Security",
-							Version: "v0.6.6",
+							Version: "v0.6.9",
 						}),
 					}),
 				}))
