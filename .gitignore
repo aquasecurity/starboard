@@ -17,5 +17,7 @@ site/
 ## helm chart
 output/*
 .cr-release-packages/*
+deploy/helm/*.tgz
+
 ## idea files
 *.iml
