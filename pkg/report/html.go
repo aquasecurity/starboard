@@ -24,11 +24,11 @@ type workloadReporter struct {
 	configAuditReportsReader   configauditreport.ReadWriter
 }
 
-func NewWorkloadReporter(clock ext.Clock, client client.Client) WorkloadReporter {
+func NewWorkloadReporter(clock ext.Clock, resolver kube.ObjectResolver) WorkloadReporter {
 	return &workloadReporter{
 		clock:                      clock,
-		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(client),
-		configAuditReportsReader:   configauditreport.NewReadWriter(client),
+		vulnerabilityReportsReader: vulnerabilityreport.NewReadWriter(&resolver),
+		configAuditReportsReader:   configauditreport.NewReadWriter(&resolver),
 	}
 }
 

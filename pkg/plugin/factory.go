@@ -5,7 +5,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
-	"github.com/aquasecurity/trivy-operator/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"

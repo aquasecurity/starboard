@@ -566,7 +566,7 @@ func TestGetPodSpec(t *testing.T) {
 
 func TestObjectResolver_RelatedReplicaSetName(t *testing.T) {
 
-	kubClient := fake.NewClientBuilder().WithScheme(trivyoperator.NewScheme()).WithObjects(
+	kubClient := fake.NewClientBuilder().WithScheme(starboard.NewScheme()).WithObjects(
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "nginx",
