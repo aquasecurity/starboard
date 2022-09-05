@@ -124,8 +124,11 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	if err != nil {
 		return err
 	}
-
-	objectResolver := kube.ObjectResolver{Client: mgr.GetClient()}
+    compatibleObjectMapper, err := kube.InitCompatibleMgr(mgr.GetClient().RESTMapper())
+	if err != nil {
+		return err
+	}
+	objectResolver := kube.NewObjectResolver(mgr.GetClient(),compatibleObjectMapper)
 	limitChecker := controller.NewLimitChecker(operatorConfig, mgr.GetClient(), starboardConfig)
 	logsReader := kube.NewLogsReader(kubeClientset)
 	secretsReader := kube.NewSecretsReader(mgr.GetClient())

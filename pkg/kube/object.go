@@ -68,6 +68,12 @@ const (
 )
 
 const (
+	cronJobResource        = "cronjobs"
+	apiBatchV1beta1CronJob = "batch/v1beta1, Kind=CronJob"
+	apiBatchV1CronJob      = "batch/v1, Kind=CronJob"
+)
+
+const (
 	deploymentAnnotation string = "deployment.kubernetes.io/revision"
 )
 
@@ -94,6 +100,7 @@ func IsWorkload(kind string) bool {
 		kind == "Job" ||
 		kind == "CronJob"
 }
+
 
 // IsClusterScopedKind returns true if the specified kind is ClusterRole,
 // ClusterRoleBinding, and CustomResourceDefinition.
@@ -292,8 +299,65 @@ var ErrReplicaSetNotFound = errors.New("replicaset not found")
 var ErrNoRunningPods = errors.New("no active pods for controller")
 var ErrUnSupportedKind = errors.New("unsupported workload kind")
 
+//CompatibleMgr provide k8s compatible objects (group/api/kind) capabilities
+type CompatibleMgr interface {
+	// GetSupportedObjectByKind get specific k8s compatible object (group/api/kind) by kind
+	GetSupportedObjectByKind(kind Kind) client.Object
+}
+
+type CompatibleObjectMapper struct {
+	kindObjectMap map[string]client.Object
+}
+
 type ObjectResolver struct {
 	client.Client
+	CompatibleMgr
+}
+
+func NewObjectResolver(c client.Client, cm CompatibleMgr) ObjectResolver {
+	return ObjectResolver{c, cm}
+}
+
+//InitCompatibleMgr initializes a CompatibleObjectMapper who store a map the of supported kinds with it compatible Objects (group/api/kind)
+// it dynamically fetches the compatible k8s objects (group/api/kind) by resource from the cluster and store it in kind vs k8s object mapping
+// It will enable the operator to support old and new API resources based on cluster version support
+func InitCompatibleMgr(restMapper meta.RESTMapper) (CompatibleMgr, error) {
+	kindObjectMap := make(map[string]client.Object)
+	for _, resource := range getCompatibleResources() {
+		gvk, err := restMapper.KindFor(schema.GroupVersionResource{Resource: resource})
+		if err != nil {
+			return nil, err
+		}
+		err = supportedObjectsByK8sKind(gvk.String(), gvk.Kind, kindObjectMap)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &CompatibleObjectMapper{kindObjectMap: kindObjectMap}, nil
+}
+
+// return a map of supported object api per k8s version
+func supportedObjectsByK8sKind(api string, kind string, kindObjectMap map[string]client.Object) error {
+	var resource client.Object
+	switch api {
+	case apiBatchV1beta1CronJob:
+		resource = &batchv1beta1.CronJob{}
+	case apiBatchV1CronJob:
+		resource = &batchv1.CronJob{}
+	default:
+		return fmt.Errorf("api %s is not suooprted compatibale resource", api)
+	}
+	kindObjectMap[kind] = resource
+	return nil
+}
+
+func getCompatibleResources() []string {
+	return []string{cronJobResource}
+}
+
+//GetSupportedObjectByKind accept kind and return the supported object (group/api/kind) of the cluster
+func (o *CompatibleObjectMapper) GetSupportedObjectByKind(kind Kind) client.Object {
+	return o.kindObjectMap[string(kind)]
 }
 
 func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef) (client.Object, error) {
@@ -312,7 +376,7 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 	case KindDaemonSet:
 		obj = &appsv1.DaemonSet{}
 	case KindCronJob:
-		obj = &batchv1beta1.CronJob{}
+		obj = o.CompatibleMgr.GetSupportedObjectByKind(KindCronJob)
 	case KindJob:
 		obj = &batchv1.Job{}
 	case KindService:
@@ -484,7 +548,7 @@ func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*b
 	if controller.Kind != "CronJob" {
 		return nil, fmt.Errorf("pod %q is controlled by a %q, want CronJob", job.Name, controller.Kind)
 	}
-	cj := &batchv1beta1.CronJob{}
+	cj := o.CompatibleMgr.GetSupportedObjectByKind(KindCronJob)
 	err := o.Client.Get(ctx, client.ObjectKey{Namespace: job.Namespace, Name: controller.Name}, cj)
 	if err != nil {
 		return nil, err
