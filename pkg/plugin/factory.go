@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/trivy-operator/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/plugin/aqua"
 	"github.com/aquasecurity/starboard/pkg/plugin/conftest"
 	"github.com/aquasecurity/starboard/pkg/plugin/polaris"
@@ -27,10 +28,16 @@ type Resolver struct {
 	namespace          string
 	serviceAccountName string
 	client             client.Client
+	objectResolver     *kube.ObjectResolver
 }
 
 func NewResolver() *Resolver {
 	return &Resolver{}
+}
+
+func (r *Resolver) WithObjectResolver(objectResolver *kube.ObjectResolver) *Resolver {
+	r.objectResolver = objectResolver
+	return r
 }
 
 func (r *Resolver) WithBuildInfo(buildInfo starboard.BuildInfo) *Resolver {
@@ -80,7 +87,7 @@ func (r *Resolver) GetVulnerabilityPlugin() (vulnerabilityreport.Plugin, starboa
 
 	switch scanner {
 	case Trivy:
-		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.client), pluginContext, nil
+		return trivy.NewPlugin(ext.NewSystemClock(), ext.NewGoogleUUIDGenerator(), r.objectResolver), pluginContext, nil
 	case Aqua:
 		return aqua.NewPlugin(ext.NewGoogleUUIDGenerator(), r.buildInfo), pluginContext, nil
 	}

@@ -235,7 +235,7 @@ func ObjectRefFromKindAndObjectKey(kind Kind, name client.ObjectKey) ObjectRef {
 // security report.
 func ComputeSpecHash(obj client.Object) (string, error) {
 	switch t := obj.(type) {
-	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.Job:
+	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.CronJob, *batchv1beta1.CronJob, *batchv1.Job:
 		spec, err := GetPodSpec(obj)
 		if err != nil {
 			return "", err
@@ -288,6 +288,8 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
 	case *batchv1beta1.CronJob:
 		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	case *batchv1.CronJob:
+		return (obj.(*batchv1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
 	case *batchv1.Job:
 		return (obj.(*batchv1.Job)).Spec.Template.Spec, nil
 	default:
@@ -451,7 +453,7 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 		}
 		// Pod controlled by sth else (usually frameworks)
 		return obj, nil
-	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob:
+	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.CronJob:
 		return obj, nil
 	default:
 		return obj, nil
@@ -540,7 +542,7 @@ func (o *ObjectResolver) ReplicaSetByPod(ctx context.Context, pod *corev1.Pod) (
 	return rsCopy, err
 }
 
-func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1beta1.CronJob, error) {
+func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (client.Object, error) {
 	controller := metav1.GetControllerOf(job)
 	if controller == nil {
 		return nil, fmt.Errorf("did not find a controller for job %q", job.Name)
@@ -554,7 +556,7 @@ func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*b
 		return nil, err
 	}
 	obj, err := o.ensureGVK(cj)
-	return obj.(*batchv1beta1.CronJob), err
+	return obj, err
 }
 
 func (o *ObjectResolver) JobByPod(ctx context.Context, pod *corev1.Pod) (*batchv1.Job, error) {
@@ -649,6 +651,8 @@ func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (st
 		}
 		return pods[0].Spec.NodeName, nil
 	case *batchv1beta1.CronJob:
+		return "", ErrUnSupportedKind
+	case *batchv1.CronJob:
 		return "", ErrUnSupportedKind
 	case *batchv1.Job:
 		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*batchv1.Job).Spec.Selector.MatchLabels)

@@ -13,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	v1 "k8s.io/api/batch/v1"
+	"k8s.io/api/batch/v1beta1"
 )
 
 func TestReadWriter(t *testing.T) {
@@ -71,7 +73,7 @@ func TestReadWriter(t *testing.T) {
 	})
 
 	t.Run("Should update ConfigAuditReport", func(t *testing.T) {
-		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1alpha1.ConfigAuditReport{
+		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1beta1.CronJob{},&v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            "deployment-app",
 				Namespace:       "qa",
@@ -142,7 +144,7 @@ func TestReadWriter(t *testing.T) {
 	})
 
 	t.Run("Should find ConfigAuditReport by owner", func(t *testing.T) {
-		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(
+		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1beta1.CronJob{},
 			&v1alpha1.ConfigAuditReport{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace:       "my-namespace",
@@ -299,7 +301,7 @@ func TestReadWriter(t *testing.T) {
 	t.Run("Should update ClusterConfigAuditReport", func(t *testing.T) {
 		testClient := fake.NewClientBuilder().
 			WithScheme(kubernetesScheme).
-			WithObjects(
+			WithObjects(&v1beta1.CronJob{},
 				&v1alpha1.ClusterConfigAuditReport{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "clusterrole-admin",
@@ -368,7 +370,7 @@ func TestReadWriter(t *testing.T) {
 	t.Run("Should find ClusterConfigAuditReport by owner", func(t *testing.T) {
 		testClient := fake.NewClientBuilder().
 			WithScheme(kubernetesScheme).
-			WithObjects(
+			WithObjects(&v1.CronJob{},
 				&v1alpha1.ClusterConfigAuditReport{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            "clusterrole-viewer",

@@ -240,11 +240,11 @@ type plugin struct {
 // on the settings returned by Config.GetMode. The ClientServer mode is usually
 // more performant, however it requires a Trivy server accessible at the
 // configurable Config.GetServerURL.
-func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, client client.Client) vulnerabilityreport.Plugin {
+func NewPlugin(clock ext.Clock, idGenerator ext.IDGenerator, objectResolver *kube.ObjectResolver) vulnerabilityreport.Plugin {
 	return &plugin{
 		clock:          clock,
 		idGenerator:    idGenerator,
-		objectResolver: &kube.ObjectResolver{Client: client},
+		objectResolver: objectResolver,
 	}
 }
 

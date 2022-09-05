@@ -161,7 +161,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			SecretsReader:  secretsReader,
 			Plugin:         plugin,
 			PluginContext:  pluginContext,
-			ReadWriter:     vulnerabilityreport.NewReadWriter(mgr.GetClient()),
+			ReadWriter:     vulnerabilityreport.NewReadWriter(&objectResolver),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup vulnerabilityreport reconciler: %w", err)
 		}
@@ -205,7 +205,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			LogsReader:     logsReader,
 			Plugin:         plugin,
 			PluginContext:  pluginContext,
-			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+			ReadWriter:     configauditreport.NewReadWriter(&objectResolver),
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup configauditreport reconciler: %w", err)
 		}
@@ -244,7 +244,7 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 			ConfigData:     starboardConfig,
 			Client:         mgr.GetClient(),
 			ObjectResolver: objectResolver,
-			ReadWriter:     configauditreport.NewReadWriter(mgr.GetClient()),
+			ReadWriter:     configauditreport.NewReadWriter(&objectResolver),
 			BuildInfo:      buildInfo,
 		}).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to setup resource controller: %w", err)
