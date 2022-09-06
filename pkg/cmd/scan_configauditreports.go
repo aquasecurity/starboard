@@ -53,7 +53,7 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		if err != nil {
 			return err
 		}	
-		scanner := configauditreport.NewScanner(buildInfo, kubeClient)
+		scanner := configauditreport.NewScanner(buildInfo, kubeClient,cm)
 		reportBuilder, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err

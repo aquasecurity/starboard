@@ -16,7 +16,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -77,7 +76,6 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		{kind: kube.KindClusterRole, forObject: &rbacv1.ClusterRole{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
 		{kind: kube.KindClusterRoleBindings, forObject: &rbacv1.ClusterRoleBinding{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
 		{kind: kube.KindCustomResourceDefinition, forObject: &apiextensionsv1.CustomResourceDefinition{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
-		{kind: kube.KindPodSecurityPolicy, forObject: &policyv1beta1.PodSecurityPolicy{}, ownsObject: &v1alpha1.ClusterConfigAuditReport{}},
 	}
 
 	for _, resource := range resources {
