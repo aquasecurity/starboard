@@ -257,7 +257,7 @@ var _ = Describe("Starboard CLI", func() {
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
@@ -301,7 +301,7 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
@@ -511,7 +511,7 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      rs.Name,
@@ -576,7 +576,7 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicationController,
 					Name:      rc.Name,
@@ -630,7 +630,7 @@ var _ = Describe("Starboard CLI", func() {
 
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
@@ -684,7 +684,7 @@ var _ = Describe("Starboard CLI", func() {
 
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
@@ -751,7 +751,7 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindStatefulSet,
 					Name:      sts.Name,
@@ -817,7 +817,7 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-				objectResolver := kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindDaemonSet,
 					Name:      ds.Name,

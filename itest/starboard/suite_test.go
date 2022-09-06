@@ -75,7 +75,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	or:=kube.NewObjectResolver(kubeClient,&kube.CompatibleObjectMapper{})
+	or := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
 	objectResolver = &or
 	help = helper.NewHelper(kubeClient)
 

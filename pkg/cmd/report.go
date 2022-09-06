@@ -66,7 +66,7 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
-			objectResolver := kube.NewObjectResolver(kubeClient,compatibleObjectMapper)
+			objectResolver := kube.NewObjectResolver(kubeClient, compatibleObjectMapper)
 			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return err

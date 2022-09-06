@@ -49,16 +49,16 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		}
 		scheme := starboard.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
-		cm,err:=kube.InitCompatibleMgr(kubeClient.RESTMapper())
+		cm, err := kube.InitCompatibleMgr(kubeClient.RESTMapper())
 		if err != nil {
 			return err
-		}	
-		scanner := configauditreport.NewScanner(buildInfo, kubeClient,cm)
+		}
+		scanner := configauditreport.NewScanner(buildInfo, kubeClient, cm)
 		reportBuilder, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
-		objectResolver := kube.NewObjectResolver(kubeClient,cm)
+		objectResolver := kube.NewObjectResolver(kubeClient, cm)
 		writer := configauditreport.NewReadWriter(&objectResolver)
 		return reportBuilder.Write(ctx, writer)
 	}

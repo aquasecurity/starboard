@@ -58,11 +58,11 @@ NAME is the name of a particular Kubernetes resource.
 			if err != nil {
 				return err
 			}
-			cm,err:=kube.InitCompatibleMgr(kubeClient.RESTMapper())
+			cm, err := kube.InitCompatibleMgr(kubeClient.RESTMapper())
 			if err != nil {
 				return err
 			}
-			objectResolver := kube.NewObjectResolver(kubeClient,cm)
+			objectResolver := kube.NewObjectResolver(kubeClient, cm)
 			reader := configauditreport.NewReadWriter(&objectResolver)
 			report, err := reader.FindReportByOwnerInHierarchy(ctx, workload)
 			if err != nil {

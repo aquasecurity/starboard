@@ -442,7 +442,7 @@ func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {
 		testClient := fake.NewClientBuilder().WithObjects().Build()
-		objectResolver := kube.NewObjectResolver(testClient,&kube.CompatibleObjectMapper{})
+		objectResolver := kube.NewObjectResolver(testClient, &kube.CompatibleObjectMapper{})
 		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 
 		pluginContext := starboard.NewPluginContext().
@@ -506,7 +506,7 @@ func TestPlugin_Init(t *testing.T) {
 					"trivy.mode":     "Standalone",
 				},
 			}).Build()
-		objectResolver := kube.NewObjectResolver(testClient,&kube.CompatibleObjectMapper{})
+		objectResolver := kube.NewObjectResolver(testClient, &kube.CompatibleObjectMapper{})
 		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 
 		pluginContext := starboard.NewPluginContext().
@@ -3163,7 +3163,7 @@ CVE-2019-1543`,
 				WithServiceAccountName("starboard-sa").
 				WithClient(fakeclient).
 				Get()
-			objectResolver := kube.NewObjectResolver(fakeclient,&kube.CompatibleObjectMapper{})
+			objectResolver := kube.NewObjectResolver(fakeclient, &kube.CompatibleObjectMapper{})
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
@@ -3481,7 +3481,7 @@ CVE-2019-1543`,
 				WithClient(fakeclient).
 				WithStarboardConfig(map[string]string{starboard.KeyVulnerabilityScansInSameNamespace: "true"}).
 				Get()
-			objectResolver := kube.NewObjectResolver(fakeclient,&kube.CompatibleObjectMapper{})
+			objectResolver := kube.NewObjectResolver(fakeclient, &kube.CompatibleObjectMapper{})
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
@@ -3644,7 +3644,7 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 				WithServiceAccountName("starboard-sa").
 				WithClient(fakeClient).
 				Get()
-			objectResolver := kube.NewObjectResolver(fakeClient,&kube.CompatibleObjectMapper{})
+			objectResolver := kube.NewObjectResolver(fakeClient, &kube.CompatibleObjectMapper{})
 			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			report, err := instance.ParseVulnerabilityReportData(ctx, tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
 			switch {

@@ -10,11 +10,11 @@ import (
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/api/batch/v1"
+	"k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	v1 "k8s.io/api/batch/v1"
-	"k8s.io/api/batch/v1beta1"
 )
 
 func TestReadWriter(t *testing.T) {
@@ -73,7 +73,7 @@ func TestReadWriter(t *testing.T) {
 	})
 
 	t.Run("Should update ConfigAuditReport", func(t *testing.T) {
-		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1beta1.CronJob{},&v1alpha1.ConfigAuditReport{
+		testClient := fake.NewClientBuilder().WithScheme(kubernetesScheme).WithObjects(&v1beta1.CronJob{}, &v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            "deployment-app",
 				Namespace:       "qa",
@@ -93,7 +93,7 @@ func TestReadWriter(t *testing.T) {
 			},
 		}).Build()
 		resolver := kube.NewObjectResolver(testClient, &kube.CompatibleObjectMapper{})
- 		readWriter := configauditreport.NewReadWriter(&resolver)
+		readWriter := configauditreport.NewReadWriter(&resolver)
 		err := readWriter.WriteReport(context.TODO(), v1alpha1.ConfigAuditReport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "deployment-app",

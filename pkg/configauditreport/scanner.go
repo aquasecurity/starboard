@@ -20,13 +20,13 @@ type Scanner struct {
 	objectResolver *kube.ObjectResolver
 }
 
-func NewScanner(buildInfo starboard.BuildInfo, client client.Client,cm kube.CompatibleMgr) *Scanner {
-	or:=kube.NewObjectResolver(client,cm)
+func NewScanner(buildInfo starboard.BuildInfo, client client.Client, cm kube.CompatibleMgr) *Scanner {
+	or := kube.NewObjectResolver(client, cm)
 	return &Scanner{
-		buildInfo: buildInfo,
-		scheme:    client.Scheme(),
-		client:    client,
-		objectResolver:&or,
+		buildInfo:      buildInfo,
+		scheme:         client.Scheme(),
+		client:         client,
+		objectResolver: &or,
 	}
 }
 

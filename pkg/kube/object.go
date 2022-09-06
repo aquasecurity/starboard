@@ -101,7 +101,6 @@ func IsWorkload(kind string) bool {
 		kind == "CronJob"
 }
 
-
 // IsClusterScopedKind returns true if the specified kind is ClusterRole,
 // ClusterRoleBinding, and CustomResourceDefinition.
 //
