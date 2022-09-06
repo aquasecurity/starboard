@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -57,7 +58,12 @@ NAME is the name of a particular Kubernetes resource.
 			if err != nil {
 				return err
 			}
-			reader := configauditreport.NewReadWriter(kubeClient)
+			cm, err := kube.InitCompatibleMgr(kubeClient.RESTMapper())
+			if err != nil {
+				return err
+			}
+			objectResolver := kube.NewObjectResolver(kubeClient, cm)
+			reader := configauditreport.NewReadWriter(&objectResolver)
 			report, err := reader.FindReportByOwnerInHierarchy(ctx, workload)
 			if err != nil {
 				return nil

@@ -68,6 +68,12 @@ const (
 )
 
 const (
+	cronJobResource        = "cronjobs"
+	apiBatchV1beta1CronJob = "batch/v1beta1, Kind=CronJob"
+	apiBatchV1CronJob      = "batch/v1, Kind=CronJob"
+)
+
+const (
 	deploymentAnnotation string = "deployment.kubernetes.io/revision"
 )
 
@@ -228,7 +234,7 @@ func ObjectRefFromKindAndObjectKey(kind Kind, name client.ObjectKey) ObjectRef {
 // security report.
 func ComputeSpecHash(obj client.Object) (string, error) {
 	switch t := obj.(type) {
-	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.Job:
+	case *corev1.Pod, *appsv1.Deployment, *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1.CronJob, *batchv1beta1.CronJob, *batchv1.Job:
 		spec, err := GetPodSpec(obj)
 		if err != nil {
 			return "", err
@@ -281,6 +287,8 @@ func GetPodSpec(obj client.Object) (corev1.PodSpec, error) {
 		return (obj.(*appsv1.DaemonSet)).Spec.Template.Spec, nil
 	case *batchv1beta1.CronJob:
 		return (obj.(*batchv1beta1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
+	case *batchv1.CronJob:
+		return (obj.(*batchv1.CronJob)).Spec.JobTemplate.Spec.Template.Spec, nil
 	case *batchv1.Job:
 		return (obj.(*batchv1.Job)).Spec.Template.Spec, nil
 	default:
@@ -292,8 +300,65 @@ var ErrReplicaSetNotFound = errors.New("replicaset not found")
 var ErrNoRunningPods = errors.New("no active pods for controller")
 var ErrUnSupportedKind = errors.New("unsupported workload kind")
 
+//CompatibleMgr provide k8s compatible objects (group/api/kind) capabilities
+type CompatibleMgr interface {
+	// GetSupportedObjectByKind get specific k8s compatible object (group/api/kind) by kind
+	GetSupportedObjectByKind(kind Kind) client.Object
+}
+
+type CompatibleObjectMapper struct {
+	kindObjectMap map[string]client.Object
+}
+
 type ObjectResolver struct {
 	client.Client
+	CompatibleMgr
+}
+
+func NewObjectResolver(c client.Client, cm CompatibleMgr) ObjectResolver {
+	return ObjectResolver{c, cm}
+}
+
+//InitCompatibleMgr initializes a CompatibleObjectMapper who store a map the of supported kinds with it compatible Objects (group/api/kind)
+// it dynamically fetches the compatible k8s objects (group/api/kind) by resource from the cluster and store it in kind vs k8s object mapping
+// It will enable the operator to support old and new API resources based on cluster version support
+func InitCompatibleMgr(restMapper meta.RESTMapper) (CompatibleMgr, error) {
+	kindObjectMap := make(map[string]client.Object)
+	for _, resource := range getCompatibleResources() {
+		gvk, err := restMapper.KindFor(schema.GroupVersionResource{Resource: resource})
+		if err != nil {
+			return nil, err
+		}
+		err = supportedObjectsByK8sKind(gvk.String(), gvk.Kind, kindObjectMap)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &CompatibleObjectMapper{kindObjectMap: kindObjectMap}, nil
+}
+
+// return a map of supported object api per k8s version
+func supportedObjectsByK8sKind(api string, kind string, kindObjectMap map[string]client.Object) error {
+	var resource client.Object
+	switch api {
+	case apiBatchV1beta1CronJob:
+		resource = &batchv1beta1.CronJob{}
+	case apiBatchV1CronJob:
+		resource = &batchv1.CronJob{}
+	default:
+		return fmt.Errorf("api %s is not suooprted compatibale resource", api)
+	}
+	kindObjectMap[kind] = resource
+	return nil
+}
+
+func getCompatibleResources() []string {
+	return []string{cronJobResource}
+}
+
+//GetSupportedObjectByKind accept kind and return the supported object (group/api/kind) of the cluster
+func (o *CompatibleObjectMapper) GetSupportedObjectByKind(kind Kind) client.Object {
+	return o.kindObjectMap[string(kind)]
 }
 
 func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef) (client.Object, error) {
@@ -312,7 +377,7 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 	case KindDaemonSet:
 		obj = &appsv1.DaemonSet{}
 	case KindCronJob:
-		obj = &batchv1beta1.CronJob{}
+		obj = o.CompatibleMgr.GetSupportedObjectByKind(KindCronJob)
 	case KindJob:
 		obj = &batchv1.Job{}
 	case KindService:
@@ -387,7 +452,7 @@ func (o *ObjectResolver) ReportOwner(ctx context.Context, obj client.Object) (cl
 		}
 		// Pod controlled by sth else (usually frameworks)
 		return obj, nil
-	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob:
+	case *appsv1.ReplicaSet, *corev1.ReplicationController, *appsv1.StatefulSet, *appsv1.DaemonSet, *batchv1beta1.CronJob, *batchv1.CronJob:
 		return obj, nil
 	default:
 		return obj, nil
@@ -476,7 +541,7 @@ func (o *ObjectResolver) ReplicaSetByPod(ctx context.Context, pod *corev1.Pod) (
 	return rsCopy, err
 }
 
-func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*batchv1beta1.CronJob, error) {
+func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (client.Object, error) {
 	controller := metav1.GetControllerOf(job)
 	if controller == nil {
 		return nil, fmt.Errorf("did not find a controller for job %q", job.Name)
@@ -484,13 +549,13 @@ func (o *ObjectResolver) CronJobByJob(ctx context.Context, job *batchv1.Job) (*b
 	if controller.Kind != "CronJob" {
 		return nil, fmt.Errorf("pod %q is controlled by a %q, want CronJob", job.Name, controller.Kind)
 	}
-	cj := &batchv1beta1.CronJob{}
+	cj := o.CompatibleMgr.GetSupportedObjectByKind(KindCronJob)
 	err := o.Client.Get(ctx, client.ObjectKey{Namespace: job.Namespace, Name: controller.Name}, cj)
 	if err != nil {
 		return nil, err
 	}
 	obj, err := o.ensureGVK(cj)
-	return obj.(*batchv1beta1.CronJob), err
+	return obj, err
 }
 
 func (o *ObjectResolver) JobByPod(ctx context.Context, pod *corev1.Pod) (*batchv1.Job, error) {
@@ -585,6 +650,8 @@ func (o *ObjectResolver) GetNodeName(ctx context.Context, obj client.Object) (st
 		}
 		return pods[0].Spec.NodeName, nil
 	case *batchv1beta1.CronJob:
+		return "", ErrUnSupportedKind
+	case *batchv1.CronJob:
 		return "", ErrUnSupportedKind
 	case *batchv1.Job:
 		pods, err := o.getActivePodsByLabelSelector(ctx, obj.GetNamespace(), obj.(*batchv1.Job).Spec.Selector.MatchLabels)

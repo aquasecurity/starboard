@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aquasecurity/starboard/pkg/configauditreport"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -48,12 +49,17 @@ func ScanConfigAuditReports(buildInfo starboard.BuildInfo, cf *genericclioptions
 		}
 		scheme := starboard.NewScheme()
 		kubeClient, err := client.New(kubeConfig, client.Options{Scheme: scheme})
-		scanner := configauditreport.NewScanner(buildInfo, kubeClient)
+		cm, err := kube.InitCompatibleMgr(kubeClient.RESTMapper())
+		if err != nil {
+			return err
+		}
+		scanner := configauditreport.NewScanner(buildInfo, kubeClient, cm)
 		reportBuilder, err := scanner.Scan(ctx, workload)
 		if err != nil {
 			return err
 		}
-		writer := configauditreport.NewReadWriter(kubeClient)
+		objectResolver := kube.NewObjectResolver(kubeClient, cm)
+		writer := configauditreport.NewReadWriter(&objectResolver)
 		return reportBuilder.Write(ctx, writer)
 	}
 }

@@ -75,9 +75,8 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	objectResolver = &kube.ObjectResolver{
-		Client: kubeClient,
-	}
+	or := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+	objectResolver = &or
 	help = helper.NewHelper(kubeClient)
 
 	apiextensionsClientset, err = apiextensions.NewForConfig(config)

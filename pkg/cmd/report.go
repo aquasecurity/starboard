@@ -62,6 +62,11 @@ NAME is the name of a particular Kubernetes workload.
 			if err != nil {
 				return err
 			}
+			compatibleObjectMapper, err := kube.InitCompatibleMgr(kubeClient.RESTMapper())
+			if err != nil {
+				return err
+			}
+			objectResolver := kube.NewObjectResolver(kubeClient, compatibleObjectMapper)
 			workload, _, err := WorkloadFromArgs(mapper, ns, args)
 			if err != nil {
 				return err
@@ -76,7 +81,7 @@ NAME is the name of a particular Kubernetes workload.
 				kube.KindCronJob,
 				kube.KindJob,
 				kube.KindPod:
-				reporter := report.NewWorkloadReporter(clock, kubeClient)
+				reporter := report.NewWorkloadReporter(clock, objectResolver)
 				return reporter.Generate(workload, out)
 			case kube.KindNamespace:
 				reporter := report.NewNamespaceReporter(clock, kubeClient)

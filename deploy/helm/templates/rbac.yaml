@@ -122,14 +122,6 @@ rules:
       - list
       - watch
   - apiGroups:
-      - policy
-    resources:
-      - podsecuritypolicies
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
       - aquasecurity.github.io
     resources:
       - vulnerabilityreports

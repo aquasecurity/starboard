@@ -10,6 +10,7 @@ import (
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/ext"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/plugin/trivy"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/stretchr/testify/assert"
@@ -440,21 +441,21 @@ func TestConfig_GetMirrors(t *testing.T) {
 func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {
-		client := fake.NewClientBuilder().WithObjects().Build()
-
-		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), client)
+		testClient := fake.NewClientBuilder().WithObjects().Build()
+		objectResolver := kube.NewObjectResolver(testClient, &kube.CompatibleObjectMapper{})
+		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 
 		pluginContext := starboard.NewPluginContext().
 			WithName(trivy.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
-			WithClient(client).
+			WithClient(testClient).
 			Get()
 		err := instance.Init(pluginContext)
 		require.NoError(t, err)
 
 		var cm corev1.ConfigMap
-		err = client.Get(context.Background(), types.NamespacedName{
+		err = testClient.Get(context.Background(), types.NamespacedName{
 			Namespace: "starboard-ns",
 			Name:      "starboard-trivy-config",
 		}, &cm)
@@ -488,7 +489,7 @@ func TestPlugin_Init(t *testing.T) {
 	})
 
 	t.Run("Should not overwrite existing config", func(t *testing.T) {
-		client := fake.NewClientBuilder().WithObjects(
+		testClient := fake.NewClientBuilder().WithObjects(
 			&corev1.ConfigMap{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "v1",
@@ -505,20 +506,20 @@ func TestPlugin_Init(t *testing.T) {
 					"trivy.mode":     "Standalone",
 				},
 			}).Build()
-
-		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), client)
+		objectResolver := kube.NewObjectResolver(testClient, &kube.CompatibleObjectMapper{})
+		instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 
 		pluginContext := starboard.NewPluginContext().
 			WithName(trivy.Plugin).
 			WithNamespace("starboard-ns").
 			WithServiceAccountName("starboard-sa").
-			WithClient(client).
+			WithClient(testClient).
 			Get()
 		err := instance.Init(pluginContext)
 		require.NoError(t, err)
 
 		var cm corev1.ConfigMap
-		err = client.Get(context.Background(), types.NamespacedName{
+		err = testClient.Get(context.Background(), types.NamespacedName{
 			Namespace: "starboard-ns",
 			Name:      "starboard-trivy-config",
 		}, &cm)
@@ -3162,7 +3163,8 @@ CVE-2019-1543`,
 				WithServiceAccountName("starboard-sa").
 				WithClient(fakeclient).
 				Get()
-			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
+			objectResolver := kube.NewObjectResolver(fakeclient, &kube.CompatibleObjectMapper{})
+			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
@@ -3479,7 +3481,8 @@ CVE-2019-1543`,
 				WithClient(fakeclient).
 				WithStarboardConfig(map[string]string{starboard.KeyVulnerabilityScansInSameNamespace: "true"}).
 				Get()
-			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeclient)
+			objectResolver := kube.NewObjectResolver(fakeclient, &kube.CompatibleObjectMapper{})
+			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			jobSpec, secrets, err := instance.GetScanJobSpec(pluginContext, tc.workloadSpec, nil)
 			require.NoError(t, err)
 			assert.Empty(t, secrets)
@@ -3641,7 +3644,8 @@ func TestPlugin_ParseVulnerabilityReportData(t *testing.T) {
 				WithServiceAccountName("starboard-sa").
 				WithClient(fakeClient).
 				Get()
-			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), fakeClient)
+			objectResolver := kube.NewObjectResolver(fakeClient, &kube.CompatibleObjectMapper{})
+			instance := trivy.NewPlugin(fixedClock, ext.NewSimpleIDGenerator(), &objectResolver)
 			report, err := instance.ParseVulnerabilityReportData(ctx, tc.imageRef, io.NopCloser(strings.NewReader(tc.input)))
 			switch {
 			case tc.expectedError == nil:

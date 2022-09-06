@@ -18,7 +18,7 @@ import (
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -256,8 +256,9 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				Expect(err).ToNot(HaveOccurred())
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
 					Namespace: pod.Namespace,
@@ -300,8 +301,8 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindPod,
 					Name:      pod.Name,
 					Namespace: pod.Namespace,
@@ -510,8 +511,8 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      rs.Name,
 					Namespace: rs.Namespace,
@@ -575,8 +576,8 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicationController,
 					Name:      rc.Name,
 					Namespace: rc.Namespace,
@@ -629,8 +630,8 @@ var _ = Describe("Starboard CLI", func() {
 
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
 					Namespace: revision.Namespace,
@@ -683,8 +684,8 @@ var _ = Describe("Starboard CLI", func() {
 
 				revision, err := objectResolver.ReplicaSetByDeployment(ctx, deploy)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindReplicaSet,
 					Name:      revision.Name,
 					Namespace: revision.Namespace,
@@ -750,8 +751,8 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindStatefulSet,
 					Name:      sts.Name,
 					Namespace: sts.Namespace,
@@ -816,8 +817,8 @@ var _ = Describe("Starboard CLI", func() {
 					"-v", starboardCLILogLevel,
 				}, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
-
-				reports, err := vulnerabilityreport.NewReadWriter(kubeClient).FindByOwner(ctx, kube.ObjectRef{
+				objectResolver := kube.NewObjectResolver(kubeClient, &kube.CompatibleObjectMapper{})
+				reports, err := vulnerabilityreport.NewReadWriter(&objectResolver).FindByOwner(ctx, kube.ObjectRef{
 					Kind:      kube.KindDaemonSet,
 					Name:      ds.Name,
 					Namespace: ds.Namespace,
@@ -1162,14 +1163,14 @@ var _ = Describe("Starboard CLI", func() {
 
 			BeforeEach(func() {
 				ctx = context.TODO()
-				object = &batchv1beta1.CronJob{
+				object = &v1.CronJob{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "hello" + "-" + rand.String(5),
 						Namespace: testNamespace.Name,
 					},
-					Spec: batchv1beta1.CronJobSpec{
+					Spec: v1.CronJobSpec{
 						Schedule: "*/1 * * * *",
-						JobTemplate: batchv1beta1.JobTemplateSpec{
+						JobTemplate: v1.JobTemplateSpec{
 							Spec: batchv1.JobSpec{
 								Template: corev1.PodTemplateSpec{
 									Spec: corev1.PodSpec{
