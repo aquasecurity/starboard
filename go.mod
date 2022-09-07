@@ -26,7 +26,7 @@ require (
 	k8s.io/cli-runtime v0.24.1
 	k8s.io/client-go v0.24.4
 	k8s.io/code-generator v0.24.3
-	k8s.io/klog/v2 v2.70.1
+	k8s.io/klog/v2 v2.80.0
 	k8s.io/utils v0.0.0-20220706174534-f6158b442e7c
 	sigs.k8s.io/controller-runtime v0.12.3
 	sigs.k8s.io/yaml v1.3.0
@@ -35,6 +35,7 @@ require (
 require (
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 )
 
 require (
@@ -47,7 +48,6 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/aquasecurity/trivy-operator v0.1.9
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
