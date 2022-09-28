@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal
 
 LABEL name="Starboard" \
       vendor="Aqua Security Software Ltd." \
-      version="v0.15.9" \
+      version="v0.15.10" \
       summary="Starboard Operator."
 
 RUN microdnf install shadow-utils
