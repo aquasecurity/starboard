@@ -58,10 +58,3 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
-      - name: Scan Starboard Scanner Aqua image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'docker.io/aquasec/starboard-scanner-aqua:${{ github.sha }}-amd64'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
