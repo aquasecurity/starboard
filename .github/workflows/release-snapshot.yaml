@@ -54,7 +54,16 @@ jobs:
       - name: Scan Starboard Operator image for vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'docker.io/aquasec/starboard-operator:${{ github.sha }}-amd64'
+          image-ref: 'docker.io/aquasec/starboard-operator:0.15.9-amd64'
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+      - name: Notify dedicated teams channel
+        uses: jdcargile/ms-teams-notification@v1.3
+        if: failure()
+        with:
+          github-token: ${{ secrets.ORG_REPO_TOKEN }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: vulnerabilities has been found in starboard-operator image
+          notification-color: 17a2b8
+          timezone: America/Denver
