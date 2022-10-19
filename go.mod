@@ -15,7 +15,7 @@ require (
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/hashicorp/go-version v1.5.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.20.0
+	github.com/onsi/gomega v1.22.1
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
