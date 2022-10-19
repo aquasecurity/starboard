@@ -5,7 +5,7 @@ import (
 	"github.com/emirpasic/gods/sets/hashset"
 )
 
-//mapKinds map resource data
+// mapKinds map resource data
 func mapKinds(control v1alpha1.Control) []string {
 	set := hashset.New()
 	updatedKinds := make([]string, 0)

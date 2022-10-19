@@ -326,14 +326,14 @@ const (
 // emptyDir volume shared with main containers. In other words, the init
 // container runs the following Trivy command:
 //
-//     trivy --cache-dir /tmp/trivy/.cache image --download-db-only
+//	trivy --cache-dir /tmp/trivy/.cache image --download-db-only
 //
 // The number of main containers correspond to the number of containers
 // defined for the scanned workload. Each container runs the Trivy image scan
 // command and skips the database download:
 //
-//     trivy --cache-dir /tmp/trivy/.cache image --skip-update \
-//       --format json <container image>
+//	trivy --cache-dir /tmp/trivy/.cache image --skip-update \
+//	  --format json <container image>
 func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -698,8 +698,8 @@ func (p *plugin) getPodSpecForStandaloneMode(ctx starboard.PluginContext, config
 // Each container runs Trivy image scan command and refers to Trivy server URL
 // returned by Config.GetServerURL:
 //
-//     trivy client --remote <server URL> \
-//       --format json <container image>
+//	trivy client --remote <server URL> \
+//	  --format json <container image>
 func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, config Config, workload client.Object, credentials map[string]docker.Auth) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secret *corev1.Secret
 	var secrets []*corev1.Secret
@@ -988,12 +988,11 @@ func (p *plugin) getPodSpecForClientServerMode(ctx starboard.PluginContext, conf
 	}, secrets, nil
 }
 
-//FileSystem scan option with standalone mode.
-//The only difference is that instead of scanning the resource by name,
-//We scanning the resource place on a specific file system location using the following command.
+// FileSystem scan option with standalone mode.
+// The only difference is that instead of scanning the resource by name,
+// We scanning the resource place on a specific file system location using the following command.
 //
-//     trivy --quiet fs  --format json --ignore-unfixed  file/system/location
-//
+//	trivy --quiet fs  --format json --ignore-unfixed  file/system/location
 func (p *plugin) getPodSpecForStandaloneFSMode(ctx starboard.PluginContext, config Config,
 	workload client.Object) (corev1.PodSpec, []*corev1.Secret, error) {
 	var secrets []*corev1.Secret
