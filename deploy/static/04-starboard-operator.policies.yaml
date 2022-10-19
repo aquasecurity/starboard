@@ -7,10 +7,11 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.10"
+    app.kubernetes.io/version: "0.15.11"
     app.kubernetes.io/managed-by: kubectl
 data:
-  library.kubernetes.rego: "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
+  library.kubernetes.rego:
+    "package lib.kubernetes\n\ndefault is_gatekeeper = false\n\nis_gatekeeper
     {\n\thas_field(input, \"review\")\n\thas_field(input.review, \"object\")\n}\n\nobject
     = input {\n\tnot is_gatekeeper\n}\n\nobject = input.review.object {\n\tis_gatekeeper\n}\n\nformat(msg)
     = gatekeeper_format {\n\tis_gatekeeper\n\tgatekeeper_format = {\"msg\": msg}\n}\n\nformat(msg)
@@ -43,7 +44,8 @@ data:
     = pod.spec\n}\n"
   library.utils.rego: "package lib.utils\n\nhas_key(x, k) {\n\t_ = x[k]\n}\n"
   policy.1_host_ipc.kinds: Workload
-  policy.1_host_ipc.rego: "package appshield.kubernetes.KSV008\n\nimport data.lib.kubernetes\n\ndefault
+  policy.1_host_ipc.rego:
+    "package appshield.kubernetes.KSV008\n\nimport data.lib.kubernetes\n\ndefault
     failHostIPC = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV008\",\n\t\"avd_id\":
     \"AVD-KSV-0008\",\n\t\"title\": \"Access to host IPC namespace\",\n\t\"short_code\":
     \"no-shared-ipc-namespace\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"HIGH\",\n\t\"type\":
@@ -58,7 +60,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.1_host_network.kinds: Workload
-  policy.1_host_network.rego: "package appshield.kubernetes.KSV009\n\nimport data.lib.kubernetes\n\ndefault
+  policy.1_host_network.rego:
+    "package appshield.kubernetes.KSV009\n\nimport data.lib.kubernetes\n\ndefault
     failHostNetwork = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV009\",\n\t\"avd_id\":
     \"AVD-KSV-0009\",\n\t\"title\": \"Access to host network\",\n\t\"short_code\":
     \"no-host-network\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"HIGH\",\n\t\"type\":
@@ -74,7 +77,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.1_host_pid.kinds: Workload
-  policy.1_host_pid.rego: "package appshield.kubernetes.KSV010\n\nimport data.lib.kubernetes\n\ndefault
+  policy.1_host_pid.rego:
+    "package appshield.kubernetes.KSV010\n\nimport data.lib.kubernetes\n\ndefault
     failHostPID = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV010\",\n\t\"avd_id\":
     \"AVD-KSV-0010\",\n\t\"title\": \"Access to host PID\",\n\t\"short_code\": \"no-host-pid\",\n\t\"version\":
     \"v1.0.0\",\n\t\"severity\": \"HIGH\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\":
@@ -89,7 +93,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.1_non_core_volume_types.kinds: Workload
-  policy.1_non_core_volume_types.rego: "package appshield.kubernetes.KSV028\n\nimport
+  policy.1_non_core_volume_types.rego:
+    "package appshield.kubernetes.KSV028\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV028\",\n\t\"avd_id\": \"AVD-KSV-0028\",\n\t\"title\": \"Non-ephemeral volume
     types used\",\n\t\"short_code\": \"no-non-ephemeral-volumes\",\n\t\"version\":
@@ -112,7 +117,8 @@ data:
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
   policy.2_can_elevate_its_own_privileges.kinds: Workload
-  policy.2_can_elevate_its_own_privileges.rego: "package appshield.kubernetes.KSV001\n\nimport
+  policy.2_can_elevate_its_own_privileges.rego:
+    "package appshield.kubernetes.KSV001\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault checkAllowPrivilegeEscalation
     = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV001\",\n\t\"avd_id\": \"AVD-KSV-0001\",\n\t\"title\":
     \"Process can elevate its own privileges\",\n\t\"short_code\": \"no-self-privesc\",\n\t\"version\":
@@ -137,7 +143,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.2_privileged.kinds: Workload
-  policy.2_privileged.rego: "package appshield.kubernetes.KSV017\n\nimport data.lib.kubernetes\n\ndefault
+  policy.2_privileged.rego:
+    "package appshield.kubernetes.KSV017\n\nimport data.lib.kubernetes\n\ndefault
     failPrivileged = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV017\",\n\t\"avd_id\":
     \"AVD-KSV-0017\",\n\t\"title\": \"Privileged container\",\n\t\"short_code\": \"no-privileged-containers\",\n\t\"version\":
     \"v1.0.0\",\n\t\"severity\": \"HIGH\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\":
@@ -156,7 +163,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.3_runs_as_root.kinds: Workload
-  policy.3_runs_as_root.rego: "package appshield.kubernetes.KSV012\n\nimport data.lib.kubernetes\nimport
+  policy.3_runs_as_root.rego:
+    "package appshield.kubernetes.KSV012\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\ndefault checkRunAsNonRoot = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV012\",\n\t\"avd_id\": \"AVD-KSV-0012\",\n\t\"title\": \"Runs as root user\",\n\t\"short_code\":
     \"no-root\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"MEDIUM\",\n\t\"type\":
@@ -178,7 +186,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.3_specific_capabilities_added.kinds: Workload
-  policy.3_specific_capabilities_added.rego: "package appshield.kubernetes.KSV022\n\nimport
+  policy.3_specific_capabilities_added.rego:
+    "package appshield.kubernetes.KSV022\n\nimport
     data.lib.kubernetes\n\ndefault failAdditionalCaps = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV022\",\n\t\"avd_id\": \"AVD-KSV-0022\",\n\t\"title\": \"Non-default
     capabilities added\",\n\t\"short_code\": \"no-non-default-capabilities\",\n\t\"version\":
@@ -203,7 +212,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.4_hostpath_volumes_mounted.kinds: Workload
-  policy.4_hostpath_volumes_mounted.rego: "package appshield.kubernetes.KSV023\n\nimport
+  policy.4_hostpath_volumes_mounted.rego:
+    "package appshield.kubernetes.KSV023\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failHostPathVolume = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV023\",\n\t\"avd_id\": \"AVD-KSV-0023\",\n\t\"title\": \"hostPath
     volumes mounted\",\n\t\"short_code\": \"no-mounted-hostpath\",\n\t\"version\":
@@ -217,7 +227,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.4_runs_with_a_root_gid.kinds: Workload
-  policy.4_runs_with_a_root_gid.rego: "package appshield.kubernetes.KSV029\n\nimport
+  policy.4_runs_with_a_root_gid.rego:
+    "package appshield.kubernetes.KSV029\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failRootGroupId = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV029\",\n\t\"avd_id\": \"AVD-KSV-0029\",\n\t\"title\": \"A
     root primary or supplementary GID set\",\n\t\"short_code\": \"no-run-root-gid\",\n\t\"version\":
@@ -246,7 +257,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.5_access_to_host_ports.kinds: Workload
-  policy.5_access_to_host_ports.rego: "package appshield.kubernetes.KSV024\n\nimport
+  policy.5_access_to_host_ports.rego:
+    "package appshield.kubernetes.KSV024\n\nimport
     data.lib.kubernetes\n\ndefault failHostPorts = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV024\",\n\t\"avd_id\": \"AVD-KSV-0024\",\n\t\"title\": \"Access to host ports\",\n\t\"short_code\":
     \"no-host-port-access\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"HIGH\",\n\t\"type\":
@@ -272,7 +284,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.5_runtime_default_seccomp_profile_not_set.kinds: Workload
-  policy.5_runtime_default_seccomp_profile_not_set.rego: "package appshield.kubernetes.KSV030\n\nimport
+  policy.5_runtime_default_seccomp_profile_not_set.rego:
+    "package appshield.kubernetes.KSV030\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failSeccompProfileType =
     false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV030\",\n\t\"avd_id\": \"AVD-KSV-0030\",\n\t\"title\":
     \"Default Seccomp profile not set\",\n\t\"short_code\": \"use-default-seccomp\",\n\t\"version\":
@@ -305,7 +318,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.6_apparmor_policy_disabled.kinds: Workload
-  policy.6_apparmor_policy_disabled.rego: "package appshield.kubernetes.KSV002\n\nimport
+  policy.6_apparmor_policy_disabled.rego:
+    "package appshield.kubernetes.KSV002\n\nimport
     data.lib.kubernetes\n\ndefault failAppArmor = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV002\",\n\t\"avd_id\": \"AVD-KSV-0002\",\n\t\"title\": \"Default AppArmor
     profile not set\",\n\t\"short_code\": \"use-default-apparmor-profile\",\n\t\"version\":
@@ -324,7 +338,8 @@ data:
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
   policy.7_selinux_custom_options_set.kinds: Workload
-  policy.7_selinux_custom_options_set.rego: "package appshield.kubernetes.KSV025\n\nimport
+  policy.7_selinux_custom_options_set.rego:
+    "package appshield.kubernetes.KSV025\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failSELinux = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV025\",\n\t\"avd_id\": \"AVD-KSV-0025\",\n\t\"title\": \"SELinux
     custom options set\",\n\t\"short_code\": \"no-custom-selinux-options\",\n\t\"version\":
@@ -354,7 +369,8 @@ data:
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
   policy.8_non_default_proc_masks_set.kinds: Workload
-  policy.8_non_default_proc_masks_set.rego: "package appshield.kubernetes.KSV027\n\nimport
+  policy.8_non_default_proc_masks_set.rego:
+    "package appshield.kubernetes.KSV027\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failProcMount = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV027\",\n\t\"avd_id\": \"AVD-KSV-0027\",\n\t\"title\": \"Non-default
     /proc masks set\",\n\t\"short_code\": \"no-custom-proc-mask\",\n\t\"version\":
@@ -371,7 +387,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.9_unsafe_sysctl_options_set.kinds: Workload
-  policy.9_unsafe_sysctl_options_set.rego: "package appshield.kubernetes.KSV026\n\nimport
+  policy.9_unsafe_sysctl_options_set.rego:
+    "package appshield.kubernetes.KSV026\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failSysctls = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV026\",\n\t\"avd_id\": \"AVD-KSV-0026\",\n\t\"title\": \"Unsafe
     sysctl options set\",\n\t\"short_code\": \"no-unsafe-sysctl\",\n\t\"version\":
@@ -392,7 +409,8 @@ data:
     msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.CPU_not_limited.kinds: Workload
-  policy.CPU_not_limited.rego: "package appshield.kubernetes.KSV011\n\nimport data.lib.kubernetes\nimport
+  policy.CPU_not_limited.rego:
+    "package appshield.kubernetes.KSV011\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\ndefault failLimitsCPU = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV011\",\n\t\"avd_id\": \"AVD-KSV-0011\",\n\t\"title\": \"CPU not limited\",\n\t\"short_code\":
     \"limit-cpu\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"LOW\",\n\t\"type\":
@@ -413,7 +431,8 @@ data:
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
   policy.CPU_requests_not_specified.kinds: Workload
-  policy.CPU_requests_not_specified.rego: "package appshield.kubernetes.KSV015\n\nimport
+  policy.CPU_requests_not_specified.rego:
+    "package appshield.kubernetes.KSV015\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failRequestsCPU = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV015\",\n\t\"avd_id\": \"AVD-KSV-0015\",\n\t\"title\": \"CPU
     requests not specified\",\n\t\"short_code\": \"no-unspecified-cpu-requests\",\n\t\"version\":
@@ -435,7 +454,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.SYS_ADMIN_capability.kinds: Workload
-  policy.SYS_ADMIN_capability.rego: "package appshield.kubernetes.KSV005\n\nimport
+  policy.SYS_ADMIN_capability.rego:
+    "package appshield.kubernetes.KSV005\n\nimport
     data.lib.kubernetes\n\ndefault failCapsSysAdmin = false\n\n__rego_metadata__ :=
     {\n\t\"id\": \"KSV005\",\n\t\"avd_id\": \"AVD-KSV-0005\",\n\t\"title\": \"SYS_ADMIN
     capability added\",\n\t\"short_code\": \"no-sysadmin-capability\",\n\t\"version\":
@@ -456,7 +476,8 @@ data:
     __rego_metadata__.title,\n\t\t\"severity\": __rego_metadata__.severity,\n\t\t\"type\":
     __rego_metadata__.type,\n\t}\n}\n"
   policy.capabilities_no_drop_all.kinds: Workload
-  policy.capabilities_no_drop_all.rego: "package appshield.kubernetes.KSV003\n\nimport
+  policy.capabilities_no_drop_all.rego:
+    "package appshield.kubernetes.KSV003\n\nimport
     data.lib.kubernetes\n\ndefault checkCapsDropAll = false\n\n__rego_metadata__ :=
     {\n\t\"id\": \"KSV003\",\n\t\"avd_id\": \"AVD-KSV-0003\",\n\t\"title\": \"Default
     capabilities not dropped\",\n\t\"short_code\": \"drop-default-capabilities\",\n\t\"version\":
@@ -478,7 +499,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.capabilities_no_drop_at_least_one.kinds: Workload
-  policy.capabilities_no_drop_at_least_one.rego: "package appshield.kubernetes.KSV004\n\nimport
+  policy.capabilities_no_drop_at_least_one.rego:
+    "package appshield.kubernetes.KSV004\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failCapsDropAny = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV004\",\n\t\"avd_id\": \"AVD-KSV-0004\",\n\t\"title\": \"Unused
     capabilities should be dropped (drop any)\",\n\t\"short_code\": \"drop-unused-capabilities\",\n\t\"version\":
@@ -500,7 +522,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.file_system_not_read_only.kinds: Workload
-  policy.file_system_not_read_only.rego: "package appshield.kubernetes.KSV014\n\nimport
+  policy.file_system_not_read_only.rego:
+    "package appshield.kubernetes.KSV014\n\nimport
     data.lib.kubernetes\n\ndefault failReadOnlyRootFilesystem = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV014\",\n\t\"avd_id\": \"AVD-KSV-0014\",\n\t\"title\": \"Root
     file system is not read-only\",\n\t\"short_code\": \"use-readonly-filesystem\",\n\t\"version\":
@@ -526,7 +549,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.manages_etc_hosts.kinds: Workload
-  policy.manages_etc_hosts.rego: "package appshield.kubernetes.KSV007\n\nimport data.lib.kubernetes\nimport
+  policy.manages_etc_hosts.rego:
+    "package appshield.kubernetes.KSV007\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\ndefault failHostAliases = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV007\",\n\t\"avd_id\": \"AVD-KSV-0007\",\n\t\"title\": \"hostAliases is set\",\n\t\"short_code\":
     \"no-hostaliases\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"LOW\",\n\t\"type\":
@@ -542,7 +566,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.memory_not_limited.kinds: Workload
-  policy.memory_not_limited.rego: "package appshield.kubernetes.KSV018\n\nimport data.lib.kubernetes\nimport
+  policy.memory_not_limited.rego:
+    "package appshield.kubernetes.KSV018\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\ndefault failLimitsMemory = false\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV018\",\n\t\"avd_id\": \"AVD-KSV-0018\",\n\t\"title\": \"Memory not limited\",\n\t\"short_code\":
     \"limit-memory\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\": \"LOW\",\n\t\"type\":
@@ -563,7 +588,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.memory_requests_not_specified.kinds: Workload
-  policy.memory_requests_not_specified.rego: "package appshield.kubernetes.KSV016\n\nimport
+  policy.memory_requests_not_specified.rego:
+    "package appshield.kubernetes.KSV016\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failRequestsMemory = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV016\",\n\t\"avd_id\": \"AVD-KSV-0016\",\n\t\"title\": \"Memory
     requests not specified\",\n\t\"short_code\": \"no-unspecified-memory-requests\",\n\t\"version\":
@@ -585,7 +611,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.mounts_docker_socket.kinds: Workload
-  policy.mounts_docker_socket.rego: "package appshield.kubernetes.KSV006\n\nimport
+  policy.mounts_docker_socket.rego:
+    "package appshield.kubernetes.KSV006\n\nimport
     data.lib.kubernetes\n\nname = input.metadata.name\n\ndefault checkDockerSocket
     = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV006\",\n\t\"avd_id\": \"AVD-KSV-0006\",\n\t\"title\":
     \"hostPath volume mounted with docker.sock\",\n\t\"short_code\": \"no-docker-sock-mount\",\n\t\"version\":
@@ -603,7 +630,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.protect_core_components_namespace.kinds: Workload
-  policy.protect_core_components_namespace.rego: "package appshield.kubernetes.KSV037\n\nimport
+  policy.protect_core_components_namespace.rego:
+    "package appshield.kubernetes.KSV037\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV037\",\n\t\"avd_id\": \"AVD-KSV-0037\",\n\t\"title\": \"User Pods should
     not be placed in kube-system namespace\",\n\t\"short_code\": \"no-user-pods-in-system-namespace\",\n\t\"version\":
@@ -623,7 +651,8 @@ data:
     \"component\")\n\tcoreComponentLabels := [\"kube-apiserver\", \"etcd\", \"kube-controller-manager\",
     \"kube-scheduler\"]\n\tmetadata.labels.component = coreComponentLabels[_]\n}\n"
   policy.protecting_pod_service_account_tokens.kinds: Workload
-  policy.protecting_pod_service_account_tokens.rego: "package appshield.kubernetes.KSV036\n\nimport
+  policy.protecting_pod_service_account_tokens.rego:
+    "package appshield.kubernetes.KSV036\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV036\",\n\t\"avd_id\": \"AVD-KSV-0036\",\n\t\"title\": \"Protecting Pod service
     account tokens\",\n\t\"short_code\": \"no-auto-mount-service-token\",\n\t\"version\":
@@ -644,7 +673,8 @@ data:
     == kubernetes.containers[_].volumeMounts[_].mountPath\n}\n\nhas_key(x, k) {\n\t_
     = x[k]\n}\n"
   policy.runs_with_GID_le_10000.kinds: Workload
-  policy.runs_with_GID_le_10000.rego: "package appshield.kubernetes.KSV021\n\nimport
+  policy.runs_with_GID_le_10000.rego:
+    "package appshield.kubernetes.KSV021\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failRunAsGroup = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV021\",\n\t\"avd_id\": \"AVD-KSV-0021\",\n\t\"title\": \"Runs
     with low group ID\",\n\t\"short_code\": \"use-high-gid\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\":
@@ -671,7 +701,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.runs_with_UID_le_10000.kinds: Workload
-  policy.runs_with_UID_le_10000.rego: "package appshield.kubernetes.KSV020\n\nimport
+  policy.runs_with_UID_le_10000.rego:
+    "package appshield.kubernetes.KSV020\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failRunAsUser = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV020\",\n\t\"avd_id\": \"AVD-KSV-0020\",\n\t\"title\": \"Runs
     with low user ID\",\n\t\"short_code\": \"use-high-uid\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\":
@@ -698,7 +729,8 @@ data:
     __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.selector_usage_in_network_policies.kinds: NetworkPolicy
-  policy.selector_usage_in_network_policies.rego: "package appshield.kubernetes.KSV038\n\nimport
+  policy.selector_usage_in_network_policies.rego:
+    "package appshield.kubernetes.KSV038\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\":
     \"KSV038\",\n\t\"avd_id\": \"AVD-KSV-0038\",\n\t\"title\": \"Selector usage in
     network policies\",\n\t\"short_code\": \"selector-usage-in-network-policies\",\n\t\"version\":
@@ -732,7 +764,8 @@ data:
     == {}\n\tcontains(input.spec.policyType, \"Ingress\")\n}\n\ncontains(arr, elem)
     {\n\tarr[_] = elem\n}\n"
   policy.tiller_is_deployed.kinds: Workload
-  policy.tiller_is_deployed.rego: "package appshield.kubernetes.KSV202\n\nimport data.lib.kubernetes\n\n__rego_metadata__
+  policy.tiller_is_deployed.rego:
+    "package appshield.kubernetes.KSV202\n\nimport data.lib.kubernetes\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV102\",\n\t\"avd_id\": \"AVD-KSV-0102\",\n\t\"title\": \"Tiller
     Is Deployed\",\n\t\"short_code\": \"no-tiller\",\n\t\"version\": \"v1.0.0\",\n\t\"severity\":
     \"Critical\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\":
@@ -755,7 +788,8 @@ data:
     == \"helm\"\n}\n\n# Check for tiller by name label\ncheckMetadata(metadata) {\n\tmetadata.labels.name
     == \"tiller\"\n}\n"
   policy.use_limit_range.kinds: LimitRange
-  policy.use_limit_range.rego: "package appshield.kubernetes.KSV039\n\nimport data.lib.kubernetes\nimport
+  policy.use_limit_range.rego:
+    "package appshield.kubernetes.KSV039\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\": \"KSV039\",\n\t\"avd_id\":
     \"AVD-KSV-0039\",\n\t\"title\": \"limit range usage\",\n\t\"short_code\": \"limit-range-usage\",\n\t\"severity\":
     \"LOW\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\": \"ensure
@@ -772,7 +806,8 @@ data:
     \"min\")\n\tkubernetes.has_field(input.spec.limits[_], \"default\")\n\tkubernetes.has_field(input.spec.limits[_],
     \"defaultRequest\")\n}\n"
   policy.use_resource_quota.kinds: ResourceQuota
-  policy.use_resource_quota.rego: "package appshield.kubernetes.KSV040\n\nimport data.lib.kubernetes\nimport
+  policy.use_resource_quota.rego:
+    "package appshield.kubernetes.KSV040\n\nimport data.lib.kubernetes\nimport
     data.lib.utils\n\n__rego_metadata__ := {\n\t\"id\": \"KSV040\",\n\t\"avd_id\":
     \"AVD-KSV-0040\",\n\t\"title\": \"resource quota usage\",\n\t\"short_code\": \"resource-quota-usage\",\n\t\"severity\":
     \"LOW\",\n\t\"type\": \"Kubernetes Security Check\",\n\t\"description\": \"ensure
@@ -788,7 +823,8 @@ data:
     \"requests.cpu\")\n\tkubernetes.has_field(input.spec.hard, \"requests.memory\")\n\tkubernetes.has_field(input.spec.hard,
     \"limits.cpu\")\n\tkubernetes.has_field(input.spec.hard, \"limits.memory\")\n}\n"
   policy.uses_image_tag_latest.kinds: Workload
-  policy.uses_image_tag_latest.rego: "package appshield.kubernetes.KSV013\n\nimport
+  policy.uses_image_tag_latest.rego:
+    "package appshield.kubernetes.KSV013\n\nimport
     data.lib.kubernetes\n\ndefault checkUsingLatestTag = false\n\n__rego_metadata__
     := {\n\t\"id\": \"KSV013\",\n\t\"avd_id\": \"AVD-KSV-0013\",\n\t\"title\": \"Image
     tag ':latest' used\",\n\t\"short_code\": \"use-specific-tags\",\n\t\"version\":
@@ -814,7 +850,8 @@ data:
     := {\n\t\t\"msg\": msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.uses_untrusted_azure_registry.kinds: Workload
-  policy.uses_untrusted_azure_registry.rego: "package appshield.kubernetes.KSV032\n\nimport
+  policy.uses_untrusted_azure_registry.rego:
+    "package appshield.kubernetes.KSV032\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failTrustedAzureRegistry
     = false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV032\",\n\t\"avd_id\": \"AVD-KSV-0032\",\n\t\"title\":
     \"All container images must start with the *.azurecr.io domain\",\n\t\"short_code\":
@@ -840,7 +877,8 @@ data:
     msg,\n\t\t\"id\": __rego_metadata__.id,\n\t\t\"title\": __rego_metadata__.title,\n\t\t\"severity\":
     __rego_metadata__.severity,\n\t\t\"type\": __rego_metadata__.type,\n\t}\n}\n"
   policy.uses_untrusted_gcr_registry.kinds: Workload
-  policy.uses_untrusted_gcr_registry.rego: "package appshield.kubernetes.KSV033\n\nimport
+  policy.uses_untrusted_gcr_registry.rego:
+    "package appshield.kubernetes.KSV033\n\nimport
     data.lib.kubernetes\nimport data.lib.utils\n\ndefault failTrustedGCRRegistry =
     false\n\n__rego_metadata__ := {\n\t\"id\": \"KSV033\",\n\t\"avd_id\": \"AVD-KSV-0033\",\n\t\"title\":
     \"All container images must start with a GCR domain\",\n\t\"short_code\": \"use-gcr-domain\",\n\t\"version\":

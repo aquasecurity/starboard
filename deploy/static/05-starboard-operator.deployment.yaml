@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.10"
+    app.kubernetes.io/version: "0.15.11"
     app.kubernetes.io/managed-by: kubectl
   annotations:
     prometheus.io/path: /metrics
@@ -30,7 +30,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.10"
+    app.kubernetes.io/version: "0.15.11"
     app.kubernetes.io/managed-by: kubectl
 spec:
   replicas: 1
@@ -50,7 +50,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: "starboard-operator"
-          image: "docker.io/aquasec/starboard-operator:0.15.10"
+          image: "docker.io/aquasec/starboard-operator:0.15.11"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPERATOR_NAMESPACE
@@ -114,14 +114,12 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             failureThreshold: 10
-          resources:
-            {}
+          resources: {}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-              - ALL
+                - ALL
             privileged: false
             readOnlyRootFilesystem: true
-      securityContext:
-        {}
+      securityContext: {}

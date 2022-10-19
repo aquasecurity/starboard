@@ -5,7 +5,7 @@ metadata:
   name: clustercompliancereports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.10"
+    app.kubernetes.io/version: "0.15.11"
 spec:
   group: aquasecurity.github.io
   scope: Cluster
@@ -61,7 +61,7 @@ spec:
                 cron:
                   type: string
                   pattern: '^(((([\*]{1}){1})|((\*\/){0,1}(([0-9]{1}){1}|(([1-5]{1}){1}([0-9]{1}){1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([0-9]{1}){1}|(([1]{1}){1}([0-9]{1}){1}){1}|([2]{1}){1}([0-3]{1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([1-9]{1}){1}|(([1-2]{1}){1}([0-9]{1}){1}){1}|([3]{1}){1}([0-1]{1}){1}))) ((([\*]{1}){1})|((\*\/){0,1}(([1-9]{1}){1}|(([1-2]{1}){1}([0-9]{1}){1}){1}|([3]{1}){1}([0-1]{1}){1}))|(jan|feb|mar|apr|may|jun|jul|aug|sep|okt|nov|dec)) ((([\*]{1}){1})|((\*\/){0,1}(([0-7]{1}){1}))|(sun|mon|tue|wed|thu|fri|sat)))$'
-                  description: 'cron define the intervals for report generation'
+                  description: "cron define the intervals for report generation"
                 controls:
                   type: array
                   items:
@@ -79,12 +79,12 @@ spec:
                         type: string
                       id:
                         type: string
-                        description: 'id define the control check id'
+                        description: "id define the control check id"
                       kinds:
                         type: array
                         items:
                           type: string
-                          description: 'kinds define the list of kinds control check apply on , example: Node,Workload '
+                          description: "kinds define the list of kinds control check apply on , example: Node,Workload "
                       mapping:
                         type: object
                         required:
@@ -93,8 +93,8 @@ spec:
                         properties:
                           scanner:
                             type: string
-                            pattern: '^config-audit$|^kube-bench$'
-                            description: 'scanner define the name of the scanner which produce data, currently only config-audit and kube-bench are supported'
+                            pattern: "^config-audit$|^kube-bench$"
+                            description: "scanner define the name of the scanner which produce data, currently only config-audit and kube-bench are supported"
                           checks:
                             type: array
                             items:
@@ -104,10 +104,10 @@ spec:
                               properties:
                                 id:
                                   type: string
-                                  description: 'id define the check id as produced by scanner'
+                                  description: "id define the check id as produced by scanner"
                       severity:
                         type: string
-                        description: 'define the severity of the control'
+                        description: "define the severity of the control"
                         enum:
                           - CRITICAL
                           - HIGH
@@ -116,7 +116,7 @@ spec:
                           - UNKNOWN
                       defaultStatus:
                         type: string
-                        description: 'define the default value for check status in case resource not found'
+                        description: "define the default value for check status in case resource not found"
                         enum:
                           - PASS
                           - WARN
@@ -126,12 +126,12 @@ spec:
               type: object
       subresources:
         # status enables the status subresource.
-        status: { }
+        status: {}
   names:
     singular: clustercompliancereport
     plural: clustercompliancereports
     kind: ClusterComplianceReport
     listKind: ClusterComplianceReportList
-    categories: [ ]
+    categories: []
     shortNames:
       - compliance
