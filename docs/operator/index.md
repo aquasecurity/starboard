@@ -21,7 +21,7 @@ for each of them.
 In other words, the desired state for the controllers managed by this operator is that for each workload or node there
 are security reports stored in the cluster as custom resources. Each custom resource is owned by a built-in resource
 to inherit its life cycle. Beyond that, we take advantage of Kubernetes [garbage collector][k8s-garbage-collection]
-to automatically delete stale reports and trigger rescan. For example, deleting a ReplicaSet will delete controlee
+to automatically delete stale reports and trigger rescan. For example, deleting a ReplicaSet will delete controller
 VulnerabilityReports, whereas deleting a VulnerabilityReport owned by a ReplicaSet will rescan that ReplicaSet and
 eventually recreate the VulnerabilityReport.
 
