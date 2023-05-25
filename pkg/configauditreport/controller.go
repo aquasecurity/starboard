@@ -157,6 +157,13 @@ func (r *ResourceController) reconcileResource(resourceKind kube.Kind) reconcile
 					"controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
+			podAnnotations := resource.GetAnnotations()
+			// Ignore scanning of pod which is created for deploymentConfig
+			if value, ok := podAnnotations[kube.DeployerPodForDeploymentLabel]; ok {
+				log.V(1).Info("Ignoring system pod created for deployment config",
+					"deploymentConfigName", value)
+				return ctrl.Result{}, nil
+			}
 		}
 
 		if r.Config.ConfigAuditScannerScanOnlyCurrentRevisions && resourceKind == kube.KindReplicaSet {
@@ -167,6 +174,18 @@ func (r *ResourceController) reconcileResource(resourceKind kube.Kind) reconcile
 			}
 			if !activeReplicaSet {
 				log.V(1).Info("Ignoring inactive ReplicaSet", "controllerKind", controller.Kind, "controllerName", controller.Name)
+				return ctrl.Result{}, nil
+			}
+		}
+
+		if r.Config.ConfigAuditScannerScanOnlyCurrentRevisions && resourceKind == kube.KindReplicationController {
+			controller := metav1.GetControllerOf(resource)
+			activeReplicaSet, err := r.IsActiveReplicationController(ctx, resource, controller)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed checking current revision: %w", err)
+			}
+			if !activeReplicaSet {
+				log.V(1).Info("Ignoring inactive ReplicationController", "controllerKind", controller.Kind, "controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
 		}

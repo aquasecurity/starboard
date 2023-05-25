@@ -26,8 +26,8 @@ on:
       - 'NOTICE'
 
 env:
-  GO_VERSION: "1.17"
-  KIND_VERSION: "v0.11.1"
+  GO_VERSION: "1.19"
+  KIND_VERSION: "v0.17.0"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
 
 # Disable permissions granted to the GITHUB_TOKEN for all the available scopes.
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
@@ -57,7 +57,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Verify Go code
-        uses: golangci/golangci-lint-action@v3.2.0
+        uses: golangci/golangci-lint-action@v3.4.0
         with:
           args: --verbose
           version: latest
