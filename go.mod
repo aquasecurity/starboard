@@ -20,7 +20,7 @@ require (
 	github.com/openshift/api v0.0.0-20221013123533-341d389bd4a7
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.4
 	github.com/valyala/quicktemplate v1.7.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.24.4
