@@ -13,7 +13,9 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	extensionv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1 "k8s.io/api/networking/v1"
+	networkingbetav1 "k8s.io/api/networking/v1beta1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -70,9 +72,13 @@ const (
 )
 
 const (
-	cronJobResource        = "cronjobs"
-	apiBatchV1beta1CronJob = "batch/v1beta1, Kind=CronJob"
-	apiBatchV1CronJob      = "batch/v1, Kind=CronJob"
+	cronJobResource           = "cronjobs"
+	ingressResource           = "ingress"
+	apiBatchV1beta1CronJob    = "batch/v1beta1, Kind=CronJob"
+	apiBatchV1CronJob         = "batch/v1, Kind=CronJob"
+	apiNetworkV1betaIngress   = "networking.k8s.io/v1beta1, Kind=Ingress"
+	apiNetworkV1Ingress       = "networking.k8s.io/v1, Kind=Ingress"
+	apiExtensionV1betaIngress = "extensions/v1beta1, Kind=Ingress"
 )
 
 const (
@@ -350,6 +356,12 @@ func supportedObjectsByK8sKind(api string, kind string, kindObjectMap map[string
 		resource = &batchv1beta1.CronJob{}
 	case apiBatchV1CronJob:
 		resource = &batchv1.CronJob{}
+	case apiNetworkV1betaIngress:
+		resource = &networkingbetav1.Ingress{}
+	case apiNetworkV1Ingress:
+		resource = &networkingv1.Ingress{}
+	case apiExtensionV1betaIngress:
+		resource = &extensionv1beta1.Ingress{}
 	default:
 		return fmt.Errorf("api %s is not suooprted compatibale resource", api)
 	}
@@ -358,7 +370,7 @@ func supportedObjectsByK8sKind(api string, kind string, kindObjectMap map[string
 }
 
 func getCompatibleResources() []string {
-	return []string{cronJobResource}
+	return []string{cronJobResource, ingressResource}
 }
 
 // GetSupportedObjectByKind accept kind and return the supported object (group/api/kind) of the cluster

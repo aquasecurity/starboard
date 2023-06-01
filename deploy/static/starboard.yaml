@@ -715,6 +715,7 @@ rules:
       - delete
   - apiGroups:
       - networking.k8s.io
+      - extensions
     resources:
       - networkpolicies
       - ingresses
