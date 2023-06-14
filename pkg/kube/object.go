@@ -85,7 +85,7 @@ const (
 	deploymentAnnotation       string = "deployment.kubernetes.io/revision"
 	deploymentConfigAnnotation string = "openshift.io/deployment-config.latest-version"
 
-	DeployerPodForDeploymentLabel string = "openshift.io/deployment-config.name"
+	DeployerPodForDeploymentLabel string = "openshift.io/deployer-pod-for.name"
 )
 
 // IsBuiltInWorkload returns true if the specified v1.OwnerReference
