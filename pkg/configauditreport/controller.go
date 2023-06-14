@@ -157,9 +157,9 @@ func (r *ResourceController) reconcileResource(resourceKind kube.Kind) reconcile
 					"controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
-			podAnnotations := resource.GetAnnotations()
+			labels := resource.GetLabels()
 			// Ignore scanning of pod which is created for deploymentConfig
-			if value, ok := podAnnotations[kube.DeployerPodForDeploymentLabel]; ok {
+			if value, ok := labels[kube.DeployerPodForDeploymentLabel]; ok {
 				log.V(1).Info("Ignoring system pod created for deployment config",
 					"deploymentConfigName", value)
 				return ctrl.Result{}, nil
