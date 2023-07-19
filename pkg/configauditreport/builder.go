@@ -191,8 +191,8 @@ func (b *ReportBuilder) Data(data v1alpha1.ConfigAuditReportData) *ReportBuilder
 func (b *ReportBuilder) reportName() string {
 	kind := b.controller.GetObjectKind().GroupVersionKind().Kind
 	name := b.controller.GetName()
-	reportName := fmt.Sprintf("%s-%s", strings.ToLower(kind), strings.ToLower(name))
-	if len(validation.IsValidLabelValue(reportName)) == 0 {
+	reportName := fmt.Sprintf("%s-%s", strings.ToLower(kind), name)
+	if len(validation.IsDNS1123Label(reportName)) == 0 {
 		return reportName
 	}
 	return fmt.Sprintf("%s-%s", strings.ToLower(kind), kube.ComputeHash(name))
