@@ -6,5 +6,5 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.15"
+    app.kubernetes.io/version: "v0.15.16-rc"
     app.kubernetes.io/managed-by: kubectl
