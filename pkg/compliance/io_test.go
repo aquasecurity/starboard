@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	//"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"sort"
 	"testing"
@@ -38,7 +38,7 @@ func TestPopulateSpecDataToMaps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			specData, err := ioutil.ReadFile(tt.specPath)
+			specData, err := os.ReadFile(tt.specPath)
 			if err != nil {
 				t.Errorf(err.Error())
 			}
@@ -85,7 +85,7 @@ func TestControlChecksByScannerChecks(t *testing.T) {
 			}}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			specData, err := ioutil.ReadFile(tt.specPath)
+			specData, err := os.ReadFile(tt.specPath)
 			assert.NoError(t, err)
 			var spec v1alpha1.ReportSpec
 			err = yaml.Unmarshal(specData, &spec)

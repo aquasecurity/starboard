@@ -5,7 +5,8 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 
 	"context"
-	"io/ioutil"
+	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -530,8 +531,8 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 	t.Run("data with Title", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-		logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title.json")
-		logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
+		logsReaderByte, err := os.ReadFile("./testdata/fixture/config_audit_log_reader_with_title.json")
+		logsReader := io.NopCloser(strings.NewReader(string(logsReaderByte)))
 		pluginContext := starboard.NewPluginContext().
 			WithName(conftest.Plugin).
 			WithNamespace("starboard-ns").
@@ -672,8 +673,8 @@ func TestPlugin_ParseConfigAuditReportData(t *testing.T) {
 
 		g := NewGomegaWithT(t)
 		plugin := conftest.NewPlugin(ext.NewSimpleIDGenerator(), fixedClock)
-		logsReaderByte, err := ioutil.ReadFile("./testdata/fixture/config_audit_log_reader_with_title_id.json")
-		logsReader := ioutil.NopCloser(strings.NewReader(string(logsReaderByte)))
+		logsReaderByte, err := os.ReadFile("./testdata/fixture/config_audit_log_reader_with_title_id.json")
+		logsReader := io.NopCloser(strings.NewReader(string(logsReaderByte)))
 		pluginContext := starboard.NewPluginContext().
 			WithName(conftest.Plugin).
 			WithNamespace("starboard-ns").
