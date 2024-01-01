@@ -174,6 +174,10 @@ func (r *ResourceController) reconcileResource(resourceKind kube.Kind) reconcile
 			}
 			if !activeReplicaSet {
 				log.V(1).Info("Ignoring inactive ReplicaSet", "controllerKind", controller.Kind, "controllerName", controller.Name)
+				err = kube.MarkOldReportForImmediateDeletion(ctx, r.ObjectResolver, resource.GetNamespace(), resource.GetName())
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("failed marking old reports for immediate deletion : %w", err)
+				}
 				return ctrl.Result{}, nil
 			}
 		}
@@ -185,6 +189,10 @@ func (r *ResourceController) reconcileResource(resourceKind kube.Kind) reconcile
 				return ctrl.Result{}, fmt.Errorf("failed checking current revision: %w", err)
 			}
 			if !activeReplicaSet {
+				err = kube.MarkOldReportForImmediateDeletion(ctx, r.ObjectResolver, resource.GetNamespace(), resource.GetName())
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("failed marking old reports for immediate deletion : %w", err)
+				}
 				log.V(1).Info("Ignoring inactive ReplicationController", "controllerKind", controller.Kind, "controllerName", controller.Name)
 				return ctrl.Result{}, nil
 			}
