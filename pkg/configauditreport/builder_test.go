@@ -175,12 +175,13 @@ func TestScanJobBuilder(t *testing.T) {
 			}).
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
+		fmt.Println(job)
 		g.Expect(job).To(Equal(&batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "scan-configauditreport-64d65c457",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "755877d4bb",
+					starboard.LabelResourceSpecHash:         "f755fff96",
 					starboard.LabelPluginConfigHash:         "hash-test",
 					starboard.LabelConfigAuditReportScanner: "plugin-test",
 					starboard.LabelK8SAppManagedBy:          "starboard",
@@ -196,7 +197,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "755877d4bb",
+							starboard.LabelResourceSpecHash:         "f755fff96",
 							starboard.LabelPluginConfigHash:         "hash-test",
 							starboard.LabelConfigAuditReportScanner: "plugin-test",
 							starboard.LabelK8SAppManagedBy:          "starboard",
@@ -235,6 +236,7 @@ func TestScanJobBuilder(t *testing.T) {
 			Get()
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(job).NotTo(BeNil())
+		fmt.Println(job)
 		b, err := json.Marshal(job)
 		if err != nil {
 			fmt.Println(err)
@@ -245,7 +247,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Name:      "scan-configauditreport-5bfbdd65c9",
 				Namespace: "starboard-ns",
 				Labels: map[string]string{
-					starboard.LabelResourceSpecHash:         "66f8596c77",
+					starboard.LabelResourceSpecHash:         "5878c568d4",
 					starboard.LabelPluginConfigHash:         "hash-test",
 					starboard.LabelConfigAuditReportScanner: "plugin-test",
 					starboard.LabelK8SAppManagedBy:          "starboard",
@@ -264,7 +266,7 @@ func TestScanJobBuilder(t *testing.T) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							starboard.LabelResourceSpecHash:         "66f8596c77",
+							starboard.LabelResourceSpecHash:         "5878c568d4",
 							starboard.LabelPluginConfigHash:         "hash-test",
 							starboard.LabelConfigAuditReportScanner: "plugin-test",
 							starboard.LabelK8SAppManagedBy:          "starboard",

@@ -92,7 +92,7 @@ func (r *runnableJob) Run(ctx context.Context) error {
 
 	complete := make(chan error)
 
-	jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{ // nolint: errcheck
 		UpdateFunc: func(_, newObj interface{}) {
 			newJob, ok := newObj.(*batchv1.Job)
 			if !ok {
@@ -115,7 +115,7 @@ func (r *runnableJob) Run(ctx context.Context) error {
 		},
 	})
 
-	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{ // nolint: errcheck
 		AddFunc: func(obj interface{}) {
 			event := obj.(*corev1.Event)
 
