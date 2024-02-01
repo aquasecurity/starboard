@@ -5,7 +5,7 @@ LABEL name="Starboard" \
       version="v0.15.19" \
       summary="Starboard Operator."
 
-RUN microdnf install shadow-utils
+RUN microdnf install -y shadow-utils
 RUN useradd -u 10000 starboard
 WORKDIR /opt/bin/
 COPY starboard-operator-fips /usr/local/bin/starboard-operator
