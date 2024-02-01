@@ -1,6 +1,6 @@
 module github.com/aquasecurity/starboard
 
-go 1.19
+go 1.21
 
 replace golang.org/x/text => golang.org/x/text v0.3.8
 
