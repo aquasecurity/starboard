@@ -601,7 +601,7 @@ dockers:
     dockerfile: build/starboard-operator/Dockerfile.fips
     goarch: amd64
     ids:
-      - starboard-operator
+      - starboard-operator-fips
     build_flag_templates:
       - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
@@ -619,7 +619,7 @@ dockers:
     dockerfile: build/starboard-operator/Dockerfile.fips
     goarch: arm64
     ids:
-      - starboard-operator
+      - starboard-operator-fips
     build_flag_templates:
       - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
@@ -637,7 +637,7 @@ dockers:
     dockerfile: build/starboard-operator/Dockerfile.fips
     goarch: s390x
     ids:
-      - starboard-operator
+      - starboard-operator-fips
     build_flag_templates:
       - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
@@ -655,7 +655,7 @@ dockers:
     dockerfile: build/starboard-operator/Dockerfile.fips
     goarch: ppc64le
     ids:
-      - starboard-operator
+      - starboard-operator-fips
     build_flag_templates:
       - "--label=org.opencontainers.image.title=starboard-operator"
       - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
