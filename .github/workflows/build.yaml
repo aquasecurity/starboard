@@ -49,13 +49,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Cached Go dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Verify Go code
         uses: golangci/golangci-lint-action@v3.4.0
         with:
@@ -79,12 +72,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Run unit tests
         run: make unit-tests
       - name: Upload code coverage
@@ -105,12 +92,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Setup Kubernetes cluster (KIND)
         uses: engineerd/setup-kind@v0.5.0
         with:
@@ -145,12 +126,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Setup Kubernetes cluster (KIND)
         uses: engineerd/setup-kind@v0.5.0
         with:
@@ -196,12 +171,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Checkout code
         uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Setup Kubernetes cluster (KIND)
         uses: engineerd/setup-kind@v0.5.0
         with:
