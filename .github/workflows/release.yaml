@@ -14,6 +14,17 @@ env:
   KIND_VERSION: "v0.11.1"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
 jobs:
+  remove-old-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '1 month' # '<number> <unit>', e.g. 5 days, 2 years, 90 seconds, parsed by Moment.js
+          # Optional inputs
+          # skip-tags: true
+          # skip-recent: 5
   unit-tests:
     name: Run unit tests
     runs-on: ubuntu-20.04
