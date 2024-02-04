@@ -19,7 +19,6 @@ builds:
       - amd64
       - arm
       - arm64
-      - s390x
     goarm:
       - "7"
     ignore:
@@ -66,7 +65,6 @@ builds:
       - amd64
       - arm
       - arm64
-      - s390x
     goarm:
       - "7"
 archives:
@@ -189,24 +187,6 @@ dockers:
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
-      - "docker.io/aquasec/starboard:{{ .Version }}-arm64"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard/Dockerfile
-    goarch: arm64
-    ids:
-      - starboard
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.description=Command line interface for Starboard"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/arm64"
-  - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
     use: buildx
     goos: linux
@@ -264,42 +244,6 @@ dockers:
       - "--platform=linux/arm64"
     extra_files:
       - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-arm64"
-    use: buildx
-    goos: linux
-    dockerfile: build/scanner-aqua/Dockerfile
-    goarch: arm64
-    ids:
-      - starboard-scanner-aqua
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-scanner-aqua"
-      - "--label=org.opencontainers.image.description=Aqua scanner for Starboard"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/arm64"
-  - image_templates:
-      - "docker.io/aquasec/starboard:{{ .Version }}-s390x"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard/Dockerfile
-    goarch: s390x
-    ids:
-      - starboard
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.description=Command line interface for Starboard"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-s390x"
     use: buildx
@@ -376,24 +320,6 @@ dockers:
       - "--platform=linux/s390x"
     extra_files:
       - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-s390x"
-    use: buildx
-    goos: linux
-    dockerfile: build/scanner-aqua/Dockerfile
-    goarch: s390x
-    ids:
-      - starboard-scanner-aqua
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-scanner-aqua"
-      - "--label=org.opencontainers.image.description=Aqua scanner for Starboard"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
     use: buildx
@@ -670,8 +596,6 @@ docker_manifests:
   - name_template: "aquasec/starboard:{{ .Version }}"
     image_templates:
       - "aquasec/starboard:{{ .Version }}-amd64"
-      - "aquasec/starboard:{{ .Version }}-arm64"
-      - "aquasec/starboard:{{ .Version }}-s390x"
   - name_template: "aquasec/starboard-operator:{{ .Version }}"
     image_templates:
       - "aquasec/starboard-operator:{{ .Version }}-amd64"
@@ -711,5 +635,3 @@ docker_manifests:
   - name_template: "aquasec/starboard-scanner-aqua:{{ .Version }}"
     image_templates:
       - "aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
-      - "aquasec/starboard-scanner-aqua:{{ .Version }}-arm64"
-      - "aquasec/starboard-scanner-aqua:{{ .Version }}-s390x"
