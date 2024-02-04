@@ -341,6 +341,26 @@ dockers:
     extra_files:
       - LICENSE
   - image_templates:
+      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-ppc64le"
+    use: buildx
+    goos: linux
+    dockerfile: build/starboard-operator/Dockerfile.ubi9
+    goarch: ppc64le
+    ids:
+      - starboard-operator
+    build_flag_templates:
+      - "--label=org.opencontainers.image.title=starboard-operator"
+      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+      - "--label=org.opencontainers.image.vendor=Aqua Security"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+      - "--platform=linux/ppc64le"
+    extra_files:
+      - LICENSE
+  - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-amd64"
     use: buildx
     goos: linux
