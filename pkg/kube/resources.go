@@ -1,15 +1,20 @@
 package kube
 
 import (
+	"context"
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"time"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/davecgh/go-spew/spew"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // GetContainerImagesFromPodSpec returns a map of container names
@@ -61,4 +66,56 @@ func DeepHashObject(hasher hash.Hash, objectToWrite interface{}) {
 		SpewKeys:       true,
 	}
 	printer.Fprintf(hasher, "%#v", objectToWrite)
+}
+
+// GetReportsByLabel fetch reports by matching labels
+func getReportsByLabel(ctx context.Context, resolver ObjectResolver, objectList client.ObjectList, namespace string,
+	labels map[string]string) error {
+	err := resolver.Client.List(ctx, objectList,
+		client.InNamespace(namespace),
+		client.MatchingLabels(labels))
+	if err != nil {
+		return fmt.Errorf("listing reports in namespace %s matching labels %v: %w", namespace,
+			labels, err)
+	}
+	return err
+}
+
+// MarkOldReportForImmediateDeletion set old (historical replicaSets) reports with TTL = 0 for immediate deletion
+func MarkOldReportForImmediateDeletion(ctx context.Context, resolver ObjectResolver, namespace string, resourceName string) error {
+	annotation := map[string]string{
+		v1alpha1.TTLReportAnnotation: time.Duration(0).String(),
+	}
+	resourceNameLabels := map[string]string{starboard.LabelResourceName: resourceName}
+	err := markOldConfigAuditReports(ctx, resolver, namespace, resourceNameLabels, annotation)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func markOldConfigAuditReports(ctx context.Context, resolver ObjectResolver, namespace string, resourceNameLabels map[string]string, annotation map[string]string) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		var configAuditReportList v1alpha1.ConfigAuditReportList
+		err := getReportsByLabel(ctx, resolver, &configAuditReportList, namespace, resourceNameLabels)
+		if err != nil {
+			return err
+		}
+		for _, report := range configAuditReportList.Items {
+			err := markReportTTL(ctx, resolver, report.DeepCopy(), annotation)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func markReportTTL[T client.Object](ctx context.Context, resolver ObjectResolver, report T, annotation map[string]string) error {
+	report.SetAnnotations(annotation)
+	err := resolver.Client.Update(ctx, report)
+	if err != nil {
+		return err
+	}
+	return nil
 }
