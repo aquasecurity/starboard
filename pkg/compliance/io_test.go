@@ -40,12 +40,12 @@ func TestPopulateSpecDataToMaps(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specData, err := ioutil.ReadFile(tt.specPath)
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Errorf("Error: %v", err)
 			}
 			var spec v1alpha1.ReportSpec
 			err = yaml.Unmarshal(specData, &spec)
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Errorf("Error: %v", err)
 			}
 			pd := mgr.populateSpecDataToMaps(spec)
 			if len(pd.scannerResourceListNames) > 0 && len(pd.controlCheckIds) > 0 {
