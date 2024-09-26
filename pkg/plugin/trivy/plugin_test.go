@@ -438,6 +438,41 @@ func TestConfig_GetMirrors(t *testing.T) {
 	}
 }
 
+func TestConfig_GoogleCredsFileExists(t *testing.T) {
+	testCases := []struct {
+		name           string
+		configData     trivy.Config
+		expectedOutput bool
+	}{
+		{
+			name: "Should return false",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"foo": "bar",
+				},
+			}},
+			expectedOutput: false,
+		},
+		{
+			name: "Should return true",
+			configData: trivy.Config{PluginConfig: starboard.PluginConfig{
+				Data: map[string]string{
+					"foo":                  "bar",
+					"trivy.googleAppCreds": "google-creds.json",
+				},
+			}},
+			expectedOutput: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			exists := tc.configData.GoogleCredsFileExists()
+			assert.Equal(t, tc.expectedOutput, exists)
+		})
+	}
+}
+
 func TestPlugin_Init(t *testing.T) {
 
 	t.Run("Should create the default config", func(t *testing.T) {
