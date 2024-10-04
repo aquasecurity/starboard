@@ -57,6 +57,10 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_TEST_CLI_LOG_LEVEL: "0"
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
     needs:
@@ -95,6 +99,10 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   integration-operator-conftest:
     name: Integration / Operator / Conftest
     needs:
@@ -133,6 +141,10 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   release:
     name: Release
     needs:
@@ -172,3 +184,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
    #   - name: Update new version for plugin 'starboard' in krew-index
    #     uses: rajatjindal/krew-release-bot@v0.0.43
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
+      - name: Check disk usage
+        run: df -h
