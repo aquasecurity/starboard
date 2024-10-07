@@ -155,6 +155,12 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
+      - name: Cleanup Docker and KIND resources (Pre-Release)
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
+      - name: Check disk usage (Pre-Release)
+        run: df -h
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
