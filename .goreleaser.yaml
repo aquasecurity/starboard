@@ -128,26 +128,26 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-amd64"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.ubi8
-    goarch: amd64
-    ids:
-      - starboard-operator
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/amd64"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-amd64"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.ubi8
+#    goarch: amd64
+#    ids:
+#      - starboard-operator
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/amd64"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-amd64"
     use: buildx
@@ -204,26 +204,26 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/arm64"
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.ubi8
-    goarch: arm64
-    ids:
-      - starboard-operator
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/arm64"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.ubi8
+#    goarch: arm64
+#    ids:
+#      - starboard-operator
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/arm64"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-arm64"
     use: buildx
@@ -280,26 +280,26 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/ppc64le"
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-s390x"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.ubi8
-    goarch: s390x
-    ids:
-      - starboard-operator
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/s390x"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-s390x"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.ubi8
+#    goarch: s390x
+#    ids:
+#      - starboard-operator
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/s390x"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-s390x"
     use: buildx
@@ -320,26 +320,26 @@ dockers:
       - "--platform=linux/s390x"
     extra_files:
       - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.ubi8
-    goarch: ppc64le
-    ids:
-      - starboard-operator
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/ppc64le"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.ubi8
+#    goarch: ppc64le
+#    ids:
+#      - starboard-operator
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/ppc64le"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-ppc64le"
     use: buildx
@@ -360,26 +360,26 @@ dockers:
       - "--platform=linux/ppc64le"
     extra_files:
       - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-amd64"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
-    goarch: amd64
-    ids:
-      - starboard-operator-fips
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/amd64"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-amd64"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
+#    goarch: amd64
+#    ids:
+#      - starboard-operator-fips
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/amd64"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
     use: buildx
@@ -400,66 +400,66 @@ dockers:
       - "--platform=linux/amd64"
     extra_files:
       - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-arm64"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
-    goarch: arm64
-    ids:
-      - starboard-operator-fips
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/arm64"
-    extra_files:
-      - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-s390x"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
-    goarch: s390x
-    ids:
-      - starboard-operator-fips
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/s390x"
-    extra_files:
-      - LICENSE
-  - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-ppc64le"
-    use: buildx
-    goos: linux
-    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
-    goarch: ppc64le
-    ids:
-      - starboard-operator-fips
-    build_flag_templates:
-      - "--label=org.opencontainers.image.title=starboard-operator"
-      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
-      - "--label=org.opencontainers.image.vendor=Aqua Security"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
-      - "--platform=linux/ppc64le"
-    extra_files:
-      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-arm64"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
+#    goarch: arm64
+#    ids:
+#      - starboard-operator-fips
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/arm64"
+#    extra_files:
+#      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-s390x"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
+#    goarch: s390x
+#    ids:
+#      - starboard-operator-fips
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/s390x"
+#    extra_files:
+#      - LICENSE
+#  - image_templates:
+#      - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi8-fips-ppc64le"
+#    use: buildx
+#    goos: linux
+#    dockerfile: build/starboard-operator/Dockerfile.fips.ubi8
+#    goarch: ppc64le
+#    ids:
+#      - starboard-operator-fips
+#    build_flag_templates:
+#      - "--label=org.opencontainers.image.title=starboard-operator"
+#      - "--label=org.opencontainers.image.description=Keeps Starboard resources updated"
+#      - "--label=org.opencontainers.image.vendor=Aqua Security"
+#      - "--label=org.opencontainers.image.version={{ .Version }}"
+#      - "--label=org.opencontainers.image.created={{ .Date }}"
+#      - "--label=org.opencontainers.image.source=https://github.com/aquasecurity/starboard"
+#      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#      - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
+#      - "--platform=linux/ppc64le"
+#    extra_files:
+#      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
     use: buildx
@@ -628,18 +628,18 @@ docker_manifests:
       - "aquasec/starboard-operator:{{ .Version }}-fips-arm64"
       - "aquasec/starboard-operator:{{ .Version }}-fips-s390x"
       - "aquasec/starboard-operator:{{ .Version }}-fips-ppc64le"
-  - name_template: "aquasec/starboard-operator:{{ .Version }}-ubi8"
-    image_templates:
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-amd64"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-s390x"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
-  - name_template: "aquasec/starboard-operator:{{ .Version }}-ubi8-fips"
-    image_templates:
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-amd64"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-arm64"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-s390x"
-      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-ppc64le"
+#  - name_template: "aquasec/starboard-operator:{{ .Version }}-ubi8"
+#    image_templates:
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-amd64"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-arm64"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-s390x"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-ppc64le"
+#  - name_template: "aquasec/starboard-operator:{{ .Version }}-ubi8-fips"
+#    image_templates:
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-amd64"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-arm64"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-s390x"
+#      - "aquasec/starboard-operator:{{ .Version }}-ubi8-fips-ppc64le"
   - name_template: "aquasec/starboard-operator:{{ .Version }}-ubi9"
     image_templates:
       - "aquasec/starboard-operator:{{ .Version }}-ubi9-amd64"
