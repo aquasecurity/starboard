@@ -93,7 +93,6 @@ checksum:
 #      - '^release'
 dockers:
   - image_templates:
-      - "docker.io/aquasec/starboard:{{ .Version }}-amd64"
       - "aquasec.azurecr.io/starboard:{{ .Version }}-amd64"
     use: buildx
     goos: linux
