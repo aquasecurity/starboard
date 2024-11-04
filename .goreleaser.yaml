@@ -1,6 +1,6 @@
-release:
-  draft: false
-  prerelease: auto
+#release:
+#  draft: false
+#  prerelease: auto
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
@@ -82,15 +82,15 @@ archives:
         format: zip
 checksum:
   name_template: "checksums.txt"
-snapshot:
-  name_template: "{{ .FullCommit }}"
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs'
-      - '^test'
-      - '^release'
+#snapshot:
+#  name_template: "{{ .FullCommit }}"
+#changelog:
+#  sort: asc
+#  filters:
+#    exclude:
+#      - '^docs'
+#      - '^test'
+#      - '^release'
 dockers:
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-amd64"
