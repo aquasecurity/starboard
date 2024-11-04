@@ -23,9 +23,9 @@ jobs:
       - name: login to azure acr - Lihitest2
         uses: azure/docker-login@v2
         with:
-          login-server: ${{ env.AQUSEC_ACR_REGISTRY_NAME }}
-          username: ${{ env.AQUASEC_ACR_USERNAME }}
-          password: ${{ env.AQUASEC_ACR_PASSWORD }}
+          login-server: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
+          username: ${{ secrets.AQUASEC_ACR_USERNAME }}
+          password: ${{ secrets.AQUASEC_ACR_PASSWORD }}
 
       - name: Cleanup Docker and KIND resources (Pre-Release)
         run: |
