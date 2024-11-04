@@ -20,6 +20,13 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
+      - name: login to azure acr - Lihitest2
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ env.AQUSEC_ACR_REGISTRY_NAME }}
+          username: ${{ env.AQUASEC_ACR_USERNAME }}
+          password: ${{ env.AQUASEC_ACR_PASSWORD }}
+
       - name: Cleanup Docker and KIND resources (Pre-Release)
         run: |
           docker system prune -a --force
@@ -34,12 +41,12 @@ jobs:
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: login to azure acr - Lihitest2
-        uses: azure/docker-login@v2
-        with:
-          login-server: ${{ env.AQUSEC_ACR_REGISTRY_NAME }}
-          username: ${{ env.AQUASEC_ACR_USERNAME }}
-          password: ${{ env.AQUASEC_ACR_PASSWORD }}
+#      - name: login to azure acr - Lihitest2
+#        uses: azure/docker-login@v2
+#        with:
+#          login-server: ${{ env.AQUSEC_ACR_REGISTRY_NAME }}
+#          username: ${{ env.AQUASEC_ACR_USERNAME }}
+#          password: ${{ env.AQUASEC_ACR_PASSWORD }}
 
       - name: Setup Go
         uses: actions/setup-go@v3
