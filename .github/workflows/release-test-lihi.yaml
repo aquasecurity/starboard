@@ -34,7 +34,7 @@ jobs:
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
 
-      - name: login to azure acr - Lihitest
+      - name: login to azure acr - Lihitest2
         uses: azure/docker-login@v2
         with:
           login-server: ${{ env.AQUSEC_ACR_REGISTRY_NAME }}
