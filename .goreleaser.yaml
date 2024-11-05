@@ -1,115 +1,40 @@
-#release:
-#  draft: false
-#  prerelease: auto
+release:
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto
+
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
-#before:
-#  hooks:
-#    - go mod download
-#builds:
-#  - id: starboard
-#    main: ./cmd/starboard/main.go
-#    binary: starboard
-#    goos:
-#      - darwin
-#      - linux
-#      - windows
-#    goarch:
-#      - amd64
-#      - arm
-#      - arm64
-#    goarm:
-#      - "7"
-#    ignore:
-#      - goos: darwin
-#        goarch: s390x
-#      - goos: windows
-#        goarch: s390x
-#  - id: starboard-operator
-#    main: ./cmd/starboard-operator/main.go
-#    binary: starboard-operator
-#    goos:
-#      - linux
-#    goarch:
-#      - amd64
-#      - arm
-#      - arm64
-#      - s390x
-#      - ppc64le
-#    goarm:
-#      - "7"
-#  - id: starboard-operator-fips
-#    main: ./cmd/starboard-operator/main.go
-#    binary: starboard-operator-fips
-#    flags:
-#      - -tags=fipsonly
-#    env:
-#      - GOEXPERIMENT=boringcrypto
-#    goos:
-#      - linux
-#    goarch:
-#      - amd64
-#      - arm
-#      - arm64
-#      - s390x
-#      - ppc64le
-#    goarm:
-#      - "7"
-#  - id: starboard-scanner-aqua
-#    main: ./cmd/scanner-aqua/main.go
-#    binary: starboard-scanner-aqua
-#    goos:
-#      - linux
-#    goarch:
-#      - amd64
-#      - arm
-#      - arm64
-#    goarm:
-#      - "7"
-#archives:
-#  - name_template: >-
-#      {{ .ProjectName }}_
-#      {{- .Os }}_
-#      {{- if eq .Arch "amd64" }}x86_64
-#      {{- else if eq .Arch "arm" }}ARM
-#      {{- else if eq .Arch "arm64" }}ARM64
-#      {{- else }}{{ .Arch }}{{ end }}
-#    builds:
-#      - starboard
-#    format_overrides:
-#      - goos: windows
-#        format: zip
+
 checksum:
   name_template: "checksums.txt"
-#snapshot:
-#  name_template: "{{ .FullCommit }}"
-#changelog:
-#  sort: asc
-#  filters:
-#    exclude:
-#      - '^docs'
-#      - '^test'
-#      - '^release'
+
 builds:
   - id: starboard
     main: ./cmd/starboard/main.go
     binary: starboard
     goos:
-      - darwin
       - linux
-      - windows
     goarch:
       - amd64
       - arm
       - arm64
     goarm:
       - "7"
-    ignore:
-      - goos: darwin
-        goarch: s390x
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm" }}ARM
+      {{- else if eq .Arch "arm64" }}ARM64
+      {{- else }}{{ .Arch }}{{ end }}
+    builds:
+      - starboard
+    format_overrides:
       - goos: windows
-        goarch: s390x
+        format: zip
 dockers:
   - image_templates:
       - "aquasec.azurecr.io/starboard-lihitest:{{ .Version }}-amd64"
