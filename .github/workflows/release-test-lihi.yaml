@@ -4,7 +4,7 @@
 #
 #    git tag -a v0.0.1 -m 'Release v0.0.1'
 #    git push upstream v0.0.1
-name: Release
+name: Release-Test-Lihi
 on:
   push:
     branches:
@@ -70,17 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
    #   - name: Update new version for plugin 'starboard' in krew-index
    #     uses: rajatjindal/krew-release-bot@v0.0.43
-
-#      - name: Tag and push image to Amazon ECR
-#        id: build-image
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          IMAGE_TAG: ${{ github.sha }}
-#        run: |
-#          # push to ECR
-#          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_ECR
-#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Cleanup Docker and KIND resources
         run: |
