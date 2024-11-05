@@ -91,6 +91,25 @@ checksum:
 #      - '^docs'
 #      - '^test'
 #      - '^release'
+builds:
+  - id: starboard
+    main: ./cmd/starboard/main.go
+    binary: starboard
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: s390x
+      - goos: windows
+        goarch: s390x
 dockers:
   - image_templates:
       - "aquasec.azurecr.io/starboard-lihitest:{{ .Version }}-amd64"
