@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/starboard/pkg/runner"
+	"github.com/aquasecurity/starboard/pkg/utils"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,7 @@ func (r *runnableJob) Run(ctx context.Context) error {
 		r.clientset,
 		defaultResyncDuration,
 		informers.WithNamespace(r.job.Namespace),
+		informers.WithTransform(utils.TransformObjMetadata),
 	)
 	jobsInformer := informerFactory.Batch().V1().Jobs()
 	eventsInformer := informerFactory.Core().V1().Events()

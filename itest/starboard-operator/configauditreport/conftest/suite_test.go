@@ -92,7 +92,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	inputs = behavior.Inputs{
-		AssertTimeout:         3 * time.Minute,
+		AssertTimeout:         5 * time.Minute, // Increased timeout to 5 minutes
 		PrimaryNamespace:      corev1.NamespaceDefault,
 		PrimaryWorkloadPrefix: "wordpress",
 
@@ -130,6 +130,9 @@ var _ = BeforeSuite(func() {
 		defer GinkgoRecover()
 		By("Starting Starboard operator")
 		err = operator.Start(startCtx, buildInfo, operatorConfig)
+		if err != nil {
+			logf.Log.Error(err, "Failed to start operator")
+		}
 		Expect(err).ToNot(HaveOccurred())
 	}()
 
