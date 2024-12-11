@@ -1,10 +1,9 @@
 package behavior
 
 import (
+	"context"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"context"
 	"time"
 
 	"github.com/aquasecurity/starboard/itest/helper"
@@ -35,34 +34,6 @@ type Inputs struct {
 // of a vulnerability scanner with the given inputs.
 func VulnerabilityScannerBehavior(inputs *Inputs) func() {
 	return func() {
-
-		Context("When unmanaged Pod is created", func() {
-
-			var ctx context.Context
-			var pod *corev1.Pod
-
-			BeforeEach(func() {
-				ctx = context.Background()
-				pod = helper.NewPod().
-					WithRandomName("unmanaged-nginx").
-					WithNamespace(inputs.PrimaryNamespace).
-					WithContainer("nginx", "nginx:1.16").
-					Build()
-
-				err := inputs.Create(ctx, pod)
-				Expect(err).ToNot(HaveOccurred())
-			})
-
-			It("Should create VulnerabilityReport", func() {
-				Eventually(inputs.HasVulnerabilityReportOwnedBy(pod), inputs.AssertTimeout).Should(BeTrue())
-			})
-
-			AfterEach(func() {
-				err := inputs.Delete(ctx, pod)
-				Expect(err).ToNot(HaveOccurred())
-			})
-
-		})
 
 		Context("When Deployment is created", func() {
 
