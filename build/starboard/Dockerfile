@@ -1,4 +1,4 @@
-FROM alpine:3.19
+FROM alpine:3.21
 
 RUN adduser -u 10000 -D -g '' starboard starboard
 
