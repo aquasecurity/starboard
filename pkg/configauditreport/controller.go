@@ -84,6 +84,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 				predicate.Not(predicate.ManagedByStarboardOperator),
 				predicate.Not(predicate.IsLeaderElectionResource),
 				predicate.Not(predicate.IsBeingTerminated),
+				predicate.Not(predicate.ManagedByKubeEnforcer),
 				installModePredicate,
 			)).
 			Owns(resource.ownsObject).
@@ -110,6 +111,7 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		err = ctrl.NewControllerManagedBy(mgr).
 			For(resource.forObject, builder.WithPredicates(
 				predicate.Not(predicate.ManagedByStarboardOperator),
+				predicate.Not(predicate.ManagedByKubeEnforcer),
 				predicate.Not(predicate.IsBeingTerminated),
 			)).
 			Owns(resource.ownsObject).

@@ -272,10 +272,6 @@ func TestPlugin_Init(t *testing.T) {
 		}, &cm)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(cm).To(Equal(corev1.ConfigMap{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "ConfigMap",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "starboard-conftest-config",
 				Namespace: "starboard-ns",
@@ -299,6 +295,10 @@ func TestPlugin_Init(t *testing.T) {
 
 		client := fake.NewClientBuilder().WithObjects(
 			&corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "ConfigMap",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "starboard-conftest-config",
 					Namespace:       "starboard-ns",
