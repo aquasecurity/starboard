@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.23"
+    app.kubernetes.io/version: "0.15.24"
     app.kubernetes.io/managed-by: kubectl
 spec:
   name: nsa
