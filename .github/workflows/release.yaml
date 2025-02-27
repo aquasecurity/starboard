@@ -10,7 +10,7 @@ on:
     tags:
       - "v*"
 env:
-  GO_VERSION: "1.21.6"
+  GO_VERSION: "1.23.1"
   KIND_VERSION: "v0.11.1"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
 jobs:
@@ -57,6 +57,10 @@ jobs:
         env:
           KUBECONFIG: /home/runner/.kube/config
           STARBOARD_TEST_CLI_LOG_LEVEL: "0"
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   itest-starboard-operator:
     name: Run integration tests / Starboard Operator
     needs:
@@ -95,6 +99,10 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   integration-operator-conftest:
     name: Integration / Operator / Conftest
     needs:
@@ -133,6 +141,10 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
   release:
     name: Release
     needs:
@@ -143,6 +155,12 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
+      - name: Cleanup Docker and KIND resources (Pre-Release)
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
+      - name: Check disk usage (Pre-Release)
+        run: df -h
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -163,6 +181,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: login to Aqua Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
+          username: ${{ secrets.AQUASEC_ACR_USERNAME }}
+          password: ${{ secrets.AQUASEC_ACR_PASSWORD }}
       - name: Release
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -170,5 +194,12 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AQUSEC_ACR_REGISTRY_NAME: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
    #   - name: Update new version for plugin 'starboard' in krew-index
    #     uses: rajatjindal/krew-release-bot@v0.0.43
+      - name: Cleanup Docker and KIND resources
+        run: |
+          docker system prune -a --force
+          docker volume prune --force
+      - name: Check disk usage
+        run: df -h

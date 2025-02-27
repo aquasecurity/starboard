@@ -3,6 +3,8 @@ package utils
 import (
 	"github.com/aquasecurity/starboard/pkg/ext"
 	"github.com/gorhill/cronexpr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"time"
 )
 
@@ -17,12 +19,12 @@ func NextCronDuration(cronString string, creationTime time.Time, clock ext.Clock
 	return timeToExpiration(expr.Next(creationTime), clock), nil
 }
 
-//DurationExceeded  check if duration is now meaning zero
+// DurationExceeded  check if duration is now meaning zero
 func DurationExceeded(duration time.Duration) bool {
 	return duration.Nanoseconds() <= 0
 }
 
-//timeToExpiration  return the duration between time to expiration
+// timeToExpiration  return the duration between time to expiration
 func timeToExpiration(expiresAt time.Time, clock ext.Clock) time.Duration {
 	return expiresAt.Sub(clock.Now())
 }
@@ -31,4 +33,22 @@ func timeToExpiration(expiresAt time.Time, clock ext.Clock) time.Duration {
 func IsTTLExpired(ttl time.Duration, creationTime time.Time, clock ext.Clock) (bool, time.Duration) {
 	durationToTTLExpiration := timeToExpiration(creationTime.Add(ttl), clock)
 	return DurationExceeded(durationToTTLExpiration), durationToTTLExpiration
+}
+
+// TransformObjMetadata removes managed fields and the "kubectl.kubernetes.io/last-applied-configuration"
+// annotation from Kubernetes objects. This ensures that these fields are not stored in the client-go cache.
+func TransformObjMetadata(obj interface{}) (interface{}, error) {
+	obj, err := cache.TransformStripManagedFields()(obj)
+	if err != nil {
+		return obj, err
+	}
+
+	if metaObj, ok := obj.(metav1.ObjectMetaAccessor); ok {
+		annotations := metaObj.GetObjectMeta().GetAnnotations()
+		if annotations != nil {
+			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
+			metaObj.GetObjectMeta().SetAnnotations(annotations)
+		}
+	}
+	return obj, nil
 }

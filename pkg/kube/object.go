@@ -16,7 +16,6 @@ import (
 	extensionv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1 "k8s.io/api/networking/v1"
 	networkingbetav1 "k8s.io/api/networking/v1beta1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -273,8 +272,6 @@ func ComputeSpecHash(obj client.Object) (string, error) {
 		return ComputeHash(obj), nil
 	case *apiextensionsv1.CustomResourceDefinition:
 		return ComputeHash(obj), nil
-	case *policyv1beta1.PodSecurityPolicy:
-		return ComputeHash(obj), nil
 	default:
 		return "", fmt.Errorf("computing spec hash of unsupported object: %T", t)
 	}
@@ -330,13 +327,13 @@ func NewObjectResolver(c client.Client, cm CompatibleMgr) ObjectResolver {
 	return ObjectResolver{c, cm}
 }
 
-// InitCompatibleMgr initializes a CompatibleObjectMapper who store a map the of supported kinds with it compatible Objects (group/api/kind)
-// it dynamically fetches the compatible k8s objects (group/api/kind) by resource from the cluster and store it in kind vs k8s object mapping
+// InitCompatibleMgr This initializes a CompatibleObjectMapper who store a map the of supported kinds with it compatible Objects (group/api/kind)
+// it dynamically fetches the compatible k8ms objects (group/api/kind) by resource from the cluster and store it in kind vs k8s object mapping
 // It will enable the operator to support old and new API resources based on cluster version support
 func InitCompatibleMgr(restMapper meta.RESTMapper) (CompatibleMgr, error) {
 	kindObjectMap := make(map[string]client.Object)
 	for _, resource := range getCompatibleResources() {
-		gvk, err := restMapper.KindFor(schema.GroupVersionResource{Resource: resource})
+		gvk, err := getGroupVersionKind(restMapper, resource)
 		if err != nil {
 			return nil, err
 		}
@@ -346,6 +343,40 @@ func InitCompatibleMgr(restMapper meta.RESTMapper) (CompatibleMgr, error) {
 		}
 	}
 	return &CompatibleObjectMapper{kindObjectMap: kindObjectMap}, nil
+}
+
+func getGroupVersionKind(restMapper meta.RESTMapper, resource string) (schema.GroupVersionKind, error) {
+	// Special handling for CronJob
+	if resource == "cronjobs" {
+		if gvk, err := restMapper.KindFor(schema.GroupVersionResource{Group: "batch", Resource: resource, Version: "v1"}); err == nil {
+			return gvk, nil
+		}
+		if gvk, err := restMapper.KindFor(schema.GroupVersionResource{Group: "batch", Resource: resource, Version: "v1beta1"}); err == nil {
+			return gvk, nil
+		}
+		return schema.GroupVersionKind{}, fmt.Errorf("resource %s not found", resource)
+	}
+
+	// Special handling for Ingress
+	if resource == "ingress" || resource == "ingresses" {
+		if gvk, err := restMapper.KindFor(schema.GroupVersionResource{Group: "networking.k8s.io", Resource: "ingresses", Version: "v1"}); err == nil {
+			return gvk, nil
+		}
+		if gvk, err := restMapper.KindFor(schema.GroupVersionResource{Group: "networking.k8s.io", Resource: "ingresses", Version: "v1beta1"}); err == nil {
+			return gvk, nil
+		}
+		if gvk, err := restMapper.KindFor(schema.GroupVersionResource{Group: "extensions", Resource: "ingresses", Version: "v1beta1"}); err == nil {
+			return gvk, nil
+		}
+		return schema.GroupVersionKind{}, fmt.Errorf("resource %s not found", resource)
+	}
+
+	// Default handling for other resources
+	gvk, err := restMapper.KindFor(schema.GroupVersionResource{Resource: resource})
+	if err != nil {
+		return schema.GroupVersionKind{}, err
+	}
+	return gvk, nil
 }
 
 // return a map of supported object api per k8s version
@@ -419,8 +450,6 @@ func (o *ObjectResolver) ObjectFromObjectRef(ctx context.Context, ref ObjectRef)
 		obj = &rbacv1.ClusterRoleBinding{}
 	case KindCustomResourceDefinition:
 		obj = &apiextensionsv1.CustomResourceDefinition{}
-	case KindPodSecurityPolicy:
-		obj = &policyv1beta1.PodSecurityPolicy{}
 	case KindDeploymentConfig:
 		obj = &ocpappsv1.DeploymentConfig{}
 	default:

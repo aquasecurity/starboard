@@ -13,13 +13,16 @@ import (
 	"github.com/aquasecurity/starboard/pkg/operator/etc"
 	"github.com/aquasecurity/starboard/pkg/plugin"
 	"github.com/aquasecurity/starboard/pkg/starboard"
+	"github.com/aquasecurity/starboard/pkg/utils"
 	"github.com/aquasecurity/starboard/pkg/vulnerabilityreport"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	controllerconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var (
@@ -39,10 +42,13 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 		"exclude namespaces", operatorConfig.ExcludeNamespaces)
 
 	// Set the default manager options.
+	skipNameValidation := true // https://github.com/kubernetes-sigs/controller-runtime/issues/2937
 	options := manager.Options{
 		Scheme:                 starboard.NewScheme(),
-		MetricsBindAddress:     operatorConfig.MetricsBindAddress,
+		Metrics:                metricsserver.Options{BindAddress: operatorConfig.MetricsBindAddress},
 		HealthProbeBindAddress: operatorConfig.HealthProbeBindAddress,
+		Cache:                  cache.Options{DefaultTransform: utils.TransformObjMetadata},
+		Controller:             controllerconfig.Controller{SkipNameValidation: &skipNameValidation},
 	}
 
 	if operatorConfig.LeaderElectionEnabled {
@@ -55,30 +61,21 @@ func Start(ctx context.Context, buildInfo starboard.BuildInfo, operatorConfig et
 	case etc.OwnNamespace:
 		// Add support for OwnNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `starboard-operator`).
-		setupLog.Info("Constructing client cache", "namespace", targetNamespaces[0])
-		options.Namespace = targetNamespaces[0]
-	case etc.SingleNamespace:
+		setupLog.Info("Constructing client cache", "namespace", operatorNamespace)
+		options.Cache.DefaultNamespaces = map[string]cache.Config{operatorNamespace: {}}
+	case etc.SingleNamespace, etc.MultiNamespace:
 		// Add support for SingleNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default`).
-		cachedNamespaces := append(targetNamespaces, operatorNamespace)
-		if operatorConfig.CISKubernetesBenchmarkEnabled {
-			// Cache cluster-scoped resources such as Nodes
-			cachedNamespaces = append(cachedNamespaces, "")
-		}
-		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
-		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
-	case etc.MultiNamespace:
 		// Add support for MultiNamespace set in OPERATOR_NAMESPACE (e.g. `starboard-operator`)
 		// and OPERATOR_TARGET_NAMESPACES (e.g. `default,kube-system`).
 		// Note that you may face performance issues when using this mode with a high number of namespaces.
 		// More: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
-		cachedNamespaces := append(targetNamespaces, operatorNamespace)
-		if operatorConfig.CISKubernetesBenchmarkEnabled {
-			// Cache cluster-scoped resources such as Nodes
-			cachedNamespaces = append(cachedNamespaces, "")
+		namespaceCacheMap := make(map[string]cache.Config)
+		setupLog.Info("Constructing client cache", "namespaces", targetNamespaces)
+		for _, namespace := range append(targetNamespaces, operatorNamespace) {
+			namespaceCacheMap[namespace] = cache.Config{}
 		}
-		setupLog.Info("Constructing client cache", "namespaces", cachedNamespaces)
-		options.NewCache = cache.MultiNamespacedCacheBuilder(cachedNamespaces)
+		options.Cache.DefaultNamespaces = namespaceCacheMap
 	case etc.AllNamespaces:
 		// Add support for AllNamespaces set in OPERATOR_NAMESPACE (e.g. `operators`)
 		// and OPERATOR_TARGET_NAMESPACES left blank.

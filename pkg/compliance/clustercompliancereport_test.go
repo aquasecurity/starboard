@@ -36,6 +36,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 	logger := log.Log.WithName("operator")
 	config := getStarboardConfig()
 	ginkgo.Context("reconcile compliance spec report with cis-bench anc audit-config data and validate compliance reports data and requeue", func() {
+		defer ginkgo.GinkgoRecover()
+
 		var cisBenchList v1alpha1.CISKubeBenchReportList
 		err := loadResource("./testdata/fixture/cisBenchmarkReportList.json", &cisBenchList)
 		Expect(err).ToNot(HaveOccurred())
@@ -63,6 +65,7 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		ginkgo.It("check cluster compliance report detail data match expected result", func() {
+			defer ginkgo.GinkgoRecover()
 			// validate cluster compliance detail report data
 			var clusterComplianceDetialReport v1alpha1.ClusterComplianceDetailReport
 			err = loadResource("./testdata/fixture/clusterComplianceDetailReport.json", &clusterComplianceDetialReport)
@@ -78,6 +81,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		})
 
 		ginkgo.It("check cluster compliance report status match expected result", func() {
+			defer ginkgo.GinkgoRecover()
+
 			// validate cluster compliance report status
 			var clusterComplianceReport v1alpha1.ClusterComplianceReport
 			err = loadResource("./testdata/fixture/clusterComplianceReport.json", &clusterComplianceReport)
@@ -89,6 +94,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		})
 
 		ginkgo.It("check requeue interval bigger then 0", func() {
+			defer ginkgo.GinkgoRecover()
+
 			// validate resource requeue with interval
 			res, err := instance.generateComplianceReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa"})
 			Expect(err).ToNot(HaveOccurred())
@@ -96,6 +103,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		})
 
 		ginkgo.It("check compliance compliance report status is updated following to changes occur with cis-bench and config-audit report", func() {
+			defer ginkgo.GinkgoRecover()
+
 			// update cis-benchmark report and config-audit with failed tests and compare update compliance report
 			var updatedCisBench v1alpha1.CISKubeBenchReport
 			err = loadResource("./testdata/fixture/cisBenchmarkReportUpdate.json", &updatedCisBench)
@@ -126,6 +135,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 			Expect(cmp.Equal(complianceReportUpdate.Status, clusterComplianceReportUpdate.Status, ignoreTimeStamp())).To(BeTrue())
 		})
 		ginkgo.It("check compliance compliance report detail is updated following to changes occur with cis-bench and config-audit report", func() {
+			defer ginkgo.GinkgoRecover()
+
 			// update cis-benchmark report and config-audit with failed tests and compare update compliance report
 			var clusterComplianceDetialReport v1alpha1.ClusterComplianceDetailReport
 			err = loadResource("./testdata/fixture/clusterComplianceDetailReportUpdate.json", &clusterComplianceDetialReport)
@@ -142,6 +153,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 	})
 
 	ginkgo.Context("reconcile compliance spec report without cis-bench and audit-config data and validate compliance reports data", func() {
+		defer ginkgo.GinkgoRecover()
+
 		var clusterComplianceSpec v1alpha1.ClusterComplianceReport
 		err := loadResource("./testdata/fixture/clusterComplianceSpec.json", &clusterComplianceSpec)
 		// create new client
@@ -152,6 +165,8 @@ var _ = ginkgo.Describe("cluster compliance report", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		ginkgo.It("check compliance reconcile where cis-benchmark and config-audit reports are not present", func() {
+			defer ginkgo.GinkgoRecover()
+
 			// validate compliance reports has no status / data
 			complianceDetailReport, err := getDetailReport(context.TODO(), types.NamespacedName{Namespace: "", Name: "nsa-details"}, clientWithComplianceSpecOnly)
 			Expect(err).ToNot(HaveOccurred())

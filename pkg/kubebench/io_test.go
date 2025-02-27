@@ -22,6 +22,10 @@ func TestReadWriter(t *testing.T) {
 		client := fake.NewClientBuilder().WithScheme(kubernetesScheme).Build()
 		instance := kubebench.NewReadWriter(client)
 		err := instance.Write(context.Background(), v1alpha1.CISKubeBenchReport{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "aquasecurity.github.io/v1alpha1",
+				Kind:       "CISKubeBenchReport",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
@@ -82,6 +86,10 @@ func TestReadWriter(t *testing.T) {
 		client := fake.NewClientBuilder().
 			WithScheme(kubernetesScheme).
 			WithObjects(&v1alpha1.CISKubeBenchReport{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "aquasecurity.github.io/v1alpha1",
+					Kind:       "CISKubeBenchReport",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "control-plane",
 					ResourceVersion: "0",
@@ -107,6 +115,10 @@ func TestReadWriter(t *testing.T) {
 			Build()
 		instance := kubebench.NewReadWriter(client)
 		err := instance.Write(context.Background(), v1alpha1.CISKubeBenchReport{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "aquasecurity.github.io/v1alpha1",
+				Kind:       "CISKubeBenchReport",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "control-plane",
 				Labels: map[string]string{
@@ -167,6 +179,10 @@ func TestReadWriter(t *testing.T) {
 		client := fake.NewClientBuilder().
 			WithScheme(kubernetesScheme).
 			WithObjects(&v1alpha1.CISKubeBenchReport{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "aquasecurity.github.io/v1alpha1",
+					Kind:       "CISKubeBenchReport",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "control-plane",
 					ResourceVersion: "1",
@@ -189,6 +205,10 @@ func TestReadWriter(t *testing.T) {
 					},
 				},
 			}, &v1alpha1.CISKubeBenchReport{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "aquasecurity.github.io/v1alpha1",
+					Kind:       "CISKubeBenchReport",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "worker",
 					ResourceVersion: "1",
