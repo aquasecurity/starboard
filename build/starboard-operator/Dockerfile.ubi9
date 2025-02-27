@@ -14,4 +14,3 @@ COPY LICENSE /licenses/LICENSE
 USER starboard
 
 ENTRYPOINT ["starboard-operator"]
- ̰
