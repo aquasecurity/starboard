@@ -94,7 +94,6 @@ changelog:
 dockers:
   - image_templates:
       - "docker.io/aquasec/starboard:{{ .Version }}-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
@@ -113,7 +112,6 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -152,7 +150,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.ubi9
@@ -173,7 +170,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-scanner-aqua:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/scanner-aqua/Dockerfile
@@ -191,7 +187,6 @@ dockers:
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
   - image_templates:
-      - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
     use: buildx
     goos: linux
@@ -231,7 +226,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.ubi9
@@ -252,7 +246,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -271,7 +264,6 @@ dockers:
       - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ppc64le"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ppc64le"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
@@ -310,7 +302,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.ubi9
@@ -351,7 +342,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-ppc64le"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-ppc64le"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.ubi9
@@ -392,7 +382,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips.ubi9
@@ -473,7 +462,6 @@ dockers:
 #      - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips.ubi9
@@ -494,7 +482,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips.ubi9
@@ -515,7 +502,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips.ubi9
@@ -536,7 +522,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-ubi9-fips-ppc64le"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-ppc64le"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips.ubi9
@@ -557,7 +542,6 @@ dockers:
       - LICENSE
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-fips-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips
@@ -576,7 +560,6 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-fips-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips
@@ -595,7 +578,6 @@ dockers:
       - "--platform=linux/arm64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-fips-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-s390x"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips
@@ -614,7 +596,6 @@ dockers:
       - "--platform=linux/s390x"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-fips-ppc64le"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-ppc64le"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile.fips
@@ -674,35 +655,3 @@ docker_manifests:
   - name_template: "aquasec/starboard-scanner-aqua:{{ .Version }}"
     image_templates:
       - "aquasec/starboard-scanner-aqua:{{ .Version }}-amd64"
-
-  # Aqua container registry
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard:{{ .Version }}-amd64"
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ppc64le"
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-fips-ppc64le"
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-ppc64le"
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-s390x"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-ubi9-fips-ppc64le"
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-scanner-aqua:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-scanner-aqua:{{ .Version }}-amd64"
