@@ -2,210 +2,210 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/faq/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/further-reading/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/settings/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/getting-started/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/troubleshooting/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/installation/binary-releases/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/installation/docker/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/installation/krew/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/cli/installation/source/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/compliance/nsa-1.0/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/built-in-policies/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/infrastructure-scanners/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/pluggable-scanners/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/pluggable-scanners/conftest/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/configuration-auditing/pluggable-scanners/polaris/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/ciskubebench-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/clustercompliance-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/clustercompliancedetail-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/clusterconfigaudit-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/clustervulnerability-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/configaudit-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/kubehunter-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/crds/vulnerability-report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/caching_scan_results_by_repo_digest/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/design_associating_rego_policies_with_k8s_resources/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/design_compliance_report/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/design_trivy_file_system_scanner/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/design_vuln_scan_job_in_same_namespace_of_workload/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/design/ttl_scans/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/integrations/lens/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/integrations/octant/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/integrations/prometheus/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/configuration/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/getting-started/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/troubleshooting/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/installation/helm/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/installation/kubectl/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/installation/olm/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/operator/installation/upgrade/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/tutorials/manage_access_to_security_reports/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/tutorials/writing-custom-configuration-audit-policies/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/vulnerability-scanning/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/vulnerability-scanning/aqua-enterprise/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/vulnerability-scanning/managed-registries/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/vulnerability-scanning/private-registries/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
     <url>
          <loc>https://aquasecurity.github.io/starboard/main/vulnerability-scanning/trivy/</loc>
-         <lastmod>2024-12-11</lastmod>
+         <lastmod>2025-02-28</lastmod>
     </url>
 </urlset>
