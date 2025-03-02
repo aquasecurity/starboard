@@ -60,7 +60,7 @@ docker_manifests:
   # Dockerhub
   - name_template: "aquasec/private-test:{{ .Version }}"
     image_templates:
-      - "aquasec/starboard:{{ .Version }}-amd64"
+      - "aquasec/private-test:{{ .Version }}-amd64"
 
   # Aquasec
   - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-lihitest:{{ .Version }}"
