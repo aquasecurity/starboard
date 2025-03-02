@@ -7,8 +7,8 @@
 name: Release-Test-Lihi
 on:
   push:
-    branches:
-      - lihitest-release-*
+    tags:
+      - "test*"
 env:
   GO_VERSION: "1.23.1"
   KIND_VERSION: "v0.11.1"

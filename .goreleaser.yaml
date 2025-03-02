@@ -2,7 +2,6 @@ release:
   draft: false
   prerelease: auto
   disable: false
-  allow_untagged: true
 
 env:
   - GO111MODULE=on
