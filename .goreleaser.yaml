@@ -1,5 +1,5 @@
 release:
-  draft: true
+  draft: false
   prerelease: auto
 
 env:
