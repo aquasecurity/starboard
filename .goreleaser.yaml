@@ -1,6 +1,7 @@
 release:
   draft: false
-  prerelease: auto
+  prerelease: true
+  disable: false
 
 env:
   - GO111MODULE=on
