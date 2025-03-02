@@ -1,6 +1,6 @@
 release:
   draft: false
-  prerelease: true
+  prerelease: auto
   disable: false
 
 env:
