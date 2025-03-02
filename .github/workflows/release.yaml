@@ -147,10 +147,6 @@ jobs:
 #          docker volume prune --force
   release:
     name: Release
-    needs:
-      - itest-starboard
-      - itest-starboard-operator
-      - integration-operator-conftest
     runs-on: ubuntu-20.04
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
