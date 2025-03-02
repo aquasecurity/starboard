@@ -36,6 +36,7 @@ archives:
         format: zip
 dockers:
   - image_templates:
+      - "docker.io/aquasec/private-test:{{ .Version }}-amd64"
       - "aquasec.azurecr.io/starboard-lihitest:{{ .Version }}-amd64"
     use: buildx
     goos: linux
@@ -55,6 +56,12 @@ dockers:
       - "--platform=linux/amd64"
 
 docker_manifests:
-  - name_template: "aquasec/starboard:{{ .Version }}"
+  # Dockerhub
+  - name_template: "aquasec/private-test:{{ .Version }}"
     image_templates:
       - "aquasec/starboard:{{ .Version }}-amd64"
+
+  # Aquasec
+  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-lihitest:{{ .Version }}"
+    image_templates:
+      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-lihitest:{{ .Version }}-amd64"
