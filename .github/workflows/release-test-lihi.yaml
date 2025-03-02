@@ -68,6 +68,7 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AQUSEC_ACR_REGISTRY_NAME: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
    #   - name: Update new version for plugin 'starboard' in krew-index
    #     uses: rajatjindal/krew-release-bot@v0.0.43
 
