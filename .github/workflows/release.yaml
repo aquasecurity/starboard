@@ -30,8 +30,6 @@ jobs:
 #        run: make unit-tests
   itest-starboard:
     name: Run integration tests / Starboard CLI
-    needs:
-      - unit-tests
     runs-on: ubuntu-20.04
     timeout-minutes: 15
     steps:
