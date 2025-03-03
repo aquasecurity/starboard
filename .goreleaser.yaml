@@ -93,8 +93,8 @@ changelog:
       - '^release'
 dockers:
   - image_templates:
-      - "docker.io/aquasec/lihitest-starboard:{{ .Version }}-amd64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/private-test:{{ .Version }}-amd64"
+      - "docker.io/aquasec/private-test:{{ .Version }}-amd64"
+      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/lihitest-starboard:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
@@ -113,11 +113,11 @@ dockers:
       - "--platform=linux/amd64"
 
 docker_manifests:
-  - name_template: "aquasec/lihitest-starboard:{{ .Version }}"
+  - name_template: "aquasec/private-test:{{ .Version }}"
     image_templates:
-      - "aquasec/lihitest-starboard:{{ .Version }}-amd64"
+      - "aquasec/private-test:{{ .Version }}-amd64"
 
   # Aqua container registry
-  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/private-test:{{ .Version }}"
+  - name_template: "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/lihitest-starboard:{{ .Version }}"
     image_templates:
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/private-test:{{ .Version }}-amd64"
+      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/lihitest-starboard:{{ .Version }}-amd64"
