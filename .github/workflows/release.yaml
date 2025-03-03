@@ -172,6 +172,8 @@ jobs:
           fetch-depth: 0
       - name: Login to registries
         run: |
+          docker logout docker.io
+          docker logout ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
           docker login --username ${{ secrets.DOCKERHUB_USER }} --password ${{ secrets.DOCKERHUB_TOKEN }} docker.io
           docker login --username ${{ secrets.AQUASEC_ACR_USERNAME }} --password ${{ secrets.AQUASEC_ACR_PASSWORD }} ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
 #      - name: Login to docker.io registry
