@@ -94,7 +94,7 @@ changelog:
 dockers:
   - image_templates:
       - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-lihitest:{{ .Version }}-amd64"
-#      - "docker.io/aquasec/private-test:{{ .Version }}-amd64"
+      - "docker.io/aquasec/private-test:{{ .Version }}-amd64"
     use: buildx
     goos: linux
     dockerfile: build/starboard/Dockerfile
