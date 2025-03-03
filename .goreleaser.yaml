@@ -192,7 +192,7 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "docker.io/aquasec/starboard-operator:{{ .Version }}-arm64"
-      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-scanner-aqua:{{ .Version }}-arm64"
+      - "{{ .Env.AQUSEC_ACR_REGISTRY_NAME }}/starboard-operator:{{ .Version }}-arm64"
     use: buildx
     goos: linux
     dockerfile: build/starboard-operator/Dockerfile
