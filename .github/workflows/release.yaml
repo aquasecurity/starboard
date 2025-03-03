@@ -170,15 +170,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Login to registries
-        run: |
-          docker logout docker.io
-          docker logout ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
-          sudo apt-get update
-          sudo apt-get install -y docker-credential-helpers
-          echo '{"credsStore":"desktop","credHelpers":{"docker.io":"pass","${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}":"pass"}}' > ~/.docker/config.json
-          docker login --username ${{ secrets.DOCKERHUB_USER }} --password ${{ secrets.DOCKERHUB_TOKEN }} docker.io
-          docker login --username ${{ secrets.AQUASEC_ACR_USERNAME }} --password ${{ secrets.AQUASEC_ACR_PASSWORD }} ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
+#      - name: Login to registries
+#        run: |
+#          docker logout docker.io
+#          docker logout ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
+#          sudo apt-get update
+#          sudo apt-get install -y docker-credential-helpers
+#          echo '{"credsStore":"desktop","credHelpers":{"docker.io":"pass","${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}":"pass"}}' > ~/.docker/config.json
+#          docker login --username ${{ secrets.DOCKERHUB_USER }} --password ${{ secrets.DOCKERHUB_TOKEN }} docker.io
+#          docker login --username ${{ secrets.AQUASEC_ACR_USERNAME }} --password ${{ secrets.AQUASEC_ACR_PASSWORD }} ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
 #      - name: Login to docker.io registry
 #        uses: docker/login-action@v2
 #        with:
@@ -190,6 +190,18 @@ jobs:
 #          login-server: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
 #          username: ${{ secrets.AQUASEC_ACR_USERNAME }}
 #          password: ${{ secrets.AQUASEC_ACR_PASSWORD }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Aquasec Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
+          username: ${{ secrets.AQUASEC_ACR_USERNAME }}
+          password: ${{ secrets.AQUASEC_ACR_PASSWORD }}
       - name: Release
         uses: goreleaser/goreleaser-action@v3
         with:
