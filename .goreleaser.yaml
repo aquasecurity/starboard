@@ -26,47 +26,47 @@ builds:
         goarch: s390x
       - goos: windows
         goarch: s390x
-  - id: starboard-operator
-    main: ./cmd/starboard-operator/main.go
-    binary: starboard-operator
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm
-      - arm64
-      - s390x
-      - ppc64le
-    goarm:
-      - "7"
-  - id: starboard-operator-fips
-    main: ./cmd/starboard-operator/main.go
-    binary: starboard-operator-fips
-    flags:
-      - -tags=fipsonly
-    env:
-      - GOEXPERIMENT=boringcrypto
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm
-      - arm64
-      - s390x
-      - ppc64le
-    goarm:
-      - "7"
-  - id: starboard-scanner-aqua
-    main: ./cmd/scanner-aqua/main.go
-    binary: starboard-scanner-aqua
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm
-      - arm64
-    goarm:
-      - "7"
+#  - id: starboard-operator
+#    main: ./cmd/starboard-operator/main.go
+#    binary: starboard-operator
+#    goos:
+#      - linux
+#    goarch:
+#      - amd64
+#      - arm
+#      - arm64
+#      - s390x
+#      - ppc64le
+#    goarm:
+#      - "7"
+#  - id: starboard-operator-fips
+#    main: ./cmd/starboard-operator/main.go
+#    binary: starboard-operator-fips
+#    flags:
+#      - -tags=fipsonly
+#    env:
+#      - GOEXPERIMENT=boringcrypto
+#    goos:
+#      - linux
+#    goarch:
+#      - amd64
+#      - arm
+#      - arm64
+#      - s390x
+#      - ppc64le
+#    goarm:
+#      - "7"
+#  - id: starboard-scanner-aqua
+#    main: ./cmd/scanner-aqua/main.go
+#    binary: starboard-scanner-aqua
+#    goos:
+#      - linux
+#    goarch:
+#      - amd64
+#      - arm
+#      - arm64
+#    goarm:
+#      - "7"
 archives:
   - name_template: >-
       {{ .ProjectName }}_
