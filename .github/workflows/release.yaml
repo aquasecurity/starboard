@@ -190,11 +190,11 @@ jobs:
 #          login-server: ${{ secrets.AQUSEC_ACR_REGISTRY_NAME }}
 #          username: ${{ secrets.AQUASEC_ACR_USERNAME }}
 #          password: ${{ secrets.AQUASEC_ACR_PASSWORD }}
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#      - name: Login to Docker Hub
+#        uses: docker/login-action@v3
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USER }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Aquasec Container Registry
         uses: docker/login-action@v3
