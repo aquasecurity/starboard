@@ -112,8 +112,9 @@ dockers:
       - "--label=org.opencontainers.image.documentation=https://aquasecurity.github.io/starboard/v{{ .Version }}/"
       - "--platform=linux/amd64"
 
-  # dockerhub container registry
-#docker_manifests:
+
+docker_manifests:
+ # dockerhub container registry
 #  - name_template: "aquasec/private-test:{{ .Version }}"
 #    image_templates:
 #      - "aquasec/private-test:{{ .Version }}-amd64"
