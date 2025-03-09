@@ -6,7 +6,7 @@ LABEL name="Starboard" \
       summary="Starboard Operator." \
       org.label-schema.schema-version="1.0" \
       maintainer="Aqua Security Software Ltd." \
-      release=$KUBEBENCH_VERSION \
+      release=v0.15.24 \
       description="Starboard Operator."
 
 RUN microdnf install -y shadow-utils
