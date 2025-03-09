@@ -4,6 +4,10 @@ LABEL name="Starboard" \
       vendor="Aqua Security Software Ltd." \
       version="v0.15.24" \
       summary="Starboard Operator."
+      org.label-schema.schema-version="1.0" \
+      maintainer="Aqua Security Software Ltd." \
+      release=$KUBEBENCH_VERSION \
+      description="Starboard Operator."
 
 RUN microdnf install -y shadow-utils
 RUN useradd -u 10000 starboard
