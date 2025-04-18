@@ -41,7 +41,7 @@ concurrency:
 jobs:
   verify-code:
     name: Verify code
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -64,7 +64,7 @@ jobs:
         run: GOPATH="$(go env GOPATH)" ./hack/verify-codegen.sh
   unit-tests:
     name: Run unit tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v3
@@ -83,7 +83,7 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -117,7 +117,7 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -162,7 +162,7 @@ jobs:
     needs:
       - unit-tests
       - verify-code
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -206,7 +206,7 @@ jobs:
       - itest-starboard-cli
       - itest-starboard-operator
       - integration-operator-conftest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3

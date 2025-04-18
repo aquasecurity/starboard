@@ -16,7 +16,7 @@ env:
 jobs:
   unit-tests:
     name: Run unit tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Setup Go
         uses: actions/setup-go@v3
@@ -32,7 +32,7 @@ jobs:
     name: Run integration tests / Starboard CLI
     needs:
       - unit-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -65,7 +65,7 @@ jobs:
     name: Run integration tests / Starboard Operator
     needs:
       - unit-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -107,7 +107,7 @@ jobs:
     name: Integration / Operator / Conftest
     needs:
       - unit-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Setup Go
@@ -151,7 +151,7 @@ jobs:
       - itest-starboard
       - itest-starboard-operator
       - integration-operator-conftest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
