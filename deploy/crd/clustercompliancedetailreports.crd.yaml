@@ -5,7 +5,7 @@ metadata:
   name: clustercompliancedetailreports.aquasecurity.github.io
   labels:
     app.kubernetes.io/managed-by: starboard
-    app.kubernetes.io/version: "0.15.26"
+    app.kubernetes.io/version: "0.15.27"
 spec:
   group: aquasecurity.github.io
   versions:
