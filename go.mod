@@ -1,6 +1,6 @@
 module github.com/aquasecurity/starboard
 
-go 1.24.4
+go 1.24.6
 
 require (
 	github.com/caarlos0/env/v6 v6.10.0
