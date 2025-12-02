@@ -141,7 +141,7 @@ jobs:
           KUBECONFIG: /home/runner/.kube/config
           OPERATOR_NAMESPACE: starboard-system
           OPERATOR_TARGET_NAMESPACES: default
-      - name: Cleanup Docker and KIND resources
+      - name: Free Disk Space (Comprehensive)
         run: |
           docker system prune -a --force
           docker volume prune --force
@@ -157,10 +157,23 @@ jobs:
     steps:
       - name: Cleanup Docker and KIND resources (Pre-Release)
         run: |
-          docker system prune -a --force
-          docker volume prune --force
-      - name: Check disk usage (Pre-Release)
-        run: df -h
+          echo "=== Disk space before cleanup ==="
+          df -h
+          echo "=== Removing unnecessary pre-installed tools ==="
+          # Remove large pre-installed software not needed for Go/Docker builds
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/.ghcup
+          # Clean package manager caches
+          sudo apt-get clean
+          sudo apt-get autoremove -y
+          # Clean Docker
+          docker system prune -a --volumes --force
+          echo "=== Disk space after cleanup ==="
+          df -h
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
