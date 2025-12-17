@@ -2,11 +2,11 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 LABEL name="Starboard" \
       vendor="Aqua Security Software Ltd." \
-      version="v0.15.28" \
+      version="v0.15.29" \
       summary="Starboard Operator." \
       org.label-schema.schema-version="1.0" \
       maintainer="Aqua Security Software Ltd." \
-      release=v0.15.28 \
+      release=v0.15.29 \
       description="Starboard Operator."
 
 RUN microdnf install -y shadow-utils
