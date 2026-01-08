@@ -50,7 +50,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Verify Go code
-        uses: golangci/golangci-lint-action@v3.4.0
+        uses: golangci/golangci-lint-action@v3.6.0
         with:
           args: --verbose
           version: latest
