@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: starboard-operator
     app.kubernetes.io/instance: starboard-operator
-    app.kubernetes.io/version: "0.15.29"
+    app.kubernetes.io/version: "0.15.30"
     app.kubernetes.io/managed-by: kubectl
 data:
   library.kubernetes.rego:
