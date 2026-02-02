@@ -9,7 +9,9 @@ LABEL name="Starboard" \
       release=v0.15.30 \
       description="Starboard Operator."
 
-RUN microdnf install -y shadow-utils
+RUN microdnf upgrade -y --nodocs \
+    && microdnf install -y shadow-utils \
+    && microdnf clean all
 RUN useradd -u 10000 starboard
 WORKDIR /opt/bin/
 COPY starboard-operator /usr/local/bin/starboard-operator
