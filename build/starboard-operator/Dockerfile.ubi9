@@ -2,11 +2,11 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 LABEL name="Starboard" \
       vendor="Aqua Security Software Ltd." \
-      version="v0.15.32" \
+      version="v0.15.33" \
       summary="Starboard Operator." \
       org.label-schema.schema-version="1.0" \
       maintainer="Aqua Security Software Ltd." \
-      release=v0.15.32 \
+      release=v0.15.33 \
       description="Starboard Operator."
 
 RUN microdnf upgrade -y --nodocs \
