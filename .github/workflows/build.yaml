@@ -26,7 +26,7 @@ on:
       - 'NOTICE'
 
 env:
-  GO_VERSION: "1.24.12"
+  GO_VERSION: "1.26.2"
   KIND_VERSION: "v0.17.0"
   KIND_IMAGE: "kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
 
@@ -50,12 +50,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Verify Go code
-        uses: golangci/golangci-lint-action@v3.4.0
+        # golangci-lint-action v8 requires golangci-lint >= v2.1.0.
+        # v2.9.0 is the first release built with Go 1.26 (per
+        # https://github.com/golangci/golangci-lint/pull/6271), which is
+        # required because go.mod declares go 1.26.2 - older lint binaries
+        # refuse to load the config with a "Go language version ... lower
+        # than the targeted Go version" error.
+        uses: golangci/golangci-lint-action@v8
         with:
           args: --verbose
-          version: latest
-          skip-pkg-cache: true
-          skip-build-cache: true
+          version: v2.9.0
+          # v5+ removed skip-pkg-cache / skip-build-cache; cache is now a
+          # single toggle and the Go-side cache is owned by actions/setup-go.
+          skip-cache: true
       - name: Verify YAML code
         uses: ibiqlik/action-yamllint@v3
       - name: Vendor Go modules

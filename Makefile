@@ -13,14 +13,20 @@ GOPATH=$(shell go env GOPATH)
 GOBIN=$(GOPATH)/bin
 GINKGO=$(GOBIN)/ginkgo
 
-SOURCES := $(shell find . -name '*.go')
+# Sources tracked for build-target staleness. Includes go.mod/go.sum so a
+# dependency bump (e.g. for a CVE fix) reliably forces a binary rebuild even
+# when no .go file under the tree was edited - otherwise `make` thinks the
+# binary is up to date and silently keeps the stale module versions baked in.
+SOURCES := $(shell find . -name '*.go') go.mod go.sum
 
 IMAGE_TAG := dev
 STARBOARD_CLI_IMAGE := aquasec/starboard:$(IMAGE_TAG)
 STARBOARD_OPERATOR_IMAGE := aquasec/starboard-operator:$(IMAGE_TAG)
 STARBOARD_SCANNER_AQUA_IMAGE := aquasec/starboard-scanner-aqua:$(IMAGE_TAG)
-#STARBOARD_OPERATOR_IMAGE_UBI8 := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8
-#STARBOARD_OPERATOR_IMAGE_UBI8_FIPS := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8-fips
+STARBOARD_OPERATOR_IMAGE_UBI8 := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8
+STARBOARD_OPERATOR_IMAGE_UBI8_FIPS := aquasec/starboard-operator:$(IMAGE_TAG)-ubi8-fips
+STARBOARD_OPERATOR_IMAGE_UBI9 := aquasec/starboard-operator:$(IMAGE_TAG)-ubi9
+STARBOARD_OPERATOR_IMAGE_UBI9_FIPS := aquasec/starboard-operator:$(IMAGE_TAG)-ubi9-fips
 
 MKDOCS_IMAGE := aquasec/mkdocs-material:starboard
 MKDOCS_PORT := 8000
@@ -32,20 +38,24 @@ all: build
 build: build-starboard-cli build-starboard-operator build-starboard-scanner-aqua
 
 ## Builds the starboard binary
-build-starboard-cli: $(SOURCES)
-	CGO_ENABLED=0 go build -o ./bin/starboard ./cmd/starboard/main.go
+build-starboard-cli: bin/starboard
+bin/starboard: $(SOURCES)
+	CGO_ENABLED=0 go build -o $@ ./cmd/starboard/main.go
 
 ## Builds the starboard-operator binary
-build-starboard-operator: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-operator ./cmd/starboard-operator/main.go
+build-starboard-operator: bin/starboard-operator
+bin/starboard-operator: $(SOURCES)
+	CGO_ENABLED=0 GOOS=linux go build -o $@ ./cmd/starboard-operator/main.go
 
-## Builds the starboard-operator binary
-build-starboard-operator-fips: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux GOEXPERIMENT=boringcrypto go build -tags fipsonly -o ./bin/starboard-operator-fips ./cmd/starboard-operator/main.go
+## Builds the starboard-operator FIPS binary (BoringCrypto + fipsonly tag)
+build-starboard-operator-fips: bin/starboard-operator-fips
+bin/starboard-operator-fips: $(SOURCES)
+	CGO_ENABLED=0 GOOS=linux GOEXPERIMENT=boringcrypto go build -tags fipsonly -o $@ ./cmd/starboard-operator/main.go
 
 ## Builds the scanner-aqua binary
-build-starboard-scanner-aqua: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux go build -o ./bin/starboard-scanner-aqua ./cmd/scanner-aqua/main.go
+build-starboard-scanner-aqua: bin/starboard-scanner-aqua
+bin/starboard-scanner-aqua: $(SOURCES)
+	CGO_ENABLED=0 GOOS=linux go build -o $@ ./cmd/scanner-aqua/main.go
 
 .PHONY: get-ginkgo
 ## Installs Ginkgo CLI
@@ -145,13 +155,23 @@ docker-build-starboard-cli: build-starboard-cli
 docker-build-starboard-operator: build-starboard-operator
 	$(DOCKER) build --no-cache -t $(STARBOARD_OPERATOR_IMAGE) -f build/starboard-operator/Dockerfile bin
 
-## Builds Docker image for Starboard operator ubi8
+## Builds FIPS Docker image for Starboard operator (UBI8 base - deprecated, kept for parity)
 docker-build-starboard-operator-fips: build-starboard-operator-fips
 	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.fips.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8_FIPS) bin
+
+## Builds FIPS Docker image for Starboard operator (UBI9 base - this is what releases ship)
+docker-build-starboard-operator-fips-ubi9: build-starboard-operator-fips
+	cp LICENSE bin/LICENSE
+	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.fips.ubi9 -t $(STARBOARD_OPERATOR_IMAGE_UBI9_FIPS) bin
 
 ## Builds Docker image for Starboard operator ubi8
 docker-build-starboard-operator-ubi8: build-starboard-operator
 	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.ubi8 -t $(STARBOARD_OPERATOR_IMAGE_UBI8) bin
+
+## Builds Docker image for Starboard operator ubi9
+docker-build-starboard-operator-ubi9: build-starboard-operator
+	cp LICENSE bin/LICENSE
+	$(DOCKER) build --no-cache -f build/starboard-operator/Dockerfile.ubi9 -t $(STARBOARD_OPERATOR_IMAGE_UBI9) bin
 
 ## Builds Docker image for Aqua scanner
 docker-build-starboard-scanner-aqua: build-starboard-scanner-aqua
@@ -170,11 +190,18 @@ mkdocs-serve:
 	$(DOCKER) run --name mkdocs-serve --rm -v $(PWD):/docs -p $(MKDOCS_PORT):8000 $(MKDOCS_IMAGE)
 
 .PHONY: \
+	build-starboard-cli \
+	build-starboard-operator \
+	build-starboard-operator-fips \
+	build-starboard-scanner-aqua \
 	clean \
 	docker-build \
 	docker-build-starboard-cli \
 	docker-build-starboard-operator \
 	docker-build-starboard-operator-ubi8 \
+	docker-build-starboard-operator-ubi9 \
+	docker-build-starboard-operator-fips \
+	docker-build-starboard-operator-fips-ubi9 \
 	docker-build-starboard-scanner-aqua \
 	kind-load-images \
 	mkdocs-serve

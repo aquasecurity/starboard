@@ -1,10 +1,25 @@
+version: "2"
+
 run:
   timeout: 5m
+
 linters:
+  # govet stays in the default set; gosimple no longer exists as a separate
+  # linter in v2 (its checks were folded into staticcheck), so it doesn't need
+  # to appear here.
   enable:
     - errorlint
-    - govet
   disable:
-    - gosimple
     - ineffassign
     - staticcheck
+  settings:
+    errcheck:
+      # These call sites either write to streams whose errors are not
+      # actionable (formatted output / hash writers) or close/reset state in
+      # tests where the error is uninteresting. Exempting them avoids
+      # peppering benign `_ =` discards across the codebase.
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*os.File).Close
+        - os.Setenv
