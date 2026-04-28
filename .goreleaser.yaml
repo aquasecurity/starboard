@@ -26,6 +26,11 @@ builds:
         goarch: s390x
       - goos: windows
         goarch: s390x
+      # Go 1.17+ dropped 32-bit ARM support on Windows. Only windows/arm64
+      # exists on the modern toolchain, so excluding this pair is required
+      # since the go.mod bump to 1.26.x.
+      - goos: windows
+        goarch: arm
   - id: starboard-operator
     main: ./cmd/starboard-operator/main.go
     binary: starboard-operator
