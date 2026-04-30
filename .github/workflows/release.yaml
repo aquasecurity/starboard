@@ -152,6 +152,8 @@ jobs:
       - itest-starboard-operator
       - integration-operator-conftest
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
