@@ -16,7 +16,7 @@ permissions: {}
 jobs:
   release-snapshot:
     name: Release unversioned snapshot
-    runs-on: ubuntu-2404-2core
+    runs-on: ubuntu-2404-4core
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
@@ -37,7 +37,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v3
         with:
           version: v1.7.0
-          args: release --snapshot --skip-publish --rm-dist
+          args: release --snapshot --skip-publish --rm-dist --timeout 90m
       - name: Scan Starboard CLI image for vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
