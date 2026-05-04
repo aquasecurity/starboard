@@ -151,7 +151,7 @@ jobs:
       - itest-starboard
       - itest-starboard-operator
       - integration-operator-conftest
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-2404-2core
     permissions:
       contents: write
     env:
