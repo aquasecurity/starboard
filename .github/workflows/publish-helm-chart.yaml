@@ -25,7 +25,7 @@ jobs:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
       - name: Install Helm
-        uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab  # v1.1
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78  # v3.5
         with:
           version: v3.5.0
       - name: Set up python
