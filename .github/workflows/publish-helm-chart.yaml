@@ -11,9 +11,6 @@ on:
         required: true
   pull_request:
     types:
-      - opened
-      - synchronize
-      - reopened
       - closed
     branches:
       - main
@@ -21,9 +18,6 @@ on:
       - 'deploy/helm/**'
 
 env:
-  HELM_REP: helm-charts
-  GH_OWNER: aquasecurity
-  CHART_DIR: deploy/helm
   KIND_VERSION: "v0.14.0"
   KIND_IMAGE: "kindest/node:v1.23.6@sha256:b1fa224cc6c7ff32455e0b1fd9cbfd3d3bc87ecaa8fcb06961ed1afb3db0f9ae"
 
