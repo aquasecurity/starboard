@@ -11,6 +11,9 @@ on:
         required: true
   pull_request:
     types:
+      - opened # to run tests when a PR is created
+      - synchronize # to run tests when a PR is updated with new commits
+      - reopened # to run tests when a PR is reopened after being closed
       - closed
     branches:
       - main
