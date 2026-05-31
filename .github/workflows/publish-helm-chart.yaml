@@ -20,6 +20,10 @@ on:
     paths:
       - 'deploy/helm/**'
 
+
+permissions:
+  contents: read
+
 env:
   KIND_VERSION: "v0.14.0"
   KIND_IMAGE: "kindest/node:v1.23.6@sha256:b1fa224cc6c7ff32455e0b1fd9cbfd3d3bc87ecaa8fcb06961ed1afb3db0f9ae"
