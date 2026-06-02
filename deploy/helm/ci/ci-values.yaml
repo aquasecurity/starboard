@@ -3,4 +3,4 @@
 # KIND can pull the image even when the current appVersion has not been pushed
 # to Docker Hub yet (e.g. during release-prep PRs).
 image:
-  tag: "0.15.35"
+  tag: "0.15.37"
