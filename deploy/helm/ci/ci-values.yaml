@@ -1,0 +1,6 @@
+# Values used by chart-testing (ct lint-and-install) in CI.
+# Overrides appVersion-based image tag with the last published release so that
+# KIND can pull the image even when the current appVersion has not been pushed
+# to Docker Hub yet (e.g. during release-prep PRs).
+image:
+  tag: "0.15.35"
