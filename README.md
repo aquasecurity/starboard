@@ -2,7 +2,7 @@
 
 We've announced our plans to discontinue Starboard and merge it into [Trivy](https://github.com/aquasecurity/trivy).
 
-Starboard CLI has been reintroduced as [trivy kubernetes](https://aquasecurity.github.io/trivy/latest/docs/kubernetes/cli/scanning/) command and starboard-operator with a focus on trivy capabilities is available as [Trivy-Operator](https://aquasecurity.github.io/trivy/latest/docs/kubernetes/operator/).
+Starboard CLI has been reintroduced as [trivy kubernetes](https://aquasecurity.github.io/trivy/latest/docs/target/kubernetes/) command and starboard-operator with a focus on trivy capabilities is available as [Trivy-Operator](https://github.com/aquasecurity/trivy-operator).
 
 We will not be accepting new features/pull requests/issues.
 we encourage you to contribute to [Trivy-Operator](https://github.com/aquasecurity/trivy-operator) and [Trivy CLI](https://github.com/aquasecurity/trivy) and influence the future of Trivy Kubernetes.
