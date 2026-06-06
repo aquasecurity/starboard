@@ -59,7 +59,11 @@ func (r *ResourceController) SetupWithManager(mgr ctrl.Manager) error {
 		{kind: kube.KindCronJob, forObject: r.ObjectResolver.GetSupportedObjectByKind(kube.KindCronJob), ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindJob, forObject: &batchv1.Job{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindService, forObject: &corev1.Service{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
-		{kind: kube.KindConfigMap, forObject: &corev1.ConfigMap{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
+		{Kind: kube.KindConfigMap, ForObject: &metav1.PartialObjectMetadata{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			}}, OwnsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindRole, forObject: &rbacv1.Role{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindRoleBinding, forObject: &rbacv1.RoleBinding{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
 		{kind: kube.KindNetworkPolicy, forObject: &networkingv1.NetworkPolicy{}, ownsObject: &v1alpha1.ConfigAuditReport{}},
